@@ -9,7 +9,8 @@ class loginCarol:
         self.password = password
         self.domain = domain
         self.applicationId = applicationId
-
+        self.access_token = None
+        self.refresh_token = None
 
     def newToken(self):
         url = 'https://{}.carol.ai/api/v2/oauth2/token'.format(self.domain)

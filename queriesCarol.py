@@ -13,6 +13,9 @@ class queryCarol:
         self.sortBy = None
         self.indexType = 'MASTER'
         self.drop_list = None
+        if self.token_object.access_token is None:
+            self.token_object.newToken()
+
         self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
         self.query_data = []
         self.querystring = {}
@@ -25,6 +28,10 @@ class queryCarol:
         else:
             self.querystring = {"offset": self.offset, "pageSize": self.pageSize, "sortOrder": self.sortOrder,
                                 "sortBy": self.sortBy, "indexType": self.indexType}
+
+
+    def _setParams(self):
+        pass
 
     def _dropHandler(self):
         pass
