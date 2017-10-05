@@ -1,6 +1,6 @@
 # pyCarol
 
-This package implements some of the Carol's APIs. The following endpoints are implemented: 
+This package implements some of Carol's APIs. The following endpoints are implemented: 
     
     - V2 OAuth2:
         1. POST - /api/v2/oauth2/token
