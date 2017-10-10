@@ -2,7 +2,7 @@
 
 This package implements some of Carol's APIs. The following endpoints are implemented: 
     
-    - V2 OAuth2: (loginResources.py)
+    - V2 OAuth2: (loginCarol.py)
         1. POST - /api/v2/oauth2/token
         2. POST/GET - /api/v2/oauth2/token/{access_token}
         
