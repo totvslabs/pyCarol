@@ -1,7 +1,7 @@
 __version__ = '0.1'
 
 
-from .loginResources import *
+from .loginCarol import *
 from .stagingCarol import *
 from .utils import *
 from .schemaGenerator import *
