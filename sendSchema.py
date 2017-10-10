@@ -7,6 +7,8 @@ import requests
 class Table(object):
     def __init__(self, name, token, subdomain, connector_id):
 
+
+
         self.name = name
         self.token = token  # format 02845jfjj3420382
         self.subdomain = 'https://%s.carol.ai' % subdomain

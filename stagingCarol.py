@@ -1,7 +1,65 @@
 import json
 import requests
-#from . import utils
-import re
+from .schemaGenerator import *
+
+
+
+
+class sendStagingTable(object):
+    def __init__(self, token):
+
+        self.token_object = token
+        if self.token_object.access_token is None:
+            self.token_object.newToken()
+
+        self.headers = {'Authorization': self.token_object.access_token,
+                        'Content-Type': 'application/json'}
+
+        self.applicationId =  self.token_object.applicationId
+        self.schema = None
+
+    def createSchema(self,fields_dict=None,mdmStagingType='stagingName', mdmFlexible='false',
+                     crosswalkname=None,crosswalkList=None):
+
+        assert fields_dict is not None
+
+        if isinstance(fields_dict,dict):
+            self.schema = carolSchemaGenerator(fields_dict)
+            self.schema =  self.schema.to_dict(mdmStagingType=mdmStagingType, mdmFlexible=mdmFlexible,
+                     crosswalkname=crosswalkname,crosswalkList=crosswalkList)
+        elif isinstance(fields_dict,str):
+
+            self.schema = carolSchemaGenerator.from_json(fields_dict)
+            self.schema = self.schema.to_dict(mdmStagingType=mdmStagingType, mdmFlexible=mdmFlexible,
+                                              crosswalkname=crosswalkname, crosswalkList=crosswalkList)
+
+
+
+    def sendSchema(self,fields_dict=None,applicationId=None):
+        if applicationId is not None:
+            self.applicationId = applicationId
+        if fields_dict is None:
+            assert self.schema is not None
+        elif isinstance(fields_dict,str):
+            self.schema = json.loads(fields_dict)
+        elif isinstance(fields_dict, dict):
+            self.schema = fields_dict
+        else:
+            raise Exception('Not valid format')
+
+        self.stagingName = self.schema['mdmStagingType']
+        querystring = {"applicationId": self.applicationId}
+
+        url = 'https://{}.carol.ai/api/v2/staging/tables/{}/schema'.format(self.token_object.domain,
+                                                                                            self.stagingName)
+        res = requests.request("POST", url, json=self.schema, headers=self.headers, params=querystring)
+
+
+        if not res.ok:
+            raise Exception(res.text)
+        else:
+            print('Schema sent succesfully!')
+
 
 
 class staginCarol:
@@ -79,6 +137,7 @@ class staginCarol:
             if save_results:
                 file.write(json.dumps(query, ensure_ascii=False))
                 file.write('\n')
+                file.flush()
         if save_results:
             file.close()
 

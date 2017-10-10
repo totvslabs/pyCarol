@@ -12,7 +12,10 @@ class loginCarol:
         self.access_token = None
         self.refresh_token = None
 
-    def newToken(self):
+    def newToken(self,applicationId=None):
+
+        if applicationId is not None:
+            self.applicationId = applicationId
         url = 'https://{}.carol.ai/api/v2/oauth2/token'.format(self.domain)
 
         grant_type = 'password'  # use refresh_token if one wants to refresh the token

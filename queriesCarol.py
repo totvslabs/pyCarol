@@ -95,6 +95,7 @@ class queryCarol:
                     if save_results:
                         file.write(json.dumps(query, ensure_ascii=False))
                         file.write('\n')
+                        file.flush()
                     break
 
             self.querystring['offset'] = count
@@ -103,6 +104,7 @@ class queryCarol:
             if save_results:
                 file.write(json.dumps(query, ensure_ascii=False))
                 file.write('\n')
+                file.flush()
         if save_results:
             file.close()
 
@@ -184,6 +186,7 @@ class queryCarol:
                 if save_result:
                     file.write(json.dumps(query, ensure_ascii=False))
                     file.write('\n')
+                    file.flush()
                     break
 
             self.querystring['offset'] = count
@@ -192,6 +195,7 @@ class queryCarol:
             if save_result:
                 file.write(json.dumps(query, ensure_ascii=False))
                 file.write('\n')
+                file.flush()
         if save_result:
             file.close()
 
@@ -273,6 +277,7 @@ class namedQueryManagement:
                 print('{}/{}'.format(count, self.totalHits), end ='\r')
             file.write(json.dumps(query, ensure_ascii=False))
             file.write('\n')
+            file.flush()
         file.close()
         self._getParam()
 

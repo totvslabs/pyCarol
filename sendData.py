@@ -23,8 +23,12 @@ class sendDataCarol:
                 i += self.step_size
         yield []
 
-    def sendData(self, stagingName,data = None, print_stats = False):
+    def sendData(self, stagingName,data = None, step_size = 100, applicationId=None,print_stats = False):
+        if applicationId is not None:
+            if not applicationId==self.token_object.applicationId:
+                self.token_object.newToken(applicationId)
 
+        self.step_size = step_size
         self.print_stats = print_stats
         if not data:
             assert not self.data==[]
@@ -62,12 +66,17 @@ class sendDataCarol:
                 ite = False
 
     @classmethod
-    def from_json(cls, token, filename):
+    def from_json(cls, token, filename,read_lines = True):
 
+        data = []
         with open(filename, 'r') as data_file:
-            json_data = data_file.read()
+            if read_lines:
+                for file in data_file.readlines():
+                    data.append(json.loads(file))
+            else:
+                json_data = data_file.read()
+                data = json.loads(json_data)
 
-        data = json.loads(json_data)
         ret = sendDataCarol(token)
         ret.data = data
         return ret

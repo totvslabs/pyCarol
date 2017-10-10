@@ -66,13 +66,19 @@ class carolSchemaGenerator(object):
     def from_json(cls, base_json):
         base_object = json.loads(base_json)
         obj = cls(base_object)
-
         return obj
 
     def to_dict(self, mdmStagingType='stagingName', mdmFlexible='false', crosswalkname=None,
-                crosswalkList=['variable']):
+                crosswalkList=None):
 
         assert isinstance(crosswalkList, list)
+
+        fields = set(self.base_object.keys())
+        for key_field in crosswalkList:
+            if key_field not in fields:
+                raise Exception('Your key field %s is not in your fields!' % (key_field))
+            if type(key_field) != str:
+                raise Exception('Field %s type is not string, must be!' % key_field)
 
         if crosswalkname is None:
             crosswalkname = mdmStagingType
@@ -99,7 +105,7 @@ class carolSchemaGenerator(object):
         return schema_dict
 
     def to_json(self, mdmStagingType='stagingName', mdmFlexible='false', crosswalkname=None,
-                crosswalkList=['variable']):
+                crosswalkList=None):
         if self.schema_dict is not None:
             json_schema = json.dumps(self.schema_dict)
         else:
