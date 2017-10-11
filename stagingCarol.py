@@ -57,7 +57,8 @@ class sendDataCarol:
                 if response.reason == 'Unauthorized':
                     self.token_object.refreshToken()
                     self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
-                    data_json = gen.send(True)
+                    data_json = gen.send(True) #not needed?
+                    print('Resending last batch, refreshing token')
                     continue
                 raise Exception(response.reason)
 
