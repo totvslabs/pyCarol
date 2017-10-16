@@ -25,7 +25,7 @@ This package implements some of Carol's APIs. The following endpoints are implem
     - v1 v1 Entity Template Types (entityTemplateTypesCarol.py)
         1. GET - /api/v1/entityTemplateTypes
         
-    - v1 Fields
+    - v1 Fields (fieldsCarol.py)
         1. GET - /api/v1/admin/fields
         2. GET - /api/v1/admin/fields/{mdmId}
         3. GET - /api/v1/admin/fields/possibleTypes
@@ -33,7 +33,7 @@ This package implements some of Carol's APIs. The following endpoints are implem
         5. GET - /api/v1/fields/{mdmId}
         6. GET - /api/v1/fields/possibleTypes
     
-    - v1 Verticals
+    - v1 Verticals (verticalsCarol.py)
         1. GET - /api/v1/verticals
         2. GET - /api/v1/verticals/{verticalId}
         3. GET - /api/v1/verticals/name/{verticalName}
