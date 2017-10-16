@@ -22,6 +22,22 @@ This package implements some of Carol's APIs. The following endpoints are implem
         2. GET - /api/v2/staging/tables/{table}
         3. POST - /api/v2/staging/tables/{table}/schema
         
+    - v1 v1 Entity Template Types (entityTemplateTypesCarol.py)
+        1. GET - /api/v1/entityTemplateTypes
+        
+    - v1 Fields
+        1. GET - /api/v1/admin/fields
+        2. GET - /api/v1/admin/fields/{mdmId}
+        3. GET - /api/v1/admin/fields/possibleTypes
+        4. GET - /api/v1/fields
+        5. GET - /api/v1/fields/{mdmId}
+        6. GET - /api/v1/fields/possibleTypes
+    
+    - v1 Verticals
+        1. GET - /api/v1/verticals
+        2. GET - /api/v1/verticals/{verticalId}
+        3. GET - /api/v1/verticals/name/{verticalName}
+        
     - v1 Database Toolbelt Admin (toolbeltAdmin.py)
         1. DELETE - /api/v1/databaseToolbelt/filter
         

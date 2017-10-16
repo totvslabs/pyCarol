@@ -1,7 +1,6 @@
-import json
 import requests
-from . import utils
-from queriesCarol import queryCarol
+
+from pycarol.queriesCarol import queryCarol
 
 
 class deleteEntryCarol:
