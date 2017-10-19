@@ -22,7 +22,7 @@ class loginCarol:
         refresh_token = ''  # pass if refresh the token is needed
 
         auth_request = {'username': self.username, 'password': self.password, "grant_type": grant_type, 'subdomain': self.domain,
-                        'applicationId': self.applicationId, 'refresh_token': refresh_token, 'Content-Type': 'application/json'}
+                        'connectorId': self.applicationId, 'refresh_token': refresh_token, 'Content-Type': 'application/json'}
         token = requests.post(url=url, data=auth_request)
         if token.ok:
             self.access_token = json.loads(token.text)['access_token']

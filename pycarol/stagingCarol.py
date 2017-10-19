@@ -33,7 +33,7 @@ class sendDataCarol:
 
         self.step_size = step_size
         self.print_stats = print_stats
-        if not data:
+        if data is None:
             assert not self.data==[]
         else:
             self.data = data

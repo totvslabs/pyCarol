@@ -48,7 +48,8 @@ class namedQueryManagement:
         self.sortBy = sortBy
         set_param = True
         self.totalHits = float("inf")
-        file = open(filename, 'w', encoding='utf8')
+        if save_file:
+            file = open(filename, 'w', encoding='utf8')
         while count < self.totalHits:
             url_filter = "https://{}.carol.ai/api/v2/named_queries".format(self.token_object.domain)
             self.lastResponse = requests.get(url=url_filter, headers=self.headers, params=self.querystring)
@@ -58,7 +59,8 @@ class namedQueryManagement:
                     self.token_object.refreshToken()
                     self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
                     continue
-                file.close()
+                if save_file:
+                    file.close()
                 raise Exception(self.lastResponse.text)
 
             self.lastResponse.encoding = 'utf8'
@@ -81,10 +83,12 @@ class namedQueryManagement:
             self.querystring['offset'] = count
             if print_status:
                 print('{}/{}'.format(count, self.totalHits), end ='\r')
-            file.write(json.dumps(query, ensure_ascii=False))
-            file.write('\n')
-            file.flush()
-        file.close()
+            if save_file:
+                file.write(json.dumps(query, ensure_ascii=False))
+                file.write('\n')
+                file.flush()
+        if save_file:
+            file.close()
         self._getParam()
 
     def creatingNamedQueries(self, namedQueries):
