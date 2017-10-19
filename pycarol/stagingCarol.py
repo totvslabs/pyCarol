@@ -68,7 +68,7 @@ class sendDataCarol:
                     data_json = gen.send(True) #not needed?
                     print('Resending last batch, refreshing token')
                     continue
-                raise Exception(response.reason)
+                raise Exception(response.text)
 
             cont += len(data_json)
             if self.print_stats:
