@@ -1,6 +1,7 @@
 import json
 import requests
 from .schemaGenerator import *
+import pandas as pd
 
 
 class sendDataCarol:
@@ -36,7 +37,14 @@ class sendDataCarol:
         if data is None:
             assert not self.data==[]
         else:
-            self.data = data
+            if isinstance(data,pd.DataFrame):
+                try:
+                    self.data =  data.to_json(orient='records', date_format='iso', lines=False)
+                    self.data = json.loads(self.data)
+                except:
+                    raise IOError
+            else:
+                self.data = data
 
 
         self.stagingName = stagingName
