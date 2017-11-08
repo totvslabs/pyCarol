@@ -42,7 +42,7 @@ This package implements some of Carol's APIs. The following endpoints are implem
         3. GET - /api/v1/verticals/name/{verticalName}
         
     - v1 Database Toolbelt Admin (toolbeltAdmin.py)
-        1. DELETE - ~~/api/v1/databaseToolbelt/filter~~  (deprecated)
+        1. DELETE - /api/v1/databaseToolbelt/filter  (deprecated)
         
  We also have a Schema Generator (schemaGenerator.py).
 
