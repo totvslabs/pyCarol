@@ -85,11 +85,6 @@ class carolSchemaGenerator(object):
 
         mdmCrosswalkTemplate = {"mdmCrosswalkTemplate": {"mdmCrossreference": {crosswalkname: crosswalkList}}}
 
-        if not mdmFlexible:
-            mdmFlexible = 'false'
-        else:
-            mdmFlexible = 'true'
-
         schema_dict = {}
 
         base_object = self.base_object

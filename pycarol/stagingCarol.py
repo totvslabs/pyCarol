@@ -43,6 +43,8 @@ class sendDataCarol:
                     self.data = json.loads(self.data)
                 except:
                     raise IOError
+            elif isinstance(data,str):
+                self.data = json.loads(data)
             else:
                 self.data = data
 
@@ -141,7 +143,7 @@ class sendStagingTable(object):
         querystring = {"applicationId": self.applicationId}
 
         url = 'https://{}.carol.ai/api/v2/staging/tables/{}/schema'.format(self.token_object.domain,
-                                                                                            self.stagingName)
+                                                                           self.stagingName)
         res = requests.request("POST", url, json=self.schema, headers=self.headers, params=querystring)
 
 
