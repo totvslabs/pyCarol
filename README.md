@@ -12,6 +12,9 @@ This package implements some of Carol's APIs. The following endpoints are implem
     - v2 Queries (queriesCarol.py)
         1. POST - /api/v2/queries/filter
         2. POST - /api/v2/queries/named/{query_name}
+        2. DELETE - /api/v2/queries/filter 
+        2. POST - /api/v2/queries/filter/{scrollId}
+        
         
     - v2 Named Queries (namedQueryCarol.py)
         1. GET/POST - /api/v2/named_queries
@@ -39,7 +42,7 @@ This package implements some of Carol's APIs. The following endpoints are implem
         3. GET - /api/v1/verticals/name/{verticalName}
         
     - v1 Database Toolbelt Admin (toolbeltAdmin.py)
-        1. DELETE - /api/v1/databaseToolbelt/filter
+        1. ~~DELETE - /api/v1/databaseToolbelt/filter (deprecated)~~
         
  We also have a Schema Generator (schemaGenerator.py).
 
