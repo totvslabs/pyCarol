@@ -22,9 +22,8 @@ This package implements some of Carol's APIs. The following endpoints are implem
         2. DELETE - /api/v2/named_queries/name/{name}
         
     - v2 Staging (stagingCarol.py)
-        1. POST - /api/v2/staging/tables/{table}
-        2. GET - /api/v2/staging/tables/{table}
-        3. POST - /api/v2/staging/tables/{table}/schema
+        1. GET/POST - /api/v2/staging/tables/{table}
+        2. POST - /api/v2/staging/tables/{table}/schema
         
     - v1 Entity Template Types (entityTemplateTypesCarol.py)
         1. GET - /api/v1/entityTemplateTypes
