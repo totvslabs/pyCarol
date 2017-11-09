@@ -1,5 +1,7 @@
 # pyCarol
 
+<img src="https://github.com/TOTVS/carol-ds-retail/blob/master/recommender-project/image/pycarol.jpg" alt="Carol" width="32" data-canonical-src="http://svgur.com/i/ue.svg"> 
+
 This package implements some of Carol's APIs. The following endpoints are implemented: 
     
     - V2 OAuth2: (loginCarol.py)
@@ -15,7 +17,6 @@ This package implements some of Carol's APIs. The following endpoints are implem
         2. DELETE - /api/v2/queries/filter 
         2. POST - /api/v2/queries/filter/{scrollId}
         
-        
     - v2 Named Queries (namedQueryCarol.py)
         1. GET/POST - /api/v2/named_queries
         2. DELETE - /api/v2/named_queries/name/{name}
@@ -25,7 +26,7 @@ This package implements some of Carol's APIs. The following endpoints are implem
         2. GET - /api/v2/staging/tables/{table}
         3. POST - /api/v2/staging/tables/{table}/schema
         
-    - v1 v1 Entity Template Types (entityTemplateTypesCarol.py)
+    - v1 Entity Template Types (entityTemplateTypesCarol.py)
         1. GET - /api/v1/entityTemplateTypes
         
     - v1 Fields (fieldsCarol.py)
