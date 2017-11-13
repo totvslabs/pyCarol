@@ -21,6 +21,8 @@ class queryCarol:
         self.querystring = {}
         self.only_hits = True
         self.scrollable = True
+        self.get_all = True
+        self.max_hits = float('inf')
 
     def _setQuerystring(self):
         if self.sortBy is None:
@@ -65,7 +67,13 @@ class queryCarol:
             count += query['count']
 
             if set_param:
-                self.totalHits = query["totalHits"]
+                if self.get_all:
+                    self.totalHits = query["totalHits"]
+                elif self.max_hits <= query["totalHits"]:
+                    self.totalHits = self.max_hits
+                else:
+                    self.totalHits = query["totalHits"]
+
                 set_param = False
                 if self.safe_check:
                     self.mdmId_list = []
@@ -137,7 +145,14 @@ class queryCarol:
             url_filter = "https://{}.carol.ai/api/v2/queries/filter/{}".format(self.token_object.domain, scrollId)
 
             if set_param:
-                self.totalHits = query["totalHits"]
+
+                if self.get_all:
+                    self.totalHits = query["totalHits"]
+                elif self.max_hits <= query["totalHits"]:
+                    self.totalHits = self.max_hits
+                else:
+                    self.totalHits = query["totalHits"]
+
                 self.querystring  = querystring = {"indexType":self.indexType}
                 set_param = False
 
@@ -174,7 +189,7 @@ class queryCarol:
         if self.save_results:
             file.close()
 
-    def newQuery(self, json_query, use_scroll = True, offset=0, pageSize=50, sortOrder='ASC', sortBy='mdmLastUpdated', indexType='MASTER',
+    def newQuery(self, json_query, use_scroll = True, max_hits = float('inf'), offset=0, pageSize=50, sortOrder='ASC', sortBy='mdmLastUpdated', indexType='MASTER',
                  only_hits = True, print_status=True, save_results=True, filename='query_result.json', safe_check=False):
         self.offset = offset
         self.pageSize = pageSize
@@ -189,6 +204,12 @@ class queryCarol:
         self.filename = filename
         self.safe_check = safe_check
         self.json_query = json_query
+        self.max_hits = max_hits
+
+        if max_hits == float('inf'):
+            self.get_all = True
+        else:
+            self.get_all = False
 
         self._setQuerystring()
 
@@ -219,7 +240,7 @@ class queryCarol:
         self.totalHits = query["totalHits"]
         return self.totalHits
 
-    def namedQuery(self, named_query, json_query, use_scroll = True, offset=0, pageSize=50, sortOrder='ASC', indexType='MASTER',
+    def namedQuery(self, named_query, json_query, max_hits = float('inf'), use_scroll = True, offset=0, pageSize=50, sortOrder='ASC', indexType='MASTER',
                    only_hits=True, sortBy='mdmLastUpdated', safe_check= False,
                    print_status=True, save_results=True, filename='results_json.json'):
 
@@ -237,6 +258,13 @@ class queryCarol:
         self.save_results = save_results
         self.filename = filename
         self.use_scroll = use_scroll
+
+        self.max_hits = max_hits
+
+        if max_hits == float('inf'):
+            self.get_all = True
+        else:
+            self.get_all = False
 
         self._setQuerystring()
 
