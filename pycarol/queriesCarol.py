@@ -155,7 +155,6 @@ class queryCarol:
 
                 self.querystring  = querystring = {"indexType":self.indexType}
                 set_param = False
-
                 if self.safe_check:
                     self.mdmId_list = []
             if self.only_hits:
