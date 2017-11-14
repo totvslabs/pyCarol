@@ -20,6 +20,7 @@ This package implements some of Carol's APIs. The following endpoints are implem
     - v2 Named Queries (namedQueryCarol.py)
         1. GET/POST - /api/v2/named_queries
         2. DELETE - /api/v2/named_queries/name/{name}
+        3. GET - /api/v2/named_queries/name/{name}
         
     - v2 Staging (stagingCarol.py)
         1. GET/POST - /api/v2/staging/tables/{table}

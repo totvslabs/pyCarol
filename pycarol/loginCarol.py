@@ -74,24 +74,19 @@ class loginCarol:
             raise Exception(token.reason)
 
     def checkToken(self):
+        """
+        Token expires information
+        Usage::
+          >>> from pycarol.loginCarol import  loginCarol
+          >>> login = loginCarol(username= username, password=my_password, domain = my_domain, connectorId=my_connectorId)
+          >>> login.checkToken()
+          The access token '73685500c93011e789910e4789ade3a3' will expires in 3316s
+        """
         url = 'https://{}.carol.ai/api/v2/oauth2/token/{}'.format(self.domain, self.access_token)
         token = requests.get(url=url)
         if token.ok:
             #self.token2 = json.loads(token.text)
             self._expires_in = json.loads(token.text)['expires_in']
-            print('The access token {} will expires in {}s'.format(self.access_token,self._expires_in))
+            print("The access token '{}' will expires in {}s".format(self.access_token,self._expires_in))
         else:
             raise Exception(token.reason)
-
-
-'''
-    def logout(self):
-        url = 'https://{}.carol.ai/api/v2/oauth2/logout'.format(self.domain)
-        auth_request = {"access_token": self.access_token,'Content-Type': 'application/json'}
-        token = requests.post(url=url, data=auth_request)
-        if token.ok:
-            #self.token2 = json.loads(token.text)
-            pass
-        else:
-            raise Exception(token.reason)
-            '''

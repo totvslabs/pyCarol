@@ -3,7 +3,7 @@ import requests
 #from . import utils
 import re
 
-class namedQueryManagement:
+class namedQueries:
     def __init__(self, token_object):
         self.token_object = token_object
         if self.token_object.access_token is None:
@@ -33,11 +33,11 @@ class namedQueryManagement:
                 self.paramDict[key] = re.findall(r'\{\{(.*?)\}\}', json.dumps(value, ensure_ascii=False))
 
     def getAll(self, offset=0, pageSize=50, sortOrder='ASC', sortBy='mdmLastUpdated', print_status=True, save_file=True,
-               filename='data/namedQueries.json', safe_check=False):
+               filename='namedQueries.json', safe_check=False):
         '''
         Copy all named queries from a tenant
         '''
-        self._setQuerystring()
+
         self.named_query_data = []
         count = self.offset
 
@@ -47,6 +47,7 @@ class namedQueryManagement:
         # self.indexType = indexType
         self.sortBy = sortBy
         set_param = True
+        self._setQuerystring()
         self.totalHits = float("inf")
         if save_file:
             file = open(filename, 'w', encoding='utf8')
@@ -90,6 +91,46 @@ class namedQueryManagement:
         if save_file:
             file.close()
         self._getParam()
+
+
+    def getByName(self, named_query, save_file=True, filename='namedQueries.json'):
+        '''
+        Copy all named queries from a tenant
+        '''
+
+        self.named_query_data = []
+
+        if save_file:
+            file = open(filename, 'w', encoding='utf8')
+        while True:
+            url_filter = "https://{}.carol.ai/api/v2/named_queries/name/{}".format(self.token_object.domain,named_query)
+            self.lastResponse = requests.get(url=url_filter, headers=self.headers)
+            if not self.lastResponse.ok:
+                # error handler for token
+                if self.lastResponse.reason == 'Unauthorized':
+                    self.token_object.refreshToken()
+                    self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+                    continue
+                if save_file:
+                    file.close()
+                raise Exception(self.lastResponse.text)
+            break
+
+        self.lastResponse.encoding = 'utf8'
+        query = json.loads(self.lastResponse.text)
+
+        self.named_query_dict.update({query['mdmQueryName']: query})
+
+        if save_file:
+            file.write(json.dumps(query, ensure_ascii=False))
+            file.write('\n')
+            file.flush()
+            file.close()
+        self._getParam()
+
+    def getParamByName(self, named_query=None):
+        self.getByName(named_query, save_file=False)
+        return self.paramDict
 
     def creatingNamedQueries(self, namedQueries):
         '''
