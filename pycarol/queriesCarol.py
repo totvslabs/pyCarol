@@ -5,6 +5,18 @@ import re
 
 
 class queryCarol:
+    """ It implements the calls for the following end ppoints:
+       1. /api/v2/queries/filter
+       2. /api/v2/queries/filtera
+       3. /api/v2/queries/named/{query_name}
+
+    :param token_object: An object of the class loginCarol that contains the tenant information needed to generate access tokens.
+    See loginCarol docstring
+    Usage::
+
+      >>> from pycarol.queriesCarol import  queryCarol
+      >>> query = queryCarol(token_object)
+    """
     def __init__(self, token_object):
         self.token_object = token_object
         self.offset = 0
