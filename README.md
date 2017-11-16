@@ -123,7 +123,7 @@ named_query_resp.namedQuery(named_query = named_query, json_query = payload)
 named_query_resp.query_data
 
 ```
-It is possible to use all the parameters used in the filter query, i.e., `only_hits` , `only_hits`, etc.
+It is possible to use all the parameters used in the filter query, i.e., `only_hits` , `save_results`, etc.
 For more information for the possible input parameters check the docstring.
 
 What if one does not remember the parameters for a given named query?
@@ -223,4 +223,4 @@ send_data.sendData(stagingName = 'my_stag', data = json_ex, step_size = 2,
 The parameter `step_size` says how many registers will be sent each time. Remember the the max size per payload is 
 5MB. The parameter  `data` can be a pandas DataFrame (Beta).
 
-OBS: It is nop possible to create a mapping using pycarol. The Mapping has to be done via the UI
+OBS: It is not possible to create a mapping using pycarol. The Mapping has to be done via the UI
