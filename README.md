@@ -173,7 +173,7 @@ schema.sendSchema(connectorId=connectorId)  #here connectorId is that one create
 ```
 
 The json scheama will be in the variable `schema.schema`. The code above will create the following schema:
-```json
+```python
 {
   'mdmCrosswalkTemplate': {
     'mdmCrossreference': {
