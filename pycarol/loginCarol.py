@@ -22,7 +22,7 @@ class loginCarol:
         self.username = username
         self.password = password
         self.domain = domain
-        self.applicationId = connectorId
+        self.connectorId = connectorId
         self.access_token = None
         self.refresh_token = None
 
@@ -38,14 +38,14 @@ class loginCarol:
         """
 
         if connectorId is not None:
-            self.applicationId = connectorId
+            self.connectorId = connectorId
         url = 'https://{}.carol.ai/api/v2/oauth2/token'.format(self.domain)
 
         grant_type = 'password'  # use refresh_token if one wants to refresh the token
         refresh_token = ''  # pass if refresh the token is needed
 
         auth_request = {'username': self.username, 'password': self.password, "grant_type": grant_type, 'subdomain': self.domain,
-                        'connectorId': self.applicationId, 'refresh_token': refresh_token, 'Content-Type': 'application/json'}
+                        'connectorId': self.connectorId, 'refresh_token': refresh_token, 'Content-Type': 'application/json'}
         token = requests.post(url=url, data=auth_request)
         if token.ok:
             self.access_token = json.loads(token.text)['access_token']

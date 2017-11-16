@@ -73,10 +73,8 @@ print('This is refreshed access token {}'.format(token_object.access_token))
 ```python
 from pycarol import loginCarol, queriesCarol
 token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)
-                                    
+                                     domain = my_domain, connectorId=my_connectorId)                            
 token_object.newToken()
-
 
 json_query = {
           "mustList": [
@@ -113,13 +111,11 @@ The parameter `only_hits = True` will make sure that the only records into the p
 ```python
 from pycarol import loginCarol, queriesCarol
 token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)
-                                    
+                                     domain = my_domain, connectorId=my_connectorId)                           
 token_object.newToken()
 
-
-named_query = 'revenueHist'
-payload = {"bin":"1d","cnpj":"24386434000130"} 
+named_query = 'revenueHist'  # named query name
+payload = {"bin":"1d","cnpj":"24386434000130"}  #payload to send.
 named_query_resp = queriesCarol.queryCarol(token_object)
 #To get all records returned:
 named_query_resp.namedQuery(named_query = named_query, json_query = payload)
@@ -129,12 +125,102 @@ named_query_resp.query_data
 ```
 It is possible to use all the parameters used in the filter query, i.e., `only_hits` , `only_hits`, etc.
 For more information for the possible input parameters check the docstring.
+
+What if one does not remember the parameters for a given named query?
+
+
+```python
+from pycarol import loginCarol, queriesCarol
+token_object = loginCarol.loginCarol(username= username, password=my_password, 
+                                     domain = my_domain, connectorId=my_connectorId)                             
+token_object.newToken()
+
+named_query = 'revenueHist'  # named query name
+named_query_resp = queriesCarol.queryCarol(token_object)
+named_query_resp.namedQueryParams(named_query = named_query)
+> {'revenueHist': ['*cnpj', 'dateFrom', 'dateTo', '*bin']}  #Parameters starting by * are mandatory. 
+
+```
  
+ ##### Sending data.
  
+ The first step to send data to Carol is to create a connector. 
+ 
+ ```python
+from pycarol import loginCarol, applicationsCarol
+token_object = loginCarol.loginCarol(username= username, password=my_password, 
+                                     domain = my_domain, connectorId=my_connectorId)                           
+token_object.newToken()
 
+conn = applicationsCarol.connectorsCarol(token_object)
+conn.createConnector(connectorName = 'my_conector', connectorLabel = "conector_label", groupName = "GroupName")
+connectorId = conn.connectorId  # this is the just created connector Id
 
+```
+With the connector Id on hands we  can create the staging schema and then create the staging table. Assuming we have 
+a sample of the data we want to send. 
 
+  ```python
+from pycarol import stagingCarol
 
+json_ex = {"name":'Rafael',"email": {"type": "email", "email": 'rafael@totvs.com.br'}   }
+schema = stagingCarol.sendStagingTable(token_object)
+schema.createSchema(fields_dict = json_ex, mdmStagingType='my_stag', mdmFlexible='false',
+                       crosswalkname= 'my_crosswalk' ,crosswalkList=['name'])
+                       
+#sending schaema
+schema.sendSchema(connectorId=connectorId)  #here connectorId is that one created above
+```
 
+The json scheama will be in the variable `schema.schema`. The code above will create the following schema:
+```json
+{
+  'mdmCrosswalkTemplate': {
+    'mdmCrossreference': {
+      'my_crosswalk': [
+        'name'
+      ]
+    }
+  },
+  'mdmFlexible': 'false',
+  'mdmStagingMapping': {
+    'properties': {
+      'email': {
+        'properties': {
+          'email': {
+            'type': 'string'
+          },
+          'type': {
+            'type': 'string'
+          }
+        },
+        'type': 'nested'
+      },
+      'name': {
+        'type': 'string'
+      }
+    }
+  },
+  'mdmStagingType': 'my_stag'
+}
+```
+To send the data  (assuming we have a json with the data we want to send). 
 
+  ```python
+from pycarol import stagingCarol
 
+json_ex = [{"name":'Rafael',"email": {"type": "email", "email": 'rafael@totvs.com.br'}   },
+           {"name":'Leandro',"email": {"type": "email", "email": 'Leandro@totvs.com.br'}   },
+           {"name":'Mario',"email": {"type": "email", "email": 'mario@totvs.com.br'}   },
+           {"name":'Marcelo',"email": {"type": "email", "email": 'marcelo@totvs.com.br'}   }]
+           
+           
+send_data = stagingCarol.sendDataCarol(token_object)
+send_data.sendData(stagingName = 'my_stag', data = json_ex, step_size = 2, 
+                   connectorId=connectorId, print_stats = True)
+                       
+```
+The parameter `step_size` says how many registers will be sent each time. Remember the the max size per payload is 
+5MB. The parameter  `data` can be a pandas DataFrame (Beta).
+
+OBS: It is nop possible to create a mapping using pycarol. The Mapping has to be done via the UI

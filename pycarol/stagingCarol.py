@@ -27,10 +27,10 @@ class sendDataCarol:
                 i += self.step_size
         yield []
 
-    def sendData(self, stagingName,data = None, step_size = 100, applicationId=None,print_stats = False):
-        if applicationId is not None:
-            if not applicationId==self.token_object.applicationId:
-                self.token_object.newToken(applicationId)
+    def sendData(self, stagingName, data = None, step_size = 100, connectorId=None, print_stats = False):
+        if connectorId is not None:
+            if not connectorId==self.token_object.connectorId:
+                self.token_object.newToken(connectorId)
 
         self.step_size = step_size
         self.print_stats = print_stats
@@ -51,7 +51,7 @@ class sendDataCarol:
 
         self.stagingName = stagingName
         self.url_filter = "https://{}.carol.ai/api/v2/staging/tables/{}?returnData=false&applicationId={}" \
-            .format(self.token_object.domain, self.stagingName, self.token_object.applicationId)
+            .format(self.token_object.domain, self.stagingName, self.token_object.connectorId)
 
 
         gen = self._streamData(self.data)
@@ -107,7 +107,7 @@ class sendStagingTable(object):
         self.headers = {'Authorization': self.token_object.access_token,
                         'Content-Type': 'application/json'}
 
-        self.applicationId =  self.token_object.applicationId
+        self.connectorId =  self.token_object.connectorId
         self.schema = None
 
     def createSchema(self,fields_dict=None,mdmStagingType='stagingName', mdmFlexible='false',
@@ -118,7 +118,7 @@ class sendStagingTable(object):
         if isinstance(fields_dict,dict):
             self.schema = carolSchemaGenerator(fields_dict)
             self.schema =  self.schema.to_dict(mdmStagingType=mdmStagingType, mdmFlexible=mdmFlexible,
-                     crosswalkname=crosswalkname,crosswalkList=crosswalkList)
+                                               crosswalkname=crosswalkname,crosswalkList=crosswalkList)
         elif isinstance(fields_dict,str):
 
             self.schema = carolSchemaGenerator.from_json(fields_dict)
@@ -127,9 +127,9 @@ class sendStagingTable(object):
 
 
 
-    def sendSchema(self,fields_dict=None,applicationId=None):
-        if applicationId is not None:
-            self.applicationId = applicationId
+    def sendSchema(self, fields_dict=None, connectorId=None):
+        if connectorId is not None:
+            self.connectorId = connectorId
         if fields_dict is None:
             assert self.schema is not None
         elif isinstance(fields_dict,str):
@@ -140,7 +140,7 @@ class sendStagingTable(object):
             raise Exception('Not valid format')
 
         self.stagingName = self.schema['mdmStagingType']
-        querystring = {"applicationId": self.applicationId}
+        querystring = {"applicationId": self.connectorId}
 
         url = 'https://{}.carol.ai/api/v2/staging/tables/{}/schema'.format(self.token_object.domain,
                                                                            self.stagingName)
@@ -168,18 +168,18 @@ class getStaginCarol:
         self.query_data = []
         self.table = None
         self.querystring = {}
-        self.applicationId = self.token_object.applicationId
+        self.connectorId = self.token_object.connectorId
         self._setQuerystring()
 
     def _setQuerystring(self):
         if self.sortBy is None:
             self.querystring = {"offset": self.offset, "pageSize": str(self.pageSize), "sortOrder": self.sortOrder,
-                                "applicationId": self.applicationId}
+                                "applicationId": self.connectorId}
         else:
             self.querystring = {"offset": self.offset, "pageSize": str(self.pageSize), "sortOrder": self.sortOrder,
-                                "sortBy": self.sortBy, "applicationId": self.applicationId}
+                                "sortBy": self.sortBy, "applicationId": self.connectorId}
 
-    def getStaging(self, table, applicationId=None, offset=0, pageSize=50, sortOrder='ASC', sortBy='mdmLastUpdated',
+    def getStaging(self, table, connectorId=None, offset=0, pageSize=50, sortOrder='ASC', sortBy='mdmLastUpdated',
                    print_status=True, save_results=True, filename='staging_result.json', safe_check=False):
         self.offset = offset
         self.pageSize = pageSize
@@ -187,8 +187,8 @@ class getStaginCarol:
         self.table = table
         self.sortBy = sortBy
         self.query_data = []
-        if applicationId is not None:
-            self.applicationId = applicationId
+        if connectorId is not None:
+            self.connectorId = connectorId
 
         self._setQuerystring()
 
@@ -235,11 +235,11 @@ class getStaginCarol:
         if save_results:
             file.close()
 
-    def checkTotalHits(self, table, applicationId=None):
+    def checkTotalHits(self, table, connectorId=None):
         self.table = table
         self.pageSize = 0
-        if applicationId is not None:
-            self.applicationId = applicationId
+        if connectorId is not None:
+            self.connectorId = connectorId
 
         self._setQuerystring()
         errors = True

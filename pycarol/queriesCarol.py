@@ -1,5 +1,6 @@
 import json
 import requests
+from . import namedQueryCarol as nq
 #from . import utils
 import re
 
@@ -307,6 +308,11 @@ class queryCarol:
             self._queryHandler_scroll(type_query='named_query')
         else:
             self._oldQueryHandler(type_query='named_query')
+
+    def namedQueryParams(self,named_query):
+        named = nq.namedQueries(self.token_object)
+        named.getParamByName(named_query=named_query)
+        return named.paramDict
 
 
 
