@@ -5,7 +5,7 @@ import re
 
 
 class queryCarol:
-    """ It implements the calls for the following end ppoints:
+    """ It implements the calls for the following endpoints:
        1. /api/v2/queries/filter
        2. /api/v2/queries/filtera
        3. /api/v2/queries/named/{query_name}
@@ -13,7 +13,6 @@ class queryCarol:
     :param token_object: An object of the class loginCarol that contains the tenant information needed to generate access tokens.
     See loginCarol docstring
     Usage::
-
       >>> from pycarol.queriesCarol import  queryCarol
       >>> query = queryCarol(token_object)
     """
@@ -200,8 +199,28 @@ class queryCarol:
         if self.save_results:
             file.close()
 
-    def newQuery(self, json_query, use_scroll = True, max_hits = float('inf'), offset=0, pageSize=50, sortOrder='ASC', sortBy='mdmLastUpdated', indexType='MASTER',
-                 only_hits = True, print_status=True, save_results=True, filename='query_result.json', safe_check=False):
+    def newQuery(self, json_query, max_hits = float('inf'), offset=0, pageSize=50, sortOrder='ASC', use_scroll = True,
+                 sortBy='mdmLastUpdated', indexType='MASTER',only_hits = True, print_status=True,
+                 save_results=True, filename='query_result.json', safe_check=False):
+
+        """
+
+        :param json_query: Json object with the query to use
+        :param use_scroll: Use scroll endpoint
+        :param max_hits: number of records to return
+        :param offset: page offset
+        :param pageSize: Number of register to return per call
+        :param sortOrder: Sort order
+        :param sortBy: Filter to sort response
+        :param indexType: Type of index, MASTER, REJECTED, etc
+        :param only_hits:  Return only values inside the path $.hits.
+        :param print_status: Print how many records were downloaded.
+        :param save_results: Save or not the result
+        :param filename: File pacth and name to save the response
+        :param safe_check: Check for repeated records
+        :return: The response will be in the variable "query_data"
+        """
+
         self.offset = offset
         self.pageSize = pageSize
         self.sortOrder = sortOrder
@@ -232,6 +251,11 @@ class queryCarol:
 
 
     def checkTotalHits(self, json_query):
+        """
+        Check the total hits for a given query
+        :param json_query: Json object with the query to use
+        :return: number of records for this query
+        """
         errors = True
         while errors:
             url_filter = "https://{}.carol.ai/api/v2/queries/filter?offset={}&pageSize={}&sortOrder={}&indexType={}".format(
@@ -253,7 +277,7 @@ class queryCarol:
 
     def namedQuery(self, named_query, json_query, max_hits = float('inf'), use_scroll = True, offset=0, pageSize=50, sortOrder='ASC', indexType='MASTER',
                    only_hits=True, sortBy='mdmLastUpdated', safe_check= False,
-                   print_status=True, save_results=True, filename='results_json.json'):
+                   print_status=True, save_results=False, filename='results_json.json'):
 
         self.offset = offset
         self.pageSize = pageSize
