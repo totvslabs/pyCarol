@@ -1,7 +1,7 @@
 import requests
 import json
 
-class fields(object):
+class fieldsCarol(object):
     def __init__(self, token_object):
         self.token_object = token_object
         if self.token_object.access_token is None:

@@ -4,6 +4,7 @@ from .entityTemplateTypesCarol import *
 from .verticalsCarol import *
 from .fieldsCarol import *
 
+
 class createTemplate(object):
     def __init__(self, token_object):
         self.token_object = token_object
@@ -65,10 +66,8 @@ class createTemplate(object):
         else:
             self.mdmLabel = mdmLabel
 
-        if mdmTransactionDataModel:
-            self.mdmTransactionDataModel = 'true'
-        else:
-            self.mdmTransactionDataModel = 'false'
+
+        self.mdmTransactionDataModel = mdmTransactionDataModel
 
         assert ((mdmVerticalNames) or (mdmVerticalIds))
         assert ((mdmEntityTemplateTypeIds) or (mdmEntityTemplateTypeNames))
@@ -105,6 +104,20 @@ class createTemplate(object):
 
 
 
+    def addFields(self,json_sample):
+
+        fields = fieldsCarol(self.token_object)
+        fields.possibleTypes()
+        self.possible_types = fields._possibleTypes
+        fields.getAll()
+        self.all_possible_fields = fields.fields_dict
+
+        #for prop, value in json_sample.items():
+        #    pass
+
+
+
+"""
 ##############
 ############################
 ############################
@@ -225,3 +238,4 @@ headers = {
 
 response = requests.request("POST", url, data=payload, headers=headers)
 
+"""
