@@ -53,7 +53,7 @@ class loginCarol:
             self.tenantId = json.loads(token.text)['client_id'].split('_')[0]
             return token
         else:
-            raise Exception(token.reason)
+            raise Exception(token.text)
 
     def refreshToken(self):
         """
@@ -71,7 +71,7 @@ class loginCarol:
             self.access_token = json.loads(token.text)['access_token']
             self.refresh_token = json.loads(token.text)['refresh_token']
         else:
-            raise Exception(token.reason)
+            raise Exception(token.text)
 
     def checkToken(self):
         """

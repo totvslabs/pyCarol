@@ -12,7 +12,11 @@ class fieldsCarol(object):
         self.pageSize = 100
         self.sortOrder = 'ASC'
         self.sortBy = None
-        self.possibleTypes
+
+        self.fields_dict = {}
+        self.fields_data = []
+
+        self.getAll(admin = True, print_status=False, save_file=False)
 
     def possibleTypes(self,admin=True):
 
@@ -96,7 +100,6 @@ class fieldsCarol(object):
                 file.flush()
         if save_file:
             file.close()
-        return self.fields_dict
 
 
 
@@ -104,14 +107,13 @@ class fieldsCarol(object):
 
         assert fields_ids is not None
 
+        self.fields_data = []
+
         if isinstance(fields_ids,str):
             vertical_ids = [fields_ids]
 
         if save_file:
             file = open(filename, 'w', encoding='utf8')
-
-        self.fields_dict = {}
-        self.fields_data = []
 
         for fields_id in fields_ids:
             if admin:
@@ -143,6 +145,32 @@ class fieldsCarol(object):
                 file.flush()
         if save_file:
             file.close()
-        return self.fields_dict
+
+
+    def create(self,mdmName,mdmMappingDataType,mdmFieldType,mdmLabel,mdmDescription):
+        '''
+        :param mdmName:
+        :param mdmMappingDataType: string,  double, long, stc
+        :param mdmFieldType: PRIMITIVE or NESTED
+        :param mdmLabel:
+        :param mdmDescription:
+        :return:
+        '''
+
+        url = "https://{}.carol.ai/api/v1/fields".format(self.token_object.domain)
+        payload = {"mdmName": mdmName, "mdmMappingDataType": mdmMappingDataType, "mdmFieldType": mdmFieldType,
+                   "mdmLabel": {"en-US": mdmLabel}, "mdmDescription": {"en-US": mdmDescription}}
+        while True:
+            self.lastResponse = requests.request("POST", url, json=payload, headers=self.headers)
+            if not self.lastResponse.ok:
+                # error handler for token
+                if self.lastResponse.reason == 'Unauthorized':
+                    self.token_object.refreshToken()
+                    self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+                    continue
+                raise Exception(self.lastResponse.text)
+            break
+        query = self.lastResponse.json()
+        self.fields_dict.update({mdmName: query})
 
 

@@ -109,7 +109,7 @@ class createTemplate(object):
         fields = fieldsCarol(self.token_object)
         fields.possibleTypes()
         self.possible_types = fields._possibleTypes
-        fields.getAll()
+        #fields.getAll()
         self.all_possible_fields = fields.fields_dict
 
         #for prop, value in json_sample.items():
