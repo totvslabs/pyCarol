@@ -160,6 +160,8 @@ class fieldsCarol(object):
         url = "https://{}.carol.ai/api/v1/fields".format(self.token_object.domain)
         payload = {"mdmName": mdmName, "mdmMappingDataType": mdmMappingDataType, "mdmFieldType": mdmFieldType,
                    "mdmLabel": {"en-US": mdmLabel}, "mdmDescription": {"en-US": mdmDescription}}
+        assert not mdmName in self.fields_dict.keys()
+
         while True:
             self.lastResponse = requests.request("POST", url, json=payload, headers=self.headers)
             if not self.lastResponse.ok:
@@ -172,5 +174,7 @@ class fieldsCarol(object):
             break
         query = self.lastResponse.json()
         self.fields_dict.update({mdmName: query})
+
+
 
 
