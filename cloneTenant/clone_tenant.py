@@ -1,4 +1,4 @@
-from functions import *
+from cloneTenant.functions import *
 
 
 ## Please create a folder called data in the directory. It will be used to save some jsons.
@@ -29,5 +29,8 @@ result, all_mappings, new_connector,schema_list,response_stag = cloneConnectors(
 #Creating NamedQueries
 namedQueries = get_GetNamedQueries(accessToken_from,subdomain_from)
 creatingNamedQueries(accessToken_to,subdomain_to,namedQueries)
+
+
+
 
 

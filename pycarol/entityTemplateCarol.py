@@ -59,6 +59,32 @@ class JsonEntTypeNotFound(Exception):
     pass
 
 
+class deleteTemplate(object):
+    def __init__(self, token_object):
+        self.token_object = token_object
+        if self.token_object.access_token is None:
+            self.token_object.newToken()
+
+        self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+
+    def delete(self,entityTemplateId,entitySpace):
+
+        while True:
+            url = "https://{}.carol.ai/api/v1/entities/templates/{}".format(self.token_object.domain, entityTemplateId)
+            querystring = {"entitySpace": entitySpace}
+            self.lastResponse =  requests.request("DELETE", url, headers=self.headers, params=querystring)
+            if not self.lastResponse.ok:
+                # error handler for token
+                if self.lastResponse.reason == 'Unauthorized':
+                    self.token_object.refreshToken()
+                    self.headers = {'Authorization': self.token_object.access_token,
+                                    'Content-Type': 'application/json'}
+                    continue
+                raise Exception(self.lastResponse.text)
+            break
+
+
+
 class entityTemplate(object):
     def __init__(self, token_object):
         self.token_object = token_object
@@ -66,6 +92,13 @@ class entityTemplate(object):
             self.token_object.newToken()
 
         self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+
+    def _setQuerystring(self):
+        if self.sortBy is None:
+            self.querystring = {"offset": self.offset, "pageSize": str(self.pageSize), "sortOrder": self.sortOrder}
+        else:
+            self.querystring = {"offset": self.offset, "pageSize": str(self.pageSize), "sortOrder": self.sortOrder,
+                                "sortBy": self.sortBy}
 
     def _get(self,id, by = 'id'):
         not_found = False
@@ -89,7 +122,7 @@ class entityTemplate(object):
                     print('Template not found')
                     self.entityTemplate_ = {}
                     break
-                raise Exception(self.lastResponse.reason)
+                raise Exception(self.lastResponse.text)
             break
         if not_found:
             self.entityTemplate_ = {}
@@ -98,11 +131,93 @@ class entityTemplate(object):
             resp = json.loads(self.lastResponse.text)
             self.entityTemplate_ = {resp['mdmName'] : resp}
 
+
+    def getAll(self, offset=0, pageSize=-1, sortOrder='ASC', sortBy='mdmLastUpdated', print_status=False,
+               save_file=False, filename='EntityTemplate.json'):
+
+        self.offset = offset
+        self.pageSize = pageSize
+        self.sortOrder = sortOrder
+        self.sortBy = sortBy
+        self._setQuerystring()
+
+        self.template_dict = {}
+        self.template_data = []
+        count = self.offset
+
+        set_param = True
+        self.totalHits = float("inf")
+        if save_file:
+            file = open(filename, 'w', encoding='utf8')
+        while count < self.totalHits:
+            url_filter = "https://{}.carol.ai/api/v1/entities/templates".format(self.token_object.domain)
+            self.lastResponse = requests.get(url=url_filter, headers=self.headers, params=self.querystring)
+            if not self.lastResponse.ok:
+                # error handler for token
+                if self.lastResponse.reason == 'Unauthorized':
+                    self.token_object.refreshToken()
+                    self.headers = {'Authorization': self.token_object.access_token,
+                                    'Content-Type': 'application/json'}
+                    continue
+                if save_file:
+                    file.close()
+                raise Exception(self.lastResponse.text)
+
+            self.lastResponse.encoding = 'utf8'
+            query = json.loads(self.lastResponse.text)
+            count += query['count']
+            if set_param:
+                self.totalHits = query["totalHits"]
+                set_param = False
+
+            query = query['hits']
+            self.template_data.extend(query)
+            self.template_dict.update({i['mdmName']: {'mdmId': i['mdmId'],'mdmEntitySpace': i['mdmEntitySpace'] } for i in query})
+            self.querystring['offset'] = count
+            if print_status:
+                print('{}/{}'.format(count, self.totalHits), end='\r')
+            if save_file:
+                file.write(json.dumps(query, ensure_ascii=False))
+                file.write('\n')
+                file.flush()
+        if save_file:
+            file.close()
+
     def getByName(self,entityTemplateName):
         self._get(entityTemplateName, by = 'name')
 
     def getById(self,entityTemplateId):
         self._get(entityTemplateId, by='id')
+
+    def getSnapshot(self,entityTemplateId,entitySpace):
+        not_found = False
+        while True:
+            url_snapshot = 'https://{}.carol.ai/api/v1/entities/templates/{}/snapshot?entitySpace={}'.format(
+                self.token_object.domain,
+                entityTemplateId,
+                entitySpace)
+
+            self.lastResponse = requests.get(url=url_snapshot, headers=self.headers)
+            if not self.lastResponse.ok:
+                # error handler for token
+                if self.lastResponse.reason == 'Unauthorized':
+                    self.token_object.refreshToken()
+                    self.headers = {'Authorization': self.token_object.access_token,
+                                    'Content-Type': 'application/json'}
+                    continue
+                elif self.lastResponse.reason == 'Not Found':
+                    not_found = True
+                    print('Template not found')
+                    self.snapshot_ = {}
+                    break
+                raise Exception(self.lastResponse.text)
+            break
+        if not_found:
+            self.snapshot_ = {}
+        else:
+            self.lastResponse.encoding = 'utf8'
+            resp = json.loads(self.lastResponse.text)
+            self.snapshot_ = {resp['entityTemplateName']: resp}
 
 
 class createTemplate(object):
@@ -118,6 +233,57 @@ class createTemplate(object):
         self.fields.possibleTypes()
         self.all_possible_types = self.fields._possibleTypes
         self.all_possible_fields = self.fields.fields_dict
+
+    def fromSnapshot(self,snap_shot, publish = False, overwrite = False):
+
+        while True:
+            url = 'https://{}.carol.ai/api/v1/entities/templates/snapshot'.format(self.token_object.domain)
+            self.lastResponse = requests.post(url=url, headers=self.headers, json=snap_shot)
+            if not self.lastResponse.ok:
+                # error handler for token
+                if self.lastResponse.reason == 'Unauthorized':
+                    self.token_object.refreshToken()
+                    self.headers = {'Authorization': self.token_object.access_token,
+                                    'Content-Type': 'application/json'}
+                    continue
+                elif ('Record already exists' in self.lastResponse.json()['errorMessage']) and (overwrite):
+                    del_DM = deleteTemplate(self.token_object)
+                    find_temp = entityTemplate(self.token_object)
+                    find_temp.getByName(snap_shot['entityTemplateName'])
+                    entityTemplateId = find_temp.entityTemplate_.get(snap_shot['entityTemplateName'])['mdmId']
+                    entitySpace = find_temp.entityTemplate_.get(snap_shot['entityTemplateName'])['mdmEntitySpace']
+                    del_DM.delete(entityTemplateId,entitySpace)
+                    continue
+
+                raise Exception(self.lastResponse.text)
+            break
+        print('Data Model {} created'.format(snap_shot['entityTemplateName']))
+        self.lastResponse.encoding = 'utf8'
+        response = json.loads(self.lastResponse.text)
+        self.template_dict.update({response['mdmName']: response})
+        if publish:
+            self.publishTemplate(response['mdmId'])
+
+
+
+    def publishTemplate(self,entityTemplateId):
+
+        while True:
+            url = 'https://{}.carol.ai/api/v1/entities/templates/{}/publish'.format(self.token_object.domain,
+                                                                                    entityTemplateId)
+            self.lastResponse =  requests.post(url=url, headers=self.headers)
+            if not self.lastResponse.ok:
+                # error handler for token
+                if self.lastResponse.reason == 'Unauthorized':
+                    self.token_object.refreshToken()
+                    self.headers = {'Authorization': self.token_object.access_token,
+                                    'Content-Type': 'application/json'}
+                    continue
+                raise Exception(self.lastResponse.text)
+            break
+
+
+
 
     def _checkVerticals(self):
         self.verticalsNameIdsDict = verticals(self.token_object).getAll()
@@ -200,7 +366,7 @@ class createTemplate(object):
 
         while True:
             url_filter = "https://{}.carol.ai/api/v1/entities/templates".format(self.token_object.domain)
-            self.lastResponse = requests.get(url=url_filter, headers=self.headers, json = payload)
+            self.lastResponse = requests.post(url=url_filter, headers=self.headers, json = payload)
             if not self.lastResponse.ok:
                 # error handler for token
                 if self.lastResponse.reason == 'Unauthorized':
@@ -212,7 +378,7 @@ class createTemplate(object):
             break
 
         self.lastResponse.encoding = 'utf8'
-        response = [json.loads(self.lastResponse.text)]
+        response = json.loads(self.lastResponse.text)
         self.template_dict.update({response['mdmName']: response})
 
 
@@ -321,6 +487,7 @@ class createTemplate(object):
                 #to_create = create_field(prop, value)
                 #print(to_create)
 
+    #not done
     def _nested(self,mdmName, value, parentId=''):
         payload = {"mdmName": mdmName, "mdmMappingDataType": entity_type.ent_type,
                    "mdmLabel": {"en-US": mdmName}, "mdmDescription": {"en-US": mdmName}}

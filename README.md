@@ -28,8 +28,14 @@ This package implements some of Carol's APIs. The following endpoints are implem
         
     - v1 Entity Template Types (entityTemplateTypesCarol.py)
         1. GET/POST - /api/v1/entityTemplateTypes
-        2. GET - /api/v1/entities/templates/name/{entityTemplateName}
-        3. GET - /api/v1/entities/templates/global/{entityTemplateId}
+        
+    - v1 Entity Template (entityTemplateCarol.py)
+        1. GET/POST - /api/api/v1/entities/templates/snapshot
+        2. POST - /api/v1/entities/templates/{entityTemplateId}/publish
+        3. GET/POST - /api/v1/entities/templates
+        4. GET - /api/v1/entities/templates/name/{entityTemplateName}
+        5. GET - /api/v1/entities/templates/global/{entityTemplateId}
+        6. DELTE - /api/v1/entities/templates/{entityTemplateId}
         
     - v1 Fields (fieldsCarol.py)
         1. GET/POST - /api/v1/admin/fields
