@@ -15,7 +15,7 @@ class cloneTenant(object):
         self.headers_to = {'Authorization': self.token_to.access_token, 'Content-Type': 'application/json'}
         self.all_dms = False
 
-    def fromDM(self,dm_list = None, overwrite = False):
+    def copyDMs(self,dm_list = None, overwrite = False):
 
         assert dm_list is not None
         DMsTenant = ett.entityTemplate(self.token_from)
@@ -40,7 +40,7 @@ class cloneTenant(object):
             dm_tocreate.fromSnapshot(current_snap[dm_name],publish=True,overwrite = overwrite)
             dm_tocreate.template_dict[dm_name]['mdmId']
 
-    def allDM(self,overwrite = False):
+    def copyAllDMs(self,overwrite = False):
         self.all_dms = True
         DMsTenant = ett.entityTemplate(self.token_from)
         DMsTenant.getAll()
@@ -76,9 +76,9 @@ print(token_object.access_token)
 
 ct = cloneTenant(token_object,token_to)
 
-ct.allDM()
+ct.copyAllDMs()
 
-ct.fromDM(['productforecast','customer'],overwrite= True)
+ct.copyDMs(['productforecast','customer'],overwrite= True)
 
 
 
