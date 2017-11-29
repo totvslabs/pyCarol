@@ -24,10 +24,16 @@ This package implements some of Carol's APIs. The following endpoints are implem
         
     - v2 Staging (stagingCarol.py)
         1. GET/POST - /api/v2/staging/tables/{table}
-        2. POST - /api/v2/staging/tables/{table}/schema
+        2. GET-POST - /api/v2/staging/tables/{table}/schema
         
     - v1 Entity Template Types (entityTemplateTypesCarol.py)
         1. GET/POST - /api/v1/entityTemplateTypes
+        
+    - v1 Entity Mappings (entityMappingsCarol.py)
+        1. GET/POST - /api/v1/applications/{applicationId}/entityMappings
+        2. GET/POST/DELETE - /api/v1/applications/{applicationId}/entityMappings/{entityMappingId}
+        3. PUT - /api/v1/applications/{applicationId}/entityMappings/{entityMappingId}/snapshot
+        4. POST - /api/v1/applications/{applicationId}/entityMappings/snapshot
         
     - v1 Entity Template (entityTemplateCarol.py)
         1. GET/POST - /api/api/v1/entities/templates/snapshot
@@ -51,7 +57,7 @@ This package implements some of Carol's APIs. The following endpoints are implem
         3. GET - /api/v1/verticals/name/{verticalName}
 
     - v1 Applications (applicationsCarol.py)
-        1. POST - /api/v1/applications
+        1. GET/POST - /api/v1/applications
         2. DELETE - /api/v1/applications/{applicationId}
         3. GET - /api/v1/applications/name/{applicationName}
 
@@ -172,7 +178,7 @@ a sample of the data we want to send.
 from pycarol import stagingCarol
 
 json_ex = {"name":'Rafael',"email": {"type": "email", "email": 'rafael@totvs.com.br'}   }
-schema = stagingCarol.sendStagingTable(token_object)
+schema = stagingCarol.stagingSchema(token_object)
 schema.createSchema(fields_dict = json_ex, mdmStagingType='my_stag', mdmFlexible='false',
                        crosswalkname= 'my_crosswalk' ,crosswalkList=['name'])
                        
@@ -180,7 +186,7 @@ schema.createSchema(fields_dict = json_ex, mdmStagingType='my_stag', mdmFlexible
 schema.sendSchema(connectorId=connectorId)  #here connectorId is that one created above
 ```
 
-The json scheama will be in the variable `schema.schema`. The code above will create the following schema:
+The json schema will be in the variable `schema.schema`. The code above will create the following schema:
 ```python
 {
   'mdmCrosswalkTemplate': {

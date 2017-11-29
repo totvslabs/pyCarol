@@ -14,7 +14,27 @@ class connectorsCarol:
 
         self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
 
-    def createConnector(self,connectorName, connectorLabel = None, groupName = "Others"):
+        self.offset = 0
+        self.pageSize = 50
+        self.sortOrder = 'ASC'
+        self.sortBy = None
+        self.includeConnectors = False
+        self.includeMappings = False
+        self.includeConsumption = False
+
+        self._setQuerystring()
+
+    def _setQuerystring(self):
+        if self.sortBy is None:
+            self.querystring = {"offset": self.offset, "pageSize": str(self.pageSize), "sortOrder": self.sortOrder, "includeMappings": self.includeMappings,
+                                "includeConsumption": self.includeMappings, "includeConnectors": self.includeConnectors}
+        else:
+            self.querystring = {"offset": self.offset, "pageSize": str(self.pageSize), "sortOrder": self.sortOrder,
+                                "sortBy": self.sortBy, "includeMappings": self.includeMappings,
+                                "includeConsumption": self.includeMappings, "includeConnectors": self.includeConnectors}
+
+
+    def createConnector(self,connectorName, connectorLabel = None, groupName = "Others", overwrite=False):
         self.connectorName = connectorName
         if connectorLabel is None:
             self.connectorLabel = self.connectorName
@@ -35,6 +55,11 @@ class connectorsCarol:
                 if self.response.reason == 'Unauthorized':
                     self.token_object.refreshToken()
                     self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+                    continue
+
+                elif ('Record already exists' in self.response.json()['errorMessage']) and (overwrite):
+                    self.getConnectorsByName(connectorName)
+                    self.deleteConnector(self.connectorId)
                     continue
                 raise Exception(self.response.text)
             break
@@ -80,3 +105,53 @@ class connectorsCarol:
         self.connectorName = self.response['mdmName']
         print('Connector Id = {}'.format(self.connectorId))
 
+
+    def getAll(self, offset=0, pageSize=-1, sortOrder='ASC', sortBy=None, includeConnectors = False, includeMappings = False,
+               includeConsumption = False, print_status=True, save_results=False, filename='conectors.json'):
+        self.offset = offset
+        self.pageSize = pageSize
+        self.sortOrder = sortOrder
+        self.sortBy = sortBy
+        self.includeConnectors = includeConnectors
+        self.includeMappings = includeMappings
+        self.includeConsumption = includeConsumption
+
+        self.connectors = []
+        self._setQuerystring()
+
+        set_param = True
+        count = self.offset
+        self.totalHits = float("inf")
+        if save_results:
+            file = open(filename, 'w', encoding='utf8')
+        while count < self.totalHits:
+            url_filter = "https://{}.carol.ai/api/v1/applications".format(self.token_object.domain)
+            self.lastResponse = requests.request("GET", url_filter, headers=self.headers, params=self.querystring)
+            if not self.lastResponse.ok:
+                # error handler for token
+                if self.lastResponse.reason == 'Unauthorized':
+                    self.token_object.refreshToken()
+                    self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+                    continue
+                if save_results:
+                    file.close()
+                raise Exception(self.lastResponse.text)
+
+            self.lastResponse.encoding = 'utf8'
+            conn = json.loads(self.lastResponse.text)
+            count += conn['count']
+            if set_param:
+                self.totalHits = conn["totalHits"]
+                set_param = False
+            conn = conn['hits']
+
+            self.connectors.extend(conn)
+            self.querystring['offset'] = count
+            if print_status:
+                print('{}/{}'.format(count, self.totalHits), end ='\r')
+            if save_results:
+                file.write(json.dumps(conn, ensure_ascii=False))
+                file.write('\n')
+                file.flush()
+        if save_results:
+            file.close()

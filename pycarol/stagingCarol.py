@@ -97,7 +97,7 @@ class sendDataCarol:
 
 
 
-class sendStagingTable(object):
+class stagingSchema(object):
     def __init__(self, token):
 
         self.token_object = token
@@ -126,8 +126,7 @@ class sendStagingTable(object):
                                               crosswalkname=crosswalkname, crosswalkList=crosswalkList)
 
 
-
-    def sendSchema(self, fields_dict=None, connectorId=None):
+    def sendSchema(self, fields_dict=None, connectorId=None, request_type = 'POST',overwrite = False):
         if connectorId is not None:
             self.connectorId = connectorId
         if fields_dict is None:
@@ -144,17 +143,62 @@ class sendStagingTable(object):
 
         url = 'https://{}.carol.ai/api/v2/staging/tables/{}/schema'.format(self.token_object.domain,
                                                                            self.stagingName)
-        res = requests.request("POST", url, json=self.schema, headers=self.headers, params=querystring)
+        while True:
+            self.response = requests.request(request_type, url, json=self.schema, headers=self.headers, params=querystring)
+            if not self.response.ok:
+                # error handler for token
+                if self.response.reason == 'Unauthorized':
+                    self.token_object.refreshToken()
+                    self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+                    continue
+
+                elif ('Record already exists' in self.response.json()['errorMessage']) and (overwrite):
+                    request_type = 'PUT'
+                    continue
+                raise Exception(self.response.text)
+            break
+        print('Schema sent succesfully!')
+        self.response = self.response.json()
 
 
-        if not res.ok:
-            raise Exception(res.text)
-        else:
-            print('Schema sent succesfully!')
 
 
 
-class getStaginCarol:
+    def getSchema(self,stagingName,connectorId):
+
+        self.schema = {}
+
+        querystring = {"applicationId": connectorId}
+        while True:
+            url = "https://{}.carol.ai/api/v2/staging/tables/{}/schema".format(self.token_object.domain,stagingName)
+            self.response = requests.request("GET", url, headers=self.headers, params=querystring)
+            if not self.response.ok:
+                # error handler for token
+                if self.response.reason == 'Unauthorized':
+                    self.token_object.refreshToken()
+                    self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+                    continue
+                raise Exception(self.response.text)
+            break
+
+        self.schema = self.response.json()
+
+
+
+
+
+        headers = {
+            'accept': "application/json",
+            'authorization': "0776a350d4ee11e7b5090242ac110003",
+            'cache-control': "no-cache",
+            'postman-token': "b9f9d5e3-b11e-3a53-2d27-7488dcb6d601"
+        }
+
+        response = requests.request("GET", url, headers=headers, params=querystring)
+
+
+
+class getStagingDataCarol:
     def __init__(self, token_object):
         self.token_object = token_object
         if self.token_object.access_token is None:
@@ -179,7 +223,7 @@ class getStaginCarol:
             self.querystring = {"offset": self.offset, "pageSize": str(self.pageSize), "sortOrder": self.sortOrder,
                                 "sortBy": self.sortBy, "applicationId": self.connectorId}
 
-    def getStaging(self, table, connectorId=None, offset=0, pageSize=50, sortOrder='ASC', sortBy='mdmLastUpdated',
+    def getData(self, table, connectorId=None, offset=0, pageSize=50, sortOrder='ASC', sortBy='mdmLastUpdated',
                    print_status=True, save_results=True, filename='staging_result.json', safe_check=False):
         self.offset = offset
         self.pageSize = pageSize
