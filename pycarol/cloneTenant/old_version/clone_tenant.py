@@ -1,6 +1,3 @@
-from cloneTenant.functions import *
-
-
 ## Please create a folder called data in the directory. It will be used to save some jsons.
 
 

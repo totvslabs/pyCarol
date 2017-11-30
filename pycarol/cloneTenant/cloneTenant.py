@@ -1,8 +1,8 @@
 #from cloneTenant.functions import *
-from pycarol import entityTemplateCarol as ett
-from pycarol import applicationsCarol as appl
-from pycarol import stagingCarol as stg
-from pycarol import entityMappingsCarol as etm
+from .. import entityTemplateCarol as ett
+from .. import applicationsCarol as appl
+from .. import stagingCarol as stg
+from .. import entityMappingsCarol as etm
 from collections import defaultdict
 
 
@@ -89,12 +89,8 @@ class cloneTenant(object):
             conn_id.update({connectorName : conn_to.connectorId})
             self.token_to.newToken(connectorId=conn_to.connectorId)
 
-            #self.token_to.newToken(connectorId='188a65d0d52c11e7b5090242ac110003')#deletar e descomnetar acima
-            #conn_id.update({connectorName: '188a65d0d52c11e7b5090242ac110003'}) #deletar e descomnetar acima
-
 
             for schema_name in conn_stats.get(current_connector):
-            #for schema_name, mapping_fields in connector.get('mdmEntityMappings', None).items():
                 stag.getSchema(schema_name,connector.get('mdmId'))
 
                 aux_schema = stag.schema
@@ -131,36 +127,6 @@ class cloneTenant(object):
 
     def copyConnectors(self, staging_list,  copy_mapping=True, overwrite=False):
         pass
-
-
-
-
-
-
-import json
-from pycarol import loginCarol, applicationsCarol
-
-with open('../../carol-ds-retail/config.json') as json_data:
-    d = json.loads(json_data.read())
-token_object = loginCarol.loginCarol(**d['todimot'])
-token_object.newToken()
-
-token_to = loginCarol.loginCarol(**d['mario'])
-token_to.newToken()
-print(token_object.access_token)
-
-
-
-
-ct = cloneTenant(token_object,token_to)
-
-ct.copyAllDMs(overwrite=True)
-#ct.copyAllConnectors(overwrite=True,copy_mapping=True)
-
-
-
-#ct.copyDMs(['productforecast','customer'],overwrite= True)
-
 
 
 
