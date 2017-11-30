@@ -60,6 +60,7 @@ This package implements some of Carol's APIs. The following endpoints are implem
         1. GET/POST - /api/v1/applications
         2. DELETE - /api/v1/applications/{applicationId}
         3. GET - /api/v1/applications/name/{applicationName}
+        4. GET - /api/v1/applications/{applicationId}/stats
 
     - v1 Database Toolbelt Admin (toolbeltAdmin.py)
         1. DELETE - /api/v1/databaseToolbelt/filter  (deprecated)

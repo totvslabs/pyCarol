@@ -58,7 +58,7 @@ class cloneTenant(object):
             dm_tocreate.template_dict[dm_name]['mdmId']
 
 
-    def copyAllConnectors(self,staging=True, mapping = True, overwrite=False):
+    def copyAllConnectors(self, copy_mapping = True, overwrite=False):
 
         conn = appl.connectorsCarol(self.token_from)
         conn.getAll(includeMappings=True)
@@ -67,10 +67,14 @@ class cloneTenant(object):
         conn_id = {}
 
         stag = stg.stagingSchema(self.token_from)
-        mappings_to_get = etm.entityMapping(self.token_from)
         self.stag_mapp_to_use = defaultdict(list)
 
         for connector in conn_to_create:
+
+            current_connector = connector['mdmId']
+            conn.connectorStats(current_connector)
+            conn_stats = conn.connectorsStats_
+
 
             connectorName = connector.get('mdmName',None)
             connectorLabel = connector.get('mdmLabel',None)
@@ -88,7 +92,9 @@ class cloneTenant(object):
             #self.token_to.newToken(connectorId='188a65d0d52c11e7b5090242ac110003')#deletar e descomnetar acima
             #conn_id.update({connectorName: '188a65d0d52c11e7b5090242ac110003'}) #deletar e descomnetar acima
 
-            for schema_name, mapping_fields in connector.get('mdmEntityMappings', None).items():
+
+            for schema_name in conn_stats.get(current_connector):
+            #for schema_name, mapping_fields in connector.get('mdmEntityMappings', None).items():
                 stag.getSchema(schema_name,connector.get('mdmId'))
 
                 aux_schema = stag.schema
@@ -98,25 +104,33 @@ class cloneTenant(object):
                 aux_schema.pop('mdmCreated')
                 aux_schema.pop('mdmLastUpdated')
 
-                mapping_fields.pop('mdmTenantId')
-                entityMappingsId = mapping_fields.pop('mdmId')
-                entitySpace = mapping_fields.get('mdmEntitySpace')
-                mapping_fields.pop('mdmCreated')
-                mapping_fields.pop('mdmLastUpdated')
-                connectorId = mapping_fields.pop('mdmApplicationId')
-
-                mappings_to_get.getSnapshot(connectorId,entityMappingsId,entitySpace)
-
-                _, aux_map = mappings_to_get.snap.popitem()
-
-                self.stag_mapp_to_use[connectorName].append({"schema": aux_schema, "mapping": aux_map})
-
                 stg_to = stg.stagingSchema(self.token_to)
                 stg_to.sendSchema(fields_dict = aux_schema, connectorId = conn_id.get(connectorName),
                                   overwrite=overwrite)
 
-                mapping_to = etm.entityMapping(self.token_to)
-                mapping_to.createFromSnnapshot(aux_map,conn_id.get(connectorName),overwrite=overwrite)
+                if copy_mapping:
+                    mapping_fields = connector.get('mdmEntityMappings', None).get(schema_name)
+                    if mapping_fields is not None:
+                        mapping_fields.pop('mdmTenantId')
+                        entityMappingsId = mapping_fields.pop('mdmId')
+                        entitySpace = mapping_fields.get('mdmEntitySpace')
+                        mapping_fields.pop('mdmCreated')
+                        mapping_fields.pop('mdmLastUpdated')
+                        connectorId = mapping_fields.pop('mdmApplicationId')
+                        mappings_to_get = etm.entityMapping(self.token_from)
+                        mappings_to_get.getSnapshot(connectorId, entityMappingsId, entitySpace)
+                        _, aux_map = mappings_to_get.snap.popitem()
+                        mapping_to = etm.entityMapping(self.token_to)
+                        mapping_to.createFromSnnapshot(aux_map,conn_id.get(connectorName),overwrite=overwrite)
+                        self.stag_mapp_to_use[connectorName].append({"schema": aux_schema, "mapping": aux_map})
+                    else:
+                        self.stag_mapp_to_use[connectorName].append({"schema": aux_schema})
+                else:
+                    self.stag_mapp_to_use[connectorName].append({"schema": aux_schema})
+
+
+    def copyConnectors(self, staging_list,  copy_mapping=True, overwrite=False):
+        pass
 
 
 
@@ -140,14 +154,11 @@ print(token_object.access_token)
 
 ct = cloneTenant(token_object,token_to)
 
-#ct.copyAllDMs()
+ct.copyAllDMs(overwrite=True)
+#ct.copyAllConnectors(overwrite=True,copy_mapping=True)
 
 
-#ct.copyDMs(['customer','product'])
-ct.copyAllConnectors(overwrite=True)
 
-
-#ct.copyAllDMs()
 #ct.copyDMs(['productforecast','customer'],overwrite= True)
 
 

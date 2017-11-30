@@ -155,3 +155,21 @@ class connectorsCarol:
                 file.flush()
         if save_results:
             file.close()
+
+    def connectorStats(self,connectorId):
+
+
+        url = "https://{}.carol.ai/api/v1/applications/{}/stats".format(self.token_object.domain,connectorId)
+        while True:
+            self.response = requests.request("GET", url, headers=self.headers)
+            if not self.response.ok:
+                # error handler for token
+                if self.response.reason == 'Unauthorized':
+                    self.token_object.refreshToken()
+                    self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+                    continue
+                raise Exception(self.response.text)
+            break
+        conn_stats = self.response.json()['aggs']
+        self.connectorsStats_ = {key : list(value['stagingEntityStats'].keys()) for key, value in conn_stats.items()}
+

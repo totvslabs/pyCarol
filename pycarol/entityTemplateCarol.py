@@ -3,6 +3,8 @@ import json
 from .entityTemplateTypesCarol import *
 from .verticalsCarol import *
 from .fieldsCarol import *
+import time
+
 
 
 class entIntType(object):
@@ -122,6 +124,9 @@ class entityTemplate(object):
                     print('Template not found')
                     self.entityTemplate_ = {}
                     break
+                elif ('is in Deleted state' in self.response.json()['errorMessage']):
+                    time.sleep(1)
+                    continue
                 raise Exception(self.lastResponse.text)
             break
         if not_found:
@@ -250,9 +255,12 @@ class createTemplate(object):
                     del_DM = deleteTemplate(self.token_object)
                     find_temp = entityTemplate(self.token_object)
                     find_temp.getByName(snap_shot['entityTemplateName'])
-                    entityTemplateId = find_temp.entityTemplate_.get(snap_shot['entityTemplateName'])['mdmId']
+                    entityTemplateId = find_temp.entityTemplate_.get(snap_shot['entityTemplateName']).get('mdmId',None)
+                    if entityTemplateId is None: #if None
+                        continue
                     entitySpace = find_temp.entityTemplate_.get(snap_shot['entityTemplateName'])['mdmEntitySpace']
                     del_DM.delete(entityTemplateId,entitySpace)
+                    time.sleep(0.5) #waint for deletion
                     continue
 
                 raise Exception(self.lastResponse.text)
