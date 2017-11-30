@@ -3,6 +3,11 @@
 # Table of Contents
 1. [APIs Implemented](#apis-implemented)
 2. [Using pyCarol](#using-pyCarol)
+   1. [Processing filter queries](#processing-filter-queries)
+   2. [Processing named queries](#processing-named-queries)
+   2. [Sending data](#sending-data)
+2. [Using pyCarol](#using-pyCarol)
+2. [Using pyCarol](#using-pyCarol)
 3. [Cloning a tenant](#cloning-a-tenant)
 
 
@@ -75,7 +80,7 @@ This package implements some of Carol's APIs. The following endpoints are implem
  We also have a Schema Generator (schemaGenerator.py).
  
  
- ### Using pyCarol: [](#){name=pycarol_ex}
+ ### Using pyCarol
  
 
  All APIs need a login object. It creates/refreshes tokens.
@@ -89,7 +94,7 @@ token_object.refreshToken()
 print('This is refreshed access token {}'.format(token_object.access_token))
 ```  
 
-##### Processing filter queries. 
+##### Processing filter queries
 
 
 ```python
@@ -128,7 +133,7 @@ The parameter `only_hits = True` will make sure that the only records into the p
  `only_hits = False`. 
 
 
-##### Processing named queries. 
+##### Processing named queries
 
 ```python
 from pycarol import loginCarol, queriesCarol
@@ -164,7 +169,7 @@ named_query_resp.namedQueryParams(named_query = named_query)
 
 ```
  
- ##### Sending data.
+ ##### Sending data
  
  The first step to send data to Carol is to create a connector. 
  
