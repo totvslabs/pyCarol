@@ -1,6 +1,13 @@
 # pyCarol   <img src="https://github.com/TOTVS/carol-ds-retail/blob/master/recommender-project/image/pycarol.jpg" alt="Carol" width="32" data-canonical-src="http://svgur.com/i/ue.svg"> 
 
+# Table of Contents
+1. [APIs Implemented](#apis-implemented)
+2. [Using pyCarol](#using-pyCarol)
+3. [Cloning a tenant](#cloning-a-tenant)
 
+
+
+## APIs Implemented
 
 This package implements some of Carol's APIs. The following endpoints are implemented: 
     
@@ -68,7 +75,7 @@ This package implements some of Carol's APIs. The following endpoints are implem
  We also have a Schema Generator (schemaGenerator.py).
  
  
- ### Using pyCarol:
+ ### Using pyCarol: [](#){name=pycarol_ex}
  
 
  All APIs need a login object. It creates/refreshes tokens.
@@ -239,3 +246,6 @@ The parameter `step_size` says how many registers will be sent each time. Rememb
 5MB. The parameter  `data` can be a pandas DataFrame (Beta).
 
 OBS: It is not possible to create a mapping using pycarol. The Mapping has to be done via the UI
+
+
+### Cloning a tenant
