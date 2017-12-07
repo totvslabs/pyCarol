@@ -314,6 +314,12 @@ class queryCarol:
         named.getParamByName(named_query=named_query)
         return named.paramDict
 
+    def downloadAll(self, dm_name, pageSize=500, save_results = False,safe_check = False, filename ='allResults.json',
+                    print_status=True):
+        json_query = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": dm_name}]}
+        self.newQuery(json_query=json_query, pageSize=pageSize, save_results=save_results,
+                      safe_check=safe_check,filename=filename, print_status=print_status)
+
 
 
 class deleteFilter:
