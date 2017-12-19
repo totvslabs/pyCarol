@@ -13,9 +13,12 @@ class lazeDM(object):
 
         self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
 
-    def start(self,json_sample,mdmName, profileTitle = None ,overwrite = True, mdmVerticalIds=None, mdmVerticalNames='retail', mdmEntityTemplateTypeIds=None,
+    def start(self,json_sample,mdmName, publish = True, profileTitle = None ,overwrite = True, mdmVerticalIds=None, mdmVerticalNames='retail', mdmEntityTemplateTypeIds=None,
                mdmEntityTemplateTypeNames='product', mdmLabel=None, mdmGroupName='Others',
                mdmTransactionDataModel=False):
+
+        if publish:
+            assert  profileTitle in json_sample
 
         if ((mdmVerticalNames is None) and (mdmVerticalIds is None)):
             self.verticalsNameIdsDict = verticals(self.token_object).getAll()
@@ -34,4 +37,4 @@ class lazeDM(object):
 
         entityTemplateId = tDM.template_dict[mdmName]['mdmId']
 
-        tDM.from_json(json_sample, profileTitle= profileTitle, publish= True, entityTemplateId=entityTemplateId)
+        tDM.from_json(json_sample, profileTitle= profileTitle, publish= publish, entityTemplateId=entityTemplateId)
