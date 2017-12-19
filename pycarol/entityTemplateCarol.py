@@ -340,7 +340,7 @@ class createTemplate(object):
         if not est_.entityTemplate_ == {}:
             raise Exception('mdm name {} already exist'.format(self.mdmName))
 
-    def create(self, mdmName, mdmVerticalIds=None, mdmVerticalNames=None, mdmEntityTemplateTypeIds=None,
+    def create(self, mdmName, overwrite = False, mdmVerticalIds=None, mdmVerticalNames=None, mdmEntityTemplateTypeIds=None,
                mdmEntityTemplateTypeNames=None, mdmLabel=None, mdmGroupName='Others',
                mdmTransactionDataModel=False):
 
@@ -365,7 +365,8 @@ class createTemplate(object):
 
         self._checkVerticals()
         self._checkEntityTemplateTypes()
-        self._checkEntityTemplateName()
+        if not overwrite:
+            self._checkEntityTemplateName()
 
         payload = {"mdmName": self.mdmName, "mdmGroupName": self.mdmGroupName, "mdmLabel": {"en-US": self.mdmLabel},
                    "mdmVerticalIds": [self.mdmVerticalIds],
@@ -382,12 +383,46 @@ class createTemplate(object):
                     self.headers = {'Authorization': self.token_object.access_token,
                                     'Content-Type': 'application/json'}
                     continue
+                elif ('Record already exists' in self.lastResponse.json()['errorMessage']) and (overwrite):
+                    del_DM = deleteTemplate(self.token_object)
+                    find_temp = entityTemplate(self.token_object)
+                    find_temp.getByName(self.mdmName)
+                    entityTemplateId = find_temp.entityTemplate_.get(self.mdmName).get('mdmId',None)
+                    if entityTemplateId is None: #if None
+                        continue
+                    entitySpace = find_temp.entityTemplate_.get(self.mdmName)['mdmEntitySpace']
+                    del_DM.delete(entityTemplateId,entitySpace)
+                    time.sleep(0.5) #waint for deletion
+                    continue
                 raise Exception(self.lastResponse.text)
             break
 
         self.lastResponse.encoding = 'utf8'
         response = json.loads(self.lastResponse.text)
         self.template_dict.update({response['mdmName']: response})
+
+
+    def _profileTitle(self,profileTitle,entityTemplateId):
+        if isinstance(profileTitle,str):
+            profileTitle = [profileTitle]
+
+            profileTitle = [i.lower() for i in profileTitle]
+
+        while True:
+            url = "https://{}.carol.ai/api/v1/entities/templates/{}/profileTitle".format(self.token_object.domain,
+                                                                                         entityTemplateId)
+
+            payload = profileTitle  # list of fields
+            self.lastResponse = requests.post(url, json=payload, headers=self.headers)
+            if not self.lastResponse.ok:
+                # error handler for token
+                if self.lastResponse.reason == 'Unauthorized':
+                    self.token_object.refreshToken()
+                    self.headers = {'Authorization': self.token_object.access_token,
+                                    'Content-Type': 'application/json'}
+                    continue
+                raise Exception(self.lastResponse.text)
+            break
 
 
     def addField(self,fieldName, entityTemplateId = None,parentFieldId = ""):
@@ -450,7 +485,10 @@ class createTemplate(object):
 
 
 
-    def from_json(self,json_sample, entityTemplateId = None, mdmLabelMap = None, mdmDescriptionMap = None ):
+    def from_json(self,json_sample, profileTitle = None, publish = False, entityTemplateId = None, mdmLabelMap = None, mdmDescriptionMap = None ):
+
+        if publish:
+            assert profileTitle in json_sample
 
         self.mdmLabelMap = mdmLabelMap
         self.mdmDescriptionMap = mdmDescriptionMap
@@ -491,6 +529,10 @@ class createTemplate(object):
                     self.addField(prop, parentFieldId="")
                 else:
                     print('Nested fields are not supported')
+
+        if publish:
+            self._profileTitle(profileTitle, self.entityTemplateId)
+            self.publishTemplate(self.entityTemplateId)
 
                 #to_create = create_field(prop, value)
                 #print(to_create)

@@ -7,7 +7,6 @@
    2. [Processing named queries](#processing-named-queries)
    2. [Sending data](#sending-data)
 2. [Using pyCarol](#using-pyCarol)
-2. [Using pyCarol](#using-pyCarol)
 3. [Cloning a tenant](#cloning-a-tenant)
 
 
