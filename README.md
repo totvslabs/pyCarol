@@ -5,9 +5,9 @@
 2. [Using pyCarol](#using-pyCarol)
    1. [Processing filter queries](#processing-filter-queries)
    2. [Processing named queries](#processing-named-queries)
-   2. [Sending data](#sending-data)
-2. [Using pyCarol](#using-pyCarol)
-3. [Cloning a tenant](#cloning-a-tenant)
+   3. [Sending data](#sending-data)
+3. [Using pyCarol](#using-pycarol)
+4. [Cloning a tenant](#cloning-a-tenant)
 
 
 
