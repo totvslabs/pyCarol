@@ -75,7 +75,6 @@ class cloneTenant(object):
             conn.connectorStats(current_connector)
             conn_stats = conn.connectorsStats_
 
-
             connectorName = connector.get('mdmName',None)
             connectorLabel = connector.get('mdmLabel',None)
             if connectorLabel:
@@ -125,7 +124,7 @@ class cloneTenant(object):
                     self.stag_mapp_to_use[connectorName].append({"schema": aux_schema})
 
 
-    def copyConnectors(self, conectors_map, map_type = 'connectorId', copy_mapping=True, overwrite=False):
+    def copyConnectors(self, conectors_map, map_type = 'name', copy_mapping=True, overwrite=False):
 
         if map_type == 'connectorId':
             map_type = 'mdmId'
@@ -134,12 +133,10 @@ class cloneTenant(object):
         else:
             raise('values should be connectorId or name')
 
-
+        conn_id = {}
         conn = appl.connectorsCarol(self.token_from)
         conn.getAll(includeMappings=True)
         conn_to_create = conn.connectors
-
-        conn_id = {}
 
         stag = stg.stagingSchema(self.token_from)
         self.stag_mapp_to_use = defaultdict(list)
@@ -147,9 +144,18 @@ class cloneTenant(object):
         for connector, staging in conectors_map.items():
             #for connector in conn_to_create:
 
+            if isinstance(staging,str):
+                staging = [staging]
+
+            for list_conn in conn_to_create:
+                if list_conn[map_type] == connector:
+                    connector = list_conn
+                    break
+
+
+
             current_connector = connector['mdmId']
             conn.connectorStats(current_connector)
-            conn_stats = conn.connectorsStats_
 
             connectorName = connector.get('mdmName', None)
             connectorLabel = connector.get('mdmLabel', None)
@@ -164,7 +170,8 @@ class cloneTenant(object):
             conn_id.update({connectorName: conn_to.connectorId})
             self.token_to.newToken(connectorId=conn_to.connectorId)
 
-            for schema_name in conn_stats.get(current_connector):
+
+            for schema_name in staging:
                 stag.getSchema(schema_name, connector.get('mdmId'))
 
                 aux_schema = stag.schema
