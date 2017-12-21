@@ -124,7 +124,7 @@ class entityTemplate(object):
                     print('Template not found')
                     self.entityTemplate_ = {}
                     break
-                elif ('is in Deleted state' in self.response.json()['errorMessage']):
+                elif ('is in Deleted state' in self.lastResponse.json()['errorMessage']):
                     time.sleep(1)
                     continue
                 raise Exception(self.lastResponse.text)
