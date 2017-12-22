@@ -3,6 +3,7 @@ import json
 
 class fieldsCarol(object):
     def __init__(self, token_object):
+        self.dev = token_object.dev
         self.token_object = token_object
         if self.token_object.access_token is None:
             self.token_object.newToken()
@@ -22,9 +23,9 @@ class fieldsCarol(object):
 
         while True:
             if admin:
-                url_filter = "https://{}.carol.ai/api/v1/fields/possibleTypes".format(self.token_object.domain)
+                url_filter = "https://{}.carol.ai{}/api/v1/fields/possibleTypes".format(self.token_object.domain, self.dev)
             else:
-                url_filter = "https://{}.carol.ai/api/v1/admin/fields/possibleTypes".format(self.token_object.domain)
+                url_filter = "https://{}.carol.ai{}/api/v1/admin/fields/possibleTypes".format(self.token_object.domain, self.dev)
             self.lastResponse = requests.get(url=url_filter, headers=self.headers)
             if not self.lastResponse.ok:
                 # error handler for token
@@ -65,9 +66,9 @@ class fieldsCarol(object):
             file = open(filename, 'w', encoding='utf8')
 
         if admin:
-            url_filter = "https://{}.carol.ai/api/v1/admin/fields".format(self.token_object.domain)
+            url_filter = "https://{}.carol.ai{}/api/v1/admin/fields".format(self.token_object.domain, self.dev)
         else:
-            url_filter = "https://{}.carol.ai/api/v1/fields".format(self.token_object.domain)
+            url_filter = "https://{}.carol.ai{}/api/v1/fields".format(self.token_object.domain, self.dev)
 
         while count < self.totalHits:
             self.lastResponse = requests.get(url=url_filter, headers=self.headers, params=self.querystring)
@@ -117,9 +118,9 @@ class fieldsCarol(object):
 
         for fields_id in fields_ids:
             if admin:
-                url_filter = "https://{}.carol.ai/api/v1/admin/fields/{}".format(self.token_object.domain,fields_id)
+                url_filter = "https://{}.carol.ai{}/api/v1/admin/fields/{}".format(self.token_object.domain, self.dev,fields_id)
             else:
-                url_filter = "https://{}.carol.ai/api/v1/fields/{}".format(self.token_object.domain,fields_id)
+                url_filter = "https://{}.carol.ai{}/api/v1/fields/{}".format(self.token_object.domain, self.dev,fields_id)
             while True:
                 self.lastResponse = requests.get(url=url_filter, headers=self.headers)
                 if not self.lastResponse.ok:
@@ -157,7 +158,7 @@ class fieldsCarol(object):
         :return:
         '''
 
-        url = "https://{}.carol.ai/api/v1/fields".format(self.token_object.domain)
+        url = "https://{}.carol.ai{}/api/v1/fields".format(self.token_object.domain, self.dev)
         payload = {"mdmName": mdmName, "mdmMappingDataType": mdmMappingDataType, "mdmFieldType": mdmFieldType,
                    "mdmLabel": {"en-US": mdmLabel}, "mdmDescription": {"en-US": mdmDescription}}
         assert not mdmName in self.fields_dict.keys()

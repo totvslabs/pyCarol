@@ -63,16 +63,19 @@ class JsonEntTypeNotFound(Exception):
 
 class deleteTemplate(object):
     def __init__(self, token_object):
+        self.dev = token_object.dev
         self.token_object = token_object
         if self.token_object.access_token is None:
             self.token_object.newToken()
+
+        self.dev = None
 
         self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
 
     def delete(self,entityTemplateId,entitySpace):
 
         while True:
-            url = "https://{}.carol.ai/api/v1/entities/templates/{}".format(self.token_object.domain, entityTemplateId)
+            url = "https://{}.carol.ai{}/api/v1/entities/templates/{}".format(self.token_object.domain , self.dev , entityTemplateId)
             querystring = {"entitySpace": entitySpace}
             self.lastResponse =  requests.request("DELETE", url, headers=self.headers, params=querystring)
             if not self.lastResponse.ok:
@@ -89,12 +92,13 @@ class deleteTemplate(object):
 
 class entityTemplate(object):
     def __init__(self, token_object):
+        self.dev = token_object.dev
         self.token_object = token_object
         if self.token_object.access_token is None:
             self.token_object.newToken()
 
         self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
-
+        self.dev = None
     def _setQuerystring(self):
         if self.sortBy is None:
             self.querystring = {"offset": self.offset, "pageSize": str(self.pageSize), "sortOrder": self.sortOrder}
@@ -106,9 +110,9 @@ class entityTemplate(object):
         not_found = False
         while True:
             if by == 'name':
-                url = "https://{}.carol.ai/api/v1/entities/templates/name/{}".format(self.token_object.domain,id)
+                url = "https://{}.carol.ai{}/api/v1/entities/templates/name/{}".format(self.token_object.domain , self.dev,id)
             elif by == 'id':
-                url = "https://{}.carol.ai/api/v1/entities/templates/{}/working".format(self.token_object.domain,id)
+                url = "https://{}.carol.ai{}/api/v1/entities/templates/{}/working".format(self.token_object.domain , self.dev,id)
             else:
                 raise print('Type incorrect')
             self.lastResponse = requests.request("GET", url, headers=self.headers)
@@ -155,7 +159,7 @@ class entityTemplate(object):
         if save_file:
             file = open(filename, 'w', encoding='utf8')
         while count < self.totalHits:
-            url_filter = "https://{}.carol.ai/api/v1/entities/templates".format(self.token_object.domain)
+            url_filter = "https://{}.carol.ai{}/api/v1/entities/templates".format(self.token_object.domain , self.dev)
             self.lastResponse = requests.get(url=url_filter, headers=self.headers, params=self.querystring)
             if not self.lastResponse.ok:
                 # error handler for token
@@ -197,8 +201,8 @@ class entityTemplate(object):
     def getSnapshot(self,entityTemplateId,entitySpace):
         not_found = False
         while True:
-            url_snapshot = 'https://{}.carol.ai/api/v1/entities/templates/{}/snapshot?entitySpace={}'.format(
-                self.token_object.domain,
+            url_snapshot = 'https://{}.carol.ai{}/api/v1/entities/templates/{}/snapshot?entitySpace={}'.format(
+                self.token_object.domain, self.dev,
                 entityTemplateId,
                 entitySpace)
 
@@ -227,6 +231,8 @@ class entityTemplate(object):
 
 class createTemplate(object):
     def __init__(self, token_object):
+
+        self.dev = token_object.dev
         self.token_object = token_object
         if self.token_object.access_token is None:
             self.token_object.newToken()
@@ -242,7 +248,7 @@ class createTemplate(object):
     def fromSnapshot(self,snap_shot, publish = False, overwrite = False):
 
         while True:
-            url = 'https://{}.carol.ai/api/v1/entities/templates/snapshot'.format(self.token_object.domain)
+            url = 'https://{}.carol.ai{}/api/v1/entities/templates/snapshot'.format(self.token_object.domain , self.dev)
             self.lastResponse = requests.post(url=url, headers=self.headers, json=snap_shot)
             if not self.lastResponse.ok:
                 # error handler for token
@@ -277,7 +283,7 @@ class createTemplate(object):
     def publishTemplate(self,entityTemplateId):
 
         while True:
-            url = 'https://{}.carol.ai/api/v1/entities/templates/{}/publish'.format(self.token_object.domain,
+            url = 'https://{}.carol.ai{}/api/v1/entities/templates/{}/publish'.format(self.token_object.domain , self.dev,
                                                                                     entityTemplateId)
             self.lastResponse =  requests.post(url=url, headers=self.headers)
             if not self.lastResponse.ok:
@@ -374,7 +380,7 @@ class createTemplate(object):
                    "mdmTransactionDataModel": self.mdmTransactionDataModel, "mdmProfileTitleFields": []}
 
         while True:
-            url_filter = "https://{}.carol.ai/api/v1/entities/templates".format(self.token_object.domain)
+            url_filter = "https://{}.carol.ai{}/api/v1/entities/templates".format(self.token_object.domain , self.dev)
             self.lastResponse = requests.post(url=url_filter, headers=self.headers, json = payload)
             if not self.lastResponse.ok:
                 # error handler for token
@@ -409,7 +415,7 @@ class createTemplate(object):
             profileTitle = [i.lower() for i in profileTitle]
 
         while True:
-            url = "https://{}.carol.ai/api/v1/entities/templates/{}/profileTitle".format(self.token_object.domain,
+            url = "https://{}.carol.ai{}/api/v1/entities/templates/{}/profileTitle".format(self.token_object.domain , self.dev,
                                                                                          entityTemplateId)
 
             payload = profileTitle  # list of fields
@@ -448,7 +454,7 @@ class createTemplate(object):
             return
         querystring = {"parentFieldId": parentFieldId}
         while True:
-            url = "https://{}.carol.ai/api/v1/entities/templates/{}/onboardField/{}".format(self.token_object.domain,
+            url = "https://{}.carol.ai{}/api/v1/entities/templates/{}/onboardField/{}".format(self.token_object.domain , self.dev,
                                                                                             self.entityTemplateId, field_to_send['mdmId'])
             response = requests.request("POST", url, headers=self.headers, params=querystring)
             if not response.ok:
@@ -578,7 +584,7 @@ class createTemplate(object):
 
 #To add fields, firts need to cread the field.  (OBS. there are a lot of pre created fields to be used.)
 
-url = "https://mario.carol.ai/api/v1/fields"
+url = "https://mario.carol.ai{}/api/v1/fields"
 
 payload = {"mdmName":"nome","mdmMappingDataType":"string","mdmFieldType":"PRIMITIVE","mdmLabel":{"en-US":"Nome"},"mdmDescription":{"en-US":"Nome"}}
 headers = {
@@ -603,7 +609,7 @@ response = requests.request("POST", url, json=payload, headers=headers)
 
 import requests
 
-url = "https://mario.carol.ai/api/v1/fields"
+url = "https://mario.carol.ai{}/api/v1/fields"
 
 payload = {"mdmName":"nestedtest","mdmMappingDataType":"nested","mdmFieldType":"NESTED",
            "mdmLabel":{"en-US":"nested test"},"mdmDescription":{"en-US":"nested"}}
@@ -631,7 +637,7 @@ response = requests.request("POST", url, data=payload, headers=headers)
 #Then to add a field to a DM
 
 
-url = "https://mario.carol.ai/api/v1/entities/templates/4d7e5010b11611e78cce0242ac110003/onboardField/73792f30b11911e78cce0242ac110003"
+url = "https://mario.carol.ai{}/api/v1/entities/templates/4d7e5010b11611e78cce0242ac110003/onboardField/73792f30b11911e78cce0242ac110003"
 
 querystring = {"parentFieldId":""}
 
@@ -646,7 +652,7 @@ response = requests.request("POST", url, headers=headers, params=querystring)
 
 import requests
 
-url = "https://mario.carol.ai/api/v1/entities/templates/4d7e5010b11611e78cce0242ac110003/onboardField/5abfc4c0b11b11e78cce0242ac110003"
+url = "https://mario.carol.ai{}/api/v1/entities/templates/4d7e5010b11611e78cce0242ac110003/onboardField/5abfc4c0b11b11e78cce0242ac110003"
 
 querystring = {"parentFieldId":""}
 
@@ -661,7 +667,7 @@ response = requests.request("POST", url, headers=headers, params=querystring)
 
 # to add a chield to the nest field to a DM
 
-url = "https://mario.carol.ai/api/v1/entities/templates/4d7e5010b11611e78cce0242ac110003/onboardField/fcc94630b07911e793370242ac110003"
+url = "https://mario.carol.ai{}/api/v1/entities/templates/4d7e5010b11611e78cce0242ac110003/onboardField/fcc94630b07911e793370242ac110003"
 
 querystring = {"parentFieldId":"5abfc4c0b11b11e78cce0242ac110003"}
 
@@ -680,7 +686,7 @@ print(response.text)
 
 import requests
 
-url = "https://mario.carol.ai/api/v1/entities/templates/4d7e5010b11611e78cce0242ac110003/profileTitle"
+url = "https://mario.carol.ai{}/api/v1/entities/templates/4d7e5010b11611e78cce0242ac110003/profileTitle"
 
 payload = ["mdmtaxid"]  #list of fields
 headers = {

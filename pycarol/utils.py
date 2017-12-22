@@ -29,12 +29,13 @@ def scrub(obj, bad):
 
 class tenantsCarol:
     def __init__(self,token_object):
+        self.dev = token_object.dev
         self.token_object = token_object
         self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
 
     def getInfo(self,domain):
         _true = True
-        url = "https://{}.carol.ai/api/v2/tenants/domain/{}".format(self.token_object.domain,domain)
+        url = "https://{}.carol.ai{}/api/v2/tenants/domain/{}".format(self.token_object.domain,self.dev,domain)
         while _true:
             self.response = requests.request("GET", url, headers=self.headers)
             if not self.response.ok:

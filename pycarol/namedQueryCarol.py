@@ -8,7 +8,7 @@ class namedQueries:
         self.token_object = token_object
         if self.token_object.access_token is None:
             self.token_object.newToken()
-
+        self.dev = token_object.dev
         self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
         self.offset = 0
         self.pageSize = 50
@@ -52,7 +52,7 @@ class namedQueries:
         if save_file:
             file = open(filename, 'w', encoding='utf8')
         while count < self.totalHits:
-            url_filter = "https://{}.carol.ai/api/v2/named_queries".format(self.token_object.domain)
+            url_filter = "https://{}.carol.ai{}/api/v2/named_queries".format(self.token_object.domain, self.dev)
             self.lastResponse = requests.get(url=url_filter, headers=self.headers, params=self.querystring)
             if not self.lastResponse.ok:
                 # error handler for token
@@ -103,7 +103,7 @@ class namedQueries:
         if save_file:
             file = open(filename, 'w', encoding='utf8')
         while True:
-            url_filter = "https://{}.carol.ai/api/v2/named_queries/name/{}".format(self.token_object.domain,named_query)
+            url_filter = "https://{}.carol.ai{}/api/v2/named_queries/name/{}".format(self.token_object.domain, self.dev,named_query)
             self.lastResponse = requests.get(url=url_filter, headers=self.headers)
             if not self.lastResponse.ok:
                 # error handler for token
@@ -143,8 +143,8 @@ class namedQueries:
 
         errors = True
         while errors:
-            url_filter = "https://{}.carol.ai/api/v2/queries/filter?offset={}&pageSize={}&sortOrder={}&indexType={}".format(
-                self.token_object.domain, str(self.offset), str(0), self.sortOrder, self.indexType)
+            url_filter = "https://{}.carol.ai{}/api/v2/queries/filter?offset={}&pageSize={}&sortOrder={}&indexType={}".format(
+                self.token_object.domain,  self.dev, str(self.offset), str(0), self.sortOrder, self.indexType)
             self.lastResponse = requests.post(url=url_filter, headers=self.headers, json=namedQueries)
             if not self.lastResponse.ok:
                 # error handler for token
@@ -155,7 +155,7 @@ class namedQueries:
                 raise Exception(self.lastResponse.text)
             errors = False
 
-        url_filter = 'https://{}.carol.ai/api/v1/namedQueries'.format(self.token_object.domain)
+        url_filter = 'https://{}.carol.ai{}/api/v1/namedQueries'.format(self.token_object.domain, self.dev)
         for query in namedQueries:
             query.pop('mdmId', None)
             query.pop('mdmTenantId', None)
@@ -164,18 +164,17 @@ class namedQueries:
                 print('Error sending named query: {}'.format(response.text))
         print('Finished!')
 
-    def deleteNamedQueries(accessToken, tenant, namedQueries):
+    def deleteNamedQueries(self,namedQueries):
         '''
         Delete named query from a tenant
-        :param accessToken: AccessToken
-        :param tenant: tenant domain
         :param namedQueries: list of named queries to be deleted
         :return:
         '''
-        headers = {'Authorization': accessToken, 'Content-Type': 'application/json'}
-        names = [name['mdmQueryName'] for name in namedQueries]
-        for name in names:
-            url_filter = 'https://{}.carol.ai/api/v1/namedQueries/name/{}'.format(tenant, name)
-            response = requests.delete(url=url_filter, headers=headers)
+        if isinstance(namedQueries,str):
+            namedQueries = [namedQueries]
+
+        for name in namedQueries:
+            url_filter = 'https://{}.carol.ai{}/api/v1/namedQueries/name/{}'.format(self.token_object.domain, self.dev, name)
+            response = requests.delete(url=url_filter, headers=self.headers)
             print('Deleting named query: {}'.format(name))
         print('Finished!')

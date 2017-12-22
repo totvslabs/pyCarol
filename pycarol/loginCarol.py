@@ -25,6 +25,7 @@ class loginCarol:
         self.connectorId = connectorId
         self.access_token = None
         self.refresh_token = None
+        self.dev = None
 
     def newToken(self, connectorId=None):
         """
@@ -39,7 +40,7 @@ class loginCarol:
 
         if connectorId is not None:
             self.connectorId = connectorId
-        url = 'https://{}.carol.ai/api/v2/oauth2/token'.format(self.domain)
+        url = 'https://{}.carol.ai{}/api/v2/oauth2/token'.format(self.domain, self.dev)
 
         grant_type = 'password'  # use refresh_token if one wants to refresh the token
         refresh_token = ''  # pass if refresh the token is needed
@@ -63,7 +64,7 @@ class loginCarol:
           >>> login = loginCarol(username= username, password=my_password, domain = my_domain, connectorId=my_connectorId)
           >>> login.refreshToken()
         """
-        url = 'https://{}.carol.ai/api/v2/oauth2/token'.format(self.domain)
+        url = 'https://{}.carol.ai{}/api/v2/oauth2/token'.format(self.domain, self.dev)
         grant_type = 'refresh_token'  # use refresh_token if one wants to refresh the token
         auth_request = {"grant_type": grant_type, 'refresh_token': self.refresh_token, 'Content-Type': 'application/json'}
         token = requests.post(url=url, data=auth_request)
@@ -82,7 +83,7 @@ class loginCarol:
           >>> login.checkToken()
           The access token '73685500c93011e789910e4789ade3a3' will expires in 3316s
         """
-        url = 'https://{}.carol.ai/api/v2/oauth2/token/{}'.format(self.domain, self.access_token)
+        url = 'https://{}.carol.ai{}/api/v2/oauth2/token/{}'.format(self.domain, self.dev, self.access_token)
         token = requests.get(url=url)
         if token.ok:
             #self.token2 = json.loads(token.text)

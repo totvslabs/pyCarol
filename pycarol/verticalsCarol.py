@@ -4,6 +4,7 @@ import json
 
 class verticals(object):
     def __init__(self, token_object):
+        self.dev = token_object.dev
         self.token_object = token_object
         if self.token_object.access_token is None:
             self.token_object.newToken()
@@ -40,7 +41,7 @@ class verticals(object):
         if save_file:
             file = open(filename, 'w', encoding='utf8')
         while count < self.totalHits:
-            url_filter = "https://{}.carol.ai/api/v1/verticals".format(self.token_object.domain)
+            url_filter = "https://{}.carol.ai{}/api/v1/verticals".format(self.token_object.domain, self.dev)
             self.lastResponse = requests.get(url=url_filter, headers=self.headers, params=self.querystring)
             if not self.lastResponse.ok:
                 # error handler for token
@@ -87,7 +88,7 @@ class verticals(object):
         self.verticals_data = []
         for vertical_id in vertical_ids:
             while True:
-                url_filter = "https://{}.carol.ai/api/v1/verticals/{}".format(self.token_object.domain,vertical_id)
+                url_filter = "https://{}.carol.ai{}/api/v1/verticals/{}".format(self.token_object.domain, self.dev,vertical_id)
                 self.lastResponse = requests.get(url=url_filter, headers=self.headers)
                 if not self.lastResponse.ok:
                     # error handler for token
@@ -128,7 +129,7 @@ class verticals(object):
         self.verticals_data = []
         for name in names:
             while True:
-                url_filter = "https://{}.carol.ai/api/v1/verticals/name/{}".format(self.token_object.domain, name)
+                url_filter = "https://{}.carol.ai{}/api/v1/verticals/name/{}".format(self.token_object.domain, self.dev, name)
                 self.lastResponse = requests.get(url=url_filter, headers=self.headers)
                 if not self.lastResponse.ok:
                     # error handler for token

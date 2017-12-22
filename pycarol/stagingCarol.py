@@ -7,7 +7,7 @@ import pandas as pd
 class sendDataCarol:
 
     def __init__(self, token_object):
-
+        self.dev = token_object.dev
         self.token_object = token_object
         if self.token_object.access_token is None:
             self.token_object.newToken()
@@ -50,8 +50,8 @@ class sendDataCarol:
 
 
         self.stagingName = stagingName
-        self.url_filter = "https://{}.carol.ai/api/v2/staging/tables/{}?returnData=false&applicationId={}" \
-            .format(self.token_object.domain, self.stagingName, self.token_object.connectorId)
+        self.url_filter = "https://{}.carol.ai{}/api/v2/staging/tables/{}?returnData=false&applicationId={}" \
+            .format(self.token_object.domain, self.dev, self.stagingName, self.token_object.connectorId)
 
 
         gen = self._streamData(self.data)
@@ -99,7 +99,7 @@ class sendDataCarol:
 
 class stagingSchema(object):
     def __init__(self, token):
-
+        self.dev = token.dev
         self.token_object = token
         if self.token_object.access_token is None:
             self.token_object.newToken()
@@ -141,7 +141,7 @@ class stagingSchema(object):
         self.stagingName = self.schema['mdmStagingType']
         querystring = {"applicationId": self.connectorId}
 
-        url = 'https://{}.carol.ai/api/v2/staging/tables/{}/schema'.format(self.token_object.domain,
+        url = 'https://{}.carol.ai{}/api/v2/staging/tables/{}/schema'.format(self.token_object.domain, self.dev,
                                                                            self.stagingName)
         while True:
             self.response = requests.request(request_type, url, json=self.schema, headers=self.headers, params=querystring)
@@ -170,7 +170,7 @@ class stagingSchema(object):
 
         querystring = {"applicationId": connectorId}
         while True:
-            url = "https://{}.carol.ai/api/v2/staging/tables/{}/schema".format(self.token_object.domain,stagingName)
+            url = "https://{}.carol.ai{}/api/v2/staging/tables/{}/schema".format(self.token_object.domain, self.dev,stagingName)
             self.response = requests.request("GET", url, headers=self.headers, params=querystring)
             if not self.response.ok:
                 # error handler for token
@@ -200,6 +200,7 @@ class stagingSchema(object):
 
 class getStagingDataCarol:
     def __init__(self, token_object):
+        self.dev = token_object.dev
         self.token_object = token_object
         if self.token_object.access_token is None:
             self.token_object.newToken()
@@ -242,7 +243,7 @@ class getStagingDataCarol:
         if save_results:
             file = open(filename, 'w', encoding='utf8')
         while count < self.totalHits:
-            url_filter = "https://{}.carol.ai/api/v2/staging/tables/{}".format(self.token_object.domain, self.table)
+            url_filter = "https://{}.carol.ai{}/api/v2/staging/tables/{}".format(self.token_object.domain, self.dev, self.table)
             self.lastResponse = requests.get(url=url_filter, headers=self.headers, params=self.querystring)
             if not self.lastResponse.ok:
                 # error handler for token
@@ -288,7 +289,7 @@ class getStagingDataCarol:
         self._setQuerystring()
         errors = True
         while errors:
-            url_filter = "https://{}.carol.ai/api/v2/staging/tables/{}".format(self.token_object.domain, self.table)
+            url_filter = "https://{}.carol.ai{}/api/v2/staging/tables/{}".format(self.token_object.domain, self.dev, self.table)
             self.lastResponse = requests.get(url=url_filter, headers=self.headers, params=self.querystring)
             if not self.lastResponse.ok:
                 # error handler for token

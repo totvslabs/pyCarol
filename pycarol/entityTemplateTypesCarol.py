@@ -4,6 +4,7 @@ import json
 
 class entityTemplateTypeIds(object):
     def __init__(self, token_object):
+        self.dev = token_object.dev
         self.token_object = token_object
         if self.token_object.access_token is None:
             self.token_object.newToken()
@@ -41,7 +42,7 @@ class entityTemplateTypeIds(object):
         if save_file:
             file = open(filename, 'w', encoding='utf8')
         while count < self.totalHits:
-            url_filter = "https://{}.carol.ai/api/v1/entityTemplateTypes".format(self.token_object.domain)
+            url_filter = "https://{}.carol.ai{}/api/v1/entityTemplateTypes".format(self.token_object.domain, self.dev)
             self.lastResponse = requests.get(url=url_filter, headers=self.headers, params=self.querystring)
             if not self.lastResponse.ok:
                 # error handler for token

@@ -5,6 +5,7 @@ from pycarol.queriesCarol import queryCarol
 
 class deleteEntryCarol:
     def __init__(self, token_object):
+        self.dev = token_object.dev
         self.token_object = token_object
         self.indexType = 'MASTER'
         self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
@@ -23,7 +24,7 @@ class deleteEntryCarol:
         _deleted = True
         self.totalHits = check_register.totalHits
         while _deleted:
-            url_filter = "https://{}.carol.ai/api/v1/databaseToolbelt/filter".format(self.token_object.domain)
+            url_filter = "https://{}.carol.ai{}/api/v1/databaseToolbelt/filter".format(self.token_object.domain, self.dev)
             self.lastResponse = requests.delete(url=url_filter, headers=self.headers, params=self.querystring,
                                                 json=json_query)
             if not self.lastResponse.ok:

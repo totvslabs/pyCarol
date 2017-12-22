@@ -4,7 +4,7 @@ import requests
 
 class entityMapping:
     def __init__(self, token_object):
-
+        self.dev = token_object.dev
         self.token_object = token_object
         self.snap = {}
 
@@ -20,7 +20,7 @@ class entityMapping:
         querystring = {"entitySpace": entitySpace, "reverseMapping": False}
 
         while True:
-            url = "https://{}.carol.ai/api/v1/applications/{}/entityMappings/{}/snapshot".format(self.token_object.domain,
+            url = "https://{}.carol.ai{}/api/v1/applications/{}/entityMappings/{}/snapshot".format(self.token_object.domain, self.dev,
                                                                                                  connectorId,
                                                                                                  entityMappingsId)
 
@@ -39,7 +39,7 @@ class entityMapping:
 
 
     def updateFromSnapshot(self,snap,entityMappingId,connectorId):
-        url_mapping = 'https://{}.carol.ai/api/v1/applications/{}/entityMappings/{}/snapshot'.format(self.token_object.domain,
+        url_mapping = 'https://{}.carol.ai{}/api/v1/applications/{}/entityMappings/{}/snapshot'.format(self.token_object.domain, self.dev,
                                                                                                      connectorId,
                                                                                                      entityMappingId)
 
@@ -56,7 +56,7 @@ class entityMapping:
             break
 
     def deleteMapping(self,entityMappingId,entitySpace,connectorId):
-        url_mapping = 'https://{}.carol.ai/api/v1/applications/{}/entityMappings/{}'.format(self.token_object.domain,
+        url_mapping = 'https://{}.carol.ai{}/api/v1/applications/{}/entityMappings/{}'.format(self.token_object.domain, self.dev,
                                                                                                      connectorId,
                                                                                                      entityMappingId)
 
@@ -75,7 +75,7 @@ class entityMapping:
 
     def createFromSnnapshot(self,snap,connectorId, publish=True, overwrite = False):
 
-        url_mapping = 'https://{}.carol.ai/api/v1/applications/{}/entityMappings/snapshot'.format(self.token_object.domain,
+        url_mapping = 'https://{}.carol.ai{}/api/v1/applications/{}/entityMappings/snapshot'.format(self.token_object.domain, self.dev,
                                                                                                   connectorId)
         while True:
             self.response = requests.request('POST',url=url_mapping, headers=self.headers, json=snap)
@@ -101,7 +101,7 @@ class entityMapping:
 
     def publishMapping(self, entityMappingId,connectorId):
 
-        url = 'https://{}.carol.ai/api/v1/applications/{}/entityMappings/{}/publish'.format(self.token_object.domain,
+        url = 'https://{}.carol.ai{}/api/v1/applications/{}/entityMappings/{}/publish'.format(self.token_object.domain, self.dev,
                                                                                             connectorId,
                                                                                             entityMappingId)
 
@@ -118,7 +118,7 @@ class entityMapping:
 
 
     def getMappingInfo(self, stagingType,connectorId):
-        url = "https://{}.carol.ai/api/v1/applications/{}/entityMappings".format(self.token_object.domain,connectorId)
+        url = "https://{}.carol.ai{}/api/v1/applications/{}/entityMappings".format(self.token_object.domain, self.dev,connectorId)
 
         querystring = {"reverseMapping": False, "stagingType": stagingType, "pageSize": "-1", "sortOrder": "ASC"}
 

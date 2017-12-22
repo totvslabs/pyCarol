@@ -18,6 +18,7 @@ class queryCarol:
       >>> query = queryCarol(token_object)
     """
     def __init__(self, token_object):
+        self.dev = token_object.dev
         self.token_object = token_object
         self.offset = 0
         self.pageSize = 50
@@ -56,9 +57,9 @@ class queryCarol:
             file = open(self.filename, 'w', encoding='utf8')
 
         if type_query == 'query':
-            url_filter = "https://{}.carol.ai/api/v2/queries/filter".format(self.token_object.domain)
+            url_filter = "https://{}.carol.ai{}/api/v2/queries/filter".format(self.token_object.domain, self.dev)
         else:
-            url_filter = "https://{}.carol.ai/api/v2/queries/named/{}".format(self.token_object.domain,
+            url_filter = "https://{}.carol.ai{}/api/v2/queries/named/{}".format(self.token_object.domain, self.dev,
                                                                               self.named_query)
 
         while count < self.totalHits:
@@ -130,9 +131,9 @@ class queryCarol:
 
 
         if type_query == 'query':
-            url_filter = "https://{}.carol.ai/api/v2/queries/filter".format(self.token_object.domain)
+            url_filter = "https://{}.carol.ai{}/api/v2/queries/filter".format(self.token_object.domain, self.dev)
         else:
-            url_filter = "https://{}.carol.ai/api/v2/queries/named/{}".format(self.token_object.domain, self.named_query)
+            url_filter = "https://{}.carol.ai{}/api/v2/queries/named/{}".format(self.token_object.domain, self.dev, self.named_query)
 
 
 
@@ -154,7 +155,7 @@ class queryCarol:
 
             count += query['count']
             scrollId = query['scrollId']
-            url_filter = "https://{}.carol.ai/api/v2/queries/filter/{}".format(self.token_object.domain, scrollId)
+            url_filter = "https://{}.carol.ai{}/api/v2/queries/filter/{}".format(self.token_object.domain, self.dev, scrollId)
 
             if set_param:
 
@@ -259,8 +260,8 @@ class queryCarol:
         """
         errors = True
         while errors:
-            url_filter = "https://{}.carol.ai/api/v2/queries/filter?offset={}&pageSize={}&sortOrder={}&indexType={}".format(
-                self.token_object.domain, str(self.offset), str(0), self.sortOrder, self.indexType)
+            url_filter = "https://{}.carol.ai{}/api/v2/queries/filter?offset={}&pageSize={}&sortOrder={}&indexType={}".format(
+                self.token_object.domain, self.dev, str(self.offset), str(0), self.sortOrder, self.indexType)
             self.lastResponse = requests.post(url=url_filter, headers=self.headers, json=json_query)
             if not self.lastResponse.ok:
                 # error handler for token
@@ -325,6 +326,7 @@ class queryCarol:
 
 class deleteFilter:
     def __init__(self, token_object):
+        self.dev = token_object.dev
         self.token_object = token_object
         self.indexType = 'MASTER'
         self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
@@ -342,7 +344,7 @@ class deleteFilter:
         _deleted = True
         self.totalHits = check_register
         while _deleted:
-            url_filter = "https://{}.carol.ai/api/v2/queries/filter".format(self.token_object.domain)
+            url_filter = "https://{}.carol.ai{}/api/v2/queries/filter".format(self.token_object.domain, self.dev)
             self.lastResponse = requests.delete(url=url_filter, headers=self.headers, params=self.querystring,
                                                 json=json_query)
             if not self.lastResponse.ok:
