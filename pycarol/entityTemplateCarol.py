@@ -68,7 +68,6 @@ class deleteTemplate(object):
         if self.token_object.access_token is None:
             self.token_object.newToken()
 
-        self.dev = None
 
         self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
 
@@ -98,7 +97,6 @@ class entityTemplate(object):
             self.token_object.newToken()
 
         self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
-        self.dev = None
     def _setQuerystring(self):
         if self.sortBy is None:
             self.querystring = {"offset": self.offset, "pageSize": str(self.pageSize), "sortOrder": self.sortOrder}
