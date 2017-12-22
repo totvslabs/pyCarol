@@ -25,7 +25,7 @@ class loginCarol:
         self.connectorId = connectorId
         self.access_token = None
         self.refresh_token = None
-        self.dev = None
+        self.dev = ''
 
     def newToken(self, connectorId=None):
         """
