@@ -96,7 +96,7 @@ class queryCarol:
                     self.mdmId_list.extend([mdm_id['mdmId'] for mdm_id in query])
                     if len(self.mdmId_list) > len(set(self.mdmId_list)):
                         raise Exception('There are repeated records')
-                query = [elem['mdmGoldenFieldAndValues'] for elem in query]
+                query = [elem.get('mdmGoldenFieldAndValues',elem) for elem in query]
                 self.query_data.extend(query)
             else:
                 query.pop('count')
@@ -176,7 +176,7 @@ class queryCarol:
                     self.mdmId_list.extend([mdm_id['mdmId'] for mdm_id in query])
                     if len(self.mdmId_list) > len(set(self.mdmId_list)):
                         raise Exception('There are repeated records')
-                query = [elem['mdmGoldenFieldAndValues'] for elem in query]
+                query = [elem.get('mdmGoldenFieldAndValues',elem) for elem in query]
                 self.query_data.extend(query)
             else:
                 query.pop('count')
