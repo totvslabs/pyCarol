@@ -316,10 +316,19 @@ class queryCarol:
         return named.paramDict
 
 
-    def downloadAll(self, dm_name, pageSize=500, save_results = False,safe_check = False, filename ='allResults.json',
-                    print_status=True, max_hits = float('inf')):
-        json_query = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": dm_name}]}
-        self.newQuery(json_query=json_query, pageSize=pageSize, save_results=save_results,
+    def downloadAll(self, dm_name, connectorId = None, pageSize=500, save_results = False,safe_check = False,
+                    filename ='allResults.json',print_status=True, max_hits = float('inf'), from_stag = False,
+                    only_hits=True):
+        if from_stag:
+            assert connectorId is not None
+            indexType = 'STAGING'
+            json_query = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": connectorId+'_'+dm_name}]}
+        else:
+            json_query = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": dm_name}]}
+            indexType = 'MASTER'
+
+
+        self.newQuery(json_query=json_query, pageSize=pageSize, save_results=save_results, only_hits= only_hits, indexType= indexType,
                       safe_check=safe_check,filename=filename, print_status=print_status, max_hits = max_hits)
 
 
