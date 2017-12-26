@@ -316,7 +316,7 @@ class queryCarol:
         return named.paramDict
 
 
-    def downloadAll(self, dm_name, connectorId = None, pageSize=500, save_results = False,safe_check = False,
+    def downloadAll(self, dm_name, connectorId = None, pageSize=500, save_results = False,safe_check = False, use_scroll = True,
                     filename ='allResults.json',print_status=True, max_hits = float('inf'), from_stag = False,
                     only_hits=True):
         if from_stag:
@@ -329,7 +329,7 @@ class queryCarol:
 
 
         self.newQuery(json_query=json_query, pageSize=pageSize, save_results=save_results, only_hits= only_hits, indexType= indexType,
-                      safe_check=safe_check,filename=filename, print_status=print_status, max_hits = max_hits)
+                      safe_check=safe_check,filename=filename, print_status=print_status, max_hits = max_hits, use_scroll = use_scroll)
 
 
 
