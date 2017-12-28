@@ -3,6 +3,7 @@
 # Table of Contents
 1. [APIs Implemented](#apis-implemented)
 3. [Using pyCarol](#using-pyCarol)
+   1. [Getting an access token](#getting-an-access-token)
    1. [Running on a local Machine](#running-on-a-local-machine)
    1. [Processing filter queries](#processing-filter-queries)
    1. [Processing named queries](#processing-named-queries)
@@ -83,6 +84,10 @@ This package implements some of Carol's APIs. The following endpoints are implem
  
  ### Using pyCarol
  
+The process always starts after we obtain an access token.
+
+#####  Getting an access token
+
 
  All APIs need a login object. It creates/refreshes tokens.
 ```python
