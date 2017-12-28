@@ -253,3 +253,46 @@ OBS: It is not possible to create a mapping using pycarol. The Mapping has to be
 
 
 ### Cloning a tenant
+
+To clone a tenant we need fist to generate two token object:
+
+  ```python
+from pycarol import loginCarol
+
+token_from = loginCarol.loginCarol(username= username_from, password=my_password_from, 
+                                     domain = my_domain_from, connectorId=my_connectorId_from)
+token_from.newToken()
+
+token_to = loginCarol.loginCarol(username= username_to, password=my_password_to, 
+                                     domain = my_domain_to, connectorId=my_connectorId_to)
+token_to.newToken()
+```
+
+To copy all DMs and connector with staging tables and mappinngs: 
+  ```python
+from pycarol.cloneTenant import cloneTenant
+
+ct = cloneTenant.cloneTenant(token_from,token_to)
+ct.copyAllDMs(overwrite=True)
+ct.copyAllConnectors(overwrite=True,copy_mapping=True)
+
+```
+
+If `overwrite = True` it will oberwrite DMs/connectores with the same name. `copy_mapping = True` will create the mappings 
+for each staging table. 
+It is possible to copy only a selected number of DMs from a tenant using:
+  ```python
+from pycarol.cloneTenant import cloneTenant
+ct = cloneTenant.cloneTenant(token_from,token_to)
+ct.copyDMs(['customer'],overwrite= True)
+
+```
+The code snippet above will copy only the data model named `custumer``. It is possible to do the same for conectors and 
+stagings:
+  ```python
+from pycarol.cloneTenant import cloneTenant
+ct = cloneTenant.cloneTenant(token_from,token_to)
+ct.copyConnectors( {"protheus" : ["sa1010","sb1010"]}, copy_mapping=True, overwrite=True)
+
+```
+The code snippet above will copy the conector names `protheus` and both the stagings `sa1010` and `sb1010`, including mappings
