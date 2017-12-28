@@ -3,6 +3,7 @@ from .. import entityTemplateCarol as ett
 from .. import applicationsCarol as appl
 from .. import stagingCarol as stg
 from .. import entityMappingsCarol as etm
+from .. import namedQueryCarol as nmc
 from collections import defaultdict
 
 
@@ -17,6 +18,38 @@ class cloneTenant(object):
 
         self.headers_from = {'Authorization': self.token_from.access_token, 'Content-Type': 'application/json'}
         self.headers_to = {'Authorization': self.token_to.access_token, 'Content-Type': 'application/json'}
+
+
+    def copyAllNamedQueries(self,overwrite=True):
+        named  = nmc.namedQueries(self.token_from)
+        named.getAll(save_file=False)
+        all_named = named.named_query_data
+
+        named_to_send = nmc.namedQueries(self.token_to)
+        named_to_send.creatingNamedQueries(all_named, overwrite=overwrite)
+
+
+    def copyNamedQueries(self, list_namedQueries, overwrite=True):
+        named  = nmc.namedQueries(self.token_from)
+        named.getAll(save_file=False)
+        all_named = named.named_query_dict
+        not_exist = dict()
+        not_exist['None'] = []
+        name_to_send = []
+        for name in list_namedQueries:
+            if all_named.get(name) is not None:
+                name_to_send.append(all_named.get(name))
+            else:
+                not_exist['None'].append(name)
+
+        named_to_send = nmc.namedQueries(self.token_to)
+        named_to_send.creatingNamedQueries(name_to_send, overwrite=overwrite)
+
+        if not not_exist['None'] == []:
+            print('The following named queries in the list do not exist: {}'.format(not_exist['None']))
+
+
+
 
     def copyDMs(self,dm_list = None, overwrite = False):
 

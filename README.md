@@ -268,13 +268,14 @@ token_to = loginCarol.loginCarol(username= username_to, password=my_password_to,
 token_to.newToken()
 ```
 
-To copy all DMs and connector with staging tables and mappinngs: 
+To copy all DMs, connector with staging tables and mappinngs and named queries: 
   ```python
 from pycarol.cloneTenant import cloneTenant
 
 ct = cloneTenant.cloneTenant(token_from,token_to)
 ct.copyAllDMs(overwrite=True)
 ct.copyAllConnectors(overwrite=True,copy_mapping=True)
+ct.copyAllNamedQueries(overwrite=True)
 
 ```
 
@@ -295,4 +296,12 @@ ct = cloneTenant.cloneTenant(token_from,token_to)
 ct.copyConnectors( {"protheus" : ["sa1010","sb1010"]}, copy_mapping=True, overwrite=True)
 
 ```
-The code snippet above will copy the conector names `protheus` and both the stagings `sa1010` and `sb1010`, including mappings
+The code snippet above will copy the conector names `protheus` and both the stagings `sa1010` and `sb1010`, including mappings. Finally, coping only 
+selected named queries: 
+
+  ```python
+from pycarol.cloneTenant import cloneTenant
+ct = cloneTenant.cloneTenant(token_from,token_to)
+ct.copyNamedQueries( ['averageTicketbyClient','recommendationForUser'], overwrite=True)
+
+```

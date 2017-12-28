@@ -93,7 +93,7 @@ class namedQueries:
         self._getParam()
 
 
-    def getByName(self, named_query, save_file=True, filename='namedQueries.json'):
+    def getByName(self, named_query, save_file=False, filename='namedQueries.json'):
         '''
         Copy all named queries from a tenant
         '''
@@ -132,7 +132,7 @@ class namedQueries:
         self.getByName(named_query, save_file=False)
         return self.paramDict
 
-    def creatingNamedQueries(self, namedQueries):
+    def creatingNamedQueries(self, namedQueries,overwrite = True):
         '''
         Create named queries at the new tenant.
         :param token: AccessToken tenant
@@ -141,28 +141,39 @@ class namedQueries:
         :return: empty
         '''
 
-        errors = True
-        while errors:
-            url_filter = "https://{}.carol.ai{}/api/v2/queries/filter?offset={}&pageSize={}&sortOrder={}&indexType={}".format(
-                self.token_object.domain,  self.dev, str(self.offset), str(0), self.sortOrder, self.indexType)
-            self.lastResponse = requests.post(url=url_filter, headers=self.headers, json=namedQueries)
-            if not self.lastResponse.ok:
-                # error handler for token
-                if self.lastResponse.reason == 'Unauthorized':
-                    self.token_object.refreshToken()
-                    self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
-                    continue
-                raise Exception(self.lastResponse.text)
-            errors = False
 
-        url_filter = 'https://{}.carol.ai{}/api/v1/namedQueries'.format(self.token_object.domain, self.dev)
+        url_filter = 'https://{}.carol.ai{}/api/v2/named_queries'.format(self.token_object.domain, self.dev)
+        count = 0
+        rType = "POST"
         for query in namedQueries:
+            count+=1
             query.pop('mdmId', None)
             query.pop('mdmTenantId', None)
-            response = requests.post(url=url_filter, headers=self.headers, json=query)
-            if not response.ok:
-                print('Error sending named query: {}'.format(response.text))
-        print('Finished!')
+            while True:
+                self.lastResponse  = requests.request(rType ,url=url_filter, headers=self.headers, json=query)
+                if not self.lastResponse.ok:
+                    # error handler for token
+                    if self.lastResponse.reason == 'Unauthorized':
+                        self.token_object.refreshToken()
+                        self.headers = {'Authorization': self.token_object.access_token,
+                                        'Content-Type': 'application/json'}
+                        continue
+                    elif ('Record already exists' in self.lastResponse.json()['errorMessage']) and (overwrite):
+                        self.getByName(query['mdmQueryName'])
+                        mdmId = self.named_query_dict[query['mdmQueryName']]['mdmId']
+                        url_filter = 'https://{}.carol.ai{}/api/v2/named_queries/{}'.format(self.token_object.domain,
+                                                                                         self.dev,mdmId)
+
+
+                        rType = "PUT"
+                        continue
+
+                    raise Exception(self.lastResponse.text)
+                break
+            url_filter = 'https://{}.carol.ai{}/api/v2/named_queries'.format(self.token_object.domain, self.dev)
+            rType = "POST"
+            print('{}/{} named queries copied'.format(count, len(namedQueries)), end='\r')
+
 
     def deleteNamedQueries(self,namedQueries):
         '''
