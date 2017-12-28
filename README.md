@@ -2,12 +2,13 @@
 
 # Table of Contents
 1. [APIs Implemented](#apis-implemented)
-2. [Using pyCarol](#using-pyCarol)
+3. [Using pyCarol](#using-pyCarol)
+   1. [Running on a local Machine](#running-on-a-local-machine)
    1. [Processing filter queries](#processing-filter-queries)
-   2. [Processing named queries](#processing-named-queries)
-   3. [Sending data](#sending-data)
-3. [Using pyCarol](#using-pycarol)
-4. [Cloning a tenant](#cloning-a-tenant)
+   1. [Processing named queries](#processing-named-queries)
+   1. [Sending data](#sending-data)
+4. [Using pyCarol](#using-pycarol)
+5. [Cloning a tenant](#cloning-a-tenant)
 
 
 
@@ -78,6 +79,7 @@ This package implements some of Carol's APIs. The following endpoints are implem
         
  We also have a Schema Generator (schemaGenerator.py).
  
+
  
  ### Using pyCarol
  
@@ -92,6 +94,19 @@ print('This is a valid access token {}'.format(token_object.access_token))
 token_object.refreshToken()
 print('This is refreshed access token {}'.format(token_object.access_token))
 ```  
+#####  Running on a local Machine
+
+If you are running the application on a local machine you need to enter the port numer you are using:
+
+```python
+from pycarol import loginCarol
+token_object = loginCarol.loginCarol(username= username, password=my_password, 
+                                     domain = my_domain, connectorId=my_connectorId)
+                                     
+token_object.dev = ':8888'                                 
+token_object.newToken()
+```
+
 
 ##### Processing filter queries
 
