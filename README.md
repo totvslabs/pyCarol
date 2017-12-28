@@ -274,7 +274,7 @@ OBS: It is not possible to create a mapping using pycarol. The Mapping has to be
 
 ### Cloning a tenant
 
-To clone a tenant we need fist to generate two token object:
+To clone a tenant we need fist to generate two token objects:
 
   ```python
 from pycarol import loginCarol
@@ -299,7 +299,7 @@ ct.copyAllNamedQueries(overwrite=True)
 
 ```
 
-If `overwrite = True` it will oberwrite DMs/connectores with the same name. `copy_mapping = True` will create the mappings 
+If `overwrite = True` it will overwrite DMs/connectors with the same name. `copy_mapping = True` will create the mappings 
 for each staging table. 
 It is possible to copy only a selected number of DMs from a tenant using:
   ```python
