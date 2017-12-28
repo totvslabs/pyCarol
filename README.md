@@ -101,7 +101,7 @@ print('This is refreshed access token {}'.format(token_object.access_token))
 ```  
 #####  Running on a local Machine
 
-If you are running the application on a local machine you need to enter the port numer you are using:
+If you are running the application on a local machine you need to enter the port you are using:
 
 ```python
 from pycarol import loginCarol
