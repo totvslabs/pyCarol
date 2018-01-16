@@ -161,7 +161,7 @@ class queryCarol:
             query = json.loads(self.lastResponse.text)
 
             count += query['count']
-            scrollId = query['scrollId']
+            scrollId = query.get('scrollId', None)
             url_filter = "https://{}.carol.ai{}/api/v2/queries/filter/{}".format(self.token_object.domain, self.dev, scrollId)
 
             if set_param:
@@ -172,7 +172,7 @@ class queryCarol:
                 else:
                     self.totalHits = query["totalHits"]
 
-                self.querystring  = querystring = {"indexType":self.indexType}
+                self.querystring = {"indexType":self.indexType}
                 set_param = False
                 if self.safe_check:
                     self.mdmId_list = []
