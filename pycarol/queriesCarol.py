@@ -93,7 +93,7 @@ class queryCarol:
                 if self.safe_check:
                     self.mdmId_list = []
                 if self.get_errors:
-                    self.query_errors.update({elem.get('mdmId',elem) :  elem.get('mdmErrors',elem) for elem in query if elem['mdmErrors']})
+                    self.query_errors = {}
 
             if self.only_hits:
                 query = query['hits']
@@ -177,7 +177,7 @@ class queryCarol:
                 if self.safe_check:
                     self.mdmId_list = []
                 if self.get_errors:
-                    self.mdmId_list = {}
+                    self.query_errors = {}
 
             if self.only_hits:
                 query = query['hits']
