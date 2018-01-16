@@ -161,9 +161,6 @@ class stagingSchema(object):
         self.response = self.response.json()
 
 
-
-
-
     def getSchema(self,stagingName,connectorId):
 
         self.schema = {}
@@ -182,19 +179,6 @@ class stagingSchema(object):
             break
 
         self.schema = self.response.json()
-
-
-
-
-
-        headers = {
-            'accept': "application/json",
-            'authorization': "0776a350d4ee11e7b5090242ac110003",
-            'cache-control': "no-cache",
-            'postman-token': "b9f9d5e3-b11e-3a53-2d27-7488dcb6d601"
-        }
-
-        response = requests.request("GET", url, headers=headers, params=querystring)
 
 
 
