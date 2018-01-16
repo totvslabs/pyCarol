@@ -36,7 +36,7 @@ class queryCarol:
         self.scrollable = True
         self.get_all = True
         self.max_hits = float('inf')
-        self.query_errors = False
+        self.get_errors = False
         self.safe_check = False
 
     def _setQuerystring(self):
@@ -216,7 +216,7 @@ class queryCarol:
 
     def newQuery(self, json_query, max_hits = float('inf'), offset=0, pageSize=50, sortOrder='ASC', use_scroll = True,
                  sortBy='mdmLastUpdated', indexType='MASTER',only_hits = True, print_status=True,
-                 save_results=True, filename='query_result.json', safe_check=False, query_errors = False):
+                 save_results=True, filename='query_result.json', safe_check=False, get_errors = False):
 
         """
 
@@ -248,7 +248,7 @@ class queryCarol:
         self.save_results = save_results
         self.filename = filename
         self.safe_check = safe_check
-        self.query_errors = query_errors
+        self.get_errors = get_errors
         self.json_query = json_query
         self.max_hits = max_hits
 
@@ -332,7 +332,7 @@ class queryCarol:
 
 
     def downloadAll(self, dm_name, connectorId = None, pageSize=500, save_results = False,safe_check = False, use_scroll = True,
-                    filename ='allResults.json',print_status=True, max_hits = float('inf'), from_stag = False, query_errors = False,
+                    filename ='allResults.json',print_status=True, max_hits = float('inf'), from_stag = False, get_errors = False,
                     only_hits=True):
         if from_stag:
             assert connectorId is not None
@@ -345,7 +345,7 @@ class queryCarol:
 
         self.newQuery(json_query=json_query, pageSize=pageSize, save_results=save_results, only_hits= only_hits, indexType= indexType,
                       safe_check=safe_check,filename=filename, print_status=print_status, max_hits = max_hits, use_scroll = use_scroll,
-                      query_errors=query_errors)
+                      get_errors=get_errors)
 
 
 
