@@ -36,6 +36,8 @@ class queryCarol:
         self.scrollable = True
         self.get_all = True
         self.max_hits = float('inf')
+        self.query_errors = False
+        self.safe_check = False
 
     def _setQuerystring(self):
         if self.sortBy is None:
@@ -90,13 +92,20 @@ class queryCarol:
                 set_param = False
                 if self.safe_check:
                     self.mdmId_list = []
+                if self.get_errors:
+                    self.query_errors.update({elem.get('mdmId',elem) :  elem.get('mdmErrors',elem) for elem in query if elem['mdmErrors']})
+
             if self.only_hits:
                 query = query['hits']
                 if self.safe_check:
                     self.mdmId_list.extend([mdm_id['mdmId'] for mdm_id in query])
                     if len(self.mdmId_list) > len(set(self.mdmId_list)):
                         raise Exception('There are repeated records')
-                query = [elem.get('mdmGoldenFieldAndValues',elem) for elem in query]
+
+                if self.get_errors:
+                    self.query_errors.update({elem.get('mdmId',elem) :  elem.get('mdmErrors',elem) for elem in query if elem['mdmErrors']})
+
+                query = [elem.get('mdmGoldenFieldAndValues',elem) for elem in query if elem.get('mdmGoldenFieldAndValues',elem)]  #get mdmGoldenFieldAndValues if not empty and if it exists
                 self.query_data.extend(query)
             else:
                 query.pop('count')
@@ -135,8 +144,6 @@ class queryCarol:
         else:
             url_filter = "https://{}.carol.ai{}/api/v2/queries/named/{}".format(self.token_object.domain, self.dev, self.named_query)
 
-
-
         while count < self.totalHits:
             self.lastResponse = requests.post(url=url_filter, headers=self.headers, params=self.querystring,
                                               json= self.json_query)
@@ -158,7 +165,6 @@ class queryCarol:
             url_filter = "https://{}.carol.ai{}/api/v2/queries/filter/{}".format(self.token_object.domain, self.dev, scrollId)
 
             if set_param:
-
                 if self.get_all:
                     self.totalHits = query["totalHits"]
                 elif self.max_hits <= query["totalHits"]:
@@ -170,13 +176,20 @@ class queryCarol:
                 set_param = False
                 if self.safe_check:
                     self.mdmId_list = []
+                if self.get_errors:
+                    self.mdmId_list = {}
+
             if self.only_hits:
                 query = query['hits']
                 if self.safe_check:
                     self.mdmId_list.extend([mdm_id['mdmId'] for mdm_id in query])
                     if len(self.mdmId_list) > len(set(self.mdmId_list)):
                         raise Exception('There are repeated records')
-                query = [elem.get('mdmGoldenFieldAndValues',elem) for elem in query]
+
+                if self.get_errors:
+                    self.query_errors.update({elem.get('mdmId',elem) :  elem.get('mdmErrors',elem) for elem in query if elem['mdmErrors']})
+
+                query = [elem.get('mdmGoldenFieldAndValues',elem) for elem in query if elem.get('mdmGoldenFieldAndValues',elem)]  #get mdmGoldenFieldAndValues if not empty and if it exists
                 self.query_data.extend(query)
             else:
                 query.pop('count')
@@ -203,7 +216,7 @@ class queryCarol:
 
     def newQuery(self, json_query, max_hits = float('inf'), offset=0, pageSize=50, sortOrder='ASC', use_scroll = True,
                  sortBy='mdmLastUpdated', indexType='MASTER',only_hits = True, print_status=True,
-                 save_results=True, filename='query_result.json', safe_check=False):
+                 save_results=True, filename='query_result.json', safe_check=False, query_errors = False):
 
         """
 
@@ -235,6 +248,7 @@ class queryCarol:
         self.save_results = save_results
         self.filename = filename
         self.safe_check = safe_check
+        self.query_errors = query_errors
         self.json_query = json_query
         self.max_hits = max_hits
 
@@ -277,7 +291,8 @@ class queryCarol:
         self.totalHits = query["totalHits"]
         return self.totalHits
 
-    def namedQuery(self, named_query, json_query, max_hits = float('inf'), use_scroll = True, offset=0, pageSize=50, sortOrder='ASC', indexType='MASTER',
+    def namedQuery(self, named_query, json_query, max_hits = float('inf'), use_scroll = True, offset=0, pageSize=50,
+                   sortOrder='ASC', indexType='MASTER',
                    only_hits=True, sortBy='mdmLastUpdated', safe_check= False,
                    print_status=True, save_results=False, filename='results_json.json'):
 
@@ -317,7 +332,7 @@ class queryCarol:
 
 
     def downloadAll(self, dm_name, connectorId = None, pageSize=500, save_results = False,safe_check = False, use_scroll = True,
-                    filename ='allResults.json',print_status=True, max_hits = float('inf'), from_stag = False,
+                    filename ='allResults.json',print_status=True, max_hits = float('inf'), from_stag = False, query_errors = False,
                     only_hits=True):
         if from_stag:
             assert connectorId is not None
@@ -329,7 +344,8 @@ class queryCarol:
 
 
         self.newQuery(json_query=json_query, pageSize=pageSize, save_results=save_results, only_hits= only_hits, indexType= indexType,
-                      safe_check=safe_check,filename=filename, print_status=print_status, max_hits = max_hits, use_scroll = use_scroll)
+                      safe_check=safe_check,filename=filename, print_status=print_status, max_hits = max_hits, use_scroll = use_scroll,
+                      query_errors=query_errors)
 
 
 
