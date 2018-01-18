@@ -388,3 +388,11 @@ class deleteFilter:
             _deleted = False
         if print_status:
             print('{}/{} records deleted'.format(len(self.lastResponse.json()),check_register))
+
+
+
+    def deleteAll(self, dm_name, indexType='MASTER',print_status=True):
+        json_query = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": dm_name}]}
+        self.deleteRegisters(json_query, indexType=indexType,print_status=print_status)
+
+
