@@ -133,7 +133,7 @@ class queryCarol:
 
     def _queryHandler_scroll(self,type_query='query'):
 
-        if self.offset == 0:
+        if not self.offset == 0:
             #self.offset = 0
             print('It is not possible to use offset when use scroll for pagination')
             raise('Please use the option use_scroll = False on the call.')
