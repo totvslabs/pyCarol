@@ -38,6 +38,7 @@ class queryCarol:
         self.max_hits = float('inf')
         self.get_errors = False
         self.safe_check = False
+        self.fields = None
 
     def _setQuerystring(self):
         if self.sortBy is None:
@@ -49,12 +50,22 @@ class queryCarol:
 
         if self.scrollable:
             self.querystring.update({"scrollable":self.scrollable})
+        if self.fields:
+            self.querystring.update({"fields": self.fields})
+
+
+
+    @staticmethod
+    def _setReturnFields(fields):
+        fields = ','.join(fields)
+        return fields
+
 
 
     def _oldQueryHandler(self,type_query= 'query'):
         set_param = True
-        count = self.offset
-        self.totalHits = float("inf")
+
+
         if self.save_results:
             file = open(self.filename, 'w', encoding='utf8')
 
@@ -63,8 +74,10 @@ class queryCarol:
         else:
             url_filter = "https://{}.carol.ai{}/api/v2/queries/named/{}".format(self.token_object.domain, self.dev,
                                                                               self.named_query)
-
-        while count < self.totalHits:
+        count = self.offset
+        toGet = float("inf")
+        downloaded = 0
+        while count < toGet:
             self.lastResponse = requests.post(url=url_filter, headers=self.headers, params=self.querystring,
                                               json=self.json_query)
             if not self.lastResponse.ok:
@@ -80,14 +93,15 @@ class queryCarol:
             self.lastResponse.encoding = 'utf8'
             query = json.loads(self.lastResponse.text)
             count += query['count']
-
+            downloaded += query['count']
             if set_param:
+                self.totalHits = query["totalHits"]
                 if self.get_all:
-                    self.totalHits = query["totalHits"]
+                    toGet = query["totalHits"]
                 elif self.max_hits <= query["totalHits"]:
-                    self.totalHits = self.max_hits
+                    toGet = self.max_hits
                 else:
-                    self.totalHits = query["totalHits"]
+                    toGet = query["totalHits"]
 
                 set_param = False
                 if self.safe_check:
@@ -122,7 +136,7 @@ class queryCarol:
 
             self.querystring['offset'] = count
             if self.print_status:
-                print('{}/{}'.format(count, self.totalHits), end='\r')
+                print('{}/{}'.format(downloaded, toGet), end='\r')
             if self.save_results:
                 file.write(json.dumps(query, ensure_ascii=False))
                 file.write('\n')
@@ -135,12 +149,10 @@ class queryCarol:
 
         if not self.offset == 0:
             #self.offset = 0
-            print('It is not possible to use offset when use scroll for pagination')
-            raise('Please use the option use_scroll = False on the call.')
+            raise ValueError('It is not possible to use offset when use scroll for pagination')
 
         set_param = True
         count = self.offset
-        self.totalHits = float("inf")
         if self.save_results:
             file = open(self.filename, 'w', encoding='utf8')
 
@@ -150,7 +162,9 @@ class queryCarol:
         else:
             url_filter = "https://{}.carol.ai{}/api/v2/queries/named/{}".format(self.token_object.domain, self.dev, self.named_query)
 
-        while count < self.totalHits:
+        toGet = float("inf")
+        downloaded = 0
+        while count < toGet:
             self.lastResponse = requests.post(url=url_filter, headers=self.headers, params=self.querystring,
                                               json= self.json_query)
             if not self.lastResponse.ok:
@@ -167,16 +181,18 @@ class queryCarol:
             query = json.loads(self.lastResponse.text)
 
             count += query['count']
+            downloaded += query['count']
             scrollId = query.get('scrollId', None)
             url_filter = "https://{}.carol.ai{}/api/v2/queries/filter/{}".format(self.token_object.domain, self.dev, scrollId)
 
             if set_param:
+                self.totalHits = query["totalHits"]
                 if self.get_all:
-                    self.totalHits = query["totalHits"]
+                    toGet = query["totalHits"]
                 elif self.max_hits <= query["totalHits"]:
-                    self.totalHits = self.max_hits
+                    toGet = self.max_hits
                 else:
-                    self.totalHits = query["totalHits"]
+                    toGet = query["totalHits"]
 
                 self.querystring = {"indexType":self.indexType}
                 set_param = False
@@ -212,7 +228,7 @@ class queryCarol:
                     break
 
             if self.print_status:
-                print('{}/{}'.format(count, self.totalHits), end='\r')
+                print('{}/{}'.format(downloaded, toGet), end='\r')
             if self.save_results:
                 file.write(json.dumps(query, ensure_ascii=False))
                 file.write('\n')
@@ -221,7 +237,7 @@ class queryCarol:
             file.close()
 
     def newQuery(self, json_query, max_hits = float('inf'), offset=0, pageSize=50, sortOrder='ASC', use_scroll = True,
-                 sortBy='mdmLastUpdated', indexType='MASTER',only_hits = True, print_status=True,
+                 sortBy='mdmLastUpdated', indexType='MASTER',only_hits = True, print_status=True, fields =None,
                  save_results=True, filename='query_result.json', safe_check=False, get_errors = False):
 
         """
@@ -258,6 +274,14 @@ class queryCarol:
         self.json_query = json_query
         self.max_hits = max_hits
 
+        if isinstance(fields,str):
+            fields = [fields]
+            fields = self._setReturnFields(fields)
+        elif filename is not None:
+            fields = self._setReturnFields(fields)
+
+        self.fields = fields
+
         if max_hits == float('inf'):
             self.get_all = True
         else:
@@ -269,7 +293,6 @@ class queryCarol:
             self._queryHandler_scroll(type_query='query')
         else:
             self._oldQueryHandler(type_query='query')
-
 
 
     def checkTotalHits(self, json_query):
@@ -298,7 +321,7 @@ class queryCarol:
         return self.totalHits
 
     def namedQuery(self, named_query, json_query, max_hits = float('inf'), use_scroll = True, offset=0, pageSize=50,
-                   sortOrder='ASC', indexType='MASTER',
+                   sortOrder='ASC', indexType='MASTER', fields =None,
                    only_hits=True, sortBy='mdmLastUpdated', safe_check= False,
                    print_status=True, save_results=False, filename='results_json.json'):
 
@@ -316,8 +339,14 @@ class queryCarol:
         self.save_results = save_results
         self.filename = filename
         self.use_scroll = use_scroll
-
         self.max_hits = max_hits
+
+        if isinstance(fields,str):
+            fields = [fields]
+            fields = self._setReturnFields(fields)
+        elif filename is not None:
+            fields = self._setReturnFields(fields)
+        self.fields = fields
 
         if max_hits == float('inf'):
             self.get_all = True
@@ -339,7 +368,7 @@ class queryCarol:
 
     def downloadAll(self, dm_name, connectorId = None, pageSize=500, save_results = False,safe_check = False, use_scroll = True,
                     filename ='allResults.json',print_status=True, max_hits = float('inf'), from_stag = False, get_errors = False,
-                    only_hits=True):
+                    only_hits=True, fields =None):
         if from_stag:
             assert connectorId is not None
             indexType = 'STAGING'
@@ -351,7 +380,7 @@ class queryCarol:
 
         self.newQuery(json_query=json_query, pageSize=pageSize, save_results=save_results, only_hits= only_hits, indexType= indexType,
                       safe_check=safe_check,filename=filename, print_status=print_status, max_hits = max_hits, use_scroll = use_scroll,
-                      get_errors=get_errors)
+                      get_errors=get_errors, fields = fields)
 
 
 
