@@ -156,7 +156,6 @@ class queryCarol:
         if self.save_results:
             file = open(self.filename, 'w', encoding='utf8')
 
-
         if type_query == 'query':
             url_filter = "https://{}.carol.ai{}/api/v2/queries/filter".format(self.token_object.domain, self.dev)
         else:
