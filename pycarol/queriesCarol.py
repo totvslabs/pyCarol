@@ -53,18 +53,14 @@ class queryCarol:
         if self.fields:
             self.querystring.update({"fields": self.fields})
 
-
-
     @staticmethod
     def _setReturnFields(fields):
         fields = ','.join(fields)
         return fields
 
 
-
     def _oldQueryHandler(self,type_query= 'query'):
         set_param = True
-
 
         if self.save_results:
             file = open(self.filename, 'w', encoding='utf8')
@@ -343,7 +339,7 @@ class queryCarol:
         if isinstance(fields,str):
             fields = [fields]
             fields = self._setReturnFields(fields)
-        elif filename is not None:
+        elif fields is not None:
             fields = self._setReturnFields(fields)
         self.fields = fields
 
