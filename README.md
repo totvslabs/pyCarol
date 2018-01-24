@@ -2,14 +2,15 @@
 
 # Table of Contents
 1. [APIs Implemented](#apis-implemented)
-3. [Using pyCarol](#using-pyCarol)
+2. [Using pyCarol](#using-pyCarol)
    1. [Getting an access token](#getting-an-access-token)
    1. [Running on a local Machine](#running-on-a-local-machine)
    1. [Processing filter queries](#processing-filter-queries)
    1. [Processing named queries](#processing-named-queries)
    1. [Sending data](#sending-data)
-4. [Using pyCarol](#using-pycarol)
-5. [Cloning a tenant](#cloning-a-tenant)
+3. [Carol Apps](#carol-apps)
+4. [Cloning a tenant](#cloning-a-tenant)
+5. [pyCarol utils](#pycarol-utils)
 
 
 
@@ -74,9 +75,16 @@ This package implements some of Carol's APIs. The following endpoints are implem
         2. DELETE - /api/v1/applications/{applicationId}
         3. GET - /api/v1/applications/name/{applicationName}
         4. GET - /api/v1/applications/{applicationId}/stats
+        
+    v1 Tenant Apps (tenantAppsCarol)
+        1. GET - /api/v1/tenantApps
+        2. GET - /api/v1/tenantApps/{id}
+        3. GET - /api/v1/tenantApps/name/{name}
+        4. GET -/api/v1/tenantApps/{tenantAppId}/settings
 
     - v1 Database Toolbelt Admin (toolbeltAdmin.py)
         1. DELETE - /api/v1/databaseToolbelt/filter  (deprecated)
+        
         
  We also have a Schema Generator (schemaGenerator.py).
  
@@ -272,6 +280,25 @@ The parameter `step_size` says how many registers will be sent each time. Rememb
 OBS: It is not possible to create a mapping using pycarol. The Mapping has to be done via the UI
 
 
+
+### Carol Apps
+We can use pyCarol to access the settings of a Carol App.  
+  ```python
+from pycarol import loginCarol, tenantAppsCarol
+token = loginCarol.loginCarol(username= username_from, password=my_password_from, 
+                                     domain = my_domain_from, connectorId=my_connectorId_from)
+token.newToken()
+app = tenantAppsCarol.tenantApps(token)
+app.getSettings(appName='studentRetention')
+print(app.appSettings)
+> {'subsidiary':'1n','activeenrollment':'2n','finishedenrollment':'3n',
+     'cancelledenrollment':'4','maximumperiod':'5n','defaultlimit':'6n',
+     'relattendances':'7n','relevantmajors':'8n','trigger':'9n'}
+```
+The settings will be returned as a dictionary where the keys are the parameter names and the values are the value for 
+for that parameter. We can access the full settings as a dictionary through the variable `app.fullSettings`, where the keys
+are the parameter names and the values are the full responses for that parameter. 
+
 ### Cloning a tenant
 
 To clone a tenant we need fist to generate two token objects:
@@ -325,3 +352,28 @@ ct = cloneTenant.cloneTenant(token_from,token_to)
 ct.copyNamedQueries( ['averageTicketbyClient','recommendationForUser'], overwrite=True)
 
 ```
+
+
+### pyCarol utils
+Sometimes the human being can be lazy. So, for those moments, we create a util to quickly create a data model
+from a json:
+  ```python
+from pycarol.utils import lazyguy
+from pycarol import loginCarol
+import json
+token = loginCarol.loginCarol(username= username_from, password=my_password_from, 
+                                     domain = my_domain_from, connectorId=my_connectorId_from)
+json_query = """{"tenantId":"e7dbd874-ea9d-4092-afa4-d2f68acaaaf4","id":1,"createdAt":"2015-11-16T17:34:37-02:00",
+"subtotal":410.1,"course_status": "asdasd"}"""
+json_sample = json.loads(json_query)
+
+lg = lazyguy.lazeDM(token)
+lg.start(json_sample, mdmName='lazy',profileTitle = 'lazy',publish=False ,overwrite=True)
+```
+
+This will create a DM named `lazy` with the profile title `lazy`. The DM will not be publish. If there already exists a DM
+with the given name, we can use the `overwrite` parameter to overwrite it. 
+There are some limitations to this function: 
+   1. We do not allow to create DM with nested fields. 
+   2. If the variable we are trying to create already exists, and the type of those are different, 
+    we will get an error. 
