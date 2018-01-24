@@ -76,7 +76,7 @@ This package implements some of Carol's APIs. The following endpoints are implem
         3. GET - /api/v1/applications/name/{applicationName}
         4. GET - /api/v1/applications/{applicationId}/stats
         
-    v1 Tenant Apps (tenantAppsCarol)
+    - v1 Tenant Apps (tenantAppsCarol)
         1. GET - /api/v1/tenantApps
         2. GET - /api/v1/tenantApps/{id}
         3. GET - /api/v1/tenantApps/name/{name}
