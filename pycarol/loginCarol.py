@@ -71,6 +71,8 @@ class loginCarol:
         if token.ok:
             self.access_token = json.loads(token.text)['access_token']
             self.refresh_token = json.loads(token.text)['refresh_token']
+        elif ('Cannot find the provided refresh' in token.json()['errorMessage']):
+            self.newToken()
         else:
             raise Exception(token.text)
 
