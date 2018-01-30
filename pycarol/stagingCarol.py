@@ -80,16 +80,15 @@ class sendDataCarol:
                 ite = False
 
     @classmethod
-    def from_json(cls, token, filename,read_lines = True):
+    def from_json(cls, token, filename, read_lines = True):
 
-        data = []
         with open(filename, 'r') as data_file:
             if read_lines:
+                data = []
                 for file in data_file.readlines():
                     data.append(json.loads(file))
             else:
-                json_data = data_file.read()
-                data = json.loads(json_data)
+                data = json.load(data_file)
 
         ret = sendDataCarol(token)
         ret.data = data

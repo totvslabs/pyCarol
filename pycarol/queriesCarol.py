@@ -189,7 +189,7 @@ class queryCarol:
                 else:
                     toGet = query["totalHits"]
 
-                self.querystring = {"indexType":self.indexType}
+                #self.querystring = {"indexType":self.indexType}
                 set_param = False
                 if self.safe_check:
                     self.mdmId_list = []
