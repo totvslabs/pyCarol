@@ -17,6 +17,7 @@ class sendDataCarol:
         self.step_size = 100
         self.url_filter = None
         self.print_stats = False
+        self.sent = False
 
     def _streamData(self,data):
         i = 0
@@ -53,7 +54,7 @@ class sendDataCarol:
         self.url_filter = "https://{}.carol.ai{}/api/v2/staging/tables/{}?returnData=false&applicationId={}" \
             .format(self.token_object.domain, self.dev, self.stagingName, self.token_object.connectorId)
 
-
+        self.sent = False
         gen = self._streamData(self.data)
 
         data_size = len(self.data)
@@ -78,6 +79,7 @@ class sendDataCarol:
             data_json = gen.__next__()
             if data_json ==[]:
                 ite = False
+        self.sent = True
 
     @classmethod
     def from_json(cls, token, filename, read_lines = True):
