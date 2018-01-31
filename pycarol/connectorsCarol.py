@@ -42,7 +42,7 @@ class connectorsCarol:
             self.connectorLabel = connectorLabel
 
         self.groupName = groupName
-        url = "https://{}.carol.ai{}/api/v1/applications".format(self.token_object.domain, self.dev)
+        url = "https://{}.carol.ai{}/api/v1/connectors".format(self.token_object.domain, self.dev)
 
 
         payload = {  "mdmName": self.connectorName,   "mdmGroupName": self.groupName,   "mdmLabel": { "en-US": self.connectorLabel }}
@@ -70,7 +70,7 @@ class connectorsCarol:
 
     def deleteConnector(self,connectorId, forceDeletion = True):
         self.connectorId = connectorId
-        url = "https://{}.carol.ai{}/api/v1/applications/{}".format(self.token_object.domain, self.dev,self.connectorId)
+        url = "https://{}.carol.ai{}/api/v1/connectors/{}".format(self.token_object.domain, self.dev,self.connectorId)
         querystring = {"forceDeletion": forceDeletion}
 
         while True:
@@ -88,7 +88,7 @@ class connectorsCarol:
 
     def getConnectorsByName(self,connectorName):
         self.connectorName = connectorName
-        url = "https://{}.carol.ai{}/api/v1/applications/name/{}".format(self.token_object.domain, self.dev,self.connectorName)
+        url = "https://{}.carol.ai{}/api/v1/connectors/name/{}".format(self.token_object.domain, self.dev,self.connectorName)
 
         while True:
             self.response = requests.request("GET", url, headers=self.headers)
@@ -125,7 +125,7 @@ class connectorsCarol:
         if save_results:
             file = open(filename, 'w', encoding='utf8')
         while count < self.totalHits:
-            url_filter = "https://{}.carol.ai{}/api/v1/applications".format(self.token_object.domain, self.dev)
+            url_filter = "https://{}.carol.ai{}/api/v1/connectors".format(self.token_object.domain, self.dev)
             self.lastResponse = requests.request("GET", url_filter, headers=self.headers, params=self.querystring)
             if not self.lastResponse.ok:
                 # error handler for token
@@ -159,7 +159,7 @@ class connectorsCarol:
     def connectorStats(self,connectorId):
 
 
-        url = "https://{}.carol.ai{}/api/v1/applications/{}/stats".format(self.token_object.domain, self.dev,connectorId)
+        url = "https://{}.carol.ai{}/api/v1/connectors/{}/stats".format(self.token_object.domain, self.dev,connectorId)
         while True:
             self.response = requests.request("GET", url, headers=self.headers)
             if not self.response.ok:

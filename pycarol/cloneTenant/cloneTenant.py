@@ -1,6 +1,6 @@
 #from cloneTenant.functions import *
 from .. import entityTemplateCarol as ett
-from .. import applicationsCarol as appl
+from .. import connectorsCarol as appl
 from .. import stagingCarol as stg
 from .. import entityMappingsCarol as etm
 from .. import namedQueryCarol as nmc
@@ -184,6 +184,8 @@ class cloneTenant(object):
                 if list_conn[map_type] == connector:
                     connector = list_conn
                     break
+            else:
+                raise ValueError('{} does not exist in the tenant'.format(connector))
 
 
 
@@ -209,7 +211,7 @@ class cloneTenant(object):
 
                 aux_schema = stag.schema
                 aux_schema.pop('mdmTenantId')
-                aux_schema.pop('mdmStagingApplicationId')
+                #aux_schema.pop('mdmStagingApplicationId')
                 aux_schema.pop('mdmId')
                 aux_schema.pop('mdmCreated')
                 aux_schema.pop('mdmLastUpdated')
@@ -226,7 +228,7 @@ class cloneTenant(object):
                         entitySpace = mapping_fields.get('mdmEntitySpace')
                         mapping_fields.pop('mdmCreated')
                         mapping_fields.pop('mdmLastUpdated')
-                        connectorId = mapping_fields.pop('mdmApplicationId')
+                        connectorId = mapping_fields.pop('mdmConnectorId')
                         mappings_to_get = etm.entityMapping(self.token_from)
                         mappings_to_get.getSnapshot(connectorId, entityMappingsId, entitySpace)
                         _, aux_map = mappings_to_get.snap.popitem()

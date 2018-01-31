@@ -44,10 +44,10 @@ This package implements some of Carol's APIs. The following endpoints are implem
         1. GET/POST - /api/v1/entityTemplateTypes
         
     - v1 Entity Mappings (entityMappingsCarol.py)
-        1. GET/POST - /api/v1/applications/{applicationId}/entityMappings
-        2. GET/POST/DELETE - /api/v1/applications/{applicationId}/entityMappings/{entityMappingId}
-        3. PUT - /api/v1/applications/{applicationId}/entityMappings/{entityMappingId}/snapshot
-        4. POST - /api/v1/applications/{applicationId}/entityMappings/snapshot
+        1. GET/POST - /api/v1/connectors/{connectorId}/entityMappings
+        2. GET/POST/DELETE - /api/v1/connectors/{connectorId}/entityMappings/{entityMappingId}
+        3. PUT - /api/v1/connectors/{connectorId}/entityMappings/{entityMappingId}/snapshot
+        4. POST - /api/v1/connectors/{connectorId}/entityMappings/snapshot
         
     - v1 Entity Template (entityTemplateCarol.py)
         1. GET/POST - /api/api/v1/entities/templates/snapshot
@@ -70,11 +70,11 @@ This package implements some of Carol's APIs. The following endpoints are implem
         2. GET - /api/v1/verticals/{verticalId}
         3. GET - /api/v1/verticals/name/{verticalName}
 
-    - v1 Applications (applicationsCarol.py)
-        1. GET/POST - /api/v1/applications
-        2. DELETE - /api/v1/applications/{applicationId}
-        3. GET - /api/v1/applications/name/{applicationName}
-        4. GET - /api/v1/applications/{applicationId}/stats
+    - v1 Connectors (connectorsCarol.py)
+        1. GET/POST - /api/v1/connectors
+        2. DELETE - /api/v1/connectors/{connectorId}
+        3. GET - /api/v1/connectors/name/{connectorName}
+        4. GET - /api/v1/connectors/{connectorId}/stats
         
     - v1 Tenant Apps (tenantAppsCarol)
         1. GET - /api/v1/tenantApps
