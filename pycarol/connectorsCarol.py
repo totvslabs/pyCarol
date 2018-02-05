@@ -1,5 +1,6 @@
 import json
 import requests
+from collections import defaultdict
 #from . import utils
 
 class connectorsCarol:
@@ -21,6 +22,7 @@ class connectorsCarol:
         self.includeConnectors = False
         self.includeMappings = False
         self.includeConsumption = False
+        self.staging2connMap = None
 
         self._setQuerystring()
 
@@ -157,8 +159,6 @@ class connectorsCarol:
             file.close()
 
     def connectorStats(self,connectorId):
-
-
         url = "https://{}.carol.ai{}/api/v1/connectors/{}/stats".format(self.token_object.domain, self.dev,connectorId)
         while True:
             self.response = requests.request("GET", url, headers=self.headers)
@@ -172,4 +172,28 @@ class connectorsCarol:
             break
         conn_stats = self.response.json()['aggs']
         self.connectorsStats_ = {key : list(value['stagingEntityStats'].keys()) for key, value in conn_stats.items()}
+
+    def findConectorByStaging(self, staging_name = None):
+        d = defaultdict(list)
+        self.getAll(print_status= False)
+        connectors = self.connectors
+        for connector in connectors:
+
+            current_connector = connector['mdmId']
+            self.connectorStats(current_connector)
+            conn_stats = self.connectorsStats_
+            for i in conn_stats[current_connector]:
+                d[i].append(current_connector)
+
+        self.staging2connMap = d
+        if staging_name:
+            conn = d.get(staging_name,None)
+            if len(conn)>1:
+                print('More than one connector with the staging {}'.format(staging_name))
+                return conn
+            elif conn is None:
+                raise ValueError('There is no staging named {}'.format(staging_name))
+
+
+
 
