@@ -26,10 +26,9 @@ class queryCarol:
         self.sortBy = None
         self.indexType = 'MASTER'
         self.drop_list = None
-        if self.token_object.access_token is None:
-            self.token_object.newToken()
 
-        self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+
+        self.headers = self.token_object.headers_to_use
         self.query_data = []
         self.querystring = {}
         self.only_hits = True
