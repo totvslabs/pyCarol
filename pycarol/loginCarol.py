@@ -69,6 +69,7 @@ class loginCarol:
             self.X_Auth_ConnectorId = json.loads(token.text)['X-Auth-ConnectorId']
             self.headers_to_use = {'x-auth-key': self.X_Auth_Key, 'x-auth-connectorid': self.X_Auth_ConnectorId,
                                    'Content-Type': 'application/json'}
+            self.connectorId = self.X_Auth_ConnectorId
             return token
         else:
             raise Exception(token.text)
@@ -101,9 +102,7 @@ class loginCarol:
         else:
             raise Exception(token.text)
 
-    def revokeAPIKey(self, X_Auth_Key=None, X_Auth_ConnectorId=None):
-
-        raise ValueError('not implemented')
+    def revokeAPIKey(self, X_Auth_Key = None, X_Auth_ConnectorId = None):
 
         if X_Auth_Key is not None:
             self.X_Auth_Key = X_Auth_Key
@@ -113,32 +112,18 @@ class loginCarol:
 
         assert self.X_Auth_ConnectorId is not None
         assert self.X_Auth_Key is not None
+        assert self.access_token is not None
 
-        self.headers = {'x-auth-key': self.X_Auth_Key, 'x-auth-connectorid': self.X_Auth_ConnectorId,
-                        'Content-Type': 'application/x-www-form-urlencoded'}
+        self.headers = {'Authorization': self.access_token, 'Content-Type': 'application/x-www-form-urlencoded'}
 
         payload = "apiKey={}&connectorId={}".format(self.X_Auth_Key, self.X_Auth_ConnectorId)
-        url = "https://{}.carol.ai{}/api/v2/apiKey/details".format(self.domain, self.dev)
+        url = "https://{}.carol.ai{}/api/v2/apiKey/revoke".format(self.domain, self.dev)
 
         token = requests.request("POST", url, data=payload, headers=self.headers)
         if token.ok:
-            self.APIKeyDetails = json.loads(token.text)
+            print('APYKey: {} was revoked'.format(self.X_Auth_Key))
         else:
             raise Exception(token.text)
-
-
-        url = "https://robsonttt.carol.ai/api/v2/apiKey/revoke"
-
-        payload = "apiKey=15fd9ca00b3311e891bc3a4115ef3a9f&connectorId=c5c426b0d89611e7a5620e4789ade3a3"
-        headers = {
-            'accept': "application/json",
-            'authorization': "214027500b2811e891bc3a4115ef3a9f",
-            'content-type': "application/x-www-form-urlencoded",
-            'cache-control': "no-cache",
-            'postman-token': "15fe013a-3726-7192-c4a1-92fabd4ab375"
-        }
-
-
 
     def newToken(self, connectorId=None):
         """
