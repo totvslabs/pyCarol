@@ -4,6 +4,7 @@
 1. [APIs Implemented](#apis-implemented)
 2. [Using pyCarol](#using-pyCarol)
    1. [Getting an access token](#getting-an-access-token)
+   1. [Using API Key](#using-api-key)
    1. [Running on a local Machine](#running-on-a-local-machine)
    1. [Processing filter queries](#processing-filter-queries)
    1. [Processing named queries](#processing-named-queries)
@@ -21,6 +22,11 @@ This package implements some of Carol's APIs. The following endpoints are implem
     - V2 OAuth2: (loginCarol.py)
         1. POST - /api/v2/oauth2/token
         2. POST/GET - /api/v2/oauth2/token/{access_token}
+        
+    - v2 ApiKey (loginCarol.py)
+        1. POST - /api/v2/apiKey/details
+        2. POST - /api/v2/apiKey/issue
+        3. POST - /api/v2/apiKey/revoke
         
     - v2 Tenants (utils.py)
         1. GET - /api/v2/tenants/domain/{domain}
@@ -118,11 +124,44 @@ token_object = loginCarol.loginCarol(username= username, password=my_password,
                                      
 token_object.dev = ':8888'                                 
 token_object.newToken()
+
 ```
 
+##### Using API Key
+To use API keys instead of OAuth2
+
+```python
+from pycarol import loginCarol, queriesCarol
+token_object = loginCarol.loginCarol(X_Auth_Key =  X_Auth_Key,
+                                     X_Auth_ConnectorId= X_Auth_ConnectorId)
+token_object.getAPIKey()
+print('This is a API key {}'.format(token_object.X_Auth_Key))
+token_object.refreshToken()
+print('This is the connector Id {}'.format(token_object.X_Auth_ConnectorId))
+```
+
+To be able of getting the details you can do:
+
+```python
+from pycarol import loginCarol, queriesCarol
+token_object = loginCarol.loginCarol(X_Auth_Key =  X_Auth_Key,
+                                     X_Auth_ConnectorId= X_Auth_ConnectorId)
+token_object.getAPIKeyDetails()
+```
+
+Finally, to revoke an API key:
+
+```python
+from pycarol import loginCarol, queriesCarol
+token_object = loginCarol.loginCarol(username= username, password=my_password, 
+                                     domain = my_domain, connectorId=my_connectorId)
+token_object.newToken()
+
+token_object.revokeAPIKey(X_Auth_Key =  X_Auth_Key,
+                          X_Auth_ConnectorId= X_Auth_ConnectorId)
+```
 
 ##### Processing filter queries
-
 
 ```python
 from pycarol import loginCarol, queriesCarol
