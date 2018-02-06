@@ -31,7 +31,7 @@ class tenantsCarol:
     def __init__(self,token_object):
         self.dev = token_object.dev
         self.token_object = token_object
-        self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+        self.headers = self.token_object.headers_to_use
 
     def getInfo(self,domain):
         _true = True

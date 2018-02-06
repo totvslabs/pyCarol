@@ -6,10 +6,8 @@ import re
 class namedQueries:
     def __init__(self, token_object):
         self.token_object = token_object
-        if self.token_object.access_token is None:
-            self.token_object.newToken()
         self.dev = token_object.dev
-        self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+        self.headers = self.token_object.headers_to_use
         self.offset = 0
         self.pageSize = 50
         self.sortOrder = 'ASC'

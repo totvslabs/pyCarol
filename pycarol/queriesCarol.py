@@ -383,7 +383,7 @@ class deleteFilter:
         self.dev = token_object.dev
         self.token_object = token_object
         self.indexType = 'MASTER'
-        self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+        self.headers = self.token_object.headers_to_use
         self.query_data = []
         self.querystring = {"indexType": self.indexType, "tenantId": self.token_object.tenantId}
 

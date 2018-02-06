@@ -10,10 +10,7 @@ class connectorsCarol:
 
         self.groupName = "Others"
 
-        if self.token_object.access_token is None:
-            self.token_object.newToken()
-
-        self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+        self.headers = self.token_object.headers_to_use
 
         self.offset = 0
         self.pageSize = 50
@@ -45,10 +42,7 @@ class connectorsCarol:
 
         self.groupName = groupName
         url = "https://{}.carol.ai{}/api/v1/connectors".format(self.token_object.domain, self.dev)
-
-
         payload = {  "mdmName": self.connectorName,   "mdmGroupName": self.groupName,   "mdmLabel": { "en-US": self.connectorLabel }}
-
 
         while True:
             self.response = requests.request("POST", url, json=payload,headers=self.headers)

@@ -6,10 +6,7 @@ class entityTemplateTypeIds(object):
     def __init__(self, token_object):
         self.dev = token_object.dev
         self.token_object = token_object
-        if self.token_object.access_token is None:
-            self.token_object.newToken()
-
-        self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+        self.headers = self.token_object.headers_to_use
         self.offset = 0
         self.pageSize = 100
         self.sortOrder = 'ASC'

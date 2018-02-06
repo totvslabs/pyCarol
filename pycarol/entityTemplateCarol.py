@@ -65,11 +65,7 @@ class deleteTemplate(object):
     def __init__(self, token_object):
         self.dev = token_object.dev
         self.token_object = token_object
-        if self.token_object.access_token is None:
-            self.token_object.newToken()
-
-
-        self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+        self.headers = self.token_object.headers_to_use
 
     def delete(self,entityTemplateId,entitySpace):
 
@@ -93,10 +89,8 @@ class entityTemplate(object):
     def __init__(self, token_object):
         self.dev = token_object.dev
         self.token_object = token_object
-        if self.token_object.access_token is None:
-            self.token_object.newToken()
+        self.headers = self.token_object.headers_to_use
 
-        self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
     def _setQuerystring(self):
         if self.sortBy is None:
             self.querystring = {"offset": self.offset, "pageSize": str(self.pageSize), "sortOrder": self.sortOrder}
@@ -232,10 +226,7 @@ class createTemplate(object):
 
         self.dev = token_object.dev
         self.token_object = token_object
-        if self.token_object.access_token is None:
-            self.token_object.newToken()
-
-        self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+        self.headers = self.token_object.headers_to_use
         self.template_dict = {}
 
         self.fields = fieldsCarol(self.token_object)
@@ -543,6 +534,7 @@ class createTemplate(object):
 
     #not done
     def _nested(self,mdmName, value, parentId=''):
+        raise ValueError('not implemented')
         payload = {"mdmName": mdmName, "mdmMappingDataType": entity_type.ent_type,
                    "mdmLabel": {"en-US": mdmName}, "mdmDescription": {"en-US": mdmName}}
         entity_type = entType.get_ent_type_for(type(value))
@@ -569,129 +561,3 @@ class createTemplate(object):
 
         return payload, parentId
 
-
-
-
-
-"""
-##############
-############################
-############################
-############################
-##############
-
-#To add fields, firts need to cread the field.  (OBS. there are a lot of pre created fields to be used.)
-
-url = "https://mario.carol.ai{}/api/v1/fields"
-
-payload = {"mdmName":"nome","mdmMappingDataType":"string","mdmFieldType":"PRIMITIVE","mdmLabel":{"en-US":"Nome"},"mdmDescription":{"en-US":"Nome"}}
-headers = {
-    'authorization': "2561c210b11611e78cce0242ac110003",
-    'content-type': "application/json;charset=UTF-8",
-    'accept': "application/json, text/plain, */*",
-    }
-
-response = requests.request("POST", url, json=payload, headers=headers)
-
-
-#response:
-''' 
-{"mdmName":"nome","mdmLabel":{"en-US":"Nome"},"mdmDescription":{"en-US":"Nome"},"mdmIndex":"ANALYZED","mdmAnalyzer":"STANDARD",
- "mdmMappingDataType":"STRING","mdmFields":[],"mdmForeignKeyField":false,"mdmFieldsFull":{},"mdmFieldType":"PRIMITIVE","mdmTags":[],
- "mdmId":"73792f30b11911e78cce0242ac110003","mdmEntityType":"mdmField","mdmCreated":"2017-10-14T19:54:12Z",
- "mdmLastUpdated":"2017-10-14T19:54:12Z","mdmTenantId":"8d45c660a85b11e7a2900242ac110003"}
-'''
-
-
-#a nested field
-
-import requests
-
-url = "https://mario.carol.ai{}/api/v1/fields"
-
-payload = {"mdmName":"nestedtest","mdmMappingDataType":"nested","mdmFieldType":"NESTED",
-           "mdmLabel":{"en-US":"nested test"},"mdmDescription":{"en-US":"nested"}}
-headers = {
-    'authorization': "2561c210b11611e78cce0242ac110003",
-    'content-type': "application/json;charset=UTF-8"
-    }
-
-response = requests.request("POST", url, data=payload, headers=headers)
-
-
-#response:
-''' 
-{"mdmName":"nestedtest","mdmLabel":{"en-US":"nested test"},"mdmDescription":{"en-US":"nested"},
- "mdmIndex":"ANALYZED","mdmAnalyzer":"STANDARD","mdmMappingDataType":"NESTED","mdmFields":[],
- "mdmForeignKeyField":false,"mdmFieldsFull":{},"mdmFieldType":"NESTED","mdmTags":[],"mdmId":"5abfc4c0b11b11e78cce0242ac110003",
- "mdmEntityType":"mdmField","mdmCreated":"2017-10-14T20:07:50Z","mdmLastUpdated":"2017-10-14T20:07:50Z",
- "mdmTenantId":"8d45c660a85b11e7a2900242ac110003"}
-'''
-
-
-
-
-
-#Then to add a field to a DM
-
-
-url = "https://mario.carol.ai{}/api/v1/entities/templates/4d7e5010b11611e78cce0242ac110003/onboardField/73792f30b11911e78cce0242ac110003"
-
-querystring = {"parentFieldId":""}
-
-headers = {
-    'authorization': "2561c210b11611e78cce0242ac110003",
-    'accept': "application/json, text/plain, */*"
-    }
-
-response = requests.request("POST", url, headers=headers, params=querystring)
-
-#Then to add nested a field to a DM
-
-import requests
-
-url = "https://mario.carol.ai{}/api/v1/entities/templates/4d7e5010b11611e78cce0242ac110003/onboardField/5abfc4c0b11b11e78cce0242ac110003"
-
-querystring = {"parentFieldId":""}
-
-headers = {
-    'accept-language': "en-US,en;q=0.8,pt-BR;q=0.6,pt;q=0.4",
-    'authorization': "2561c210b11611e78cce0242ac110003",
-    }
-
-response = requests.request("POST", url, headers=headers, params=querystring)
-
-
-
-# to add a chield to the nest field to a DM
-
-url = "https://mario.carol.ai{}/api/v1/entities/templates/4d7e5010b11611e78cce0242ac110003/onboardField/fcc94630b07911e793370242ac110003"
-
-querystring = {"parentFieldId":"5abfc4c0b11b11e78cce0242ac110003"}
-
-headers = {
-
-    'accept-language': "en-US,en;q=0.8,pt-BR;q=0.6,pt;q=0.4",
-    'authorization': "2561c210b11611e78cce0242ac110003"
-    }
-
-response = requests.request("POST", url, headers=headers, params=querystring)
-
-print(response.text)
-
-
-#Add profile title
-
-import requests
-
-url = "https://mario.carol.ai{}/api/v1/entities/templates/4d7e5010b11611e78cce0242ac110003/profileTitle"
-
-payload = ["mdmtaxid"]  #list of fields
-headers = {
-    'accept-language': "en-US,en;q=0.8,pt-BR;q=0.6,pt;q=0.4",
-    'authorization': "2561c210b11611e78cce0242ac110003"
-    }
-
-response = requests.request("POST", url, data=payload, headers=headers)
-
-"""

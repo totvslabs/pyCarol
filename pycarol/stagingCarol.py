@@ -9,10 +9,7 @@ class sendDataCarol:
     def __init__(self, token_object):
         self.dev = token_object.dev
         self.token_object = token_object
-        if self.token_object.access_token is None:
-            self.token_object.newToken()
-
-        self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
+        self.headers = self.token_object.headers_to_use
         self.stagingName = None
         self.step_size = 100
         self.url_filter = None
@@ -102,11 +99,7 @@ class stagingSchema(object):
     def __init__(self, token):
         self.dev = token.dev
         self.token_object = token
-        if self.token_object.access_token is None:
-            self.token_object.newToken()
-
-        self.headers = {'Authorization': self.token_object.access_token,
-                        'Content-Type': 'application/json'}
+        self.headers = self.token_object.headers_to_use
 
         self.connectorId =  self.token_object.connectorId
         self.schema = None
@@ -187,14 +180,12 @@ class getStagingDataCarol:
     def __init__(self, token_object):
         self.dev = token_object.dev
         self.token_object = token_object
-        if self.token_object.access_token is None:
-            self.token_object.newToken()
+        self.headers = self.token_object.headers_to_use
         self.offset = 0
         self.pageSize = 50
         self.sortOrder = 'ASC'
         self.sortBy = None
         self.drop_list = None
-        self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
         self.query_data = []
         self.table = None
         self.querystring = {}
