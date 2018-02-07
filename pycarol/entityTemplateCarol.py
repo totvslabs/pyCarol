@@ -90,6 +90,17 @@ class entityTemplate(object):
         self.dev = token_object.dev
         self.token_object = token_object
         self.headers = self.token_object.headers_to_use
+        self.fields_dict = {}
+
+
+    def _get_name_type_DMS(self,fields):
+        f = {}
+        for field in fields:
+            if field.get('mdmMappingDataType', None) not in ['NESTED', 'OBJECT']:
+                f.update({field['mdmName']: field['mdmMappingDataType']})
+            else:
+                f[field['mdmName']] = self._get_name_type_DMS(field['mdmFields'])
+        return f
 
     def _setQuerystring(self):
         if self.sortBy is None:
@@ -102,9 +113,11 @@ class entityTemplate(object):
         not_found = False
         while True:
             if by == 'name':
-                url = "https://{}.carol.ai{}/api/v1/entities/templates/name/{}".format(self.token_object.domain , self.dev,id)
+                url = "https://{}.carol.ai{}/api/v1/entities/templates/name/{}".format(self.token_object.domain ,
+                                                                                       self.dev, id)
             elif by == 'id':
-                url = "https://{}.carol.ai{}/api/v1/entities/templates/{}/working".format(self.token_object.domain , self.dev,id)
+                url = "https://{}.carol.ai{}/api/v1/entities/templates/{}/working".format(self.token_object.domain ,
+                                                                                          self.dev, id)
             else:
                 raise print('Type incorrect')
             self.lastResponse = requests.request("GET", url, headers=self.headers)
@@ -131,6 +144,7 @@ class entityTemplate(object):
             self.lastResponse.encoding = 'utf8'
             resp = json.loads(self.lastResponse.text)
             self.entityTemplate_ = {resp['mdmName'] : resp}
+            self.fields_dict.update({resp['mdmName']: self._get_name_type_DMS(resp['mdmFields'])})
 
 
     def getAll(self, offset=0, pageSize=-1, sortOrder='ASC', sortBy='mdmLastUpdated', print_status=False,
@@ -173,7 +187,8 @@ class entityTemplate(object):
 
             query = query['hits']
             self.template_data.extend(query)
-            self.template_dict.update({i['mdmName']: {'mdmId': i['mdmId'],'mdmEntitySpace': i['mdmEntitySpace'] } for i in query})
+            self.fields_dict.update({i['mdmName']: self._get_name_type_DMS(i['mdmFields']) for i in query})
+            self.template_dict.update({i['mdmName']: {'mdmId': i['mdmId'],'mdmEntitySpace': i['mdmEntitySpace'] } for i in query[:3]})
             self.querystring['offset'] = count
             if print_status:
                 print('{}/{}'.format(count, self.totalHits), end='\r')
