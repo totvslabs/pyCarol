@@ -192,7 +192,7 @@ query_response.newQuery(json_query= json_query, max_hits = 1000, only_hits=True)
 query_response.query_data
 #If I want to save the response 
 query_response.newQuery(json_query= json_query, max_hits = 1000, only_hits=True, save_results = True,
-                        filename = 'PATCH/response.json')
+                        filename = 'PATH/response.json')
 ```  
 The parameter `only_hits = True` will make sure that the only records into the path `$hits.mdmGoldenFieldAndValues`.
  If you want all the response use `only_hits = False`. Also, if your filter has aggregation, you should use 
