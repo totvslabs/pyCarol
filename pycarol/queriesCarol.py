@@ -211,7 +211,7 @@ class queryCarol:
                 query.pop('count')
                 query.pop('took')
                 query.pop('totalHits')
-                query.pop('scrollId')
+                #query.pop('scrollId')
                 self.query_data.append(query)
 
                 if 'aggs' in query:
