@@ -1,5 +1,6 @@
 import requests
 import json
+from ..queriesCarol import queryCarol
 
 def scrub(obj, bad):
     '''
@@ -28,7 +29,6 @@ def scrub(obj, bad):
         pass
 
 
-
 class tenantsCarol:
     def __init__(self,token_object):
         self.dev = token_object.dev
@@ -50,3 +50,6 @@ class tenantsCarol:
             self.response.encoding = 'utf8'
             self.tenantInfo = json.loads(self.response.text)
             _true =False
+
+
+

@@ -26,6 +26,7 @@ class queryCarol:
         self.sortBy = None
         self.indexType = 'MASTER'
         self.drop_list = None
+        self.flush_result = False
 
 
         self.headers = self.token_object.headers_to_use
@@ -115,7 +116,9 @@ class queryCarol:
                     self.query_errors.update({elem.get('mdmId',elem) :  elem.get('mdmErrors',elem) for elem in query if elem['mdmErrors']})
 
                 query = [elem.get('mdmGoldenFieldAndValues',elem) for elem in query if elem.get('mdmGoldenFieldAndValues',elem)]  #get mdmGoldenFieldAndValues if not empty and if it exists
-                self.query_data.extend(query)
+
+                if not self.flush_result:
+                    self.query_data.extend(query)
             else:
                 query.pop('count')
                 query.pop('took')
@@ -206,7 +209,9 @@ class queryCarol:
                     self.query_errors.update({elem.get('mdmId',elem) :  elem.get('mdmErrors',elem) for elem in query if elem['mdmErrors']})
 
                 query = [elem.get('mdmGoldenFieldAndValues',elem) for elem in query if elem.get('mdmGoldenFieldAndValues',elem)]  #get mdmGoldenFieldAndValues if not empty and if it exists
-                self.query_data.extend(query)
+
+                if not self.flush_result:
+                    self.query_data.extend(query)
             else:
                 query.pop('count')
                 query.pop('took')
@@ -232,7 +237,7 @@ class queryCarol:
 
     def newQuery(self, json_query, max_hits = float('inf'), offset=0, pageSize=50, sortOrder='ASC', use_scroll = True,
                  sortBy='mdmLastUpdated', indexType='MASTER',only_hits = True, print_status=True, fields =None,
-                 save_results=True, filename='query_result.json', safe_check=False, get_errors = False):
+                 save_results=True, filename='query_result.json', safe_check=False, get_errors = False, flush_result = False):
 
         """
 
@@ -249,9 +254,10 @@ class queryCarol:
         :param save_results: Save or not the result
         :param filename: File pacth and name to save the response
         :param safe_check: Check for repeated records
+        :param flush_result: bool. False to do not flush, True to flush the query data each iteration.
         :return: The response will be in the variable "query_data"
         """
-
+        self.flush_result = flush_result
         self.offset = offset
         self.pageSize = pageSize
         self.sortOrder = sortOrder
@@ -315,10 +321,11 @@ class queryCarol:
         return self.totalHits
 
     def namedQuery(self, named_query, json_query, max_hits = float('inf'), use_scroll = True, offset=0, pageSize=50,
-                   sortOrder='ASC', indexType='MASTER', fields =None,
+                   sortOrder='ASC', indexType='MASTER', fields =None, flush_result = False,
                    only_hits=True, sortBy='mdmLastUpdated', safe_check= False,
                    print_status=True, save_results=False, filename='results_json.json'):
 
+        self.flush_result = flush_result
         self.offset = offset
         self.pageSize = pageSize
         self.sortOrder = sortOrder
@@ -362,7 +369,7 @@ class queryCarol:
 
     def downloadAll(self, dm_name, connectorId = None, pageSize=500, save_results = False,safe_check = False, use_scroll = True,
                     filename ='allResults.json',print_status=True, max_hits = float('inf'), from_stag = False, get_errors = False,
-                    only_hits=True, fields =None):
+                    only_hits=True, fields =None, flush_result = False):
         if from_stag:
             assert connectorId is not None
             indexType = 'STAGING'
@@ -374,7 +381,7 @@ class queryCarol:
 
         self.newQuery(json_query=json_query, pageSize=pageSize, save_results=save_results, only_hits= only_hits, indexType= indexType,
                       safe_check=safe_check,filename=filename, print_status=print_status, max_hits = max_hits, use_scroll = use_scroll,
-                      get_errors=get_errors, fields = fields)
+                      get_errors=get_errors, fields = fields, flush_result = flush_result)
 
 
 
