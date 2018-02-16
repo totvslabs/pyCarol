@@ -369,7 +369,7 @@ class queryCarol:
 
     def downloadAll(self, dm_name, connectorId = None, pageSize=500, save_results = False,safe_check = False, use_scroll = True,
                     filename ='allResults.json',print_status=True, max_hits = float('inf'), from_stag = False, get_errors = False,
-                    only_hits=True, fields =None, flush_result = False):
+                    only_hits=True, fields =None, flush_result = False, sortBy=None):
         if from_stag:
             assert connectorId is not None
             indexType = 'STAGING'
@@ -379,7 +379,7 @@ class queryCarol:
             indexType = 'MASTER'
 
 
-        self.newQuery(json_query=json_query, pageSize=pageSize, save_results=save_results, only_hits= only_hits, indexType= indexType,
+        self.newQuery(json_query=json_query, pageSize=pageSize,sortBy=sortBy, save_results=save_results, only_hits= only_hits, indexType= indexType,
                       safe_check=safe_check,filename=filename, print_status=print_status, max_hits = max_hits, use_scroll = use_scroll,
                       get_errors=get_errors, fields = fields, flush_result = flush_result)
 
