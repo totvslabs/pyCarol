@@ -171,7 +171,7 @@ class loginCarol:
             self.access_token = json.loads(token.text)['access_token']
             self.refresh_token = json.loads(token.text)['refresh_token']
             self.headers_to_use = {'Authorization': self.access_token, 'Content-Type': 'application/json'}
-        elif ('Cannot find the provided refresh' in token.json()['errorMessage']):
+        elif ('Cannot find the provided refresh' in token.text):
             self.newToken()
         else:
             raise Exception(token.text)
