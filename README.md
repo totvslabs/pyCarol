@@ -128,25 +128,36 @@ token_object.newToken()
 ```
 
 ##### Using API Key
-To use API keys instead of OAuth2
+To use API keys instead of username and password:
+
+```python
+from pycarol import loginCarol
+token_object = loginCarol.loginCarol(X_Auth_Key =  X_Auth_Key,
+                                     X_Auth_ConnectorId = X_Auth_ConnectorId,
+                                     domain= domain )
+```  
+
+To generate an API key
 
 ```python
 from pycarol import loginCarol, queriesCarol
-token_object = loginCarol.loginCarol(X_Auth_Key =  X_Auth_Key,
-                                     X_Auth_ConnectorId= X_Auth_ConnectorId)
+token_object = loginCarol.loginCarol(username= username, password=my_password, 
+                                     domain = my_domain, connectorId=my_connectorId)
 token_object.getAPIKey()
 print('This is a API key {}'.format(token_object.X_Auth_Key))
 token_object.refreshToken()
 print('This is the connector Id {}'.format(token_object.X_Auth_ConnectorId))
 ```
 
-To be able of getting the details you can do:
+To be able of getting the details of the API key you can do:
 
 ```python
 from pycarol import loginCarol, queriesCarol
 token_object = loginCarol.loginCarol(X_Auth_Key =  X_Auth_Key,
                                      X_Auth_ConnectorId= X_Auth_ConnectorId)
+                                     
 token_object.getAPIKeyDetails()
+token_object.APIKeyDetails
 ```
 
 Finally, to revoke an API key:

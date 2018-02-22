@@ -4,24 +4,37 @@ from collections import defaultdict
 #from . import utils
 
 class connectorsCarol:
+    """
+    The end points implemented here are:
+    v1 Connectors (connectorsCarol.py)
+        1. GET/POST - /api/v1/connectors
+        2. DELETE - /api/v1/connectors/{connectorId}
+        3. GET - /api/v1/connectors/name/{connectorName}
+        4. GET - /api/v1/connectors/{connectorId}/stats
+    """
     def __init__(self, token_object):
         self.dev = token_object.dev
         self.token_object = token_object
 
+        self.response = None
+        self.connectorId = None
+        self.connectorLabel = None
+        self.connectorName = None
+
         self.groupName = "Others"
-
         self.headers = self.token_object.headers_to_use
-
         self.offset = 0
         self.pageSize = 50
         self.sortOrder = 'ASC'
         self.sortBy = None
+        self.totalHits = None
         self.includeConnectors = False
         self.includeMappings = False
         self.includeConsumption = False
         self.staging2connMap = None
-
         self._setQuerystring()
+        self.connectors = []
+
 
     def _setQuerystring(self):
         if self.sortBy is None:
@@ -34,6 +47,19 @@ class connectorsCarol:
 
 
     def createConnector(self,connectorName, connectorLabel = None, groupName = "Others", overwrite=False):
+        """
+        Create a connector
+        :param connectorName: name
+        :type connectorName: str
+        :param connectorLabel: label
+        :type connectorLabel: str
+        :param groupName: Group name
+        :type groupName: str
+        :param overwrite: Overwrite if it already exists. It will delete the connector and create a new one.
+        :type overwrite: bool
+        :return: None
+        :rtype: None
+        """
         self.connectorName = connectorName
         if connectorLabel is None:
             self.connectorLabel = self.connectorName
@@ -42,7 +68,8 @@ class connectorsCarol:
 
         self.groupName = groupName
         url = "https://{}.carol.ai{}/api/v1/connectors".format(self.token_object.domain, self.dev)
-        payload = {  "mdmName": self.connectorName,   "mdmGroupName": self.groupName,   "mdmLabel": { "en-US": self.connectorLabel }}
+        payload = { "mdmName": self.connectorName,   "mdmGroupName": self.groupName,
+                    "mdmLabel": { "en-US": self.connectorLabel }}
 
         while True:
             self.response = requests.request("POST", url, json=payload,headers=self.headers)
@@ -65,6 +92,15 @@ class connectorsCarol:
 
 
     def deleteConnector(self,connectorId, forceDeletion = True):
+        """
+        Delete connector
+        :param connectorId: Connector Id
+        :type connectorId: str
+        :param forceDeletion:
+        :type forceDeletion: bool
+        :return: None
+        :rtype: None
+        """
         self.connectorId = connectorId
         url = "https://{}.carol.ai{}/api/v1/connectors/{}".format(self.token_object.domain, self.dev,self.connectorId)
         querystring = {"forceDeletion": forceDeletion}
@@ -83,6 +119,13 @@ class connectorsCarol:
 
 
     def getConnectorsByName(self,connectorName):
+        """
+        Get connector information using the connector name
+        :param connectorName:
+        :type connectorName: str
+        :return: None
+        :rtype: None
+        """
         self.connectorName = connectorName
         url = "https://{}.carol.ai{}/api/v1/connectors/name/{}".format(self.token_object.domain, self.dev,self.connectorName)
 
