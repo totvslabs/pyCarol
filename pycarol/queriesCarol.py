@@ -236,7 +236,7 @@ class queryCarol:
             file.close()
 
     def newQuery(self, json_query, max_hits = float('inf'), offset=0, pageSize=50, sortOrder='ASC', use_scroll = True,
-                 sortBy='mdmLastUpdated', indexType='MASTER',only_hits = True, print_status=True, fields =None,
+                 sortBy=None, indexType='MASTER',only_hits = True, print_status=True, fields =None,
                  save_results=True, filename='query_result.json', safe_check=False, get_errors = False, flush_result = False):
 
         """
@@ -322,7 +322,7 @@ class queryCarol:
 
     def namedQuery(self, named_query, json_query, max_hits = float('inf'), use_scroll = True, offset=0, pageSize=50,
                    sortOrder='ASC', indexType='MASTER', fields =None, flush_result = False,
-                   only_hits=True, sortBy='mdmLastUpdated', safe_check= False,
+                   only_hits=True, sortBy=None, safe_check= False,
                    print_status=True, save_results=False, filename='results_json.json'):
 
         self.flush_result = flush_result
