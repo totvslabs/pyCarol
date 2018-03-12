@@ -180,7 +180,16 @@ class queryCarol:
             count += query['count']
             downloaded += query['count']
             scrollId = query.get('scrollId', None)
-            url_filter = "https://{}.carol.ai{}/api/v2/queries/filter/{}".format(self.token_object.domain, self.dev, scrollId)
+            if scrollId is not None:
+                url_filter = "https://{}.carol.ai{}/api/v2/queries/filter/{}".format(self.token_object.domain, self.dev, scrollId)
+            elif query['count'] == 0:
+                if count < self.totalHits:
+                    print(f'Total registers downloaded: {count}/{self.totalHits}')
+                    print(f'Something is wrong, no scrollId to continue \n')
+                    break
+            else:
+                raise Exception('No Scroll Id to use. Something is wrong')
+
 
             if set_param:
                 self.totalHits = query["totalHits"]
