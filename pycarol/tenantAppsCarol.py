@@ -139,9 +139,13 @@ class tenantApps:
 
         self.appSettings = {}
         self.fullSettings = {}
+
+        if not isinstance(query,list):
+            query = [query]
         for query_list in query:
-            self.appSettings.update({i['mdmTenantAppSettingKey'] : i.get('mdmTenantAppSettingValue') for i in query_list.get('mdmTenantAppSettingValues')})
-            self.fullSettings.update({i['mdmTenantAppSettingKey'] : i for i in query_list.get('mdmTenantAppSettingValues')})
+            self.appSettings.update({i['mdmName'] : i.get('mdmParameterValue')
+                                     for i in query_list.get('mdmTenantAppSettingValues')})
+            self.fullSettings.update({i['mdmName'] : i for i in query_list.get('mdmTenantAppSettingValues')})
 
 
 
