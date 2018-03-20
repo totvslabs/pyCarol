@@ -1,5 +1,5 @@
 import json
-
+import numpy as np
 
 class IntType(object):
     json_type = "integer"
@@ -43,6 +43,9 @@ class Type(object):
             bool: BooleanType,
             list: ArrayType,
             dict: ObjectType,
+            np.float64: DoubleType,
+            np.float32: DoubleType,
+            np.float: DoubleType,
         }
 
         schema_type = SCHEMA_TYPES.get(t)
