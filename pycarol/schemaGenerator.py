@@ -46,6 +46,9 @@ class Type(object):
             np.float64: DoubleType,
             np.float32: DoubleType,
             np.float: DoubleType,
+            np.int64: IntType,
+            np.int32: IntType,
+            np.int: IntType,
         }
 
         schema_type = SCHEMA_TYPES.get(t)
