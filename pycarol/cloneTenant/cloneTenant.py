@@ -157,7 +157,8 @@ class cloneTenant(object):
                     self.stag_mapp_to_use[connectorName].append({"schema": aux_schema})
 
 
-    def copyConnectors(self, conectors_map, map_type = 'name', copy_mapping=True, overwrite=False):
+    def copyConnectors(self, conectors_map, map_type = 'name',
+                       change_name_dict = None, copy_mapping=True ,overwrite=False):
 
         if map_type == 'connectorId':
             map_type = 'mdmId'
@@ -192,12 +193,18 @@ class cloneTenant(object):
             current_connector = connector['mdmId']
             conn.connectorStats(current_connector)
 
-            connectorName = connector.get('mdmName', None)
-            connectorLabel = connector.get('mdmLabel', None)
-            if connectorLabel:
-                connectorLabel = connectorLabel['en-US']
+            if change_name_dict is not None:
+                connectorName = change_name_dict.get(connector.get('mdmName', None)).get('mdmName')
+                connectorLabel = change_name_dict.get(connector.get('mdmName', None)).get('mdmLabel')
+                if connectorLabel is None:
+                    connectorLabel = connectorName
             else:
-                connectorLabel = None
+                connectorName = connector.get('mdmName', None)
+                connectorLabel = connector.get('mdmLabel', None)
+                if connectorLabel:
+                    connectorLabel = connectorLabel['en-US']
+                else:
+                    connectorLabel = None
             groupName = connector.get('mdmGroupName', None)
 
             conn_to = appl.connectorsCarol(self.token_to)

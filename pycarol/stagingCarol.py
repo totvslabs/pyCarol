@@ -159,7 +159,7 @@ class stagingSchema(object):
 
         self.schema = {}
 
-        querystring = {"applicationId": connectorId}
+        querystring = {"connectorId": connectorId}
         while True:
             url = "https://{}.carol.ai{}/api/v2/staging/tables/{}/schema".format(self.token_object.domain, self.dev,stagingName)
             self.response = requests.request("GET", url, headers=self.headers, params=querystring)
@@ -195,10 +195,10 @@ class getStagingDataCarol:
     def _setQuerystring(self):
         if self.sortBy is None:
             self.querystring = {"offset": self.offset, "pageSize": str(self.pageSize), "sortOrder": self.sortOrder,
-                                "applicationId": self.connectorId}
+                                "connectorId": self.connectorId}
         else:
             self.querystring = {"offset": self.offset, "pageSize": str(self.pageSize), "sortOrder": self.sortOrder,
-                                "sortBy": self.sortBy, "applicationId": self.connectorId}
+                                "sortBy": self.sortBy, "connectorId": self.connectorId}
 
     def getData(self, table, connectorId=None, offset=0, pageSize=50, sortOrder='ASC', sortBy='mdmLastUpdated',
                    print_status=True, save_results=True, filename='staging_result.json', safe_check=False):
