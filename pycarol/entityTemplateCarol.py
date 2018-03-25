@@ -180,6 +180,10 @@ class entityTemplate(object):
 
             self.lastResponse.encoding = 'utf8'
             query = json.loads(self.lastResponse.text)
+            if query['count'] == 0:
+                print('There are no more results.')
+                print('Expecting {}, reponse = {}'.format(self.totalHits,count))
+                break
             count += query['count']
             if set_param:
                 self.totalHits = query["totalHits"]
