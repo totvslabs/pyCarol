@@ -188,7 +188,7 @@ class entityTemplate(object):
             query = query['hits']
             self.template_data.extend(query)
             self.fields_dict.update({i['mdmName']: self._get_name_type_DMS(i['mdmFields']) for i in query})
-            self.template_dict.update({i['mdmName']: {'mdmId': i['mdmId'],'mdmEntitySpace': i['mdmEntitySpace'] } for i in query[:3]})
+            self.template_dict.update({i['mdmName']: {'mdmId': i['mdmId'],'mdmEntitySpace': i['mdmEntitySpace'] } for i in query})
             self.querystring['offset'] = count
             if print_status:
                 print('{}/{}'.format(count, self.totalHits), end='\r')
