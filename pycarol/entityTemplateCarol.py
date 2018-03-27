@@ -517,7 +517,7 @@ class createTemplate(object):
 
         self.json_sample = json_sample
 
-        n_fields = list(self.json_sample)
+        n_fields = len(list(self.json_sample))
         count = 0
         for prop, value in self.json_sample.items():
             count +=1
