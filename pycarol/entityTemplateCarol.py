@@ -517,7 +517,11 @@ class createTemplate(object):
 
         self.json_sample = json_sample
 
+        n_fields = list(self.json_sample)
+        count = 0
         for prop, value in self.json_sample.items():
+            count +=1
+            print('Creating {}/{}'.format(count,n_fields))
             prop = prop.lower()
             entity_type = entType.get_ent_type_for(type(value))
             if prop in self.all_possible_fields.keys():
