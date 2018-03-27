@@ -177,6 +177,22 @@ class queryCarol:
             self.lastResponse.encoding = 'utf8'
             query = json.loads(self.lastResponse.text)
 
+
+            if set_param:
+                self.totalHits = query["totalHits"]
+                if self.get_all:
+                    toGet = query["totalHits"]
+                elif self.max_hits <= query["totalHits"]:
+                    toGet = self.max_hits
+                else:
+                    toGet = query["totalHits"]
+
+                set_param = False
+                if self.safe_check:
+                    self.mdmId_list = []
+                if self.get_errors:
+                    self.query_errors = {}
+
             count += query['count']
             downloaded += query['count']
             scrollId = query.get('scrollId', None)
@@ -191,21 +207,7 @@ class queryCarol:
                 raise Exception('No Scroll Id to use. Something is wrong')
 
 
-            if set_param:
-                self.totalHits = query["totalHits"]
-                if self.get_all:
-                    toGet = query["totalHits"]
-                elif self.max_hits <= query["totalHits"]:
-                    toGet = self.max_hits
-                else:
-                    toGet = query["totalHits"]
 
-                #self.querystring = {"indexType":self.indexType}
-                set_param = False
-                if self.safe_check:
-                    self.mdmId_list = []
-                if self.get_errors:
-                    self.query_errors = {}
 
             if self.only_hits:
                 query = query['hits']
