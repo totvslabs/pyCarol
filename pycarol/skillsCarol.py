@@ -4,7 +4,6 @@ import sys
 import csv
 import re
 import string
-import pandas as pd
 
 class skillCarol:
     """ Implements calls for the endpoints:
