@@ -4,6 +4,7 @@ import sys
 import csv
 import re
 import string
+import json
 
 class skillCarol:
     """ Implements calls for the endpoints:
