@@ -1,4 +1,3 @@
-%reset -f
 import itertools
 import requests
 import sys
