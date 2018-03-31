@@ -102,7 +102,7 @@ class skillCarol:
         
         url_filter = "https://{}.carol.ai{}/api/v1/ai/skill/".format(self.token_object.domain, self.dev)
     
-        self.lastResponse = requests.post(url=url_filter, headers=headers.self.headers, json=s_json)
+        self.lastResponse = requests.post(url=url_filter, headers=self.headers, json=s_json)
         self.lastResponse.encoding = 'utf8'
         query = json.loads(self.lastResponse.text)
         
@@ -195,7 +195,7 @@ class skillCarol:
     # Replace atLeastOne entitites
     def editSkillAtLeastOne(self,name, new_atleast):
         s_json = self.getSkillByName(name)
-        s_json['nlpAtLeastOneEntityType'] = new_required
+        s_json['nlpAtLeastOneEntityType'] = new_atleast
         
         url_filter = "https://{}.carol.ai{}/api/v1/ai/skill/name/{}".format(self.token_object.domain, self.dev, name)
 
