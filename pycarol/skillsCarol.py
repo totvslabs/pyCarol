@@ -15,8 +15,6 @@ class skillCarol:
         3. /api/v1/ai/nlp/query
     """
 
-
-    
     # Voice and text patterns hold default substitutions for skill texts, e.g. "totvs" -> "tótus" / "TOTVS" for voice/text
     def __init__(self, token_object, voice_patterns=None, text_patterns=None):
 
