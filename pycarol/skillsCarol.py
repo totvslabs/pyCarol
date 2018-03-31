@@ -5,7 +5,6 @@ import csv
 import re
 import string
 import pandas as pd
-from pycarol.loginCarol import *
 
 class skillCarol:
     """ Implements calls for the endpoints:
