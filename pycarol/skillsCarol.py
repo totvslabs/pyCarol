@@ -4,6 +4,9 @@ import sys
 import csv
 import re
 import string
+import json
+import pkg_resources
+
 
 class skillCarol:
     """ Implements calls for the endpoints:
@@ -11,12 +14,22 @@ class skillCarol:
         2. /api/v1/ai/skillEntity
         3. /api/v1/ai/nlp/query
     """
+
+
     
     # Voice and text patterns hold default substitutions for skill texts, e.g. "totvs" -> "tótus" / "TOTVS" for voice/text
-    def __init__(self, token_object, voice_patterns='utils/voice_patterns.csv', text_patterns='utils/text_patterns.csv'):
+    def __init__(self, token_object, voice_patterns=None, text_patterns=None):
+
         self.dev = token_object.dev
         self.token_object = token_object
         self.headers = self.token_object.headers_to_use
+
+        if voice_patterns is None:
+            voice_patterns = self._get_config_filename('utils/voice_patterns.csv')
+
+        if text_patterns is None:
+            text_patterns = self._get_config_filename('utils/text_patterns.csv')
+
         try:            
             csvfile = open(voice_patterns, newline='')
             pats = csv.reader(csvfile, delimiter=',')
@@ -29,7 +42,17 @@ class skillCarol:
             self.text_patterns = [(re.compile(re.escape(pat), re.IGNORECASE), sub) for [pat,sub] in pats]
         except:
             self.text_patterns = []
-        
+
+    @staticmethod
+    def _get_config_filename(resource_path):
+        """
+        Get file with configuration for the program execution
+        :return:
+        """
+        resource_package = __name__  # Could be any module/package name
+        file = pkg_resources.resource_filename(resource_package, resource_path)
+        return file
+
     def getSkills(self, pagesize=100):
         url_filter = "https://{}.carol.ai{}/api/v1/ai/skill?pageSize={}&sortOrder=ASC".format(self.token_object.domain, self.dev, pagesize)
         
