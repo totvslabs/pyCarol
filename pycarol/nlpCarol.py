@@ -1,14 +1,10 @@
-import itertools
 import requests
-import sys
 import csv
 import re
-import string
 import json
 import pkg_resources
 
-
-class skillCarol:
+class nlpCarol:
     """ Implements calls for the endpoints:
         1. /api/v1/ai/skill
         2. /api/v1/ai/skillEntity
@@ -21,6 +17,9 @@ class skillCarol:
         self.dev = token_object.dev
         self.token_object = token_object
         self.headers = self.token_object.headers_to_use
+        self.skills = []
+        self.entities = []
+        self.lastResponse = {}
 
         if voice_patterns is None:
             voice_patterns = self._get_config_filename('utils/voice_patterns.csv')
@@ -57,7 +56,7 @@ class skillCarol:
         self.lastResponse = requests.get(url=url_filter, headers=self.headers)
         self.lastResponse.enconding = 'utf8'
         query = json.loads(self.lastResponse.text)
-        
+
         return query['hits']
     
     def getSkillByName(self, name):
@@ -247,7 +246,7 @@ class skillCarol:
     # Append to optional list
     def addSkillsOptional(self, name, optional):
         s_json = self.getSkillByName(name)
-        s_json['nlpOptionalEntityTypes'] += required
+        s_json['nlpOptionalEntityTypes'] += optional
         
         url_filter = "https://{}.carol.ai{}/api/v1/ai/skill/name/{}".format(self.token_object.domain, self.dev, name)
 
@@ -286,7 +285,7 @@ class skillCarol:
     # Replace example 
     def editSkillExampleQuestion(self,name, example):
         s_json = self.getSkillByName(name)
-        s_json['nlpExampleQuestion'] += required
+        s_json['nlpExampleQuestion'] += example
         
         url_filter = "https://{}.carol.ai{}/api/v1/ai/skill/name/{}".format(self.token_object.domain, self.dev, name)
 
@@ -299,7 +298,7 @@ class skillCarol:
     # Replace entity value list
     def editEntityValues(self, name, values):
         if isinstance(values, str):
-            return "Please send list of values, not string"
+            values = [values]
         s_json = self.getEntityByName(name)
         s_json['nlpValues'] = values
         
@@ -314,7 +313,7 @@ class skillCarol:
     # Append to entity value list
     def addEntityValues(self, name, values):
         if isinstance(values, str):
-            return "Please send list of values, not string"
+            values = [values]
         s_json = self.getEntityByName(name)
         s_json['nlpValues'] += values
         
