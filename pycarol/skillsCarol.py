@@ -72,14 +72,14 @@ class skillCarol:
     def postSkill(self, skill):
         url_filter = "https://{}.carol.ai{}/api/v1/ai/skill/".format(self.token_object.domain, self.dev)
         
-        self.lastResponse = requests.get(url=url_filter, headers=headers.self.headers, json=skill)
+        self.lastResponse = requests.get(url=url_filter, headers=self.headers, json=skill)
         self.lastResponse.enconding = 'utf8'
         query = json.loads(self.lastResponse.text)
         
         return query
     
     # Create skill from name, required, and text
-    def postSkillLazy(name, required_entity_list, skill_text, use_subs=True):
+    def postSkillLazy(self,name, required_entity_list, skill_text, use_subs=True):
         # Build skill json
         voice_text = skill_text
         if use_subs:
@@ -129,7 +129,7 @@ class skillCarol:
     def postEntity(self, entity):
         url_filter = "https://{}.carol.ai{}/api/v1/ai/skillEntiy/".format(self.token_object.domain, self.dev)
         
-        self.lastResponse = requests.get(url=url_filter, headers=headers.self.headers, json=skill)
+        self.lastResponse = requests.get(url=url_filter, headers=self.headers, json=skill)
         self.lastResponse.enconding = 'utf8'
         query = json.loads(self.lastResponse.text)
         
@@ -145,7 +145,7 @@ class skillCarol:
         
         url_filter = "https://{}.carol.ai{}/api/v1/ai/skillEntity/".format(self.token_object.domain, self.dev)
     
-        self.lastResponse = requests.post(url=url_filter, headers=headers.self.headers, json=s_json)
+        self.lastResponse = requests.post(url=url_filter, headers=self.headers, json=s_json)
         self.lastResponse.encoding = 'utf8'
         query = json.loads(self.lastResponse.text)
         
@@ -193,7 +193,7 @@ class skillCarol:
 
 
     # Replace atLeastOne entitites
-    def editSkillAtLeastOne(name, new_atleast):
+    def editSkillAtLeastOne(self,name, new_atleast):
         s_json = self.getSkillByName(name)
         s_json['nlpAtLeastOneEntityType'] = new_required
         
@@ -284,7 +284,7 @@ class skillCarol:
         return query
 
     # Replace example 
-    def editSkillExampleQuestion(name, example):
+    def editSkillExampleQuestion(self,name, example):
         s_json = self.getSkillByName(name)
         s_json['nlpExampleQuestion'] += required
         
@@ -328,7 +328,7 @@ class skillCarol:
     
     # Add rich element (video/image/chart) to answer
     def addRichElement(self, name, url, content_type='image', width=200, height=200):
-        s_json = get_skill(name)
+        s_json = self.get_skill(name)
         rich_element = {}
         rich_element['type'] = content_type
         rich_element['width'] = width
