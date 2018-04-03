@@ -177,7 +177,6 @@ class queryCarol:
             self.lastResponse.encoding = 'utf8'
             query = json.loads(self.lastResponse.text)
 
-
             if set_param:
                 self.totalHits = query["totalHits"]
                 if self.get_all:
@@ -219,7 +218,7 @@ class queryCarol:
                 if self.get_errors:
                     self.query_errors.update({elem.get('mdmId',elem) :  elem.get('mdmErrors',elem) for elem in query if elem['mdmErrors']})
 
-                query = [elem.get('mdmGoldenFieldAndValues',elem) for elem in query if elem.get('mdmGoldenFieldAndValues',elem)]  #get mdmGoldenFieldAndValues if not empty and if it exists
+                query = [elem.get('mdmGoldenFieldAndValues',elem) for elem in query if elem.get('mdmGoldenFieldAndValues',None)]  #get mdmGoldenFieldAndValues if not empty and if it exists
 
                 if not self.flush_result:
                     self.query_data.extend(query)
