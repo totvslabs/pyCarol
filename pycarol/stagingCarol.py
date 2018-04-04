@@ -43,6 +43,8 @@ class sendDataCarol:
                     raise IOError
             elif isinstance(data,str):
                 self.data = json.loads(data)
+            elif isinstance(data, dict):
+                self.data = [data]
             else:
                 self.data = data
 
