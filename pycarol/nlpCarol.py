@@ -9,6 +9,7 @@ class nlpCarol:
         1. /api/v1/ai/skill
         2. /api/v1/ai/skillEntity
         3. /api/v1/ai/nlp/query
+
     """
 
     # Voice and text patterns hold default substitutions for skill texts, e.g. "totvs" -> "tótus" / "TOTVS" for voice/text
