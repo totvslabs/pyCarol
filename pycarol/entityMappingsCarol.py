@@ -2,6 +2,7 @@ import json
 import requests
 #from . import utils
 
+
 class entityMapping:
     def __init__(self, token_object):
         self.dev = token_object.dev
@@ -10,7 +11,7 @@ class entityMapping:
 
         self.headers = self.token_object.headers_to_use
 
-    def getSnapshot(self,connectorId, entityMappingsId, entitySpace, reverseMapping = False):
+    def getSnapshot(self, connectorId, entityMappingsId, entitySpace, reverseMapping = False):
 
         self.snap = {}
         querystring = {"entitySpace": entitySpace, "reverseMapping": reverseMapping}
