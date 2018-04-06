@@ -46,6 +46,9 @@ class sendDataCarol:
             else:
                 self.data = data
 
+        if not isinstance(self.data, list):
+            self.data = [self.data]
+
 
         self.stagingName = stagingName
         self.url_filter = "https://{}.carol.ai{}/api/v2/staging/tables/{}?returnData=false&applicationId={}" \
@@ -123,6 +126,7 @@ class stagingSchema(object):
     def sendSchema(self, fields_dict=None, connectorId=None, request_type = 'POST',overwrite = False):
         if connectorId is not None:
             self.connectorId = connectorId
+            self.token_object.newToken(self.connectorId)
         if fields_dict is None:
             assert self.schema is not None
         elif isinstance(fields_dict,str):
@@ -133,7 +137,7 @@ class stagingSchema(object):
             raise Exception('Not valid format')
 
         self.stagingName = self.schema['mdmStagingType']
-        querystring = {"applicationId": self.connectorId}
+        querystring = {"connectorId": self.connectorId}
 
         url = 'https://{}.carol.ai{}/api/v2/staging/tables/{}/schema'.format(self.token_object.domain, self.dev,
                                                                            self.stagingName)
