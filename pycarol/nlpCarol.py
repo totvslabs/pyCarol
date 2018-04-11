@@ -411,8 +411,8 @@ class nlpCarol:
 
         return query
 
-    def getUnrecognizedQuestions(self, pagesize=1000):
-        url_filter = "https://{}.carol.ai{}/api/v1/ai/nlp/feedback?pageSize={}&sortOrder=ASC".format(self.token_object.domain, self.dev, pagesize)
+    def getUnrecognizedQuestions(self, pagesize=100):
+        url_filter = "https://{}.carol.ai{}/api/v1/ai/nlp/feedback?pageSize={}&sortBy=nlpDate&sortOrder=DESC".format(self.token_object.domain, self.dev, pagesize)
 
         self.lastResponse = requests.get(url=url_filter, headers = self.headers)
         self.lastResponse.enconding = 'utf8'
@@ -420,6 +420,26 @@ class nlpCarol:
 
         unrecognized = [answer['nlpQuestion'] for answer in query if answer['nlpAnswer']['recognized'] == False]
         unrecognized = [question for question in unrecognized if question != 'Não entendi. Tente falar mais alto ou digite no campo de texto.']
-        unrecognized = list(set(list(unrecognized)))
 
         return unrecognized
+
+    def getLogs(self, pagesize=100):
+        url_filter = "https://{}.carol.ai{}/api/v1/ai/nlp/feedback?pageSize={}&sortBy=nlpDate&sortOrder=DESC".format(self.token_object.domain, self.dev, pagesize)
+        self.lastResponse = requests.get(url=url_filter, headers = self.headers)
+        self.lastResponse.enconding = 'utf8'
+        query = json.loads(self.lastResponse.text)['hits']
+        
+        logs = [{"date": log["nlpDate"], "question": log["nlpQuestion"], "answer": log["nlpAnswer"]["voiceMessage"], "recognized": log["nlpAnswer"]["recognized"]} for log in query if log["nlpQuestion"] != "initial"]
+        
+        return logs
+    
+    def postSkillandEntityLazy(self, name, entities, skill_text):
+        if isinstance(entities, str):
+            entities = [entities]
+            
+        for entity in entities:
+            self.postEntityLazy(entity, [entity])
+        
+        query = self.postSkillLazy(name, entities, skill_text)
+        
+        return query
