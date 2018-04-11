@@ -27,6 +27,7 @@ class queryCarol:
         self.indexType = 'MASTER'
         self.drop_list = None
         self.flush_result = False
+        self.get_aggs = False
 
 
         self.headers = self.token_object.headers_to_use
@@ -229,7 +230,7 @@ class queryCarol:
                 #query.pop('scrollId')
                 self.query_data.append(query)
 
-                if 'aggs' in query:
+                if self.get_aggs:
                     if self.save_results:
                         file.write(json.dumps(query, ensure_ascii=False))
                         file.write('\n')
@@ -246,7 +247,7 @@ class queryCarol:
             file.close()
 
     def newQuery(self, json_query, max_hits = float('inf'), offset=0, pageSize=50, sortOrder='ASC', use_scroll = True,
-                 sortBy=None, indexType='MASTER',only_hits = True, print_status=True, fields =None,
+                 sortBy=None, indexType='MASTER',only_hits = True, print_status=True, fields =None, get_aggs = False,
                  save_results=True, filename='query_result.json', safe_check=False, get_errors = False, flush_result = False):
 
         """
@@ -267,6 +268,7 @@ class queryCarol:
         :param flush_result: bool. False to do not flush, True to flush the query data each iteration.
         :return: The response will be in the variable "query_data"
         """
+        self.get_aggs = get_aggs
         self.flush_result = flush_result
         self.offset = offset
         self.pageSize = pageSize
@@ -332,9 +334,10 @@ class queryCarol:
 
     def namedQuery(self, named_query, json_query, max_hits = float('inf'), use_scroll = True, offset=0, pageSize=50,
                    sortOrder='ASC', indexType='MASTER', fields =None, flush_result = False,
-                   only_hits=True, sortBy=None, safe_check= False,
+                   only_hits=True, sortBy=None, safe_check= False, get_aggs = False,
                    print_status=True, save_results=False, filename='results_json.json'):
 
+        self.get_aggs = get_aggs
         self.flush_result = flush_result
         self.offset = offset
         self.pageSize = pageSize
@@ -377,7 +380,7 @@ class queryCarol:
         return named.paramDict
 
 
-    def downloadAll(self, dm_name, connectorId = None, pageSize=500, save_results = False,safe_check = False, use_scroll = True,
+    def downloadAll(self, dm_name, connectorId = None, pageSize=500, save_results = False,safe_check = False, use_scroll = True, get_aggs = False,
                     filename ='allResults.json',print_status=True, max_hits = float('inf'), from_stag = False, get_errors = False,
                     only_hits=True, fields =None, flush_result = False, sortBy=None):
         if from_stag:
@@ -390,7 +393,7 @@ class queryCarol:
 
 
         self.newQuery(json_query=json_query, pageSize=pageSize,sortBy=sortBy, save_results=save_results, only_hits= only_hits, indexType= indexType,
-                      safe_check=safe_check,filename=filename, print_status=print_status, max_hits = max_hits, use_scroll = use_scroll,
+                      safe_check=safe_check,filename=filename, print_status=print_status, max_hits = max_hits, use_scroll = use_scroll, get_aggs = get_aggs,
                       get_errors=get_errors, fields = fields, flush_result = flush_result)
 
 

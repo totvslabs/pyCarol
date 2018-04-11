@@ -51,7 +51,7 @@ class sendDataCarol:
 
 
         self.stagingName = stagingName
-        self.url_filter = "https://{}.carol.ai{}/api/v2/staging/tables/{}?returnData=false&applicationId={}" \
+        self.url_filter = "https://{}.carol.ai{}/api/v2/staging/tables/{}?returnData=false&connectorId={}" \
             .format(self.token_object.domain, self.dev, self.stagingName, self.token_object.connectorId)
 
         self.sent = False
