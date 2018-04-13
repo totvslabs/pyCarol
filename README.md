@@ -251,12 +251,12 @@ named_query_resp.namedQueryParams(named_query = named_query)
  The first step to send data to Carol is to create a connector. 
  
  ```python
-from pycarol import loginCarol, applicationsCarol
+from pycarol import loginCarol, connectorsCarol
 token_object = loginCarol.loginCarol(username= username, password=my_password, 
                                      domain = my_domain, connectorId=my_connectorId)                           
 token_object.newToken()
 
-conn = applicationsCarol.connectorsCarol(token_object)
+conn = connectorsCarol.connectorsCarol(token_object)
 conn.createConnector(connectorName = 'my_conector', connectorLabel = "conector_label", groupName = "GroupName")
 connectorId = conn.connectorId  # this is the just created connector Id
 
