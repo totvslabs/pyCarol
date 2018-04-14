@@ -11,21 +11,30 @@ class sendDataCarol:
         self.token_object = token_object
         self.headers = self.token_object.headers_to_use
         self.stagingName = None
-        self.step_size = 100
+        self.step_size = 500
         self.url_filter = None
         self.print_stats = False
-        self.sent = False
+        self.read_lines = False
+        self.isDF = False
+        self.data_size = None
+        self.data = None
 
-    def _streamData(self,data):
-        i = 0
-        size_data = len(data)
-        while not i >= size_data:
-            action = yield data[i:i + self.step_size]
-            if action is None:
-                i += self.step_size
+    def _streamData(self):
+
+        for i in range(0,self.data_size,self.step_size):
+            if self.isDF:
+                data = self.data.iloc[i:i + self.step_size].to_json(orient='records',
+                                                                    date_format='iso',
+                                                                    lines=False)
+                data = json.loads(data)
+                yield data
+            else:
+                yield self.data[i:i + self.step_size]
+
         yield []
 
-    def sendData(self, stagingName, data = None, step_size = 100, connectorId=None, print_stats = False):
+    def sendData(self, stagingName, data = None, step_size = 100,
+                 connectorId=None, print_stats = False):
         if connectorId is not None:
             if not connectorId==self.token_object.connectorId:
                 self.token_object.newToken(connectorId)
@@ -33,31 +42,31 @@ class sendDataCarol:
         self.step_size = step_size
         self.print_stats = print_stats
         if data is None:
-            assert not self.data==[]
+            assert not self.data == []
         else:
             if isinstance(data,pd.DataFrame):
-                try:
-                    self.data =  data.to_json(orient='records', date_format='iso', lines=False)
-                    self.data = json.loads(self.data)
-                except:
-                    raise IOError
+                self.isDF = True
+                self.data = data
+                self.data_size = self.data.shape[0]
+
             elif isinstance(data,str):
                 self.data = json.loads(data)
+                self.data_size = len(self.data)
             else:
                 self.data = data
+                self.data_size = len(self.data)
 
-        if not isinstance(self.data, list):
+        if  (not isinstance(self.data, list)) and (not self.isDF) :
             self.data = [self.data]
+            self.data_size = len(self.data)
 
 
         self.stagingName = stagingName
         self.url_filter = "https://{}.carol.ai{}/api/v2/staging/tables/{}?returnData=false&connectorId={}" \
-            .format(self.token_object.domain, self.dev, self.stagingName, self.token_object.connectorId)
+            .format(self.token_object.domain, self.dev,
+                    self.stagingName, self.token_object.connectorId)
 
-        self.sent = False
-        gen = self._streamData(self.data)
-
-        data_size = len(self.data)
+        gen = self._streamData()
         cont = 0
         ite = True
         data_json = gen.__next__()
@@ -68,18 +77,16 @@ class sendDataCarol:
                 if response.reason == 'Unauthorized':
                     self.token_object.refreshToken()
                     self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
-                    data_json = gen.send(True) #not needed?
                     print('Resending last batch, refreshing token')
                     continue
                 raise Exception(response.text)
 
             cont += len(data_json)
             if self.print_stats:
-                print('{}/{} sent'.format(cont,data_size), end ='\r')
+                print('{}/{} sent'.format(cont,self.data_size) )#, end ='\r')
             data_json = gen.__next__()
             if data_json ==[]:
-                ite = False
-        self.sent = True
+                break
 
     @classmethod
     def from_json(cls, token, filename, read_lines = True):
@@ -94,6 +101,7 @@ class sendDataCarol:
 
         ret = sendDataCarol(token)
         ret.data = data
+        ret.read_lines = read_lines
         return ret
 
 
