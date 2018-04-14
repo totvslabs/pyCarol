@@ -83,7 +83,7 @@ class sendDataCarol:
 
             cont += len(data_json)
             if self.print_stats:
-                print('{}/{} sent'.format(cont,self.data_size) )#, end ='\r')
+                print('{}/{} sent'.format(cont,self.data_size) , end ='\r')
             data_json = gen.__next__()
             if data_json ==[]:
                 break
