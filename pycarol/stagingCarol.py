@@ -21,7 +21,7 @@ class sendDataCarol:
 
     def _streamData(self):
 
-        for i in range(0,self.data_size,self.step_size):
+        for i in range(0, self.data_size, self.step_size):
             if self.isDF:
                 data = self.data.iloc[i:i + self.step_size].to_json(orient='records',
                                                                     date_format='iso',
@@ -43,6 +43,7 @@ class sendDataCarol:
         self.print_stats = print_stats
         if data is None:
             assert not self.data == []
+            self.data_size = len(self.data)
         else:
             if isinstance(data,pd.DataFrame):
                 self.isDF = True
