@@ -138,7 +138,7 @@ class nlpCarol:
     def postEntity(self, entity):
         url_filter = "https://{}.carol.ai{}/api/v1/ai/skillEntity/".format(self.token_object.domain, self.dev)
         
-        self.lastResponse = requests.post(url=url_filter, headers=self.headers, json=skill)
+        self.lastResponse = requests.post(url=url_filter, headers=self.headers, json=entity)
         self.lastResponse.enconding = 'utf8'
         query = json.loads(self.lastResponse.text)
         
