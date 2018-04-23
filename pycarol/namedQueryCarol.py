@@ -32,9 +32,9 @@ class namedQueries:
 
     def getAll(self, offset=0, pageSize=50, sortOrder='ASC', sortBy='mdmLastUpdated', print_status=True, save_file=True,
                filename='namedQueries.json', safe_check=False):
-        '''
+        """
         Copy all named queries from a tenant
-        '''
+        """
 
         self.named_query_data = []
         count = self.offset
@@ -81,7 +81,7 @@ class namedQueries:
             self.named_query_dict.update({i['mdmQueryName']: i for i in query})
             self.querystring['offset'] = count
             if print_status:
-                print('{}/{}'.format(count, self.totalHits), end ='\r')
+                print('{}/{}'.format(count, self.totalHits), end='\r')
             if save_file:
                 file.write(json.dumps(query, ensure_ascii=False))
                 file.write('\n')

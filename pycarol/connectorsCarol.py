@@ -224,7 +224,7 @@ class connectorsCarol:
 
         self.staging2connMap = d
         if staging_name:
-            conn = d.get(staging_name,None)
+            conn = d.get(staging_name,[])
             if len(conn)>1:
                 print('More than one connector with the staging {}'.format(staging_name))
                 return conn
