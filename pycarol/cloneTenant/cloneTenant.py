@@ -149,7 +149,7 @@ class cloneTenant(object):
                         mappings_to_get.getSnapshot(connectorId, entityMappingsId, entitySpace)
                         _, aux_map = mappings_to_get.snap.popitem()
                         mapping_to = etm.entityMapping(self.token_to)
-                        mapping_to.createFromSnnapshot(aux_map,conn_id.get(connectorName),overwrite=overwrite)
+                        mapping_to.createFromSnapshot(aux_map,conn_id.get(connectorName),overwrite=overwrite)
                         self.stag_mapp_to_use[connectorName].append({"schema": aux_schema, "mapping": aux_map})
                     else:
                         self.stag_mapp_to_use[connectorName].append({"schema": aux_schema})
@@ -238,7 +238,7 @@ class cloneTenant(object):
                         mappings_to_get.getSnapshot(connectorId, entityMappingsId, entitySpace)
                         _, aux_map = mappings_to_get.snap.popitem()
                         mapping_to = etm.entityMapping(self.token_to)
-                        mapping_to.createFromSnnapshot(aux_map, conn_id.get(connectorName), overwrite=overwrite)
+                        mapping_to.createFromSnapshot(aux_map, conn_id.get(connectorName), overwrite=overwrite)
                         self.stag_mapp_to_use[connectorName].append({"schema": aux_schema, "mapping": aux_map})
                     else:
                         self.stag_mapp_to_use[connectorName].append({"schema": aux_schema})

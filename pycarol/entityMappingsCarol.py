@@ -70,7 +70,7 @@ class entityMapping:
 
             break
 
-    def createFromSnnapshot(self,snap,connectorId, publish=True, overwrite = False):
+    def createFromSnapshot(self,snap,connectorId, publish=True, overwrite = False):
 
         url_mapping = 'https://{}.carol.ai{}/api/v1/connectors/{}/entityMappings/snapshot'.format(self.token_object.domain, self.dev,
                                                                                                   connectorId)
