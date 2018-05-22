@@ -93,6 +93,7 @@ class loginCarol:
                             'Content-Type': 'application/json'}
 
 
+
         url = "https://{}.carol.ai{}/api/v2/apiKey/details".format(self.domain, self.dev)
         querystring = {"apiKey": self.X_Auth_Key, "connectorId": self.X_Auth_ConnectorId}
         token = requests.request("GET", url, params=querystring, headers= self.headers)
