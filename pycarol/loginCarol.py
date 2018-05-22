@@ -90,15 +90,15 @@ class loginCarol:
             self.headers = {'Authorization': self.access_token, 'Content-Type': 'application/x-www-form-urlencoded'}
         else:
             self.headers = {'x-auth-key': self.X_Auth_Key, 'x-auth-connectorid': self.X_Auth_ConnectorId,
-                            'Content-Type': 'application/x-www-form-urlencoded'}
+                            'Content-Type': 'application/json'}
 
 
-        payload = "apiKey={}&connectorId={}".format(self.X_Auth_Key,self.X_Auth_ConnectorId)
         url = "https://{}.carol.ai{}/api/v2/apiKey/details".format(self.domain, self.dev)
-
-        token = requests.request("POST", url, data=payload, headers= self.headers)
+        querystring = {"apiKey": self.X_Auth_Key, "connectorId": self.X_Auth_ConnectorId}
+        token = requests.request("GET", url, params=querystring, headers= self.headers)
         if token.ok:
             self.APIKeyDetails = json.loads(token.text)
+            return self.APIKeyDetails
         else:
             raise Exception(token.text)
 
