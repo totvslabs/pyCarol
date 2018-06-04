@@ -3,119 +3,162 @@ class Tasks:
     def __init__(self, carol):
         self.carol = carol
 
-    def _getTaskId(self, task):
-        if type(task) is dict:
-            return task['mdmId']
-        else:
-            return task
+        self.task_id = None
+        self.mdm_data = None
+        self.mdm_user_id = None
+        self.mdm_connector_id = None
+        self.mdm_task_ready = None
+        self.mdm_task_processing = None
+        self.mdm_task_status = None
+        self.mdm_task_owner = None
+        self.mdm_task_progress = None
+        self.mdm_process_after = None
+        self.mdm_distribution_value = None
+        self.mdm_task_priority = None
+        self.mdm_number_of_steps = None
+        self.mdm_number_of_steps_executed = None
+        self.mdm_entity_type = None
+        self.mdm_created = None
+        self.mdm_last_updated = None
+        self.mdm_tenant_id = None
 
-    def create(self, taskType, taskGroup, data={}):
+
+    def _set_task_by_json(self, json_task):
+        self.task_id = json_task['mdmId']
+        self.mdm_data = json_task['mdmData']
+        self.mdm_user_id = json_task['mdmUserId']
+        self.mdm_connector_id = json_task['mdmConnectorId']
+        self.mdm_task_ready = json_task['mdmTaskReady']
+        self.mdm_task_processing = json_task['mdmTaskProcessing']
+        self.mdm_task_status = json_task['mdmTaskStatus']
+        self.mdm_task_owner = json_task['mdmTaskOwner']
+        self.mdm_task_progress = json_task['mdmTaskProgress']
+        self.mdm_process_after = json_task['mdmProcessAfter']
+        self.mdm_distribution_value = json_task['mdmDistributionValue']
+        self.mdm_task_priority = json_task['mdmTaskPriority']
+        self.mdm_number_of_steps = json_task['mdmNumberOfSteps']
+        self.mdm_number_of_steps_executed = json_task['mdmNumberOfStepsExecuted']
+        self.mdm_entity_type = json_task['mdmEntityType']
+        self.mdm_created = json_task['mdmCreated']
+        self.mdm_last_updated = json_task['mdmLastUpdated']
+        self.mdm_tenant_id = json_task['mdmTenantId']
+
+
+    def create(self, task_type, task_group, data={}):
         """
         Create a new task
-        :param taskType: type of task
-        :param taskGroup: commonly is used tenandId
+        :param task_type: type of task
+        :param task_group: commonly is used tenandId
         :param data: data used in the task
         :return: Task
         """
 
         dataJson = {
-            "mdmTaskType": taskType,
-            "mdmTaskGroup": taskGroup,
+            "mdmTaskType": task_type,
+            "mdmTaskGroup": task_group,
             "mdmData": data,
         }
 
-        resp = self.carol.call_api('v1/tasks/new', data=dataJson)
-        print (resp)
-        return resp
+        json_task = self.carol.call_api('v1/tasks/new', data=dataJson)
+        self._set_task_by_json(json_task)
+        return self
 
 
-    def getTask(self, task):
+    def get_task(self, task_id=None):
         """
         Get Task
-        :param task: Task or task id
+        :param task_id: task id
         :return: Task
         """
 
-        taskId = self._getTaskId(task)
-
-        resp = self.carol.call_api('v1/tasks/{}'.format(taskId))
-        return resp
+        if task_id is None:
+            task_id = self.task_id
 
 
-    def addLog(self, task, logMessage, logLevel="WARN"):
+        json_task = self.carol.call_api('v1/tasks/{}'.format(task_id))
+        self._set_task_by_json(json_task)
+        return self
+
+
+    def add_log(self, log_message, log_level="WARN", task_id=None):
         """
         Add a log
-        :param task: Task or task id
-        :param logMessage: commonly used tenandId
-        :param logLevel: options: ERROR, WARN, INFO, DEBUG, TRACE
+        :param log_message: commonly used tenandId
+        :param log_level: options: ERROR, WARN, INFO, DEBUG, TRACE
+        :param task_id: it's not necessary if self.mdm_id is defined
         :return: boolean
         """
 
-        taskId = self._getTaskId(task)
+        if task_id is None:
+            task_id = self.task_id
 
         log = [{
-            "mdmTaskId": taskId,
-            "mdmLogMessage": logMessage,
-            "mdmLogLevel": logLevel.upper()
+            "mdmTaskId": task_id,
+            "mdmLogMessage": log_message,
+            "mdmLogLevel": log_level.upper()
         }]
-        return self.addLogs(taskId, log)
+        return self.add_logs(log)
 
 
-    def addLogs(self, task, logs=[]):
+    def add_logs(self, logs=[], task_id=None):
         """
         Add more than one log
-        :param task: Task or task id
-        :param logs: array of logs objects [{"taskId":"", "logMessage": "", "logLevel": ""}]
+        :param logs: array of logs objects [{"task_id":"", "log_message": "", "log_level": ""}]
+        :param task_id: it's not necessary if self.mdm_id is defined
         :return: Task
         """
 
-        taskId = self._getTaskId(task)
+        if task_id is None:
+            task_id = self.task_id
 
-        resp = self.carol.call_api('v1/tasks/{}/logs'.format(taskId), data=logs)
+        resp = self.carol.call_api('v1/tasks/{}/logs'.format(task_id), data=logs)
         if resp['success']:
             return True
         else:
             return False
 
 
-    def getLogs(self, task):
+    def get_logs(self, task_id=None):
         """
         Get all logs
-        :param task: Task or task id
+        :param task_id: it's not necessary if self.mdm_id is defined
         :return: list of logs
         """
 
-        taskId = self._getTaskId(task)
+        if task_id is None:
+            task_id = self.task_id
 
-        resp = self.carol.call_api('v1/tasks/{}/logs'.format(taskId))
+        resp = self.carol.call_api('v1/tasks/{}/logs'.format(task_id))
         return resp
 
 
-    def setProgress(self, task, progress, progressData={}):
+    def set_progress(self, progress, progress_data={}, task_id=None):
         """
         Set Task Progress
-        :param task: Task or task id
         :param progress: Number relative to progress
-        :param progressData: Json to storage as mdmTaskProgressData
+        :param progress_data: Json to storage as mdmTaskprogress_data
+        :param task_id: it's not necessary if self.mdm_id is defined
         :return: Task
         """
 
-        taskId = self._getTaskId(task)
+        if task_id is None:
+            task_id = self.task_id
 
-        resp = self.carol.call_api('v1/tasks/{}/progress/{}'.format(taskId, progress), data=progressData)
+        resp = self.carol.call_api('v1/tasks/{}/progress/{}'.format(task_id, progress), data=progress_data)
         return resp
 
 
-    def cancel(self, task):
+    def cancel(self, task_id=None):
         """
         Cancel the task
-        :param task: Task or task id
+        :param task_id: it's not necessary if self.mdm_id is defined
         :return: boolean
         """
 
-        taskId = self._getTaskId(task)
+        if task_id is None:
+            task_id = self.task_id
 
-        resp = self.carol.call_api('v1/tasks/{}/cancel'.format(taskId), method="POST")
+        resp = self.carol.call_api('v1/tasks/{}/cancel'.format(task_id), method="POST")
         if resp['success']:
             return True
         else:
