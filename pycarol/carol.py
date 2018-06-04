@@ -5,6 +5,7 @@ from pycarol.storage import *
 from pycarol.connectors import *
 from pycarol.carolina import *
 from pycarol.staging import *
+from pycarol.tasks import *
 
 
 class Carol:
@@ -18,6 +19,7 @@ class Carol:
         self.connectors = Connectors(self)
         self.carolina = Carolina(self)
         self.staging = Staging(self)
+        self.tasks = Tasks(self)
         self.tenant = self.tenants.get_tenant_by_domain(domain)
 
         default_connector_id = '0a0829172fc2433c9aa26460c31b78f0'
