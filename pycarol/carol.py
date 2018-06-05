@@ -29,10 +29,6 @@ class Carol:
         self.auth = auth
         self.auth.login(self)
 
-        # If no connector id is specified, we create a default one for this app
-        if connector_id is None:
-            self.connector_id = self.connectors.create(app_name)
-            self.auth.login(self)
 
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json'):
         url = 'https://{}.carol.ai:{}/api/{}'.format(self.domain, self.port, path)
