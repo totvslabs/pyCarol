@@ -1,5 +1,6 @@
 
 class Tasks:
+
     def __init__(self, carol):
         self.carol = carol
 
@@ -100,10 +101,10 @@ class Tasks:
         return self.add_logs(log)
 
 
-    def add_logs(self, logs=[], task_id=None):
+    def add_logs(self, logs, task_id=None):
         """
         Add more than one log
-        :param logs: array of logs objects [{"task_id":"", "log_message": "", "log_level": ""}]
+        :param logs: list of logs objects [{"task_id":"", "log_message": "", "log_level": ""}]
         :param task_id: it's not necessary if self.mdm_id is defined
         :return: Task
         """
@@ -132,7 +133,7 @@ class Tasks:
         return resp
 
 
-    def set_progress(self, progress, progress_data={}, task_id=None):
+    def set_progress(self, progress, progress_data=None, task_id=None):
         """
         Set Task Progress
         :param progress: Number relative to progress
@@ -140,6 +141,11 @@ class Tasks:
         :param task_id: it's not necessary if self.mdm_id is defined
         :return: Task
         """
+
+        if progress_data is None:
+            progress_data = {}
+        else:
+            assert isinstance(progress_data, dict)
 
         if task_id is None:
             task_id = self.task_id
