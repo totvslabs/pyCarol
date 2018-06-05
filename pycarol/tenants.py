@@ -96,7 +96,7 @@ class Apps:
         self.entity_space = entity_space
         self.querystring = {"entitySpace": self.entity_space}
 
-        query = self.carol.call_api(f'v1/v1/tenantApps/{self.app_id}', method='GET', params=self.querystring)
+        query = self.carol.call_api(f'v1/tenantApps/{self.app_id}', method='GET', params=self.querystring)
 
         self._define_current_run(query)
 
