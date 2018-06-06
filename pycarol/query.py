@@ -225,7 +225,5 @@ class Query:
             dm_name = dm_name + 'Golden'
         self.json_query = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": dm_name}]}
         self.index_type = 'MASTER'
-        self.page_size = 1000
-
         return self
 
