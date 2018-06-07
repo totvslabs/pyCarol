@@ -143,7 +143,7 @@ class Query:
                 if self.get_errors:
                     self.query_errors.update({elem.get('mdmId',elem) :  elem.get('mdmErrors',elem) for elem in result if elem['mdmErrors']})
 
-                    result = [elem.get('mdmGoldenFieldAndValues',elem) for elem in result if elem.get('mdmGoldenFieldAndValues',None)]  #get mdmGoldenFieldAndValues if not empty and if it exists
+                result = [elem.get('mdmGoldenFieldAndValues',elem) for elem in result if elem.get('mdmGoldenFieldAndValues',None)]  #get mdmGoldenFieldAndValues if not empty and if it exists
 
                 if not self.flush_result:
                     self.results.extend(result)
