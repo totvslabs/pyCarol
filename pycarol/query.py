@@ -134,19 +134,19 @@ class Query:
                 raise Exception('No Scroll Id to use. Something is wrong')
 
             if self.only_hits:
-                query = result['hits']
+                result = result['hits']
                 if self.safe_check:
-                    self.mdmId_list.extend([mdm_id['mdmId'] for mdm_id in query])
+                    self.mdmId_list.extend([mdm_id['mdmId'] for mdm_id in result])
                     if len(self.mdmId_list) > len(set(self.mdmId_list)):
                         raise Exception('There are repeated records')
 
                 if self.get_errors:
-                    self.query_errors.update({elem.get('mdmId',elem) :  elem.get('mdmErrors',elem) for elem in query if elem['mdmErrors']})
+                    self.query_errors.update({elem.get('mdmId',elem) :  elem.get('mdmErrors',elem) for elem in result if elem['mdmErrors']})
 
-                query = [elem.get('mdmGoldenFieldAndValues',elem) for elem in query if elem.get('mdmGoldenFieldAndValues',None)]  #get mdmGoldenFieldAndValues if not empty and if it exists
+                    result = [elem.get('mdmGoldenFieldAndValues',elem) for elem in result if elem.get('mdmGoldenFieldAndValues',None)]  #get mdmGoldenFieldAndValues if not empty and if it exists
 
                 if not self.flush_result:
-                    self.results.extend(query)
+                    self.results.extend(result)
             else:
                 result.pop('count')
                 result.pop('took')
