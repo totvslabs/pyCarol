@@ -6,11 +6,12 @@ class Staging:
     def __init__(self, carol):
         self.carol = carol
 
-    def send_data(self, staging_name, data=None, step_size=100, print_stats=False, auto_create_schema=True):
+    def send_data(self, staging_name, data=None, step_size=100, print_stats=False, auto_create_schema=True, crosswalk_auto_create=None):
+
         schema = self.get_schema(staging_name)
 
         if not schema and auto_create_schema:
-            self.create_schema(data, staging_name)
+            self.create_schema(data, staging_name, crosswalk_list=crosswalk_auto_create)
 
         is_df = False
         if isinstance(data, pd.DataFrame):
@@ -54,11 +55,19 @@ class Staging:
         yield []
 
     def get_schema(self, staging_name):
-        return self.carol.call_api('v2/staging/tables/{}/schema'.format(staging_name))
+        try:
+            return self.carol.call_api('v2/staging/tables/{}/schema'.format(staging_name))
+        except Exception:
+            return None
+
+
 
     def create_schema(self, fields_dict, staging_name, mdm_flexible='false',
                      crosswalk_name=None, crosswalk_list=None, overwrite=False):
         assert fields_dict is not None
+
+        if isinstance(fields_dict, list):
+            fields_dict = fields_dict[0]
 
         if isinstance(fields_dict, dict):
             schema = carolSchemaGenerator(fields_dict)
@@ -68,6 +77,8 @@ class Staging:
             schema = carolSchemaGenerator.from_json(fields_dict)
             schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible,
                                     crosswalkname=crosswalk_name, crosswalkList=crosswalk_list)
+        else:
+            print('Behavior for type %s not defined!' % type(fields_dict))
 
         has_schema = self.get_schema(staging_name) is not None
         if has_schema:
@@ -76,7 +87,7 @@ class Staging:
             method = 'POST'
 
         resp = self.carol.call_api('v2/staging/tables/{}/schema'.format(staging_name), data=schema, method=method)
-        if resp['success']:
+        if resp['mdmId']:
             print('Schema sent successfully!')
         else:
             print('Failed to send schema: ' + resp)
