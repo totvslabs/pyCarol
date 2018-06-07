@@ -87,7 +87,7 @@ class Staging:
             method = 'POST'
 
         resp = self.carol.call_api('v2/staging/tables/{}/schema'.format(staging_name), data=schema, method=method)
-        if resp['mdmId']:
+        if resp.get('mdmId'):
             print('Schema sent successfully!')
         else:
             print('Failed to send schema: ' + resp)
