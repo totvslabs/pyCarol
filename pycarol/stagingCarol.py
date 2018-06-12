@@ -35,9 +35,8 @@ class sendDataCarol:
 
     def sendData(self, stagingName, data = None, step_size = 100,
                  connectorId=None, print_stats = False):
-        if connectorId is not None:
-            if not connectorId==self.token_object.connectorId:
-                self.token_object.newToken(connectorId)
+        if connectorId is None:
+            connectorId=self.token_object.connectorId
 
         self.step_size = step_size
         self.print_stats = print_stats
@@ -65,7 +64,7 @@ class sendDataCarol:
         self.stagingName = stagingName
         self.url_filter = "https://{}.carol.ai{}/api/v2/staging/tables/{}?returnData=false&connectorId={}" \
             .format(self.token_object.domain, self.dev,
-                    self.stagingName, self.token_object.connectorId)
+                    self.stagingName, connectorId)
 
         gen = self._streamData()
         cont = 0
