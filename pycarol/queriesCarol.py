@@ -405,7 +405,8 @@ class deleteFilter:
         self.indexType = 'MASTER'
         self.headers = self.token_object.headers_to_use
         self.query_data = []
-        self.querystring = {"indexType": self.indexType, "tenantId": self.token_object.tenantId}
+        #self.querystring = {"indexType": self.indexType, "tenantId": self.token_object.tenantId}
+        self.querystring = {"indexType": self.indexType}
 
     def deleteRegisters(self, json_query, indexType='MASTER',print_status=True):
         self.indexType = indexType
@@ -413,7 +414,7 @@ class deleteFilter:
 
         check_register = queryCarol(self.token_object).checkTotalHits(json_query)
 
-        self.querystring = {"indexType": self.indexType, "tenantId": self.token_object.tenantId}
+        self.querystring = {"indexType": self.indexType}
 
         _deleted = True
         self.totalHits = check_register
