@@ -431,7 +431,7 @@ class deleteFilter:
                 raise Exception(self.lastResponse.text)
             _deleted = False
         if print_status:
-            print('{}/{} records deleted'.format(len(self.lastResponse.json()),check_register))
+            print('{}/{} records deleted'.format(self.lastResponse.json()['count'],check_register))
 
 
 
