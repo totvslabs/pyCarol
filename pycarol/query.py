@@ -167,7 +167,7 @@ class Query:
                 if callable(callback):
                     callback(result)
                 else:
-                    raise Exception('The variable callback is not callable. This variable must be a function.')
+                    raise Exception(f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function.')
             
             if self.print_status:
                 print('{}/{}'.format(downloaded, to_get), end='\r')
