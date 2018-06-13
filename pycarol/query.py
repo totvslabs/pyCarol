@@ -33,7 +33,8 @@ class Query:
         self.flush_result = flush_result
 
         self.named_query = None
-
+        self.callback = None
+        
         # Crated to send to the Rest API
         self.query_params = None
         self.drop_list = None
@@ -66,7 +67,7 @@ class Query:
         if self.fields is not None:
             self.fields = ','.join(self.fields)
 
-    def go(self):
+    def go(self, callback=None):
         """
         """
         if self.json_query is None:
@@ -75,13 +76,13 @@ class Query:
         self._build_return_fields()
 
         if self.scrollable:
-            self._scrollable_query_handler()
+            self._scrollable_query_handler(callback)
         else:
             self._oldQueryHandler()
 
         return self
-
-    def _scrollable_query_handler(self):
+    
+    def _scrollable_query_handler(self, callback=None):
         if not self.offset == 0:
             raise ValueError('It is not possible to use offset when using scroll for pagination')
 
@@ -152,7 +153,8 @@ class Query:
                 result.pop('took')
                 result.pop('totalHits')
                 #result.pop('scrollId')
-                self.results.append(result)
+                if not self.flush_result:
+                    self.results.append(result)
 
                 if self.get_aggs:
                     if self.save_results:
@@ -160,7 +162,13 @@ class Query:
                         file.write('\n')
                         file.flush()
                     break
-
+            
+            if callback:
+                if callable(callback):
+                    callback(result)
+                else:
+                    raise Exception(f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function.')
+            
             if self.print_status:
                 print('{}/{}'.format(downloaded, to_get), end='\r')
             if self.save_results:
