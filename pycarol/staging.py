@@ -6,12 +6,17 @@ class Staging:
     def __init__(self, carol):
         self.carol = carol
 
-    def send_data(self, staging_name, data=None, step_size=100, print_stats=False, auto_create_schema=True, crosswalk_auto_create=None):
+    def send_data(self, staging_name, data=None, connector_id=None, step_size=100, print_stats=False,
+                  auto_create_schema=True, crosswalk_auto_create=None):
 
-        schema = self.get_schema(staging_name)
+        if connector_id is None:
+            connector_id = self.carol.connector_id
+
+        schema = self.get_schema(staging_name,connector_id)
 
         if not schema and auto_create_schema:
-            self.create_schema(data, staging_name, crosswalk_list=crosswalk_auto_create)
+            assert crosswalk_auto_create, "You should provite a crosswalk"
+            self.create_schema(data, staging_name, connector_id=connector_id,crosswalk_list=crosswalk_auto_create)
 
         is_df = False
         if isinstance(data, pd.DataFrame):
@@ -27,7 +32,7 @@ class Staging:
             data = [data]
             data_size = len(data)
 
-        url = 'v2/staging/tables/{}?returnData=false'.format(staging_name)
+        url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
 
         gen = self._stream_data(data, data_size, step_size, is_df)
         cont = 0
@@ -54,17 +59,23 @@ class Staging:
 
         yield []
 
-    def get_schema(self, staging_name):
+    def get_schema(self, staging_name, connector_id=None):
+        query_string = None
+        if connector_id:
+            query_string = {"connectorId": connector_id}
         try:
-            return self.carol.call_api('v2/staging/tables/{}/schema'.format(staging_name))
+            return self.carol.call_api(f'v2/staging/tables/{staging_name}/schema',  method='GET',
+                                       params=query_string)
         except Exception:
             return None
 
 
 
-    def create_schema(self, fields_dict, staging_name, mdm_flexible='false',
+    def create_schema(self, fields_dict, staging_name,connector_id=None, mdm_flexible='false',
                      crosswalk_name=None, crosswalk_list=None, overwrite=False):
         assert fields_dict is not None
+
+
 
         if isinstance(fields_dict, list):
             fields_dict = fields_dict[0]
@@ -80,13 +91,19 @@ class Staging:
         else:
             print('Behavior for type %s not defined!' % type(fields_dict))
 
-        has_schema = self.get_schema(staging_name) is not None
+        query_string = {"connectorId": connector_id}
+        if connector_id is None:
+            connector_id = self.carol.connector_id
+            query_string = {"connectorId": connector_id}
+
+        has_schema = self.get_schema(staging_name,connector_id=connector_id) is not None
         if has_schema:
             method = 'PUT'
         else:
             method = 'POST'
 
-        resp = self.carol.call_api('v2/staging/tables/{}/schema'.format(staging_name), data=schema, method=method)
+        resp = self.carol.call_api('v2/staging/tables/{}/schema'.format(staging_name), data=schema, method=method,
+                                   params=query_string)
         if resp.get('mdmId'):
             print('Schema sent successfully!')
         else:
