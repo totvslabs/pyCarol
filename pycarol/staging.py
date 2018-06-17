@@ -51,9 +51,9 @@ class Staging:
     def _stream_data(self, data, data_size, step_size, is_df):
         for i in range(0,data_size, step_size):
             if is_df:
-                data = data.iloc[i:i + step_size].to_json(orient='records', date_format='iso', lines=False)
-                data = json.loads(data)
-                yield data
+                data_to_send = data.iloc[i:i + step_size].to_json(orient='records', date_format='iso', lines=False)
+                data_to_send = json.loads(data_to_send)
+                yield data_to_send
             else:
                 yield data[i:i + step_size]
 
