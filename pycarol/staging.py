@@ -14,9 +14,7 @@ class Staging:
 
         schema = self.get_schema(staging_name,connector_id)
 
-        if not schema and auto_create_schema:
-            assert crosswalk_auto_create, "You should provite a crosswalk"
-            self.create_schema(data, staging_name, connector_id=connector_id,crosswalk_list=crosswalk_auto_create)
+
 
         is_df = False
         if isinstance(data, pd.DataFrame):
@@ -31,6 +29,14 @@ class Staging:
         if (not isinstance(data, list)) and (not is_df):
             data = [data]
             data_size = len(data)
+
+        if not schema and auto_create_schema:
+            assert crosswalk_auto_create, "You should provite a crosswalk"
+            if is_df:
+                schema_data = data.iloc[0].to_json(date_format='iso')
+            else:
+                schema_data = data[0]
+            self.create_schema(schema_data, staging_name, connector_id=connector_id, crosswalk_list=crosswalk_auto_create)
 
         url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
 

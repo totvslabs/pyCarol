@@ -219,7 +219,7 @@ class Query:
 
         return self
 
-    def namedQueryParams(self,named_query):
+    def named_query_params(self,named_query):
         named = nq.namedQueries(self.token_object)
         named.getParamByName(named_query=named_query)
         return named.paramDict
