@@ -46,13 +46,14 @@ class Carol:
         data_json = None
         if method == 'GET':
             response = requests.get(url=url, headers=headers, params=params)
-        elif method == 'POST':
+        elif (method == 'POST') or (method == 'DELETE') or (method == 'PUT'):
             headers['content-type'] = content_type
 
             if content_type == 'application/json':
                 data_json = data
                 data = None
-            response = requests.post(url=url, data=data, json=data_json, headers=headers, params=params)
+            response = requests.request(method=method, url=url, data=data, json=data_json,
+                                     headers=headers, params=params)
 
         if self.verbose:
             if data_json is not None:

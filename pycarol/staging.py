@@ -7,7 +7,7 @@ class Staging:
         self.carol = carol
 
     def send_data(self, staging_name, data=None, connector_id=None, step_size=100, print_stats=False,
-                  auto_create_schema=True, crosswalk_auto_create=None):
+                  auto_create_schema=False, crosswalk_auto_create=None):
 
         if connector_id is None:
             connector_id = self.carol.connector_id

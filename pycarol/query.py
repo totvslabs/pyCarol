@@ -25,6 +25,7 @@ class Query:
         self.fields = fields
         self.get_aggs = get_aggs
 
+
         self.save_results = save_results
         self.filename = filename
         self.print_status = print_status
@@ -39,6 +40,7 @@ class Query:
         self.query_params = None
         self.drop_list = None
         self.json_query = None
+        self.total_hits = None
 
         self.results = []
 
@@ -128,7 +130,7 @@ class Query:
                 url_filter = "v2/queries/filter/{}".format(scroll_id)
             elif result['count'] == 0:
                 if count < self.total_hits:
-                    print(f'Total records downloaded: {count}/{self.totalHits}')
+                    print(f'Total records downloaded: {count}/{self.total_hits}')
                     print(f'Something is wrong, no scrollId to continue \n')
                     break
             else:
@@ -178,30 +180,17 @@ class Query:
         if self.save_results:
             file.close()
 
-    def checkTotalHits(self, json_query):
+    def check_total_hits(self, json_query):
         """
         Check the total hits for a given query
         :param json_query: Json object with the query to use
         :return: number of records for this query
         """
-        errors = True
-        while errors:
-            url_filter = "https://{}.carol.ai{}/api/v2/queries/filter?offset={}&pageSize={}&sortOrder={}&indexType={}".format(
-                self.token_object.domain, self.dev, str(self.offset), str(0), self.sortOrder, self.indexType)
-            self.lastResponse = requests.post(url=url_filter, headers=self.headers, json=json_query)
-            if not self.lastResponse.ok:
-                # error handler for token
-                if self.lastResponse.reason == 'Unauthorized':
-                    self.token_object.refreshToken()
-                    self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
-                    continue
-                raise Exception(self.lastResponse.text)
-            errors = False
-
-        self.lastResponse.encoding = 'utf8'
-        query = json.loads(self.lastResponse.text)
-        self.total_hits = query["totalHits"]
-        return self.totalHits
+        self.json_query = json_query
+        url_filter = "v2/queries/filter?offset={}&pageSize={}&indexType={}".format(str(0), str(0), self.index_type)
+        result = self.carol.call_api(url_filter, data=self.json_query)
+        self.total_hits = result["totalHits"]
+        return self.total_hits
 
     def named(self, named_query, params=None, json_query=None):
         if json_query is not None and params is not None:
@@ -235,3 +224,15 @@ class Query:
         self.index_type = 'MASTER'
         return self
 
+    def delete(self, json_query):
+
+
+        #TODO: we should check the number of records to be deleted. If too many,
+        #it can be a problem.
+        self.json_query = json_query
+        self.querystring = {"indexType": self.index_type}
+        url_filter = "v2/queries/filter"
+        result = self.carol.call_api(url_filter, data=self.json_query,
+                                     params=self.querystring, method='DELETE')
+
+        print(result)
