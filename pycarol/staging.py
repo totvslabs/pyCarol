@@ -14,8 +14,6 @@ class Staging:
 
         schema = self.get_schema(staging_name,connector_id)
 
-
-
         is_df = False
         if isinstance(data, pd.DataFrame):
             is_df = True
