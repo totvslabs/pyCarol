@@ -234,3 +234,5 @@ class Query:
         url_filter = "v2/queries/filter"
         result = self.carol.call_api(url_filter, data=self.json_query,
                                      params=self.querystring, method='DELETE')
+
+        print('Deleted: ',result)
