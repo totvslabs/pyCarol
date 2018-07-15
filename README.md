@@ -37,17 +37,9 @@ This package implements some of Carol's APIs. The following endpoints are implem
         2. DELETE - /api/v2/queries/filter 
         2. POST - /api/v2/queries/filter/{scrollId}
         
-    - v2 Named Queries (namedQueryCarol.py)
-        1. GET/POST - /api/v2/named_queries
-        2. DELETE - /api/v2/named_queries/name/{name}
-        3. GET - /api/v2/named_queries/name/{name}
-        
     - v2 Staging (stagingCarol.py)
         1. GET/POST - /api/v2/staging/tables/{table}
         2. GET-POST - /api/v2/staging/tables/{table}/schema
-        
-    - v1 Entity Template Types (entityTemplateTypesCarol.py)
-        1. GET/POST - /api/v1/entityTemplateTypes
         
     - v1 Entity Mappings (entityMappingsCarol.py)
         1. GET/POST - /api/v1/connectors/{connectorId}/entityMappings
@@ -56,25 +48,8 @@ This package implements some of Carol's APIs. The following endpoints are implem
         4. POST - /api/v1/connectors/{connectorId}/entityMappings/snapshot
         
     - v1 Entity Template (entityTemplateCarol.py)
-        1. GET/POST - /api/api/v1/entities/templates/snapshot
-        2. POST - /api/v1/entities/templates/{entityTemplateId}/publish
-        3. GET/POST - /api/v1/entities/templates
+        1. GET - /api/api/v1/entities/templates/snapshot
         4. GET - /api/v1/entities/templates/name/{entityTemplateName}
-        5. GET - /api/v1/entities/templates/global/{entityTemplateId}
-        6. DELTE - /api/v1/entities/templates/{entityTemplateId}
-        
-    - v1 Fields (fieldsCarol.py)
-        1. GET/POST - /api/v1/admin/fields
-        2. GET - /api/v1/admin/fields/{mdmId}
-        3. GET - /api/v1/admin/fields/possibleTypes
-        4. GET - /api/v1/fields
-        5. GET - /api/v1/fields/{mdmId}
-        6. GET - /api/v1/fields/possibleTypes
-    
-    - v1 Verticals (verticalsCarol.py)
-        1. GET - /api/v1/verticals
-        2. GET - /api/v1/verticals/{verticalId}
-        3. GET - /api/v1/verticals/name/{verticalName}
 
     - v1 Connectors (connectorsCarol.py)
         1. GET/POST - /api/v1/connectors
@@ -87,15 +62,9 @@ This package implements some of Carol's APIs. The following endpoints are implem
         2. GET - /api/v1/tenantApps/{id}
         3. GET - /api/v1/tenantApps/name/{name}
         4. GET -/api/v1/tenantApps/{tenantAppId}/settings
-
-    - v1 Database Toolbelt Admin (toolbeltAdmin.py)
-        1. DELETE - /api/v1/databaseToolbelt/filter  (deprecated)
-        
         
  We also have a Schema Generator (schemaGenerator.py).
- 
 
- 
  ### Using pyCarol
  
 The process always starts after we obtain an access token.
@@ -348,82 +317,3 @@ print(app.appSettings)
 The settings will be returned as a dictionary where the keys are the parameter names and the values are the value for 
 for that parameter. We can access the full settings as a dictionary through the variable `app.fullSettings`, where the keys
 are the parameter names and the values are the full responses for that parameter. 
-
-### Cloning a tenant
-
-To clone a tenant we need fist to generate two token objects:
-
-  ```python
-from pycarol import loginCarol
-
-token_from = loginCarol.loginCarol(username= username_from, password=my_password_from, 
-                                     domain = my_domain_from, connectorId=my_connectorId_from)
-token_from.newToken()
-
-token_to = loginCarol.loginCarol(username= username_to, password=my_password_to, 
-                                     domain = my_domain_to, connectorId=my_connectorId_to)
-token_to.newToken()
-```
-
-To copy all DMs, connector with staging tables and mappinngs and named queries: 
-  ```python
-from pycarol.cloneTenant import cloneTenant
-
-ct = cloneTenant.cloneTenant(token_from,token_to)
-ct.copyAllDMs(overwrite=True)
-ct.copyAllConnectors(overwrite=True,copy_mapping=True)
-ct.copyAllNamedQueries(overwrite=True)
-
-```
-
-If `overwrite = True` it will overwrite DMs/connectors with the same name. `copy_mapping = True` will create the mappings 
-for each staging table. 
-It is possible to copy only a selected number of DMs from a tenant using:
-  ```python
-from pycarol.cloneTenant import cloneTenant
-ct = cloneTenant.cloneTenant(token_from,token_to)
-ct.copyDMs(['customer'],overwrite= True)
-
-```
-The code snippet above will copy only the data model named `custumer``. It is possible to do the same for conectors and 
-stagings:
-  ```python
-from pycarol.cloneTenant import cloneTenant
-ct = cloneTenant.cloneTenant(token_from,token_to)
-ct.copyConnectors( {"protheus" : ["sa1010","sb1010"]}, copy_mapping=True, overwrite=True)
-
-```
-The code snippet above will copy the conector names `protheus` and both the stagings `sa1010` and `sb1010`, including mappings. Finally, coping only 
-selected named queries: 
-
-  ```python
-from pycarol.cloneTenant import cloneTenant
-ct = cloneTenant.cloneTenant(token_from,token_to)
-ct.copyNamedQueries( ['averageTicketbyClient','recommendationForUser'], overwrite=True)
-
-```
-
-
-### pyCarol utils
-Sometimes the human being can be lazy. So, for those moments, we create a util to quickly create a data model
-from a json:
-  ```python
-from pycarol.utils import lazyguy
-from pycarol import loginCarol
-import json
-token = loginCarol.loginCarol(username= username_from, password=my_password_from, 
-                                     domain = my_domain_from, connectorId=my_connectorId_from)
-json_query = """{"tenantId":"e7dbd874-ea9d-4092-afa4-d2f68acaaaf4","id":1,"createdAt":"2015-11-16T17:34:37-02:00",
-"subtotal":410.1,"course_status": "asdasd"}"""
-json_sample = json.loads(json_query)
-
-lg = lazyguy.lazeDM(token)
-lg.start(json_sample, mdmName='lazy',profileTitle = 'lazy',publish=False ,overwrite=True)
-```
-
-This will create a DM named `lazy` with the profile title `lazy`. The DM will not be publish. If there already exists a DM
-with the given name, we can use the `overwrite` parameter to overwrite it. 
-There are some limitations to this function: 
-   1. We do not allow to create DM with nested fields. 
-   2. If the variable we are trying to create already exists, and the type of those are different, 
-    we will get an error. 
