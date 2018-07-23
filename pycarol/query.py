@@ -74,8 +74,9 @@ class Query:
         """
         if self.json_query is None:
             raise ValueError("You must call all() or filter() or named() before calling go()")
-        self._build_query_params()
+
         self._build_return_fields()
+        self._build_query_params()
 
         if self.scrollable:
             self._scrollable_query_handler(callback)
