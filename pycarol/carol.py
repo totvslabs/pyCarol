@@ -9,7 +9,7 @@ from pycarol.tasks import *
 
 
 class Carol:
-    def __init__(self, domain, app_name, auth, connector_id=None, port=443, verbose=False):
+    def __init__(self, domain, app_name, auth, connector_id='0a0829172fc2433c9aa26460c31b78f0', port=443, verbose=False):
         self.domain = domain
         self.app_name = app_name
         self.port = port
@@ -21,13 +21,9 @@ class Carol:
         self.staging = Staging(self)
         self.tasks = Tasks(self)
         self.tenant = self.tenants.get_tenant_by_domain(domain)
-
-        default_connector_id = '0a0829172fc2433c9aa26460c31b78f0'
         self.connector_id = connector_id
-        if self.connector_id is None:
-            self.connector_id = default_connector_id
         self.auth = auth
-        self.auth.login(self)
+        self.auth.setConnectorId(self.connector_id)
 
 
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json'):
