@@ -24,6 +24,7 @@ class Carol:
         self.connector_id = connector_id
         self.auth = auth
         self.auth.setConnectorId(self.connector_id)
+        self.response = None
 
 
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json'):
@@ -42,6 +43,7 @@ class Carol:
         data_json = None
         if method == 'GET':
             response = requests.get(url=url, headers=headers, params=params)
+            
         elif (method == 'POST') or (method == 'DELETE') or (method == 'PUT'):
             headers['content-type'] = content_type
 
@@ -50,7 +52,7 @@ class Carol:
                 data = None
             response = requests.request(method=method, url=url, data=data, json=data_json,
                                      headers=headers, params=params)
-
+        
         if self.verbose:
             if data_json is not None:
                 print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data_json, params))
@@ -59,6 +61,7 @@ class Carol:
             print("        Headers: {}".format(headers))
 
         response.encoding = 'utf-8'
+        self.response = response
         if response.ok:
             return json.loads(response.text)
         else:

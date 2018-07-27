@@ -1,6 +1,5 @@
 import json
 
-
 class Query:
     """ It implements the calls for the following endpoints:
        1. /api/v2/queries/filter
@@ -13,6 +12,7 @@ class Query:
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
                  save_results=True, filename='query_result.json', print_status=True, safe_check=False,
                  get_errors=False, flush_result=False):
+        
         self.carol = carol
         self.max_hits = max_hits
         self.offset = offset
