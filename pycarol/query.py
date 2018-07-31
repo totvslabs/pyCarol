@@ -11,7 +11,7 @@ class Query:
     """
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=50, sort_order='ASC', sort_by=None,
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
-                 save_results=True, filename='query_result.json', print_status=True, safe_check=False,
+                 save_results=False, filename='query_result.json', print_status=True, safe_check=False,
                  get_errors=False, flush_result=False):
         self.carol = carol
         self.max_hits = max_hits
@@ -127,9 +127,9 @@ class Query:
             count += result['count']
             downloaded += result['count']
             scroll_id = result.get('scrollId', None)
-            if scroll_id is not None:
+            if (scroll_id is not None) or (self.get_aggs):
                 url_filter = "v2/queries/filter/{}".format(scroll_id)
-            elif result['count'] == 0:
+            elif (result['count'] == 0):
                 if count < self.total_hits:
                     print(f'Total records downloaded: {count}/{self.total_hits}')
                     print(f'Something is wrong, no scrollId to continue \n')
@@ -165,6 +165,7 @@ class Query:
                         file.write('\n')
                         file.flush()
                     break
+
             
             if callback:
                 if callable(callback):
