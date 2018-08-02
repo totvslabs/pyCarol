@@ -1,4 +1,5 @@
 import unittest
+import os
 import sys
 sys.path.append('../.')
 from pycarol.auth.ApiKeyAuth import ApiKeyAuth
@@ -11,6 +12,11 @@ def carol_constructor():
               auth=ApiKeyAuth('6e423460919411e8855c3a7feb81f191'),
               connector_id='b0afa34067f111e8989cee82274893da')
 
+class queryCallback():
+    def __init__(self):
+        pass
+    def __call__(self, data):
+        self.called = True
 
 class QueryTestCase(unittest.TestCase):    
     def test_build_query_params_default(self):
@@ -73,7 +79,7 @@ class QueryTestCase(unittest.TestCase):
                   ]
                 }
         
-        query_result = Query(carol, page_size=1000).query(search_query).go()
+        query_result = Query(carol, page_size=1000, print_status=False).query(search_query).go()
         self.assertTrue(len(query_result.results) > 0)
     
     
@@ -89,15 +95,51 @@ class QueryTestCase(unittest.TestCase):
                   ]
                 }
         
-        query_result = Query(carol, page_size=2, max_hits=1, only_hits=False).query(search_query).go()
-        #self.assertTrue(len(query_result.results) > 0)
-        print(query_result.results)
+        query_result = Query(carol, page_size=2, max_hits=1, only_hits=False, print_status=False).query(search_query).go()
+        self.assertTrue(len(query_result.results) > 0)
     
     
-    # TODO:
-    #def test_go_callback_query(self):
-    #def test_go_save_results_query(self):
-    #def test_go_named_query(self):
+    def test_go_save_results_query(self):
+        carol = carol_constructor()
+        
+        search_query = {
+                  "mustList": [
+                    {
+                      "mdmFilterType": "TYPE_FILTER",
+                      "mdmValue": "customermanufacturingGolden"
+                    }
+                  ]
+                }
+        
+        if os.path.isfile('./query_result.json'):
+            os.remove('./query_result.json')
+        
+        query_result = Query(carol, page_size=2, max_hits=1, filename='query_result.json', save_results=True, print_status=False).query(search_query).go()
+        self.assertTrue(len(query_result.results) > 0)
+        self.assertTrue(os.path.isfile('./query_result.json'))
+    
+    
+    def test_go_named_query(self):
+        carol = carol_constructor()
+        query_result = Query(carol, page_size=2, max_hits=1, print_status=False).named('queryForUnitTest').go()
+        self.assertTrue(len(query_result.results) > 0)
+    
+    
+    def test_go_callback_query(self):
+        carol = carol_constructor()
+        callback = queryCallback()
+        
+        search_query = {
+                  "mustList": [
+                    {
+                      "mdmFilterType": "TYPE_FILTER",
+                      "mdmValue": "customermanufacturingGolden"
+                    }
+                  ]
+                }
+        
+        query_result = Query(carol, page_size=1000, print_status=False).query(search_query).go(callback=callback)
+        self.assertTrue(callback.called)
     
 if __name__ == '__main__':
     unittest.main()
