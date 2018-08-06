@@ -11,7 +11,7 @@ class Query:
     """
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=50, sort_order='ASC', sort_by=None,
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
-                 save_results=True, filename='query_result.json', print_status=True, safe_check=False,
+                 save_results=False, filename='query_result.json', print_status=True, safe_check=False,
                  get_errors=False, flush_result=False):
         self.carol = carol
         self.max_hits = max_hits
@@ -25,6 +25,7 @@ class Query:
         self.fields = fields
         self.get_aggs = get_aggs
 
+
         self.save_results = save_results
         self.filename = filename
         self.print_status = print_status
@@ -33,11 +34,13 @@ class Query:
         self.flush_result = flush_result
 
         self.named_query = None
-
+        self.callback = None
+        
         # Crated to send to the Rest API
         self.query_params = None
         self.drop_list = None
         self.json_query = None
+        self.total_hits = None
 
         self.results = []
 
@@ -66,22 +69,23 @@ class Query:
         if self.fields is not None:
             self.fields = ','.join(self.fields)
 
-    def go(self):
+    def go(self, callback=None):
         """
         """
         if self.json_query is None:
             raise ValueError("You must call all() or filter() or named() before calling go()")
-        self._build_query_params()
+
         self._build_return_fields()
+        self._build_query_params()
 
         if self.scrollable:
-            self._scrollable_query_handler()
+            self._scrollable_query_handler(callback)
         else:
             self._oldQueryHandler()
 
         return self
-
-    def _scrollable_query_handler(self):
+    
+    def _scrollable_query_handler(self, callback=None):
         if not self.offset == 0:
             raise ValueError('It is not possible to use offset when using scroll for pagination')
 
@@ -123,36 +127,37 @@ class Query:
             count += result['count']
             downloaded += result['count']
             scroll_id = result.get('scrollId', None)
-            if scroll_id is not None:
+            if (scroll_id is not None) or (self.get_aggs):
                 url_filter = "v2/queries/filter/{}".format(scroll_id)
-            elif result['count'] == 0:
+            elif (result['count'] == 0):
                 if count < self.total_hits:
-                    print(f'Total records downloaded: {count}/{self.totalHits}')
+                    print(f'Total records downloaded: {count}/{self.total_hits}')
                     print(f'Something is wrong, no scrollId to continue \n')
                     break
             else:
                 raise Exception('No Scroll Id to use. Something is wrong')
 
             if self.only_hits:
-                query = result['hits']
+                result = result['hits']
                 if self.safe_check:
-                    self.mdmId_list.extend([mdm_id['mdmId'] for mdm_id in query])
+                    self.mdmId_list.extend([mdm_id['mdmId'] for mdm_id in result])
                     if len(self.mdmId_list) > len(set(self.mdmId_list)):
                         raise Exception('There are repeated records')
 
                 if self.get_errors:
-                    self.query_errors.update({elem.get('mdmId',elem) :  elem.get('mdmErrors',elem) for elem in query if elem['mdmErrors']})
+                    self.query_errors.update({elem.get('mdmId',elem) :  elem.get('mdmErrors',elem) for elem in result if elem['mdmErrors']})
 
-                query = [elem.get('mdmGoldenFieldAndValues',elem) for elem in query if elem.get('mdmGoldenFieldAndValues',None)]  #get mdmGoldenFieldAndValues if not empty and if it exists
+                result = [elem.get('mdmGoldenFieldAndValues',elem) for elem in result if elem.get('mdmGoldenFieldAndValues',None)]  #get mdmGoldenFieldAndValues if not empty and if it exists
 
                 if not self.flush_result:
-                    self.results.extend(query)
+                    self.results.extend(result)
             else:
                 result.pop('count')
                 result.pop('took')
                 result.pop('totalHits')
                 #result.pop('scrollId')
-                self.results.append(result)
+                if not self.flush_result:
+                    self.results.append(result)
 
                 if self.get_aggs:
                     if self.save_results:
@@ -161,6 +166,13 @@ class Query:
                         file.flush()
                     break
 
+            
+            if callback:
+                if callable(callback):
+                    callback(result)
+                else:
+                    raise Exception(f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function.')
+            
             if self.print_status:
                 print('{}/{}'.format(downloaded, to_get), end='\r')
             if self.save_results:
@@ -170,30 +182,17 @@ class Query:
         if self.save_results:
             file.close()
 
-    def checkTotalHits(self, json_query):
+    def check_total_hits(self, json_query):
         """
         Check the total hits for a given query
         :param json_query: Json object with the query to use
         :return: number of records for this query
         """
-        errors = True
-        while errors:
-            url_filter = "https://{}.carol.ai{}/api/v2/queries/filter?offset={}&pageSize={}&sortOrder={}&indexType={}".format(
-                self.token_object.domain, self.dev, str(self.offset), str(0), self.sortOrder, self.indexType)
-            self.lastResponse = requests.post(url=url_filter, headers=self.headers, json=json_query)
-            if not self.lastResponse.ok:
-                # error handler for token
-                if self.lastResponse.reason == 'Unauthorized':
-                    self.token_object.refreshToken()
-                    self.headers = {'Authorization': self.token_object.access_token, 'Content-Type': 'application/json'}
-                    continue
-                raise Exception(self.lastResponse.text)
-            errors = False
-
-        self.lastResponse.encoding = 'utf8'
-        query = json.loads(self.lastResponse.text)
-        self.total_hits = query["totalHits"]
-        return self.totalHits
+        self.json_query = json_query
+        url_filter = "v2/queries/filter?offset={}&pageSize={}&indexType={}".format(str(0), str(0), self.index_type)
+        result = self.carol.call_api(url_filter, data=self.json_query)
+        self.total_hits = result["totalHits"]
+        return self.total_hits
 
     def named(self, named_query, params=None, json_query=None):
         if json_query is not None and params is not None:
@@ -211,7 +210,7 @@ class Query:
 
         return self
 
-    def namedQueryParams(self,named_query):
+    def named_query_params(self,named_query):
         named = nq.namedQueries(self.token_object)
         named.getParamByName(named_query=named_query)
         return named.paramDict
@@ -225,7 +224,17 @@ class Query:
             dm_name = dm_name + 'Golden'
         self.json_query = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": dm_name}]}
         self.index_type = 'MASTER'
-        self.page_size = 1000
-
         return self
 
+    def delete(self, json_query):
+
+
+        #TODO: we should check the number of records to be deleted. If too many,
+        #it can be a problem.
+        self.json_query = json_query
+        self.querystring = {"indexType": self.index_type}
+        url_filter = "v2/queries/filter"
+        result = self.carol.call_api(url_filter, data=self.json_query,
+                                     params=self.querystring, method='DELETE')
+
+        print('Deleted: ',result)

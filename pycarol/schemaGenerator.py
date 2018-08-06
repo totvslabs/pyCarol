@@ -77,6 +77,8 @@ class carolSchemaGenerator(object):
     def to_dict(self, mdmStagingType='stagingName', mdmFlexible='false', crosswalkname=None,
                 crosswalkList=None):
 
+        if isinstance(crosswalkList, str):
+            crosswalkList = [crosswalkList]
         assert isinstance(crosswalkList, list)
 
         fields = set(self.base_object.keys())
