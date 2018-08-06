@@ -72,27 +72,29 @@ The process always starts after we obtain an access token.
 #####  Getting an access token
 
 
- All APIs need a login object. It creates/refreshes tokens.
+ All APIs need a Carol object. 
 ```python
-from pycarol import loginCarol
-token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)
-token_object.newToken()
-print('This is a valid access token {}'.format(token_object.access_token))
-token_object.refreshToken()
-print('This is refreshed access token {}'.format(token_object.access_token))
+from pycarol.auth.PwdAuth import PwdAuth
+from pycarol.carol import Carol
+
+carol = Carol(domain=TENANT_NAME, app_name=APP_NAME,
+              auth=PwdAuth(USERNAME, PASSWORD), connector_id=CONNECTOR)
+              
 ```  
+where `domain` is the tenant name, `app_name` is the app name one is using to access, if any, 
+is the authentication method to be used (using user/password in this case) and `connector_id` is the connector 
+one wants to connect.
 #####  Running on a local Machine
 
 If you are running the application on a local machine you need to enter the port you are using:
 
 ```python
-from pycarol import loginCarol
-token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)
-                                     
-token_object.dev = ':8888'                                 
-token_object.newToken()
+from pycarol.auth.PwdAuth import PwdAuth
+from pycarol.carol import Carol
+
+carol = Carol(domain=TENANT_NAME, app_name=APP_NAME,
+              auth=PwdAuth(USERNAME, PASSWORD), connector_id=CONNECTOR,
+              port=8888)
 
 ```
 
@@ -100,10 +102,14 @@ token_object.newToken()
 To use API keys instead of username and password:
 
 ```python
-from pycarol import loginCarol
-token_object = loginCarol.loginCarol(X_Auth_Key =  X_Auth_Key,
-                                     X_Auth_ConnectorId = X_Auth_ConnectorId,
-                                     domain= domain )
+from pycarol.auth.ApiKeyAuth import ApiKeyAuth
+from pycarol.carol import Carol
+
+carol = Carol(domain=DOMAIN, 
+              app_name=APP_NAME, 
+              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
+              connector_id=CONNECTOR)
+
 ```  
 
 To generate an API key
