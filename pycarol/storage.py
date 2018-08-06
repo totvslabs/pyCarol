@@ -2,6 +2,8 @@ import os
 import pickle
 import calendar
 import gzip
+from multiprocessing import Process
+from pycarol.carol_cloner import *
 
 
 class Storage:
@@ -18,6 +20,12 @@ class Storage:
         self.bucket = self.s3.Bucket("carolina-dev-ca-central-1")
         if not os.path.exists('/tmp/carolina/cache'):
             os.makedirs('/tmp/carolina/cache')
+
+    def save_async(self, name, obj):
+        p = Process(target=_save_async, args=(Cloner(self.carol), name, obj))
+        p.start()
+
+        return p
 
     def save(self, name, obj):
         self._init_if_needed()
@@ -47,3 +55,7 @@ class Storage:
 
         with gzip.open(local_file_name, 'rb') as f:
             return pickle.load(f)
+
+
+def _save_async(cloner, name, obj):
+    return cloner.build().storage.save(name, obj)

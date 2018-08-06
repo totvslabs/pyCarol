@@ -1,4 +1,3 @@
-import boto3
 
 
 class Carolina:
@@ -11,6 +10,7 @@ class Carolina:
         self.s3 = None
 
     def _init_if_needed(self):
+        import boto3
         response = self.carol.call_api('v1/carolina/carolina/token', params={'carolAppName': self.carol.app_name})
         self.ai_access_key_id = response['aiAccessKeyId']
         self.ai_secret_key = response['aiSecretKey']

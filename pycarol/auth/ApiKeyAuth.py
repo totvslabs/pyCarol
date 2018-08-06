@@ -1,7 +1,13 @@
+from pycarol.auth.ApiKeyAuth_cloner import *
+
+
 class ApiKeyAuth:
     def __init__(self, api_key):
         self.api_key = api_key
         self.carol = None
+
+    def cloner(self):
+        return ApiKeyAuthCloner(self)
 
     def login(self, carol):
         self.carol = carol
