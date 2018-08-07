@@ -115,45 +115,54 @@ carol = Carol(domain=DOMAIN,
 To generate an API key
 
 ```python
-from pycarol import loginCarol, queriesCarol
-token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)
-token_object.getAPIKey()
-print('This is a API key {}'.format(token_object.X_Auth_Key))
-token_object.refreshToken()
-print('This is the connector Id {}'.format(token_object.X_Auth_ConnectorId))
+from pycarol.auth.PwdAuth import PwdAuth
+from pycarol.auth.ApiKeyAuth import ApiKeyAuth
+from pycarol.carol import Carol
+
+api_key = Carol(domain=TENANT_NAME, app_name=APP_NAME,
+              auth=PwdAuth(USERNAME, PASSWORD), connector_id=CONNECTOR).issue_api_key()
+              
+            
+print(f"This is a API key {api_key['X-Auth-Key']}")
+print(f"This is the connector Id {api_key['X-Auth-ConnectorId']}")
 ```
 
 To be able of getting the details of the API key you can do:
 
 ```python
-from pycarol import loginCarol, queriesCarol
-token_object = loginCarol.loginCarol(X_Auth_Key =  X_Auth_Key,
-                                     X_Auth_ConnectorId= X_Auth_ConnectorId)
-                                     
-token_object.getAPIKeyDetails()
-token_object.APIKeyDetails
+from pycarol.auth.ApiKeyAuth import ApiKeyAuth
+from pycarol.carol import Carol
+
+carol = Carol(domain=DOMAIN, 
+              app_name=APP_NAME, 
+              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
+              connector_id=CONNECTOR)
+              
+details = carol.api_key_details(APIKEY,CONNECTORID)
 ```
 
 Finally, to revoke an API key:
 
 ```python
-from pycarol import loginCarol, queriesCarol
-token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)
-token_object.newToken()
-
-token_object.revokeAPIKey(X_Auth_Key =  X_Auth_Key,
-                          X_Auth_ConnectorId= X_Auth_ConnectorId)
+carol = Carol(domain=DOMAIN, 
+              app_name=APP_NAME, 
+              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
+              connector_id=CONNECTOR)
+              
+carol.api_key_revoke(CONNECTORID)
 ```
 
 ##### Processing filter queries
 
 ```python
-from pycarol import loginCarol, queriesCarol
-token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)                            
-token_object.newToken()
+from pycarol.auth.ApiKeyAuth import ApiKeyAuth
+from pycarol.carol import Carol
+from pycarol.query import Query
+
+carol = Carol(domain=DOMAIN, 
+              app_name=APP_NAME, 
+              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
+              connector_id=CONNECTOR)
 
 json_query = {
           "mustList": [
@@ -168,21 +177,55 @@ json_query = {
             }
           ]
         }
-        
-query_response = queriesCarol.queryCarol(token_object)
-#To get all records returned:
-query_response.newQuery(json_query= json_query, max_hits = float('inf'),only_hits=True)
-#To get only 1000
-query_response.newQuery(json_query= json_query, max_hits = 1000, only_hits=True)
-#the response is here
-query_response.query_data
-#If I want to save the response 
-query_response.newQuery(json_query= json_query, max_hits = 1000, only_hits=True, save_results = True,
-                        filename = 'PATH/response.json')
+
+
+FIELDS_ITEMS = ['mdmGoldenFieldAndValues.mdmaddress.coordinates']
+query = Query(carol, page_size=10, print_status=True, only_hits=True,
+              fields=FIELDS_ITEMS, max_hits=200).query(json_query).go()
+query.results
+
 ```  
+The result will be 200 hits of the query `json_query`  above, the pagination will be 10, that means in each response
+there will be 10 records. THe query will retunr onle the fields set in `FIELDS_ITEMS`. 
 The parameter `only_hits = True` will make sure that the only records into the path `$hits.mdmGoldenFieldAndValues`.
- If you want all the response use `only_hits = False`. Also, if your filter has aggregation, you should use 
- `only_hits = False`. 
+ If one wants all the response use `only_hits = False`. Also, if your filter has an aggregation, one should use 
+ `only_hits = False` and `get_aggs=True`, e.g.,  
+ 
+ 
+```python
+from pycarol.auth.ApiKeyAuth import ApiKeyAuth
+from pycarol.carol import Carol
+from pycarol.query import Query
+
+carol = Carol(domain=DOMAIN, 
+              app_name=APP_NAME, 
+              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
+              connector_id=CONNECTOR)
+
+jsons = {
+  "mustList": [
+    {
+      "mdmFilterType": "TYPE_FILTER",
+      "mdmValue": "datamodelGolden"
+    }
+  ],
+  "aggregationList": [
+    {
+      "type": "CARDINALITY",
+      "name": "campaign",
+      "params": [
+        f"mdmGoldenFieldAndValues.taxid"
+      ]
+    }
+  ]
+}
+
+
+query = Query(carol, get_aggs=True, only_hits=False,page_size=0)
+query.query(jsons).go()
+query.results
+
+``` 
 
 
 ##### Processing named queries
