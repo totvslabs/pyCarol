@@ -4,7 +4,8 @@ from pycarol.auth.PwdAuth import *
 
 
 if __name__ == '__main__':
-    carol = Carol('rui', 'testApp', auth=PwdAuth('william.monti@totvs.com', 'totvs123'))
+    #carol = Carol('rui', 'testApp', auth=PwdAuth('william.monti@totvs.com', 'totvs123'))
+    carol = Carol('tenantx', 'testApp', auth=PwdAuth('william.monti@totvs.com', 'totvs123'))
     app = MyApp(carol)
     if app.run('predict'):
         print("Success!")
