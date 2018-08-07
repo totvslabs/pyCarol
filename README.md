@@ -185,9 +185,9 @@ query = Query(carol, page_size=10, print_status=True, only_hits=True,
 query.results
 
 ```  
-The result will be 200 hits of the query `json_query`  above, the pagination will be 10, that means in each response
-there will be 10 records. THe query will retunr onle the fields set in `FIELDS_ITEMS`. 
-The parameter `only_hits = True` will make sure that the only records into the path `$hits.mdmGoldenFieldAndValues`.
+The result will be `200` hits of the query `json_query`  above, the pagination will be 10, that means in each response
+there will be 10 records. The query will return only the fields set in `FIELDS_ITEMS`. 
+The parameter `only_hits = True` will make sure that only records into the path `$hits.mdmGoldenFieldAndValues` will return.
  If one wants all the response use `only_hits = False`. Also, if your filter has an aggregation, one should use 
  `only_hits = False` and `get_aggs=True`, e.g.,  
  
