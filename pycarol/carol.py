@@ -29,7 +29,6 @@ class Carol:
         self.auth = auth
         self.auth.login(self)
 
-
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json'):
         url = 'https://{}.carol.ai:{}/api/{}'.format(self.domain, self.port, path)
 
