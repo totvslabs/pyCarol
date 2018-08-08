@@ -13,7 +13,7 @@ class Query:
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=1000, sort_order='ASC', sort_by=None,
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
                  save_results=False, filename='query_result.json', print_status=True, safe_check=False,
-                 get_errors=False, flush_result=False, use_stream=True):
+                 get_errors=False, flush_result=False, use_stream=False):
         self.carol = carol
         self.max_hits = max_hits
         self.offset = offset
@@ -140,6 +140,7 @@ class Query:
         except Exception as e:
             if self.save_results:
                 file.close()
+            print(f'{downloaded} rows downloaded before error')
             raise Exception(e.args[0]['errorMessage'])
         print("WS Closed")
 

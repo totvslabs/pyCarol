@@ -22,7 +22,11 @@ class CarolTarget(luigi.LocalTarget):
 
 class PickleLocalTarget(luigi.LocalTarget):
     def load(self):
-        return joblib.load(self.path)
+        try:
+            return joblib.load(self.path)
+        except FileNotFoundError:
+            print("file not found!!")
+            return None
 
     def dump(self,function_output):
         dir = os.path.dirname(self.path)
@@ -104,7 +108,11 @@ class Task(luigi.Task):
 
     def _file_id(self):
         # returns the output default file identifier
-        return luigi.task.task_id_str(self.get_task_family(), self.to_str_params())
+        sp = self.to_str_params()
+        sp['_carol.tenant'] = str(self.carol().tenant['mdmId'])
+        sp['_carol.app_name'] = str(self.carol().app_name)
+
+        return luigi.task.task_id_str(self.get_task_family(), sp)
 
     def dummy_target(self):
         return DummyTarget(is_tmp=True)
