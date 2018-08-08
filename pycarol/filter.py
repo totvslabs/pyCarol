@@ -106,7 +106,11 @@ class FilterType:
         return json
 
 class Aggregation:
-    def __init__(self, agg_type, name, params=[], sub_aggregations=[], size=10, shard_size=10, min_doc_count=0, sort_by = None, sort_order = None):
+    def __init__(self, agg_type, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0,
+                 sort_by = None, sort_order = None):
+
+        assert isinstance(sub_aggregations,list)
+        assert isinstance(params, list)
         self.agg_type = agg_type
         self.name = name
         self.params = params
