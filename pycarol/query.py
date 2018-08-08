@@ -4,11 +4,15 @@ from websocket import create_connection
 
 class Query:
     """ It implements the calls for the following endpoints:
-       1. /api/v2/queries/filter
-       2. /api/v2/queries/filtera
-       3. /api/v2/queries/named/{query_name}
+        1. POST - /api/v2/queries/filter
+        2. POST - /api/v2/queries/named/{query_name}
+        2. DELETE - /api/v2/queries/filter
+        2. POST - /api/v2/queries/filter/{scrollId}
 
     Usage::
+
+
+
     """
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=1000, sort_order='ASC', sort_by=None,
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
