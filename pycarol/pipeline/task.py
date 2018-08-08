@@ -25,7 +25,7 @@ class PickleLocalTarget(luigi.LocalTarget):
         try:
             return joblib.load(self.path)
         except FileNotFoundError:
-            print("file not found!!")
+            print("file not found: " + self.path)
             return None
 
     def dump(self,function_output):
@@ -72,13 +72,11 @@ mem_data = {}
 class MemoryTarget(object):
     def __init__(self, path):
         self.path = path
-        print("New target @ " + path)
 
     def exists(self):
         return self.path in mem_data
 
     def load(self):
-        print(mem_data)
         return mem_data[self.path]
 
     def dump(self, value):
@@ -90,7 +88,7 @@ class MemoryTarget(object):
 
 
 class Task(luigi.Task):
-    TARGET_DIR = './luigi_targets/'
+    TARGET_DIR = './luigi/targets/'
     requires_list = []
     _carol = None
 
@@ -111,8 +109,8 @@ class Task(luigi.Task):
         sp = self.to_str_params()
         sp['_carol.tenant'] = str(self.carol().tenant['mdmId'])
         sp['_carol.app_name'] = str(self.carol().app_name)
-
-        return luigi.task.task_id_str(self.get_task_family(), sp)
+        fid = luigi.task.task_id_str(self.get_task_family(), sp)
+        return fid
 
     def dummy_target(self):
         return DummyTarget(is_tmp=True)
@@ -123,7 +121,7 @@ class Task(luigi.Task):
 
     def disk_target(self):
         s = self._file_id()
-        path = os.path.join(self.TARGET_DIR,'{}.pkl'.format(s))
+        path = os.path.join(self.TARGET_DIR, '{}.pkl'.format(s))
         return PickleLocalTarget(path)
 
     def keras_target(self):
