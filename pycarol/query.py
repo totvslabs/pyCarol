@@ -10,9 +10,6 @@ class Query:
         2. POST - /api/v2/queries/filter/{scrollId}
 
     Usage::
-
-
-
     """
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=1000, sort_order='ASC', sort_by=None,
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
@@ -294,8 +291,6 @@ class Query:
         return self
 
     def delete(self, json_query):
-
-
         #TODO: we should check the number of records to be deleted. If too many,
         #it can be a problem.
         self.json_query = json_query
@@ -304,4 +299,4 @@ class Query:
         result = self.carol.call_api(url_filter, data=self.json_query,
                                      params=self.querystring, method='DELETE')
 
-        print('Deleted: ',result)
+        print('Deleted: ', result)
