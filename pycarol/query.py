@@ -2,15 +2,19 @@ import json
 
 class Query:
     """ It implements the calls for the following endpoints:
-       1. /api/v2/queries/filter
-       2. /api/v2/queries/filtera
-       3. /api/v2/queries/named/{query_name}
+        1. POST - /api/v2/queries/filter
+        2. POST - /api/v2/queries/named/{query_name}
+        2. DELETE - /api/v2/queries/filter
+        2. POST - /api/v2/queries/filter/{scrollId}
 
     Usage::
+
+
+
     """
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=50, sort_order='ASC', sort_by=None,
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
-                 save_results=True, filename='query_result.json', print_status=True, safe_check=False,
+                 save_results=False, filename='query_result.json', print_status=True, safe_check=False,
                  get_errors=False, flush_result=False):
         
         self.carol = carol
@@ -125,9 +129,9 @@ class Query:
             count += result['count']
             downloaded += result['count']
             scroll_id = result.get('scrollId', None)
-            if scroll_id is not None:
+            if (scroll_id is not None) or (self.get_aggs):
                 url_filter = "v2/queries/filter/{}".format(scroll_id)
-            elif result['count'] == 0:
+            elif (result['count'] == 0):
                 if count < self.total_hits:
                     print(f'Total records downloaded: {count}/{self.total_hits}')
                     print(f'Something is wrong, no scrollId to continue \n')
@@ -163,6 +167,7 @@ class Query:
                         file.write('\n')
                         file.flush()
                     break
+
             
             if callback:
                 if callable(callback):

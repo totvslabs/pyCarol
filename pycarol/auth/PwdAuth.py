@@ -1,5 +1,6 @@
 import types
 import time
+from pycarol.auth.PwdAuth_cloner import *
 
 
 class PwdAuth:
@@ -8,6 +9,9 @@ class PwdAuth:
         self.password = password
         self._token = None
         self.carol = None
+
+    def cloner(self):
+        return PwdAuthCloner(self)
 
     def login(self, carol):
         self.carol = carol

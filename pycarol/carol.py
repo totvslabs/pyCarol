@@ -71,5 +71,20 @@ class Carol:
         resp = self.call_api('v2/apiKey/issue', data={
             'connectorId': self.connector_id
         }, content_type='application/x-www-form-urlencoded')
+        return resp
+
+    def api_key_details(self, api_key, connector_id):
+
+        resp = self.call_api('v2/apiKey/details',
+                             params = {"apiKey": api_key,
+                                            "connectorId": connector_id})
+
+        return resp
+
+    def api_key_revoke(self, connector_id):
+
+        resp = self.call_api('v2/apiKey/revoke', method='DELETE',
+                             content_type='application/x-www-form-urlencoded',
+                             params = {"connectorId": connector_id})
 
         return resp
