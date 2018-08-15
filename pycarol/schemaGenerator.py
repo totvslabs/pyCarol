@@ -77,16 +77,18 @@ class carolSchemaGenerator(object):
     def to_dict(self, mdmStagingType='stagingName', mdmFlexible='false', crosswalkname=None,
                 crosswalkList=None):
 
-        if isinstance(crosswalkList, str):
-            crosswalkList = [crosswalkList]
+        crosswalkname = mdmStagingType  #TODO. We can have more than 1 crosswalk, and one HAS to be named as the mdmStagingType
+                                        # this is to enforce we use the same name
+
         assert isinstance(crosswalkList, list)
+
 
         fields = set(self.base_object.keys())
         for key_field in crosswalkList:
             if key_field not in fields:
                 raise Exception('Your key field %s is not in your fields!' % (key_field))
             if type(key_field) != str:
-                raise Exception('Field %s type is not string, must be!' % key_field)
+                raise Exception('Field %s type is not string, it must be!' % key_field)
 
         if crosswalkname is None:
             crosswalkname = mdmStagingType

@@ -9,7 +9,7 @@ from pycarol.tasks import *
 
 
 class Carol:
-    def __init__(self, domain, app_name, auth, connector_id=None, port=443, verbose=False):
+    def __init__(self, domain, app_name, auth, connector_id='0a0829172fc2433c9aa26460c31b78f0', port=443, verbose=False):
         self.domain = domain
         self.app_name = app_name
         self.port = port
@@ -21,13 +21,11 @@ class Carol:
         self.staging = Staging(self)
         self.tasks = Tasks(self)
         self.tenant = self.tenants.get_tenant_by_domain(domain)
-
-        default_connector_id = '0a0829172fc2433c9aa26460c31b78f0'
         self.connector_id = connector_id
-        if self.connector_id is None:
-            self.connector_id = default_connector_id
         self.auth = auth
+        self.auth.set_connector_id(self.connector_id)
         self.auth.login(self)
+        self.response = None
 
 
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json'):
@@ -46,6 +44,7 @@ class Carol:
         data_json = None
         if method == 'GET':
             response = requests.get(url=url, headers=headers, params=params)
+            
         elif (method == 'POST') or (method == 'DELETE') or (method == 'PUT'):
             headers['content-type'] = content_type
 
@@ -54,7 +53,7 @@ class Carol:
                 data = None
             response = requests.request(method=method, url=url, data=data, json=data_json,
                                      headers=headers, params=params)
-
+        
         if self.verbose:
             if data_json is not None:
                 print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data_json, params))
@@ -63,6 +62,7 @@ class Carol:
             print("        Headers: {}".format(headers))
 
         response.encoding = 'utf-8'
+        self.response = response
         if response.ok:
             return json.loads(response.text)
         else:

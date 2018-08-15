@@ -1,6 +1,5 @@
 import json
 
-
 class Query:
     """ It implements the calls for the following endpoints:
         1. POST - /api/v2/queries/filter
@@ -17,6 +16,7 @@ class Query:
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
                  save_results=False, filename='query_result.json', print_status=True, safe_check=False,
                  get_errors=False, flush_result=False):
+        
         self.carol = carol
         self.max_hits = max_hits
         self.offset = offset
@@ -54,17 +54,15 @@ class Query:
             self.get_all = False
 
     def _build_query_params(self):
-        if self.sort_by is None:
-            self.query_params = {"offset": self.offset, "pageSize": self.page_size, "sortOrder": self.sort_order,
+        self.query_params = {"offset": self.offset, "pageSize": self.page_size, "sortOrder": self.sort_order,
                                 "indexType": self.index_type}
-        else:
-            self.query_params = {"offset": self.offset, "pageSize": self.page_size, "sortOrder": self.sort_order,
-                                "sortBy": self.sort_by, "indexType": self.index_type}
-
+        
+        if self.sort_by is not None:
+            self.query_params["sortBy"] = self.sort_by
         if self.scrollable:
-            self.query_params.update({"scrollable": self.scrollable})
+            self.query_params["scrollable"] = self.scrollable
         if self.fields:
-            self.query_params.update({"fields": self.fields})
+            self.query_params["fields"] = self.fields
 
     def _build_return_fields(self):
         if isinstance(self.fields, str):
@@ -231,8 +229,6 @@ class Query:
         return self
 
     def delete(self, json_query):
-
-
         #TODO: we should check the number of records to be deleted. If too many,
         #it can be a problem.
         self.json_query = json_query
