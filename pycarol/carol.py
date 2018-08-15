@@ -23,7 +23,8 @@ class Carol:
         self.tenant = self.tenants.get_tenant_by_domain(domain)
         self.connector_id = connector_id
         self.auth = auth
-        self.auth.setConnectorId(self.connector_id)
+        self.auth.set_connector_id(self.connector_id)
+        self.auth.login(self)
         self.response = None
 
 

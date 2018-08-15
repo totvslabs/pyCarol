@@ -10,6 +10,9 @@ class PwdAuth:
         self._token = None
         self.carol = None
 
+    def set_connector_id(self, connector_id):
+        self.connector_id = connector_id
+
     def cloner(self):
         return PwdAuthCloner(self)
 

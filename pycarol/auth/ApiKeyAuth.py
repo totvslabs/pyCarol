@@ -7,7 +7,7 @@ class ApiKeyAuth:
         self.carol = None
         self.connector_id = None
         
-    def setConnectorId(self, connector_id):
+    def set_connector_id(self, connector_id):
         self.connector_id = connector_id
     
     def cloner(self):

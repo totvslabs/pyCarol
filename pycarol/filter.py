@@ -66,7 +66,8 @@ class Filter:
             return Filter(self)
 
 class FilterType:
-    def __init__(self, filter_type, key = None, value = None, path = None, range_values = None, values_field = None, mdm_format = None, flags = None, range_start = None, range_end = None, mdm_golden_fields = False):
+    def __init__(self, filter_type, key = None, value = None, path = None, range_values = None, values_field = None,
+                 mdm_format = None, flags = None, range_start = None, range_end = None, mdm_golden_fields = False):
         self.filter_type = filter_type
         self.key = key
         self.value = value
@@ -111,6 +112,7 @@ class Aggregation:
 
         assert isinstance(sub_aggregations,list)
         assert isinstance(params, list)
+
         self.agg_type = agg_type
         self.name = name
         self.params = params
