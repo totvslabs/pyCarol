@@ -7,6 +7,10 @@ from pycarol.carolina import *
 from pycarol.staging import *
 from pycarol.tasks import *
 
+from urllib3.util.retry import Retry
+import requests
+from requests.adapters import HTTPAdapter
+
 
 class Carol:
     def __init__(self, domain, app_name, auth, connector_id='0a0829172fc2433c9aa26460c31b78f0', port=443, verbose=False):
@@ -27,8 +31,24 @@ class Carol:
         self.auth.login(self)
         self.response = None
 
+    @staticmethod
+    def _retry_session(retries=5, session=None, backoff_factor=0.3, status_forcelist=(500, 502, 503, 504)):
+        session = session or requests.Session()
+        retry = Retry(
+            total=retries,
+            read=retries,
+            connect=retries,
+            backoff_factor=backoff_factor,
+            status_forcelist=status_forcelist,
+        )
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
+        return session
 
-    def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json'):
+
+    def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json',
+                 retries=5, session=None, backoff_factor=0.3, status_forcelist=(500, 502, 503, 504)):
         url = 'https://{}.carol.ai:{}/api/{}'.format(self.domain, self.port, path)
 
         if method is None:
@@ -43,7 +63,7 @@ class Carol:
 
         data_json = None
         if method == 'GET':
-            response = requests.get(url=url, headers=headers, params=params)
+            pass
             
         elif (method == 'POST') or (method == 'DELETE') or (method == 'PUT'):
             headers['content-type'] = content_type
@@ -51,8 +71,12 @@ class Carol:
             if content_type == 'application/json':
                 data_json = data
                 data = None
-            response = requests.request(method=method, url=url, data=data, json=data_json,
-                                     headers=headers, params=params)
+
+
+        section = self._retry_session(retries=retries, session=session, backoff_factor=backoff_factor,
+                                      status_forcelist=status_forcelist)
+        response = section.request(method=method, url=url, data=data, json=data_json,
+                                   headers=headers, params=params)
         
         if self.verbose:
             if data_json is not None:
