@@ -1,11 +1,9 @@
-import json
-import requests
-from pycarol.tenants import *
-from pycarol.storage import *
-from pycarol.connectors import *
-from pycarol.carolina import *
-from pycarol.staging import *
-from pycarol.tasks import *
+from .tenants import *
+from .storage import *
+from .connectors import *
+from .carolina import *
+from .staging import *
+from .tasks import *
 
 from urllib3.util.retry import Retry
 import requests
