@@ -1,5 +1,3 @@
-
-
 class Cloner:
     def __init__(self, carol):
         self.domain = carol.domain
@@ -10,5 +8,5 @@ class Cloner:
         self.auth = carol.auth.cloner()
 
     def build(self):
-        from pycarol.carol import Carol
+        from .carol import Carol
         return Carol(self.domain, self.app_name, self.auth.build(), connector_id=None, port=self.port, verbose=self.verbose)

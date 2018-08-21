@@ -1,4 +1,4 @@
-from pycarol.auth.ApiKeyAuth_cloner import *
+from .ApiKeyAuth_cloner import *
 
 
 class ApiKeyAuth:

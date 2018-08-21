@@ -1,5 +1,3 @@
-import json
-
 
 class Tenants:
     def __init__(self, carol):

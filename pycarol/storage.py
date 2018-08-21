@@ -3,7 +3,7 @@ import pickle
 import calendar
 import gzip
 from multiprocessing import Process
-from pycarol.carol_cloner import *
+from .carol_cloner import *
 
 
 class Storage:
