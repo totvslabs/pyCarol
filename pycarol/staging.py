@@ -7,7 +7,7 @@ class Staging:
         self.carol = carol
 
     def send_data(self, staging_name, data=None, connector_id=None, step_size=100, print_stats=False,
-                  auto_create_schema=False, crosswalk_auto_create=None):
+                  auto_create_schema=False, crosswalk_auto_create=None, force=False):
 
         if connector_id is None:
             connector_id = self.carol.connector_id
@@ -29,12 +29,22 @@ class Staging:
             data_size = len(data)
 
         if not schema and auto_create_schema:
-            assert crosswalk_auto_create, "You should provite a crosswalk"
+            assert crosswalk_auto_create, "You should provide a crosswalk"
             if is_df:
                 schema_data = data.iloc[0].to_json(date_format='iso')
             else:
                 schema_data = data[0]
             self.create_schema(schema_data, staging_name, connector_id=connector_id, crosswalk_list=crosswalk_auto_create)
+
+
+        if crosswalk_auto_create:
+            crosswalk_list = crosswalk_auto_create
+            if is_df and not force:
+                assert data.loc[:,crosswalk_auto_create].drop_duplicates().shape == data.loc[:,crosswalk_auto_create].shape, \
+                    "crosswalk is not unique on dataframe. set force=True to send it anyway."
+
+
+
 
         url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
 
