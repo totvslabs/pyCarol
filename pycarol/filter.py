@@ -1,4 +1,4 @@
-
+from enum import Enum
 class Filter:
     def __init__(self, builder):
         self.must_list = builder._must_list
@@ -7,12 +7,12 @@ class Filter:
         self.aggregation_list = builder._aggregation_list
         self.minimum_should_match = builder._minimum_should_match
 
-    def json(self):
+    def to_json(self):
         json = {}
-        json['mustList'] = [elt.json() for elt in self.must_list]
-        json['mustNotList'] = [elt.json() for elt in self.must_not_list] 
-        json['shouldList'] = [elt.json() for elt in self.should_list]
-        json['aggregationList'] = [elt.json() for elt in self.aggregation_list]
+        json['mustList'] = [elt.to_json() for elt in self.must_list]
+        json['mustNotList'] = [elt.to_json() for elt in self.must_not_list]
+        json['shouldList'] = [elt.to_json() for elt in self.should_list]
+        json['aggregationList'] = [elt.to_json() for elt in self.aggregation_list]
         json['minimumShouldMatch'] = self.minimum_should_match
 
         return json
@@ -90,9 +90,9 @@ class FilterType:
 
     def set_key_prefix(self, key_prefix):
         if self.key:
-            self.key = key_prefix + self.key
+            self.key = key_prefix +'.'+ self.key
 
-    def json(self):
+    def to_json(self):
         json = {}
         json['mdmFilterType'] = self.filter_type.value
         if self.key:
@@ -241,6 +241,7 @@ class Aggregation:
         self.agg_type = agg_type
         self.name = name
         self.params = params
+        assert isinstance(sub_aggregations,list), 'sub_aggregations must be a list'
         self.sub_aggregations = sub_aggregations
         self.size = size
         self.shard_size = shard_size
@@ -248,7 +249,7 @@ class Aggregation:
         self.sort_by = sort_by
         self.sort_order = sort_order
 
-    def json(self):
+    def to_json(self):
         json = {}
         json['type'] = self.agg_type.value
         json['name'] = self.name
@@ -265,7 +266,7 @@ class Aggregation:
         if self.sort_order:
             json['sortOrder'] = self.sort_order
         if self.sub_aggregations:
-            json['subAggregations'] = [agg.json() for agg in self.sub_aggregations]
+            json['subAggregations'] = [agg.to_json() for agg in self.sub_aggregations]
 
         return json
 
