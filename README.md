@@ -37,17 +37,9 @@ This package implements some of Carol's APIs. The following endpoints are implem
         2. DELETE - /api/v2/queries/filter 
         2. POST - /api/v2/queries/filter/{scrollId}
         
-    - v2 Named Queries (namedQueryCarol.py)
-        1. GET/POST - /api/v2/named_queries
-        2. DELETE - /api/v2/named_queries/name/{name}
-        3. GET - /api/v2/named_queries/name/{name}
-        
     - v2 Staging (stagingCarol.py)
         1. GET/POST - /api/v2/staging/tables/{table}
         2. GET-POST - /api/v2/staging/tables/{table}/schema
-        
-    - v1 Entity Template Types (entityTemplateTypesCarol.py)
-        1. GET/POST - /api/v1/entityTemplateTypes
         
     - v1 Entity Mappings (entityMappingsCarol.py)
         1. GET/POST - /api/v1/connectors/{connectorId}/entityMappings
@@ -56,25 +48,8 @@ This package implements some of Carol's APIs. The following endpoints are implem
         4. POST - /api/v1/connectors/{connectorId}/entityMappings/snapshot
         
     - v1 Entity Template (entityTemplateCarol.py)
-        1. GET/POST - /api/api/v1/entities/templates/snapshot
-        2. POST - /api/v1/entities/templates/{entityTemplateId}/publish
-        3. GET/POST - /api/v1/entities/templates
+        1. GET - /api/api/v1/entities/templates/snapshot
         4. GET - /api/v1/entities/templates/name/{entityTemplateName}
-        5. GET - /api/v1/entities/templates/global/{entityTemplateId}
-        6. DELTE - /api/v1/entities/templates/{entityTemplateId}
-        
-    - v1 Fields (fieldsCarol.py)
-        1. GET/POST - /api/v1/admin/fields
-        2. GET - /api/v1/admin/fields/{mdmId}
-        3. GET - /api/v1/admin/fields/possibleTypes
-        4. GET - /api/v1/fields
-        5. GET - /api/v1/fields/{mdmId}
-        6. GET - /api/v1/fields/possibleTypes
-    
-    - v1 Verticals (verticalsCarol.py)
-        1. GET - /api/v1/verticals
-        2. GET - /api/v1/verticals/{verticalId}
-        3. GET - /api/v1/verticals/name/{verticalName}
 
     - v1 Connectors (connectorsCarol.py)
         1. GET/POST - /api/v1/connectors
@@ -87,15 +62,9 @@ This package implements some of Carol's APIs. The following endpoints are implem
         2. GET - /api/v1/tenantApps/{id}
         3. GET - /api/v1/tenantApps/name/{name}
         4. GET -/api/v1/tenantApps/{tenantAppId}/settings
-
-    - v1 Database Toolbelt Admin (toolbeltAdmin.py)
-        1. DELETE - /api/v1/databaseToolbelt/filter  (deprecated)
-        
         
  We also have a Schema Generator (schemaGenerator.py).
- 
 
- 
  ### Using pyCarol
  
 The process always starts after we obtain an access token.
@@ -103,27 +72,29 @@ The process always starts after we obtain an access token.
 #####  Getting an access token
 
 
- All APIs need a login object. It creates/refreshes tokens.
+ All APIs need a Carol object. 
 ```python
-from pycarol import loginCarol
-token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)
-token_object.newToken()
-print('This is a valid access token {}'.format(token_object.access_token))
-token_object.refreshToken()
-print('This is refreshed access token {}'.format(token_object.access_token))
+from pycarol.auth.PwdAuth import PwdAuth
+from pycarol.carol import Carol
+
+carol = Carol(domain=TENANT_NAME, app_name=APP_NAME,
+              auth=PwdAuth(USERNAME, PASSWORD), connector_id=CONNECTOR)
+              
 ```  
+where `domain` is the tenant name, `app_name` is the app name one is using to access, if any, 
+is the authentication method to be used (using user/password in this case) and `connector_id` is the connector 
+one wants to connect.
 #####  Running on a local Machine
 
 If you are running the application on a local machine you need to enter the port you are using:
 
 ```python
-from pycarol import loginCarol
-token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)
-                                     
-token_object.dev = ':8888'                                 
-token_object.newToken()
+from pycarol.auth.PwdAuth import PwdAuth
+from pycarol.carol import Carol
+
+carol = Carol(domain=TENANT_NAME, app_name=APP_NAME,
+              auth=PwdAuth(USERNAME, PASSWORD), connector_id=CONNECTOR,
+              port=8888)
 
 ```
 
@@ -131,54 +102,67 @@ token_object.newToken()
 To use API keys instead of username and password:
 
 ```python
-from pycarol import loginCarol
-token_object = loginCarol.loginCarol(X_Auth_Key =  X_Auth_Key,
-                                     X_Auth_ConnectorId = X_Auth_ConnectorId,
-                                     domain= domain )
+from pycarol.auth.ApiKeyAuth import ApiKeyAuth
+from pycarol.carol import Carol
+
+carol = Carol(domain=DOMAIN, 
+              app_name=APP_NAME, 
+              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
+              connector_id=CONNECTOR)
+
 ```  
 
 To generate an API key
 
 ```python
-from pycarol import loginCarol, queriesCarol
-token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)
-token_object.getAPIKey()
-print('This is a API key {}'.format(token_object.X_Auth_Key))
-token_object.refreshToken()
-print('This is the connector Id {}'.format(token_object.X_Auth_ConnectorId))
+from pycarol.auth.PwdAuth import PwdAuth
+from pycarol.auth.ApiKeyAuth import ApiKeyAuth
+from pycarol.carol import Carol
+
+api_key = Carol(domain=TENANT_NAME, app_name=APP_NAME,
+              auth=PwdAuth(USERNAME, PASSWORD), connector_id=CONNECTOR).issue_api_key()
+              
+            
+print(f"This is a API key {api_key['X-Auth-Key']}")
+print(f"This is the connector Id {api_key['X-Auth-ConnectorId']}")
 ```
 
 To be able of getting the details of the API key you can do:
 
 ```python
-from pycarol import loginCarol, queriesCarol
-token_object = loginCarol.loginCarol(X_Auth_Key =  X_Auth_Key,
-                                     X_Auth_ConnectorId= X_Auth_ConnectorId)
-                                     
-token_object.getAPIKeyDetails()
-token_object.APIKeyDetails
+from pycarol.auth.ApiKeyAuth import ApiKeyAuth
+from pycarol.carol import Carol
+
+carol = Carol(domain=DOMAIN, 
+              app_name=APP_NAME, 
+              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
+              connector_id=CONNECTOR)
+              
+details = carol.api_key_details(APIKEY,CONNECTORID)
 ```
 
 Finally, to revoke an API key:
 
 ```python
-from pycarol import loginCarol, queriesCarol
-token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)
-token_object.newToken()
-
-token_object.revokeAPIKey(X_Auth_Key =  X_Auth_Key,
-                          X_Auth_ConnectorId= X_Auth_ConnectorId)
+carol = Carol(domain=DOMAIN, 
+              app_name=APP_NAME, 
+              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
+              connector_id=CONNECTOR)
+              
+carol.api_key_revoke(CONNECTORID)
 ```
 
 ##### Processing filter queries
 
 ```python
-from pycarol import loginCarol, queriesCarol
-token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)                            
-token_object.newToken()
+from pycarol.auth.ApiKeyAuth import ApiKeyAuth
+from pycarol.carol import Carol
+from pycarol.query import Query
+
+carol = Carol(domain=DOMAIN, 
+              app_name=APP_NAME, 
+              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
+              connector_id=CONNECTOR)
 
 json_query = {
           "mustList": [
@@ -193,21 +177,55 @@ json_query = {
             }
           ]
         }
-        
-query_response = queriesCarol.queryCarol(token_object)
-#To get all records returned:
-query_response.newQuery(json_query= json_query, max_hits = float('inf'),only_hits=True)
-#To get only 1000
-query_response.newQuery(json_query= json_query, max_hits = 1000, only_hits=True)
-#the response is here
-query_response.query_data
-#If I want to save the response 
-query_response.newQuery(json_query= json_query, max_hits = 1000, only_hits=True, save_results = True,
-                        filename = 'PATH/response.json')
+
+
+FIELDS_ITEMS = ['mdmGoldenFieldAndValues.mdmaddress.coordinates']
+query = Query(carol, page_size=10, print_status=True, only_hits=True,
+              fields=FIELDS_ITEMS, max_hits=200).query(json_query).go()
+query.results
+
 ```  
-The parameter `only_hits = True` will make sure that the only records into the path `$hits.mdmGoldenFieldAndValues`.
- If you want all the response use `only_hits = False`. Also, if your filter has aggregation, you should use 
- `only_hits = False`. 
+The result will be `200` hits of the query `json_query`  above, the pagination will be 10, that means in each response
+there will be 10 records. The query will return only the fields set in `FIELDS_ITEMS`. 
+The parameter `only_hits = True` will make sure that only records into the path `$hits.mdmGoldenFieldAndValues` will return.
+ If one wants all the response use `only_hits = False`. Also, if your filter has an aggregation, one should use 
+ `only_hits = False` and `get_aggs=True`, e.g.,  
+ 
+ 
+```python
+from pycarol.auth.ApiKeyAuth import ApiKeyAuth
+from pycarol.carol import Carol
+from pycarol.query import Query
+
+carol = Carol(domain=DOMAIN, 
+              app_name=APP_NAME, 
+              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
+              connector_id=CONNECTOR)
+
+jsons = {
+  "mustList": [
+    {
+      "mdmFilterType": "TYPE_FILTER",
+      "mdmValue": "datamodelGolden"
+    }
+  ],
+  "aggregationList": [
+    {
+      "type": "CARDINALITY",
+      "name": "campaign",
+      "params": [
+        f"mdmGoldenFieldAndValues.taxid"
+      ]
+    }
+  ]
+}
+
+
+query = Query(carol, get_aggs=True, only_hits=False,page_size=0)
+query.query(jsons).go()
+query.results
+
+``` 
 
 
 ##### Processing named queries
@@ -348,82 +366,3 @@ print(app.appSettings)
 The settings will be returned as a dictionary where the keys are the parameter names and the values are the value for 
 for that parameter. We can access the full settings as a dictionary through the variable `app.fullSettings`, where the keys
 are the parameter names and the values are the full responses for that parameter. 
-
-### Cloning a tenant
-
-To clone a tenant we need fist to generate two token objects:
-
-  ```python
-from pycarol import loginCarol
-
-token_from = loginCarol.loginCarol(username= username_from, password=my_password_from, 
-                                     domain = my_domain_from, connectorId=my_connectorId_from)
-token_from.newToken()
-
-token_to = loginCarol.loginCarol(username= username_to, password=my_password_to, 
-                                     domain = my_domain_to, connectorId=my_connectorId_to)
-token_to.newToken()
-```
-
-To copy all DMs, connector with staging tables and mappinngs and named queries: 
-  ```python
-from pycarol.cloneTenant import cloneTenant
-
-ct = cloneTenant.cloneTenant(token_from,token_to)
-ct.copyAllDMs(overwrite=True)
-ct.copyAllConnectors(overwrite=True,copy_mapping=True)
-ct.copyAllNamedQueries(overwrite=True)
-
-```
-
-If `overwrite = True` it will overwrite DMs/connectors with the same name. `copy_mapping = True` will create the mappings 
-for each staging table. 
-It is possible to copy only a selected number of DMs from a tenant using:
-  ```python
-from pycarol.cloneTenant import cloneTenant
-ct = cloneTenant.cloneTenant(token_from,token_to)
-ct.copyDMs(['customer'],overwrite= True)
-
-```
-The code snippet above will copy only the data model named `custumer``. It is possible to do the same for conectors and 
-stagings:
-  ```python
-from pycarol.cloneTenant import cloneTenant
-ct = cloneTenant.cloneTenant(token_from,token_to)
-ct.copyConnectors( {"protheus" : ["sa1010","sb1010"]}, copy_mapping=True, overwrite=True)
-
-```
-The code snippet above will copy the conector names `protheus` and both the stagings `sa1010` and `sb1010`, including mappings. Finally, coping only 
-selected named queries: 
-
-  ```python
-from pycarol.cloneTenant import cloneTenant
-ct = cloneTenant.cloneTenant(token_from,token_to)
-ct.copyNamedQueries( ['averageTicketbyClient','recommendationForUser'], overwrite=True)
-
-```
-
-
-### pyCarol utils
-Sometimes the human being can be lazy. So, for those moments, we create a util to quickly create a data model
-from a json:
-  ```python
-from pycarol.utils import lazyguy
-from pycarol import loginCarol
-import json
-token = loginCarol.loginCarol(username= username_from, password=my_password_from, 
-                                     domain = my_domain_from, connectorId=my_connectorId_from)
-json_query = """{"tenantId":"e7dbd874-ea9d-4092-afa4-d2f68acaaaf4","id":1,"createdAt":"2015-11-16T17:34:37-02:00",
-"subtotal":410.1,"course_status": "asdasd"}"""
-json_sample = json.loads(json_query)
-
-lg = lazyguy.lazeDM(token)
-lg.start(json_sample, mdmName='lazy',profileTitle = 'lazy',publish=False ,overwrite=True)
-```
-
-This will create a DM named `lazy` with the profile title `lazy`. The DM will not be publish. If there already exists a DM
-with the given name, we can use the `overwrite` parameter to overwrite it. 
-There are some limitations to this function: 
-   1. We do not allow to create DM with nested fields. 
-   2. If the variable we are trying to create already exists, and the type of those are different, 
-    we will get an error. 
