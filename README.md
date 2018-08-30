@@ -231,19 +231,19 @@ query.results
 ##### Processing named queries
 
 ```python
-from pycarol import loginCarol, queriesCarol
-token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)                           
-token_object.newToken()
+from pycarol.auth.ApiKeyAuth import ApiKeyAuth
+from pycarol.carol import Carol
+from pycarol.query import Query
+
+carol = Carol(domain=DOMAIN,
+              app_name=APP_NAME,
+              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
+              connector_id=CONNECTOR)
+
 
 named_query = 'revenueHist'  # named query name
-payload = {"bin":"1d","cnpj":"24386434000130"}  #payload to send.
-named_query_resp = queriesCarol.queryCarol(token_object)
-#To get all records returned:
-named_query_resp.namedQuery(named_query = named_query, json_query = payload)
-#the response is here
-named_query_resp.query_data
-
+params = {"bin":"1d","cnpj":"24386434000130"}  #query parameters to send.
+results = Query(carol).named(named_query, params=params).go().results
 ```
 It is possible to use all the parameters used in the filter query, i.e., `only_hits` , `save_results`, etc.
 For more information for the possible input parameters check the docstring.
@@ -279,7 +279,7 @@ conn.createConnector(connectorName = 'my_conector', connectorLabel = "conector_l
 connectorId = conn.connectorId  # this is the just created connector Id
 
 ```
-With the connector Id on hands we  can create the staging schema and then create the staging table. Assuming we have 
+With the connector Id on hands we can create the staging schema and then create the staging table. Assuming we have
 a sample of the data we want to send. 
 
   ```python
