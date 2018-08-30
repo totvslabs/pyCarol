@@ -3,20 +3,23 @@ import pickle
 import calendar
 import gzip
 from multiprocessing import Process
-from pycarol.carol_cloner import *
+from pycarol.carol_cloner import Cloner
+from pycarol.utils import KeySingleton
+from pycarol.carolina import Carolina
 
 
-class Storage:
+class Storage(metaclass=KeySingleton):
     def __init__(self, carol):
         self.carol = carol
         self.s3 = None
         self.bucket = None
+        print("New Storage!")
 
     def _init_if_needed(self):
         if self.s3 is not None:
             return
 
-        self.s3 = self.carol.carolina.get_s3()
+        self.s3 = Carolina(self.carol).get_s3()
         self.bucket = self.s3.Bucket("carolina-dev-ca-central-1")
         if not os.path.exists('/tmp/carolina/cache'):
             os.makedirs('/tmp/carolina/cache')
@@ -58,4 +61,4 @@ class Storage:
 
 
 def _save_async(cloner, name, obj):
-    return cloner.build().storage.save(name, obj)
+    return Storage(cloner.build()).save(name, obj)

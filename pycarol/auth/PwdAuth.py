@@ -1,6 +1,6 @@
 import types
 import time
-from pycarol.auth.PwdAuth_cloner import *
+from pycarol.auth.PwdAuth_cloner import PwdAuthCloner
 
 
 class PwdAuth:
