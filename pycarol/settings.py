@@ -5,10 +5,16 @@ from pycarol.apps import Apps
 class Settings(metaclass=KeySingleton):
     def __init__(self, carol):
         self.carol = carol
-        self.settings = Apps(carol).get_by_name(self.carol.app_name)
+        self.app = Apps(carol).get_settings(app_name=self.carol.app_name)
 
     def get(self, key):
-        return self.settings[key]
+        return self.app.appSettings[key]
+
+    def get_full(self, key):
+        return self.app.fullSettings[key]
 
     def all(self):
-        return self.settings
+        return self.app.appSettings
+
+    def all_full(self):
+        return self.app.fullSettings

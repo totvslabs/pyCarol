@@ -1,8 +1,7 @@
 # pyCarol   <img src="https://github.com/TOTVS/carol-ds-retail/blob/master/recommender-project/image/pycarol.jpg" alt="Carol" width="32" data-canonical-src="http://svgur.com/i/ue.svg"> 
 
 # Table of Contents
-1. [APIs Implemented](#apis-implemented)
-2. [Using pyCarol](#using-pyCarol)
+1. [Using pyCarol](#using-pyCarol)
    1. [Initializing pyCarol](#getting-an-access-token)
    1. [Using API Key](#using-api-key)
    1. [Running on a local Machine](#running-on-a-local-machine)
@@ -11,61 +10,7 @@
    1. [Sending data](#sending-data)
    1. [Logging](#logging)
    1. [Settings](#settings)
-3. [Carol Apps](#carol-apps)
-4. [Cloning a tenant](#cloning-a-tenant)
-5. [pyCarol utils](#pycarol-utils)
-
-
-
-## APIs Implemented
-
-This package implements some of Carol's APIs. The following endpoints are implemented: 
-    
-    - V2 OAuth2: (loginCarol.py)
-        1. POST - /api/v2/oauth2/token
-        2. POST/GET - /api/v2/oauth2/token/{access_token}
-        
-    - v2 ApiKey (loginCarol.py)
-        1. POST - /api/v2/apiKey/details
-        2. POST - /api/v2/apiKey/issue
-        3. POST - /api/v2/apiKey/revoke
-        
-    - v2 Tenants (utils.py)
-        1. GET - /api/v2/tenants/domain/{domain}
-        
-    - v2 Queries (queriesCarol.py)
-        1. POST - /api/v2/queries/filter
-        2. POST - /api/v2/queries/named/{query_name}
-        2. DELETE - /api/v2/queries/filter 
-        2. POST - /api/v2/queries/filter/{scrollId}
-        
-    - v2 Staging (stagingCarol.py)
-        1. GET/POST - /api/v2/staging/tables/{table}
-        2. GET-POST - /api/v2/staging/tables/{table}/schema
-        
-    - v1 Entity Mappings (entityMappingsCarol.py)
-        1. GET/POST - /api/v1/connectors/{connectorId}/entityMappings
-        2. GET/POST/DELETE - /api/v1/connectors/{connectorId}/entityMappings/{entityMappingId}
-        3. PUT - /api/v1/connectors/{connectorId}/entityMappings/{entityMappingId}/snapshot
-        4. POST - /api/v1/connectors/{connectorId}/entityMappings/snapshot
-        
-    - v1 Entity Template (entityTemplateCarol.py)
-        1. GET - /api/api/v1/entities/templates/snapshot
-        4. GET - /api/v1/entities/templates/name/{entityTemplateName}
-
-    - v1 Connectors (connectorsCarol.py)
-        1. GET/POST - /api/v1/connectors
-        2. DELETE - /api/v1/connectors/{connectorId}
-        3. GET - /api/v1/connectors/name/{connectorName}
-        4. GET - /api/v1/connectors/{connectorId}/stats
-        
-    - v1 Tenant Apps (tenantAppsCarol)
-        1. GET - /api/v1/tenantApps
-        2. GET - /api/v1/tenantApps/{id}
-        3. GET - /api/v1/tenantApps/name/{name}
-        4. GET -/api/v1/tenantApps/{tenantAppId}/settings
-        
- We also have a Schema Generator (schemaGenerator.py).
+2. [APIs Implemented](#apis-implemented)
 
  ### Using pyCarol
  
@@ -364,22 +309,59 @@ Settings(carol).get('setting_name')
 # To get all the settings
 print(Settings(carol).all())
 ```
+Using the all(), the settings will be returned as a dictionary where the keys are the parameter names and the values are
+the value for that parameter. To access the full settings as a dictionary, use the all_full() method, where the keys
+are the parameter names and the values are the full responses for that parameter.
+
 Please note that your app must be created in Carol and its name be correctly setup during pyCarol initialization
 
-### Carol Apps
-We can use pyCarol to access the settings of a Carol App.  
-  ```python
-from pycarol import loginCarol, tenantAppsCarol
-token = loginCarol.loginCarol(username= username_from, password=my_password_from, 
-                                     domain = my_domain_from, connectorId=my_connectorId_from)
-token.newToken()
-app = tenantAppsCarol.tenantApps(token)
-app.getSettings(appName='studentRetention')
-print(app.appSettings)
-> {'subsidiary':'1n','activeenrollment':'2n','finishedenrollment':'3n',
-     'cancelledenrollment':'4','maximumperiod':'5n','defaultlimit':'6n',
-     'relattendances':'7n','relevantmajors':'8n','trigger':'9n'}
-```
-The settings will be returned as a dictionary where the keys are the parameter names and the values are the value for 
-for that parameter. We can access the full settings as a dictionary through the variable `app.fullSettings`, where the keys
-are the parameter names and the values are the full responses for that parameter. 
+## APIs Implemented
+
+This package implements some of Carol's APIs. The following endpoints are implemented:
+
+    - V2 OAuth2: (loginCarol.py)
+        1. POST - /api/v2/oauth2/token
+        2. POST/GET - /api/v2/oauth2/token/{access_token}
+
+    - v2 ApiKey (loginCarol.py)
+        1. POST - /api/v2/apiKey/details
+        2. POST - /api/v2/apiKey/issue
+        3. POST - /api/v2/apiKey/revoke
+
+    - v2 Tenants (utils.py)
+        1. GET - /api/v2/tenants/domain/{domain}
+
+    - v2 Queries (queriesCarol.py)
+        1. POST - /api/v2/queries/filter
+        2. POST - /api/v2/queries/named/{query_name}
+        2. DELETE - /api/v2/queries/filter
+        2. POST - /api/v2/queries/filter/{scrollId}
+
+    - v2 Staging (stagingCarol.py)
+        1. GET/POST - /api/v2/staging/tables/{table}
+        2. GET-POST - /api/v2/staging/tables/{table}/schema
+
+    - v1 Entity Mappings (entityMappingsCarol.py)
+        1. GET/POST - /api/v1/connectors/{connectorId}/entityMappings
+        2. GET/POST/DELETE - /api/v1/connectors/{connectorId}/entityMappings/{entityMappingId}
+        3. PUT - /api/v1/connectors/{connectorId}/entityMappings/{entityMappingId}/snapshot
+        4. POST - /api/v1/connectors/{connectorId}/entityMappings/snapshot
+
+    - v1 Entity Template (entityTemplateCarol.py)
+        1. GET - /api/api/v1/entities/templates/snapshot
+        4. GET - /api/v1/entities/templates/name/{entityTemplateName}
+
+    - v1 Connectors (connectorsCarol.py)
+        1. GET/POST - /api/v1/connectors
+        2. DELETE - /api/v1/connectors/{connectorId}
+        3. GET - /api/v1/connectors/name/{connectorName}
+        4. GET - /api/v1/connectors/{connectorId}/stats
+
+    - v1 Tenant Apps (tenantAppsCarol)
+        1. GET - /api/v1/tenantApps
+        2. GET - /api/v1/tenantApps/{id}
+        3. GET - /api/v1/tenantApps/name/{name}
+        4. GET -/api/v1/tenantApps/{tenantAppId}/settings
+
+ We also have a Schema Generator (schemaGenerator.py).
+
