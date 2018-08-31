@@ -9,6 +9,7 @@
    1. [Processing filter queries](#processing-filter-queries)
    1. [Processing named queries](#processing-named-queries)
    1. [Sending data](#sending-data)
+   1. [Task Logging] (#logging)
 3. [Carol Apps](#carol-apps)
 4. [Cloning a tenant](#cloning-a-tenant)
 5. [pyCarol utils](#pycarol-utils)
@@ -338,6 +339,20 @@ The parameter `step_size` says how many registers will be sent each time. Rememb
 
 OBS: It is not possible to create a mapping using pycarol. The Mapping has to be done via the UI
 
+
+
+ ##### Logging
+To log messages to Carol:
+```python
+Tasks(carol).info('Hello world!')
+Tasks(carol).warn('Warning! Missing xyz')
+Tasks(carol).error('Cannot connect to ABC, aborting')
+```
+These methods will use the current long task id provided by Carol when running your application.
+For local environments you need to set that manually first on the beginning of your code:
+```python
+Tasks(carol).create('MyApp', 'TaskGroup').set_as_current_task()
+```
 
 
 ### Carol Apps

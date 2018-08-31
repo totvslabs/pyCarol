@@ -72,6 +72,9 @@ class Tasks:
         task_id = os.environ['LONGTASKID']
         return task_id
 
+    def set_as_current_task(self):
+        os.environ['LONGTASKID'] = self.task_id
+
     def get_task(self, task_id=None):
         """
         Get Task
@@ -86,7 +89,22 @@ class Tasks:
         self._set_task_by_json(json_task)
         return self
 
-    def add_log(self, log_message, log_level="WARN", task_id=None):
+    def trace(self, log_message, task_id=None):
+        self.add_log(log_message, "TRACE", task_id)
+
+    def debug(self, log_message, task_id=None):
+        self.add_log(log_message, "DEBUG", task_id)
+
+    def info(self, log_message, task_id=None):
+        self.add_log(log_message, "INFO", task_id)
+
+    def warn(self, log_message, task_id=None):
+        self.add_log(log_message, "WARN", task_id)
+
+    def error(self, log_message, task_id=None):
+        self.add_log(log_message, "ERROR", task_id)
+
+    def add_log(self, log_message, log_level="INFO", task_id=None):
         """
         Add a log
         :param log_message: commonly used tenandId
