@@ -3,7 +3,7 @@
 # Table of Contents
 1. [APIs Implemented](#apis-implemented)
 2. [Using pyCarol](#using-pyCarol)
-   1. [Getting an access token](#getting-an-access-token)
+   1. [Initializing pyCarol](#getting-an-access-token)
    1. [Using API Key](#using-api-key)
    1. [Running on a local Machine](#running-on-a-local-machine)
    1. [Processing filter queries](#processing-filter-queries)
@@ -69,10 +69,10 @@ This package implements some of Carol's APIs. The following endpoints are implem
  
 The process always starts after we obtain an access token.
 
-#####  Getting an access token
+##### Initializing pyCarol
 
 
- All APIs need a Carol object. 
+Carol is the main object to access pyCarol and all APIs need it.
 ```python
 from pycarol.auth.PwdAuth import PwdAuth
 from pycarol.carol import Carol
@@ -121,8 +121,8 @@ from pycarol.carol import Carol
 
 api_key = Carol(domain=TENANT_NAME, app_name=APP_NAME,
               auth=PwdAuth(USERNAME, PASSWORD), connector_id=CONNECTOR).issue_api_key()
-              
-            
+
+
 print(f"This is a API key {api_key['X-Auth-Key']}")
 print(f"This is the connector Id {api_key['X-Auth-ConnectorId']}")
 ```
@@ -155,15 +155,6 @@ carol.api_key_revoke(CONNECTORID)
 ##### Processing filter queries
 
 ```python
-from pycarol.auth.ApiKeyAuth import ApiKeyAuth
-from pycarol.carol import Carol
-from pycarol.query import Query
-
-carol = Carol(domain=DOMAIN, 
-              app_name=APP_NAME, 
-              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
-              connector_id=CONNECTOR)
-
 json_query = {
           "mustList": [
             {
