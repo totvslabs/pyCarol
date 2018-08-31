@@ -270,7 +270,7 @@ are the parameter names and the values are the full responses for that parameter
 
 Please note that your app must be created in Carol and its name be correctly setup during pyCarol initialization
 
-## Validation
+## Data Validation
 There are some built-in data validation in pyCarol that we can use to ensure the data is ok
 ```python
 from pycarol.validator import Validator
