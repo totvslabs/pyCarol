@@ -1,21 +1,18 @@
 # pyCarol   <img src="https://github.com/TOTVS/carol-ds-retail/blob/master/recommender-project/image/pycarol.jpg" alt="Carol" width="32" data-canonical-src="http://svgur.com/i/ue.svg"> 
 
 # Table of Contents
-1. [Using pyCarol](#using-pyCarol)
-   1. [Initializing pyCarol](#getting-an-access-token)
+1. [Initializing pyCarol](#using-pyCarol)
    1. [Using API Key](#using-api-key)
    1. [Running on a local Machine](#running-on-a-local-machine)
-   1. [Processing filter queries](#processing-filter-queries)
-   1. [Processing named queries](#processing-named-queries)
-   1. [Sending data](#sending-data)
-   1. [Logging](#logging)
-   1. [Settings](#settings)
+1. [Queries](#queries)
+   1. [Filter queries](#processing-filter-queries)
+   1. [Named queries](#processing-named-queries)
+1. [Sending data](#sending-data)
+1. [Logging](#logging)
+1. [Settings](#settings)
 2. [APIs Implemented](#apis-implemented)
 
- ### Using pyCarol
- 
-##### Initializing pyCarol
-
+## Initializing pyCarol
 
 Carol is the main object to access pyCarol and all APIs need it.
 ```python
@@ -29,7 +26,7 @@ carol = Carol(domain=TENANT_NAME, app_name=APP_NAME,
 where `domain` is the tenant name, `app_name` is the app name one is using to access, if any, 
 is the authentication method to be used (using user/password in this case) and `connector_id` is the connector 
 one wants to connect.
-#####  Running on a local Machine
+####  Running on a local Machine
 
 If you are running the application on a local machine you need to enter the port you are using:
 
@@ -43,7 +40,7 @@ carol = Carol(domain=TENANT_NAME, app_name=APP_NAME,
 
 ```
 
-##### Using API Key
+#### Using API Key
 To use API keys instead of username and password:
 
 ```python
@@ -84,7 +81,9 @@ Finally, to revoke an API key:
 carol.api_key_revoke(CONNECTORID)
 ```
 
-##### Processing filter queries
+## Queries
+
+#### Filter queries
 
 ```python
 json_query = {
@@ -143,7 +142,7 @@ query.results
 ``` 
 
 
-##### Processing named queries
+#### Named queries
 
 ```python
 from pycarol.query import Query
@@ -165,7 +164,7 @@ Query(carol).named_query_params(named_query)
 
 ```
  
- ##### Sending data
+## Sending data
  
  The first step to send data to Carol is to create a connector. 
  
@@ -242,7 +241,7 @@ OBS: It is not possible to create a mapping using pycarol. The Mapping has to be
 
 
 
- ##### Logging
+## Logging
 To log messages to Carol:
 ```python
 Tasks(carol).info('Hello world!')
@@ -255,7 +254,7 @@ For local environments you need to set that manually first on the beginning of y
 Tasks(carol).create('MyApp', 'TaskGroup').set_as_current_task()
 ```
 
- ##### Settings
+## Settings
 We can use pyCarol to access the settings of your Carol App.
 ```python
 # To get a specific setting
