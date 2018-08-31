@@ -9,7 +9,7 @@
    1. [Processing filter queries](#processing-filter-queries)
    1. [Processing named queries](#processing-named-queries)
    1. [Sending data](#sending-data)
-   1. [Task Logging] (#logging)
+   1. [Logging](#logging)
 3. [Carol Apps](#carol-apps)
 4. [Cloning a tenant](#cloning-a-tenant)
 5. [pyCarol utils](#pycarol-utils)
