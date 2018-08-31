@@ -2,6 +2,7 @@ from .tenants import Tenants
 from urllib3.util.retry import Retry
 import requests
 from requests.adapters import HTTPAdapter
+import json
 
 
 class Carol:
