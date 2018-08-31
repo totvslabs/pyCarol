@@ -73,13 +73,9 @@ class Staging:
         except Exception:
             return None
 
-
-
-    def create_schema(self, fields_dict, staging_name,connector_id=None, mdm_flexible='false',
+    def create_schema(self, fields_dict, staging_name, connector_id=None, mdm_flexible='false',
                      crosswalk_name=None, crosswalk_list=None, overwrite=False):
         assert fields_dict is not None
-
-
 
         if isinstance(fields_dict, list):
             fields_dict = fields_dict[0]

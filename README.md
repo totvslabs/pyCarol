@@ -14,8 +14,6 @@
 
  ### Using pyCarol
  
-The process always starts after we obtain an access token.
-
 ##### Initializing pyCarol
 
 
@@ -77,25 +75,12 @@ print(f"This is the connector Id {api_key['X-Auth-ConnectorId']}")
 To be able of getting the details of the API key you can do:
 
 ```python
-from pycarol.auth.ApiKeyAuth import ApiKeyAuth
-from pycarol.carol import Carol
-
-carol = Carol(domain=DOMAIN, 
-              app_name=APP_NAME, 
-              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
-              connector_id=CONNECTOR)
-              
 details = carol.api_key_details(APIKEY,CONNECTORID)
 ```
 
 Finally, to revoke an API key:
 
 ```python
-carol = Carol(domain=DOMAIN, 
-              app_name=APP_NAME, 
-              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
-              connector_id=CONNECTOR)
-              
 carol.api_key_revoke(CONNECTORID)
 ```
 
@@ -131,14 +116,7 @@ The parameter `only_hits = True` will make sure that only records into the path 
  
  
 ```python
-from pycarol.auth.ApiKeyAuth import ApiKeyAuth
-from pycarol.carol import Carol
 from pycarol.query import Query
-
-carol = Carol(domain=DOMAIN, 
-              app_name=APP_NAME, 
-              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
-              connector_id=CONNECTOR)
 
 jsons = {
   "mustList": [
@@ -158,7 +136,6 @@ jsons = {
   ]
 }
 
-
 query = Query(carol, get_aggs=True, only_hits=False,page_size=0)
 query.query(jsons).go()
 query.results
@@ -169,15 +146,7 @@ query.results
 ##### Processing named queries
 
 ```python
-from pycarol.auth.ApiKeyAuth import ApiKeyAuth
-from pycarol.carol import Carol
 from pycarol.query import Query
-
-carol = Carol(domain=DOMAIN,
-              app_name=APP_NAME,
-              auth=ApiKeyAuth(api_key=X_AUTH_KEY),
-              connector_id=CONNECTOR)
-
 
 named_query = 'revenueHist'  # named query name
 params = {"bin":"1d","cnpj":"24386434000130"}  #query parameters to send.
@@ -190,15 +159,9 @@ What if one does not remember the parameters for a given named query?
 
 
 ```python
-from pycarol import loginCarol, queriesCarol
-token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)                             
-token_object.newToken()
-
 named_query = 'revenueHist'  # named query name
-named_query_resp = queriesCarol.queryCarol(token_object)
-named_query_resp.namedQueryParams(named_query = named_query)
-> {'revenueHist': ['*cnpj', 'dateFrom', 'dateTo', '*bin']}  #Parameters starting by * are mandatory. 
+Query(carol).named_query_params(named_query)
+> {'revenueHist': ['*cnpj', 'dateFrom', 'dateTo', '*bin']}  #Parameters starting by * are mandatory.
 
 ```
  
@@ -207,13 +170,7 @@ named_query_resp.namedQueryParams(named_query = named_query)
  The first step to send data to Carol is to create a connector. 
  
  ```python
-from pycarol import loginCarol, connectorsCarol
-token_object = loginCarol.loginCarol(username= username, password=my_password, 
-                                     domain = my_domain, connectorId=my_connectorId)                           
-token_object.newToken()
-
-conn = connectorsCarol.connectorsCarol(token_object)
-conn.createConnector(connectorName = 'my_conector', connectorLabel = "conector_label", groupName = "GroupName")
+conn = Connectors(carol).create(connectorName='my_conector', connectorLabel="conector_label", groupName="GroupName")
 connectorId = conn.connectorId  # this is the just created connector Id
 
 ```
@@ -221,15 +178,14 @@ With the connector Id on hands we can create the staging schema and then create 
 a sample of the data we want to send. 
 
   ```python
-from pycarol import stagingCarol
+from pycarol.staging import Staging
 
-json_ex = {"name":'Rafael',"email": {"type": "email", "email": 'rafael@totvs.com.br'}   }
-schema = stagingCarol.stagingSchema(token_object)
-schema.createSchema(fields_dict = json_ex, mdmStagingType='my_stag', mdmFlexible='false',
-                       crosswalkname= 'my_crosswalk' ,crosswalkList=['name'])
+json_ex = {"name":'Rafael',"email": {"type": "email", "email": 'rafael@totvs.com.br'} }
 
-#sending schema
-schema.sendSchema(connectorId=connectorId)  #here connectorId is that one created above
+staging = Staging(carol)
+staging.create_schema(staging_name='my_stag', fields_dict = json_ex, mdm_flexible='false',
+                      crosswalk_name= 'my_crosswalk' ,crosswalk_list=['name'], connector_id=connector_id)
+#here connector_id is that one created above or, if not specified, the one set during pyCarol initialization
 ```
 
 The json schema will be in the variable `schema.schema`. The code above will create the following schema:
@@ -267,18 +223,17 @@ The json schema will be in the variable `schema.schema`. The code above will cre
 To send the data  (assuming we have a json with the data we want to send). 
 
   ```python
-from pycarol import stagingCarol
+from pycarol.staging import Staging
 
 json_ex = [{"name":'Rafael',"email": {"type": "email", "email": 'rafael@totvs.com.br'}   },
            {"name":'Leandro',"email": {"type": "email", "email": 'Leandro@totvs.com.br'}   },
            {"name":'Joao',"email": {"type": "email", "email": 'joao@rolima.com.br'}   },
            {"name":'Marcelo',"email": {"type": "email", "email": 'marcelo@totvs.com.br'}   }]
            
-           
-send_data = stagingCarol.sendDataCarol(token_object)
-send_data.sendData(stagingName = 'my_stag', data = json_ex, step_size = 2, 
-                   connectorId=connectorId, print_stats = True)
-                       
+
+staging = Staging(carol)
+staging.sendData(staging_name = 'my_stag', data = json_ex, step_size = 2,
+                 connector_id=connectorId, print_stats = True)
 ```
 The parameter `step_size` says how many registers will be sent each time. Remember the the max size per payload is 
 5MB. The parameter  `data` can be a pandas DataFrame (Beta).
