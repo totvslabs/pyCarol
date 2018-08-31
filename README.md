@@ -10,6 +10,7 @@
    1. [Processing named queries](#processing-named-queries)
    1. [Sending data](#sending-data)
    1. [Logging](#logging)
+   1. [Settings](#settings)
 3. [Carol Apps](#carol-apps)
 4. [Cloning a tenant](#cloning-a-tenant)
 5. [pyCarol utils](#pycarol-utils)
@@ -354,6 +355,16 @@ For local environments you need to set that manually first on the beginning of y
 Tasks(carol).create('MyApp', 'TaskGroup').set_as_current_task()
 ```
 
+ ##### Settings
+We can use pyCarol to access the settings of your Carol App.
+```python
+# To get a specific setting
+Settings(carol).get('setting_name')
+
+# To get all the settings
+print(Settings(carol).all())
+```
+Please note that your app must be created in Carol and its name be correctly setup during pyCarol initialization
 
 ### Carol Apps
 We can use pyCarol to access the settings of a Carol App.  

@@ -9,3 +9,6 @@ class Settings(metaclass=KeySingleton):
 
     def get(self, key):
         return self.settings[key]
+
+    def all(self):
+        return self.settings
