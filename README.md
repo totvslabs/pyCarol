@@ -10,6 +10,7 @@
 1. [Sending data](#sending-data)
 1. [Logging](#logging)
 1. [Settings](#settings)
+1. [Data Validation](#validation)
 2. [APIs Implemented](#apis-implemented)
 
 ## Initializing pyCarol
@@ -268,6 +269,30 @@ the value for that parameter. To access the full settings as a dictionary, use t
 are the parameter names and the values are the full responses for that parameter.
 
 Please note that your app must be created in Carol and its name be correctly setup during pyCarol initialization
+
+## Validation
+There are some built-in data validation in pyCarol that we can use to ensure the data is ok
+```python
+from pycarol.validator import Validator
+
+validator = Validator(carol)
+# To check that the field code on the data model products is at least 80% filled
+validator.assert_non_empty(data_model='products', field='code', threshold=0.8)
+
+# Or if we already have the datamodel loaded in a variable
+validator.assert_non_empty(data=data_model, field='code', threshold=0.8)
+
+# To check if there a minimum number of records in a data model:
+validator.assert_min_quantity(data_model='products', min_qty=1000)
+
+# Custom threshold validation
+value = some_calculation
+validator.assert_custom('MyValidation', value, min_req_value)
+
+# And at the end of the validations, to post all validation issues to Carol as a long task log:
+validator.post_results()
+```
+
 
 ## APIs Implemented
 
