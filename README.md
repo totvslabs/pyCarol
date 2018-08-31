@@ -280,8 +280,8 @@ json_ex = {"name":'Rafael',"email": {"type": "email", "email": 'rafael@totvs.com
 schema = stagingCarol.stagingSchema(token_object)
 schema.createSchema(fields_dict = json_ex, mdmStagingType='my_stag', mdmFlexible='false',
                        crosswalkname= 'my_crosswalk' ,crosswalkList=['name'])
-                       
-#sending schaema
+
+#sending schema
 schema.sendSchema(connectorId=connectorId)  #here connectorId is that one created above
 ```
 
@@ -324,7 +324,7 @@ from pycarol import stagingCarol
 
 json_ex = [{"name":'Rafael',"email": {"type": "email", "email": 'rafael@totvs.com.br'}   },
            {"name":'Leandro',"email": {"type": "email", "email": 'Leandro@totvs.com.br'}   },
-           {"name":'Mario',"email": {"type": "email", "email": 'mario@totvs.com.br'}   },
+           {"name":'Joao',"email": {"type": "email", "email": 'joao@rolima.com.br'}   },
            {"name":'Marcelo',"email": {"type": "email", "email": 'marcelo@totvs.com.br'}   }]
            
            

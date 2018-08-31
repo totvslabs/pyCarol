@@ -23,7 +23,6 @@ class Tasks:
         self.mdm_last_updated = None
         self.mdm_tenant_id = None
 
-
     def _set_task_by_json(self, json_task):
         self.task_id = json_task['mdmId']
         self.mdm_data = json_task['mdmData']
@@ -44,7 +43,6 @@ class Tasks:
         self.mdm_last_updated = json_task['mdmLastUpdated']
         self.mdm_tenant_id = json_task['mdmTenantId']
 
-
     def create(self, task_type, task_group, data={}):
         """
         Create a new task
@@ -53,7 +51,6 @@ class Tasks:
         :param data: data used in the task
         :return: Task
         """
-
         dataJson = {
             "mdmTaskType": task_type,
             "mdmTaskGroup": task_group,
@@ -63,7 +60,6 @@ class Tasks:
         json_task = self.carol.call_api('v1/tasks/new', data=dataJson)
         self._set_task_by_json(json_task)
         return self
-
 
     def get_task(self, task_id=None):
         """
@@ -79,7 +75,6 @@ class Tasks:
         json_task = self.carol.call_api('v1/tasks/{}'.format(task_id))
         self._set_task_by_json(json_task)
         return self
-
 
     def add_log(self, log_message, log_level="WARN", task_id=None):
         """
@@ -100,7 +95,6 @@ class Tasks:
         }]
         return self.add_logs(log)
 
-
     def add_logs(self, logs, task_id=None):
         """
         Add more than one log
@@ -118,7 +112,6 @@ class Tasks:
         else:
             return False
 
-
     def get_logs(self, task_id=None):
         """
         Get all logs
@@ -131,7 +124,6 @@ class Tasks:
 
         resp = self.carol.call_api('v1/tasks/{}/logs'.format(task_id))
         return resp
-
 
     def set_progress(self, progress, progress_data=None, task_id=None):
         """
@@ -152,7 +144,6 @@ class Tasks:
 
         resp = self.carol.call_api('v1/tasks/{}/progress/{}'.format(task_id, progress), data=progress_data)
         return resp
-
 
     def cancel(self, task_id=None):
         """
