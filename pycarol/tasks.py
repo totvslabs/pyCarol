@@ -1,6 +1,7 @@
+import os
+
 
 class Tasks:
-
     def __init__(self, carol):
         self.carol = carol
 
@@ -61,6 +62,16 @@ class Tasks:
         self._set_task_by_json(json_task)
         return self
 
+    def current_task(self):
+        task_id = os.environ['LONGTASKID']
+        if task_id is None:
+            print("Can only get current_task if being called by Carol as a batch app")
+        self.get_task(task_id)
+
+    def get_current_task_id(self):
+        task_id = os.environ['LONGTASKID']
+        return task_id
+
     def get_task(self, task_id=None):
         """
         Get Task
@@ -71,7 +82,6 @@ class Tasks:
         if task_id is None:
             task_id = self.task_id
 
-
         json_task = self.carol.call_api('v1/tasks/{}'.format(task_id))
         self._set_task_by_json(json_task)
         return self
@@ -81,12 +91,14 @@ class Tasks:
         Add a log
         :param log_message: commonly used tenandId
         :param log_level: options: ERROR, WARN, INFO, DEBUG, TRACE
-        :param task_id: it's not necessary if self.mdm_id is defined
+        :param task_id: it's not necessary if self.mdm_id is defined or if we are running from Carol as a batch app
         :return: boolean
         """
 
         if task_id is None:
             task_id = self.task_id
+        if task_id is None:
+            task_id = self.get_current_task_id()
 
         log = [{
             "mdmTaskId": task_id,
