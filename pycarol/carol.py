@@ -88,7 +88,7 @@ class Carol:
         if response.ok:
             return json.loads(response.text)
         else:
-            raise Exception(json.loads(response.text))
+            raise Exception(response.text)
 
     def issue_api_key(self):
         resp = self.call_api('v2/apiKey/issue', data={
