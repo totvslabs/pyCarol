@@ -7,7 +7,7 @@ class Staging:
         self.carol = carol
 
     def send_data(self, staging_name, data=None, connector_id=None, step_size=100, print_stats=False,
-                  auto_create_schema=False, crosswalk_auto_create=None, force=True):
+                  auto_create_schema=False, crosswalk_auto_create=None, force=False):
 
         if connector_id is None:
             connector_id = self.carol.connector_id
@@ -39,7 +39,7 @@ class Staging:
             _crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
 
         if is_df and not force:
-            assert data.duplicated(subset=_crosswalk) == 0, \
+            assert data.duplicated(subset=_crosswalk).sum() == 0, \
                 "crosswalk is not unique on dataframe. set force=True to send it anyway."
 
 
