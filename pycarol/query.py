@@ -299,7 +299,7 @@ def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None):
                     },
                     {
                         "mdmFilterType": "RANGE_FILTER",
-                        "mdmKey": "mdmId",
+                        "mdmKey": "mdmCounterForEntity",
                         "mdmValue": RANGE_FILTER
                                          }
                 ]
