@@ -1,6 +1,9 @@
 import json
 import itertools
 from joblib import Parallel, delayed
+import dask
+import dask.dataframe as dd
+import pandas as pd
 
 class Query:
     """ It implements the calls for the following endpoints:
@@ -275,17 +278,28 @@ class ParQuery:
         print(f"Total Hits to download: {query.total_hits}")
         print(f"Number of chunks: {len(chunks)}")
 
-        list_to_compute = Parallel(n_jobs=n_jobs,
-                                   verbose=verbose)(delayed(_par_query)(RANGE_FILTER=RANGE_FILTER,
-                                                                        page_size=4999,
-                                                                        login = self.carol,
-                                                                        datamodel_name=datamodel_name)
-                                                    for RANGE_FILTER in chunks)
+#         list_to_compute = Parallel(n_jobs=n_jobs,
+#                                    verbose=verbose)(delayed(_par_query)(RANGE_FILTER=RANGE_FILTER,
+#                                                                         page_size=4999,
+#                                                                         login = self.carol,
+#                                                                         datamodel_name=datamodel_name)
+#                                                     for RANGE_FILTER in chunks)
 
-        self.results = list(itertools.chain(*list_to_compute))
-        return self
+#         self.results = list(itertools.chain(*list_to_compute))
+        list_to_compute = dask.delayed(list)([
+            _par_query(        
+                datamodel_name=datamodel_name,
+                RANGE_FILTER=RANGE_FILTER,
+                page_size=4999,
+                login = self.carol,
+            )
+            for RANGE_FILTER in chunks
+        ])
+        # results = dd.from_delayed(list_to_compute)
+        results = pd.DataFrame(list_to_compute.compute())
+        return results
 
-
+@dask.delayed
 def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None):
     json_query = {
                 "mustList": [
