@@ -1,5 +1,10 @@
 import json
 from websocket import create_connection
+import itertools
+from joblib import Parallel, delayed
+import dask
+import dask.dataframe as dd
+import pandas as pd
 
 class Query:
     """ It implements the calls for the following endpoints:
@@ -290,3 +295,81 @@ class Query:
                                      params=self.querystring, method='DELETE')
 
         print('Deleted: ',result)
+
+class ParQuery:
+
+    def __init__(self, carol):
+
+        self.carol = carol
+
+    @staticmethod
+    def ranges(min_v,max_v, nb):
+        step = int((max_v-min_v) / nb) +1
+        step = list(range(min_v,max_v,step))
+        if step[-1] != max_v:
+            step.append(max_v)
+        step = [[step[i],step[i+1]-1] for i in  range(len(step)-1) ]
+        step.append([max_v,None])
+        return step
+
+    def go(self, datamodel_name, slices=1000, verbose=50, n_jobs=1):
+
+
+        assert slices<9999, '10k is the largest slice possible'
+
+        j = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": f"{datamodel_name}Golden"}],
+             "aggregationList": [{"type": "MINIMUM", "name": "MINIMUM", "params": ["mdmCounterForEntity"]},
+                                 {"type": "MAXIMUM", "name": "MAXIMUM", "params": ["mdmCounterForEntity"]}]}
+
+        query = Query(self.carol, only_hits=False, get_aggs=True, save_results=False,
+                      print_status=True, page_size=0).query(j).go()
+        min_v = query.results[0]['aggs']['MINIMUM']['value']
+        max_v = query.results[0]['aggs']['MAXIMUM']['value']
+        chunks = self.ranges(min_v, max_v, slices)
+
+        print(f"Total Hits to download: {query.total_hits}")
+        print(f"Number of chunks: {len(chunks)}")
+
+#         list_to_compute = Parallel(n_jobs=n_jobs,
+#                                    verbose=verbose)(delayed(_par_query)(RANGE_FILTER=RANGE_FILTER,
+#                                                                         page_size=4999,
+#                                                                         login = self.carol,
+#                                                                         datamodel_name=datamodel_name)
+#                                                     for RANGE_FILTER in chunks)
+
+#         self.results = list(itertools.chain(*list_to_compute))
+        list_to_compute = dask.delayed(list)([
+            _par_query(
+                datamodel_name=datamodel_name,
+                RANGE_FILTER=RANGE_FILTER,
+                page_size=4999,
+                login = self.carol,
+            )
+            for RANGE_FILTER in chunks
+        ])
+        # results = dd.from_delayed(list_to_compute)
+        results = pd.DataFrame(list_to_compute.compute())
+        return results
+
+@dask.delayed
+def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None):
+    json_query = {
+                "mustList": [
+                    {
+                        "mdmFilterType": "TYPE_FILTER",
+                        "mdmValue": f"{datamodel_name}Golden"
+                    },
+                    {
+                        "mdmFilterType": "RANGE_FILTER",
+                        "mdmKey": "mdmCounterForEntity",
+                        "mdmValue": RANGE_FILTER
+                                         }
+                ]
+
+            }
+
+    query = Query(login, page_size=page_size, save_results=False, print_status=False,
+                  fields='mdmGoldenFieldAndValues').query(json_query).go()
+    return query.results
+
+
