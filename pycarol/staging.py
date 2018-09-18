@@ -7,7 +7,7 @@ class Staging:
         self.carol = carol
 
     def send_data(self, staging_name, data=None, connector_id=None, step_size=100, print_stats=False,
-                  auto_create_schema=False, crosswalk_auto_create=None):
+                  auto_create_schema=False, crosswalk_auto_create=None, force=False):
 
         if connector_id is None:
             connector_id = self.carol.connector_id
@@ -18,26 +18,32 @@ class Staging:
         if isinstance(data, pd.DataFrame):
             is_df = True
             data_size = data.shape[0]
+            _sample_json = data.iloc[0].to_json(date_format='iso')
         elif isinstance(data, str):
             data = json.loads(data)
             data_size = len(data)
+            _sample_json = data[0]
         else:
             data_size = len(data)
+            _sample_json = data[0]
 
         if (not isinstance(data, list)) and (not is_df):
             data = [data]
             data_size = len(data)
 
         if not schema and auto_create_schema:
-            assert crosswalk_auto_create, "You should provite a crosswalk"
-            if is_df:
-                schema_data = data.iloc[0].to_json(date_format='iso')
-            else:
-                schema_data = data[0]
-            self.create_schema(schema_data, staging_name, connector_id=connector_id, crosswalk_list=crosswalk_auto_create)
+            assert crosswalk_auto_create, "You should provide a crosswalk"
+            self.create_schema(_sample_json, staging_name, connector_id=connector_id, crosswalk_list=crosswalk_auto_create)
+            _crosswalk = crosswalk_auto_create
+        else:
+            _crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
+
+        if is_df and not force:
+            assert data.duplicated(subset=_crosswalk).sum() == 0, \
+                "crosswalk is not unique on dataframe. set force=True to send it anyway."
+
 
         url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
-
         gen = self._stream_data(data, data_size, step_size, is_df)
         cont = 0
         ite = True
@@ -73,13 +79,9 @@ class Staging:
         except Exception:
             return None
 
-
-
-    def create_schema(self, fields_dict, staging_name,connector_id=None, mdm_flexible='false',
+    def create_schema(self, fields_dict, staging_name, connector_id=None, mdm_flexible='false',
                      crosswalk_name=None, crosswalk_list=None, overwrite=False):
         assert fields_dict is not None
-
-
 
         if isinstance(fields_dict, list):
             fields_dict = fields_dict[0]
@@ -112,3 +114,10 @@ class Staging:
             print('Schema sent successfully!')
         else:
             print('Failed to send schema: ' + resp)
+
+    def _check_crosswalk_in_data(self, schema, _sample_json):
+        crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
+        if all(name in _sample_json for name in crosswalk):
+            pass
+
+

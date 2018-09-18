@@ -1,6 +1,6 @@
 import types
 import time
-from .PwdAuth_cloner import *
+from .PwdAuth_cloner import PwdAuthCloner
 
 
 class PwdAuth:

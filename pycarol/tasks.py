@@ -1,6 +1,7 @@
+import os
+
 
 class Tasks:
-
     def __init__(self, carol):
         self.carol = carol
 
@@ -23,7 +24,6 @@ class Tasks:
         self.mdm_last_updated = None
         self.mdm_tenant_id = None
 
-
     def _set_task_by_json(self, json_task):
         self.task_id = json_task['mdmId']
         self.mdm_data = json_task['mdmData']
@@ -36,17 +36,13 @@ class Tasks:
         self.mdm_task_progress = json_task['mdmTaskProgress']
         self.mdm_process_after = json_task['mdmProcessAfter']
         self.mdm_distribution_value = json_task['mdmDistributionValue']
-        self.mdm_task_priority = json_task.get('mdmTaskPriority')
-        #TODO
-        #When ES5 is in production we need to change json_task.get('mdmTaskPriority') to
-        # self.mdm_task_priority = json_task.get('mdmTaskPriority') json_task.get('mdmTaskPreference')
+        self.mdm_task_priority = json_task.get('mdmTaskPreference')
         self.mdm_number_of_steps = json_task['mdmNumberOfSteps']
         self.mdm_number_of_steps_executed = json_task['mdmNumberOfStepsExecuted']
         self.mdm_entity_type = json_task['mdmEntityType']
         self.mdm_created = json_task['mdmCreated']
         self.mdm_last_updated = json_task['mdmLastUpdated']
         self.mdm_tenant_id = json_task['mdmTenantId']
-
 
     def create(self, task_type, task_group, data={}):
         """
@@ -56,7 +52,6 @@ class Tasks:
         :param data: data used in the task
         :return: Task
         """
-
         dataJson = {
             "mdmTaskType": task_type,
             "mdmTaskGroup": task_group,
@@ -67,6 +62,18 @@ class Tasks:
         self._set_task_by_json(json_task)
         return self
 
+    def current_task(self):
+        task_id = os.environ['LONGTASKID']
+        if task_id is None:
+            print("Can only get current_task if being called by Carol as a batch app")
+        self.get_task(task_id)
+
+    def get_current_task_id(self):
+        task_id = os.environ['LONGTASKID']
+        return task_id
+
+    def set_as_current_task(self):
+        os.environ['LONGTASKID'] = self.task_id
 
     def get_task(self, task_id=None):
         """
@@ -78,23 +85,38 @@ class Tasks:
         if task_id is None:
             task_id = self.task_id
 
-
         json_task = self.carol.call_api('v1/tasks/{}'.format(task_id))
         self._set_task_by_json(json_task)
         return self
 
+    def trace(self, log_message, task_id=None):
+        self.add_log(log_message, "TRACE", task_id)
 
-    def add_log(self, log_message, log_level="WARN", task_id=None):
+    def debug(self, log_message, task_id=None):
+        self.add_log(log_message, "DEBUG", task_id)
+
+    def info(self, log_message, task_id=None):
+        self.add_log(log_message, "INFO", task_id)
+
+    def warn(self, log_message, task_id=None):
+        self.add_log(log_message, "WARN", task_id)
+
+    def error(self, log_message, task_id=None):
+        self.add_log(log_message, "ERROR", task_id)
+
+    def add_log(self, log_message, log_level="INFO", task_id=None):
         """
         Add a log
         :param log_message: commonly used tenandId
         :param log_level: options: ERROR, WARN, INFO, DEBUG, TRACE
-        :param task_id: it's not necessary if self.mdm_id is defined
+        :param task_id: it's not necessary if self.mdm_id is defined or if we are running from Carol as a batch app
         :return: boolean
         """
 
         if task_id is None:
             task_id = self.task_id
+        if task_id is None:
+            task_id = self.get_current_task_id()
 
         log = [{
             "mdmTaskId": task_id,
@@ -102,7 +124,6 @@ class Tasks:
             "mdmLogLevel": log_level.upper()
         }]
         return self.add_logs(log)
-
 
     def add_logs(self, logs, task_id=None):
         """
@@ -121,7 +142,6 @@ class Tasks:
         else:
             return False
 
-
     def get_logs(self, task_id=None):
         """
         Get all logs
@@ -134,7 +154,6 @@ class Tasks:
 
         resp = self.carol.call_api('v1/tasks/{}/logs'.format(task_id))
         return resp
-
 
     def set_progress(self, progress, progress_data=None, task_id=None):
         """
@@ -155,7 +174,6 @@ class Tasks:
 
         resp = self.carol.call_api('v1/tasks/{}/progress/{}'.format(task_id, progress), data=progress_data)
         return resp
-
 
     def cancel(self, task_id=None):
         """

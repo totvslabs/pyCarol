@@ -1,13 +1,8 @@
-from .tenants import *
-from .storage import *
-from .connectors import *
-from .carolina import *
-from .staging import *
-from .tasks import *
-
+from .tenants import Tenants
 from urllib3.util.retry import Retry
 import requests
 from requests.adapters import HTTPAdapter
+import json
 
 
 class Carol:
@@ -16,18 +11,15 @@ class Carol:
         self.app_name = app_name
         self.port = port
         self.verbose = verbose
-        self.tenants = Tenants(self)
-        self.storage = Storage(self)
-        self.connectors = Connectors(self)
-        self.carolina = Carolina(self)
-        self.staging = Staging(self)
-        self.tasks = Tasks(self)
-        self.tenant = self.tenants.get_tenant_by_domain(domain)
+        self.tenant = Tenants(self).get_tenant_by_domain(domain)
         self.connector_id = connector_id
         self.auth = auth
         self.auth.set_connector_id(self.connector_id)
         self.auth.login(self)
         self.response = None
+
+    def build_ws_url(self, path):
+        return 'wss://{}.carol.ai:{}/websocket/{}'.format(self.domain, self.port, path)
 
     @staticmethod
     def _retry_session(retries=5, session=None, backoff_factor=0.3, status_forcelist=(500, 502, 503, 504, 524)):
@@ -43,7 +35,6 @@ class Carol:
         session.mount('http://', adapter)
         session.mount('https://', adapter)
         return session
-
 
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json',
                  retries=5, session=None, backoff_factor=0.3, status_forcelist=(500, 502, 503, 504)):
@@ -69,7 +60,6 @@ class Carol:
             if content_type == 'application/json':
                 data_json = data
                 data = None
-
 
         section = self._retry_session(retries=retries, session=session, backoff_factor=backoff_factor,
                                       status_forcelist=status_forcelist)

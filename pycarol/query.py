@@ -1,4 +1,9 @@
 import json
+from websocket import create_connection
+#import itertools
+#from joblib import Parallel, delayed
+import dask
+import pandas as pd
 
 class Query:
     """ It implements the calls for the following endpoints:
@@ -15,7 +20,7 @@ class Query:
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=50, sort_order='ASC', sort_by=None,
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
                  save_results=False, filename='query_result.json', print_status=True, safe_check=False,
-                 get_errors=False, flush_result=False):
+                 get_errors=False, flush_result=False, use_stream=False):
         
         self.carol = carol
         self.max_hits = max_hits
@@ -28,7 +33,7 @@ class Query:
         self.only_hits = only_hits
         self.fields = fields
         self.get_aggs = get_aggs
-
+        self.use_stream = use_stream
 
         self.save_results = save_results
         self.filename = filename
@@ -80,13 +85,68 @@ class Query:
         self._build_return_fields()
         self._build_query_params()
 
-        if self.scrollable:
+        if self.use_stream and self.named_query is None:
+            self._streamable_query_handler(callback)
+        elif self.scrollable:
             self._scrollable_query_handler(callback)
         else:
             self._oldQueryHandler()
 
         return self
-    
+
+    def _streamable_query_handler(self, callback=None):
+        if not self.offset == 0:
+            raise ValueError('It is not possible to use offset when using streaming')
+
+        set_param = True
+        count = self.offset
+        if self.save_results:
+            file = open(self.filename, 'w', encoding='utf8')
+        url = self.carol.build_ws_url("query/" + self.carol.auth._token.access_token)
+        #print(url)
+        ws = create_connection(url)
+        params = self.query_params.copy()
+
+        if 'scrollable' in params:
+            del params['scrollable']
+        if 'pageSize' in params:
+            del params['pageSize']
+        params['query'] = self.json_query.copy()
+        #print(params)
+
+        ws.send(str(params))
+        to_get = float("inf")
+        downloaded = 0
+        try:
+            while ws.connected:
+                result = json.loads(ws.recv())
+                self.results.append(result)
+                count += 1
+                downloaded += 1
+                if callback:
+                    if callable(callback):
+                        callback(result)
+                    else:
+                        raise Exception(
+                            f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function.')
+                if self.print_status and count % 50 == 0:
+                    print('{}/{}'.format(downloaded, to_get), end='\r')
+                if self.save_results:
+                    print('Saving...')
+                    file.write(json.dumps(result, ensure_ascii=False))
+                    file.write('\n')
+                    if count % 1000 == 0:
+                        file.flush()
+                # print("Received '%s'" % result)
+        except Exception as e:
+            if self.save_results:
+                file.close()
+            print(f'{downloaded} rows downloaded before error')
+            raise Exception(e.args[0]['errorMessage'])
+        print("WS Closed")
+        if self.save_results:
+            file.close()
+
     def _scrollable_query_handler(self, callback=None):
         if not self.offset == 0:
             raise ValueError('It is not possible to use offset when using scroll for pagination')
@@ -104,12 +164,8 @@ class Query:
         to_get = float("inf")
         downloaded = 0
         while count < to_get:
-            try:
-                result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params)
-            except Exception as e:
-                if self.save_results:
-                    file.close()
-                raise Exception(e.args[0]['errorMessage'])
+
+            result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params)
 
             if set_param:
                 self.total_hits = result["totalHits"]
@@ -212,7 +268,7 @@ class Query:
 
         return self
 
-    def named_query_params(self,named_query):
+    def named_query_params(self, named_query):
         named = nq.namedQueries(self.token_object)
         named.getParamByName(named_query=named_query)
         return named.paramDict
@@ -238,3 +294,81 @@ class Query:
                                      params=self.querystring, method='DELETE')
 
         print('Deleted: ',result)
+
+class ParQuery:
+
+    def __init__(self, carol):
+
+        self.carol = carol
+
+    @staticmethod
+    def ranges(min_v,max_v, nb):
+        step = int((max_v-min_v) / nb) +1
+        step = list(range(min_v,max_v,step))
+        if step[-1] != max_v:
+            step.append(max_v)
+        step = [[step[i],step[i+1]-1] for i in  range(len(step)-1) ]
+        step.append([max_v,None])
+        return step
+
+    def go(self, datamodel_name, slices=1000, verbose=50, n_jobs=1):
+
+
+        assert slices<9999, '10k is the largest slice possible'
+
+        j = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": f"{datamodel_name}Golden"}],
+             "aggregationList": [{"type": "MINIMUM", "name": "MINIMUM", "params": ["mdmCounterForEntity"]},
+                                 {"type": "MAXIMUM", "name": "MAXIMUM", "params": ["mdmCounterForEntity"]}]}
+
+        query = Query(self.carol, only_hits=False, get_aggs=True, save_results=False,
+                      print_status=True, page_size=0).query(j).go()
+        min_v = query.results[0]['aggs']['MINIMUM']['value']
+        max_v = query.results[0]['aggs']['MAXIMUM']['value']
+        chunks = self.ranges(min_v, max_v, slices)
+
+        print(f"Total Hits to download: {query.total_hits}")
+        print(f"Number of chunks: {len(chunks)}")
+
+#         list_to_compute = Parallel(n_jobs=n_jobs,
+#                                    verbose=verbose)(delayed(_par_query)(RANGE_FILTER=RANGE_FILTER,
+#                                                                         page_size=4999,
+#                                                                         login = self.carol,
+#                                                                         datamodel_name=datamodel_name)
+#                                                     for RANGE_FILTER in chunks)
+
+#         self.results = list(itertools.chain(*list_to_compute))
+        list_to_compute = dask.delayed(list)([
+            _par_query(
+                datamodel_name=datamodel_name,
+                RANGE_FILTER=RANGE_FILTER,
+                page_size=4999,
+                login = self.carol,
+            )
+            for RANGE_FILTER in chunks
+        ])
+        # results = dd.from_delayed(list_to_compute)
+        results = pd.DataFrame(list_to_compute.compute())
+        return results
+
+@dask.delayed
+def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None):
+    json_query = {
+                "mustList": [
+                    {
+                        "mdmFilterType": "TYPE_FILTER",
+                        "mdmValue": f"{datamodel_name}Golden"
+                    },
+                    {
+                        "mdmFilterType": "RANGE_FILTER",
+                        "mdmKey": "mdmCounterForEntity",
+                        "mdmValue": RANGE_FILTER
+                                         }
+                ]
+
+            }
+
+    query = Query(login, page_size=page_size, save_results=False, print_status=False,
+                  fields='mdmGoldenFieldAndValues').query(json_query).go()
+    return query.results
+
+
