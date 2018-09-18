@@ -1,7 +1,7 @@
 import json
 from websocket import create_connection
-#import itertools
-#from joblib import Parallel, delayed
+# import itertools
+# from joblib import Parallel, delayed
 import dask
 import pandas as pd
 
@@ -14,14 +14,12 @@ class Query:
 
     Usage::
 
-
-
     """
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=50, sort_order='ASC', sort_by=None,
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
                  save_results=False, filename='query_result.json', print_status=True, safe_check=False,
                  get_errors=False, flush_result=False, use_stream=False):
-        
+
         self.carol = carol
         self.max_hits = max_hits
         self.offset = offset
@@ -44,7 +42,7 @@ class Query:
 
         self.named_query = None
         self.callback = None
-        
+
         # Crated to send to the Rest API
         self.query_params = None
         self.drop_list = None
@@ -60,8 +58,8 @@ class Query:
 
     def _build_query_params(self):
         self.query_params = {"offset": self.offset, "pageSize": self.page_size, "sortOrder": self.sort_order,
-                                "indexType": self.index_type}
-        
+                             "indexType": self.index_type}
+
         if self.sort_by is not None:
             self.query_params["sortBy"] = self.sort_by
         if self.scrollable:
@@ -103,7 +101,7 @@ class Query:
         if self.save_results:
             file = open(self.filename, 'w', encoding='utf8')
         url = self.carol.build_ws_url("query/" + self.carol.auth._token.access_token)
-        #print(url)
+        # print(url)
         ws = create_connection(url)
         params = self.query_params.copy()
 
@@ -112,7 +110,7 @@ class Query:
         if 'pageSize' in params:
             del params['pageSize']
         params['query'] = self.json_query.copy()
-        #print(params)
+        # print(params)
 
         ws.send(str(params))
         to_get = float("inf")
@@ -203,9 +201,12 @@ class Query:
                         raise Exception('There are repeated records')
 
                 if self.get_errors:
-                    self.query_errors.update({elem.get('mdmId',elem) :  elem.get('mdmErrors',elem) for elem in result if elem['mdmErrors']})
+                    self.query_errors.update(
+                        {elem.get('mdmId', elem): elem.get('mdmErrors', elem) for elem in result if elem['mdmErrors']})
 
-                result = [elem.get('mdmGoldenFieldAndValues',elem) for elem in result if elem.get('mdmGoldenFieldAndValues',None)]  #get mdmGoldenFieldAndValues if not empty and if it exists
+                result = [elem.get('mdmGoldenFieldAndValues', elem) for elem in result if
+                          elem.get('mdmGoldenFieldAndValues',
+                                   None)]  # get mdmGoldenFieldAndValues if not empty and if it exists
 
                 if not self.flush_result:
                     self.results.extend(result)
@@ -213,7 +214,7 @@ class Query:
                 result.pop('count')
                 result.pop('took')
                 result.pop('totalHits')
-                #result.pop('scrollId')
+                # result.pop('scrollId')
                 if not self.flush_result:
                     self.results.append(result)
 
@@ -224,13 +225,13 @@ class Query:
                         file.flush()
                     break
 
-            
             if callback:
                 if callable(callback):
                     callback(result)
                 else:
-                    raise Exception(f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function.')
-            
+                    raise Exception(
+                        f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function.')
+
             if self.print_status:
                 print('{}/{}'.format(downloaded, to_get), end='\r')
             if self.save_results:
@@ -285,36 +286,34 @@ class Query:
         return self
 
     def delete(self, json_query):
-        #TODO: we should check the number of records to be deleted. If too many,
-        #it can be a problem.
+        # TODO: we should check the number of records to be deleted. If too many,
+        # it can be a problem.
         self.json_query = json_query
         self.querystring = {"indexType": self.index_type}
         url_filter = "v2/queries/filter"
         result = self.carol.call_api(url_filter, data=self.json_query,
                                      params=self.querystring, method='DELETE')
 
-        print('Deleted: ',result)
+        print('Deleted: ', result)
+
 
 class ParQuery:
 
     def __init__(self, carol):
-
         self.carol = carol
 
     @staticmethod
-    def ranges(min_v,max_v, nb):
-        step = int((max_v-min_v) / nb) +1
-        step = list(range(min_v,max_v,step))
+    def ranges(min_v, max_v, nb):
+        step = int((max_v - min_v) / nb) + 1
+        step = list(range(min_v, max_v, step))
         if step[-1] != max_v:
             step.append(max_v)
-        step = [[step[i],step[i+1]-1] for i in  range(len(step)-1) ]
-        step.append([max_v,None])
+        step = [[step[i], step[i + 1] - 1] for i in range(len(step) - 1)]
+        step.append([max_v, None])
         return step
 
     def go(self, datamodel_name, slices=1000, verbose=50, n_jobs=1):
-
-
-        assert slices<9999, '10k is the largest slice possible'
+        assert slices < 9999, '10k is the largest slice possible'
 
         j = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": f"{datamodel_name}Golden"}],
              "aggregationList": [{"type": "MINIMUM", "name": "MINIMUM", "params": ["mdmCounterForEntity"]},
@@ -329,20 +328,20 @@ class ParQuery:
         print(f"Total Hits to download: {query.total_hits}")
         print(f"Number of chunks: {len(chunks)}")
 
-#         list_to_compute = Parallel(n_jobs=n_jobs,
-#                                    verbose=verbose)(delayed(_par_query)(RANGE_FILTER=RANGE_FILTER,
-#                                                                         page_size=4999,
-#                                                                         login = self.carol,
-#                                                                         datamodel_name=datamodel_name)
-#                                                     for RANGE_FILTER in chunks)
+        #         list_to_compute = Parallel(n_jobs=n_jobs,
+        #                                    verbose=verbose)(delayed(_par_query)(RANGE_FILTER=RANGE_FILTER,
+        #                                                                         page_size=4999,
+        #                                                                         login = self.carol,
+        #                                                                         datamodel_name=datamodel_name)
+        #                                                     for RANGE_FILTER in chunks)
 
-#         self.results = list(itertools.chain(*list_to_compute))
+        #         self.results = list(itertools.chain(*list_to_compute))
         list_to_compute = dask.delayed(list)([
             _par_query(
                 datamodel_name=datamodel_name,
                 RANGE_FILTER=RANGE_FILTER,
                 page_size=4999,
-                login = self.carol,
+                login=self.carol,
             )
             for RANGE_FILTER in chunks
         ])
@@ -353,22 +352,21 @@ class ParQuery:
 @dask.delayed
 def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None):
     json_query = {
-                "mustList": [
-                    {
-                        "mdmFilterType": "TYPE_FILTER",
-                        "mdmValue": f"{datamodel_name}Golden"
-                    },
-                    {
-                        "mdmFilterType": "RANGE_FILTER",
-                        "mdmKey": "mdmCounterForEntity",
-                        "mdmValue": RANGE_FILTER
-                                         }
-                ]
-
+        "mustList": [
+            {
+                "mdmFilterType": "TYPE_FILTER",
+                "mdmValue": f"{datamodel_name}Golden"
+            },
+            {
+                "mdmFilterType": "RANGE_FILTER",
+                "mdmKey": "mdmCounterForEntity",
+                "mdmValue": RANGE_FILTER
             }
+        ]
+
+    }
 
     query = Query(login, page_size=page_size, save_results=False, print_status=False,
                   fields='mdmGoldenFieldAndValues').query(json_query).go()
     return query.results
-
 
