@@ -1,9 +1,8 @@
 import json
 from websocket import create_connection
-import itertools
-from joblib import Parallel, delayed
+#import itertools
+#from joblib import Parallel, delayed
 import dask
-import dask.dataframe as dd
 import pandas as pd
 
 class Query:
