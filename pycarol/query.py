@@ -160,12 +160,8 @@ class Query:
         to_get = float("inf")
         downloaded = 0
         while count < to_get:
-            try:
-                result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params)
-            except Exception as e:
-                if self.save_results:
-                    file.close()
-                raise Exception(e.args[0]['errorMessage'])
+
+            result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params)
 
             if set_param:
                 self.total_hits = result["totalHits"]
