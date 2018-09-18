@@ -36,10 +36,7 @@ class Tasks:
         self.mdm_task_progress = json_task['mdmTaskProgress']
         self.mdm_process_after = json_task['mdmProcessAfter']
         self.mdm_distribution_value = json_task['mdmDistributionValue']
-        self.mdm_task_priority = json_task.get('mdmTaskPriority')
-        #TODO
-        #When ES5 is in production we need to change json_task.get('mdmTaskPriority') to
-        # self.mdm_task_priority = json_task.get('mdmTaskPriority') json_task.get('mdmTaskPreference')
+        self.mdm_task_priority = json_task.get('mdmTaskPreference')
         self.mdm_number_of_steps = json_task['mdmNumberOfSteps']
         self.mdm_number_of_steps_executed = json_task['mdmNumberOfStepsExecuted']
         self.mdm_entity_type = json_task['mdmEntityType']
