@@ -30,7 +30,7 @@ class Carol:
         self.response = None
 
     @staticmethod
-    def _retry_session(retries=5, session=None, backoff_factor=0.3, status_forcelist=(500, 502, 503, 504)):
+    def _retry_session(retries=5, session=None, backoff_factor=0.3, status_forcelist=(500, 502, 503, 504, 524)):
         session = session or requests.Session()
         retry = Retry(
             total=retries,
