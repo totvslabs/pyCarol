@@ -1,11 +1,5 @@
-import luigi
-import os
-import pycarol
-from luigi_extension.targets import DummyTarget
-from collections import namedtuple
 from unittest.mock import patch, MagicMock, PropertyMock
-from contextlib import ExitStack
-import shutil
+from ..query import Query
 
 """ 
 # Task Execution
@@ -63,7 +57,7 @@ class mock_carol_query:
         :return:
         """
         # first get a reference to the original unbound method we want to mock
-        original_go = pycarol.query.Query.go
+        original_go = Query.go
         mock_queries = self.mock_queries
 
         # then create a wrapper whose main purpose is to record a reference to `self`

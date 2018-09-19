@@ -1,6 +1,8 @@
 import luigi
 import json
 import logging
+from ..apps import Apps
+
 
 logger = logging.getLogger(__name__)
 
