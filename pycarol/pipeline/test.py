@@ -1,5 +1,11 @@
 from unittest.mock import patch, MagicMock, PropertyMock
+import unittest
+import luigi
+from luigi_extension import Task, inherit_list
+from .parameter import SettingsDefinition, Parameter, set_parameters
 from ..query import Query
+from ..carol import Carol
+from ..auth import ApiKeyAuth
 
 """ 
 # Task Execution
@@ -109,3 +115,112 @@ class mock_carol_query:
 def mock_carol_app(func):
     # TODO - Mock functions related to Carol App functionalities
     pass
+
+
+class TaskMock(Task):
+    TARGET_DIR = "app/data/test/targets/luigi_extension/task"
+
+
+class TestLuigiExtensionParameterTask(unittest.TestCase):
+    # def test_get_parameters_from_carol(self):
+    #     expected_params = {"abandoned":'1_11,2_11',
+    #                        "branch":'ALL',
+    #                        "startdate":'01/01/2008'}
+    #
+    #     class P(SettingsDefinition):
+    #         abandoned = Parameter(carol=True, carol_name='abandonedenrollment', description='')
+    #         branch = Parameter(carol=True, carol_name='subsidiary', description='')
+    #         startdate = Parameter(carol=True, carol_name='initialdate', description='')
+    #
+    #     app_config = test_config.config[TEST_APP_TENANT]
+    #     P.app = {}
+    #     P.app_name = app_config['APP_NAME']
+    #     P.api_token = Carol(TEST_APP_TENANT,
+    #                         app_config['APP_NAME'],
+    #                         auth=ApiKeyAuth(app_config['X_AUTH_KEY']),
+    #                         connector_id=app_config['X_CONNECTOR_ID'])
+    #     set_parameters.get_app_params(P)
+    #     self.assertEqual(expected_params, P.app)
+
+    def test_task_gets_parameters_from_all_inherited_tasks_and_set_them_to_what_is_in_ParameterTask(self):
+
+        test_list = []
+
+        class TaskA1(luigi.Task):
+            param_a1 = Parameter()
+            task_complete = False
+
+            def run(self):
+                test_list.append(('a', self.param_a1))
+                self.task_complete = True
+
+            def complete(self):
+                return self.task_complete
+
+        class TaskA2(luigi.Task):
+            param_a2 = Parameter()
+            task_complete = False
+
+            def run(self):
+                test_list.append(('a', self.param_a2))
+                self.task_complete = True
+
+            def complete(self):
+                return self.task_complete
+
+        @inherit_list((TaskA1, dict(param_a1=4)))
+        class TaskB(TaskMock):
+            param_b = Parameter()
+            task_complete = False
+
+            def run(self):
+                test_list.append(('b', self.param_b))
+                self.task_complete = True
+
+            def complete(self):
+                return self.task_complete
+
+        @inherit_list(TaskB)
+        class TaskC(TaskMock):
+            param_c = Parameter()
+            task_complete = False
+
+            def run(self):
+                test_list.append(('c', self.param_c))
+                self.task_complete = True
+
+            def complete(self):
+                return self.task_complete
+
+        @inherit_list(TaskA2)
+        class TaskD(TaskMock):
+            param_c = Parameter()
+            task_complete = False
+
+            def run(self):
+                test_list.append(('d', self.param_c))
+                self.task_complete = True
+
+            def complete(self):
+                return self.task_complete
+
+        class AppParams(SettingsDefinition):
+            TARGET_DIR = "app/data/test/targets/luigi_extension"
+            param_a1 = Parameter(default=1)
+            param_a2 = Parameter(default=2)
+            param_b = Parameter(default=3)
+            param_c = Parameter(default=5)
+
+        AppParams.api_token = None
+
+        @set_parameters(AppParams)
+        class Run(luigi.WrapperTask):
+            task = Parameter()
+
+            def requires(self):
+                #AppParams.copy_tasks_parameters(Run)
+                return [self.clone(TaskC), self.clone(TaskD)]
+
+        task_exec = luigi.build([Run(task='test')], local_scheduler=True)
+        self.assertTrue(task_exec)
+        self.assertEqual(set(test_list), set([('a', 4), ('b', 3), ('c', 5), ('a', 2), ('d', 5)]))
