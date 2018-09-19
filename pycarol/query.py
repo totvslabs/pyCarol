@@ -1,6 +1,6 @@
 import json
 from websocket import create_connection
-# import itertools
+import itertools
 # from joblib import Parallel, delayed
 import dask
 import pandas as pd
@@ -233,7 +233,7 @@ class Query:
                         f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function.')
 
             if self.print_status:
-                print('{}/{}'.format(downloaded, to_get), end='\r')
+                print('{}/{}'.format(downloaded, to_get), )#end='\r')
             if self.save_results:
                 file.write(json.dumps(result, ensure_ascii=False))
                 file.write('\n')
@@ -299,8 +299,9 @@ class Query:
 
 class ParQuery:
 
-    def __init__(self, carol):
+    def __init__(self, carol, return_df=True):
         self.carol = carol
+        self.return_df=return_df
 
     @staticmethod
     def ranges(min_v, max_v, nb):
@@ -312,14 +313,30 @@ class ParQuery:
         step.append([max_v, None])
         return step
 
-    def go(self, datamodel_name, slices=1000, verbose=50, n_jobs=1):
+    def go(self, datamodel_name=None, slices=1000, staging_name=None, connector_id=None, verbose=50, n_jobs=1):
         assert slices < 9999, '10k is the largest slice possible'
 
-        j = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": f"{datamodel_name}Golden"}],
-             "aggregationList": [{"type": "MINIMUM", "name": "MINIMUM", "params": ["mdmCounterForEntity"]},
-                                 {"type": "MAXIMUM", "name": "MAXIMUM", "params": ["mdmCounterForEntity"]}]}
+        if datamodel_name is None:
+            assert connector_id and staging_name
+            index_type = 'STAGING'
+            j = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": f"{connector_id}_{staging_name}"}],
+                 "aggregationList": [{"type": "MINIMUM", "name": "MINIMUM", "params": ["mdmCreated"]},
+                                     {"type": "MAXIMUM", "name": "MAXIMUM", "params": ["mdmCreated"]}]}
+            datamodel_name = f"{connector_id}_{staging_name}"
+            fields=None
+            only_hits=False
+            mdmKey = 'mdmCreated'
+        else:
+            index_type = 'MASTER'
+            j = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": f"{datamodel_name}Golden"}],
+                 "aggregationList": [{"type": "MINIMUM", "name": "MINIMUM", "params": ["mdmCounterForEntity"]},
+                                     {"type": "MAXIMUM", "name": "MAXIMUM", "params": ["mdmCounterForEntity"]}]}
+            datamodel_name = f"{datamodel_name}Golden"
+            fields = 'mdmGoldenFieldAndValues'
+            only_hits=True
+            mdmKey = 'mdmCounterForEntity'
 
-        query = Query(self.carol, only_hits=False, get_aggs=True, save_results=False,
+        query = Query(self.carol, index_type=index_type, only_hits=False, get_aggs=True, save_results=False,
                       print_status=True, page_size=0).query(j).go()
         min_v = query.results[0]['aggs']['MINIMUM']['value']
         max_v = query.results[0]['aggs']['MAXIMUM']['value']
@@ -328,45 +345,57 @@ class ParQuery:
         print(f"Total Hits to download: {query.total_hits}")
         print(f"Number of chunks: {len(chunks)}")
 
-        #         list_to_compute = Parallel(n_jobs=n_jobs,
-        #                                    verbose=verbose)(delayed(_par_query)(RANGE_FILTER=RANGE_FILTER,
-        #                                                                         page_size=4999,
-        #                                                                         login = self.carol,
-        #                                                                         datamodel_name=datamodel_name)
-        #                                                     for RANGE_FILTER in chunks)
 
-        #         self.results = list(itertools.chain(*list_to_compute))
         list_to_compute = dask.delayed(list)([
             _par_query(
                 datamodel_name=datamodel_name,
                 RANGE_FILTER=RANGE_FILTER,
                 page_size=4999,
                 login=self.carol,
+                index_type=index_type,
+                fields=fields,
+                only_hits=only_hits,
+                mdmKey=mdmKey,
+                return_df=self.return_df,
             )
             for RANGE_FILTER in chunks
         ])
-        # results = dd.from_delayed(list_to_compute)
-        results = pd.DataFrame(list_to_compute.compute())
-        return results
+        list_to_compute = list_to_compute.compute()
+
+        if self.return_df:
+            return pd.concat(list_to_compute,ignore_index=True)
+        list_to_compute = list(itertools.chain(*list_to_compute))
+        return list_to_compute
 
 @dask.delayed
-def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None):
+def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None, index_type='MASTER',fields=None, mdmKey=None,
+               only_hits=True, return_df=True):
     json_query = {
         "mustList": [
             {
                 "mdmFilterType": "TYPE_FILTER",
-                "mdmValue": f"{datamodel_name}Golden"
+                "mdmValue": datamodel_name
             },
             {
                 "mdmFilterType": "RANGE_FILTER",
-                "mdmKey": "mdmCounterForEntity",
+                "mdmKey": f"{mdmKey}",
                 "mdmValue": RANGE_FILTER
             }
         ]
 
     }
 
-    query = Query(login, page_size=page_size, save_results=False, print_status=False,
-                  fields='mdmGoldenFieldAndValues').query(json_query).go()
-    return query.results
+    query = Query(login, page_size=page_size, save_results=False, print_status=False, index_type=index_type,
+                  only_hits=only_hits,
+                  fields=fields).query(json_query).go()
+    query = query.results
+
+    if not only_hits:
+        query = [i['hits'] for i in query]
+        query = list(itertools.chain(*query))
+
+    if return_df:
+        return pd.DataFrame(query)
+
+    return query
 
