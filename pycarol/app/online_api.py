@@ -1,9 +1,6 @@
 from importlib import import_module
 from flask import Flask, request
 import numpy as np
-
-import redis
-
 import os
 import sys
 import json
@@ -26,11 +23,16 @@ class OnlineApi():
         flask = OnlineApi('run_me').get_api()
     """
 
-    def __init__(self, file_name=None, file_path='', app_name=None, app_version=None):
+    def __init__(self, file_name=None, file_path='', domain=None, app_name=None, app_version=None, online_name=None):
         self.file_path = file_path
         self.imported_module = None
         self.endpoints = []
         self.logs = []
+
+        if domain:
+            self.domain = domain
+        else:
+            self.domain = os.environ.get('CAROLDOMAIN', 'domain')
 
         if app_version:
             self.app_version = app_version
@@ -42,12 +44,18 @@ class OnlineApi():
         else:
             self.app_name = os.environ.get('CAROLAPPNAME', 'name')
 
+        if online_name:
+            self.online_name = online_name
+        else:
+            self.online_name = os.environ.get('CAROLONLINENAME', 'name')
+
         if not file_name:
             file_name = os.environ.get('ALGORITHMNAME')
 
         if file_name:
             self.module_name = os.path.splitext(file_name)[0]
         else:
+            self.module_name = ''
             self._log_append('The file name should be defined by parameter ou environment variable')
 
         self._dynamic_import()
@@ -82,9 +90,9 @@ class OnlineApi():
 
         @flask.route('/', methods=['GET','POST'])
         def base():
-            return 'Running! Use http:// ... /{}/(endpoint)'.format(self.app_name)
+            return 'Running! Use http:// .../{}/{}/{}/{}/api/(endpoint)'.format(self.domain, self.app_name, self.app_version, self.online_name)
 
-        @flask.route('/{}/{}/api/<prediction_path>'.format(self.app_name, self.app_version), methods=['GET','POST'])
+        @flask.route('/{}/{}/{}/{}/api/<prediction_path>'.format(self.domain, self.app_name, self.app_version, self.online_name), methods=['GET','POST'])
         def app(prediction_path):
 
             try:
@@ -97,15 +105,15 @@ class OnlineApi():
                 r = r.tolist()
             return json.dumps(r)
 
-        @flask.route('/{}/{}/statusz'.format(self.app_name, self.app_version))
+        @flask.route('/{}/{}/{}/{}/statusz'.format(self.domain, self.app_name, self.app_version, self.online_name))
         def app_statusz():
             return 'ok'
 
-        @flask.route('/{}/{}/healthz'.format(self.app_name, self.app_version))
+        @flask.route('/{}/{}/{}/{}/healthz'.format(self.domain, self.app_name, self.app_version, self.online_name))
         def app_healthz():
             return 'ok'
 
-        @flask.route('/{}/{}/logs'.format(self.app_name, self.app_version))
+        @flask.route('/{}/{}/{}/{}/logs'.format(self.domain, self.app_name, self.app_version, self.online_name))
         def app_logs():
             return str(self.logs)
 
