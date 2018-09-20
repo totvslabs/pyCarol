@@ -5,6 +5,7 @@ from websocket import create_connection
 import dask
 import pandas as pd
 
+
 class Query:
     """ It implements the calls for the following endpoints:
         1. POST - /api/v2/queries/filter
