@@ -18,7 +18,7 @@ class Query:
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=50, sort_order='ASC', sort_by=None,
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
                  save_results=False, filename='query_result.json', print_status=True, safe_check=False,
-                 get_errors=False, flush_result=False, use_stream=False):
+                 get_errors=False, flush_result=False, use_stream=False, get_times=False):
 
         self.carol = carol
         self.max_hits = max_hits
@@ -39,7 +39,7 @@ class Query:
         self.safe_check = safe_check
         self.get_errors = get_errors
         self.flush_result = flush_result
-
+        self.get_times = get_times
         self.named_query = None
         self.callback = None
 
@@ -48,6 +48,7 @@ class Query:
         self.drop_list = None
         self.json_query = None
         self.total_hits = None
+        self.query_times = []
 
         self.results = []
 
@@ -193,7 +194,11 @@ class Query:
             else:
                 raise Exception('No Scroll Id to use. Something is wrong')
 
+            if self.get_times:
+                self.query_times.append(result.pop('took'))
+
             if self.only_hits:
+
                 result = result['hits']
                 if self.safe_check:
                     self.mdmId_list.extend([mdm_id['mdmId'] for mdm_id in result])
@@ -212,7 +217,6 @@ class Query:
                     self.results.extend(result)
             else:
                 result.pop('count')
-                result.pop('took')
                 result.pop('totalHits')
                 # result.pop('scrollId')
                 if not self.flush_result:
