@@ -4,6 +4,7 @@ import itertools
 from joblib import Parallel, delayed
 import dask
 import pandas as pd
+from pycarol.connectors import Connectors
 
 class Query:
     """ It implements the calls for the following endpoints:
@@ -332,16 +333,29 @@ class ParQuery:
         return min_v, max_v
 
 
-    def go(self, datamodel_name=None, slices=1000, staging_name=None, connector_id=None ):
+    def go(self, datamodel_name=None, slices=1000, staging_name=None, connector_id=None, connector_name=None,
+           get_staging_from_golden=False ):
         assert slices < 9999, '10k is the largest slice possible'
 
+
         if datamodel_name is None:
-            assert connector_id and staging_name
+            assert connector_id or connector_name
+            assert staging_name
+
+            if not connector_id:
+                connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
+
             self.index_type = 'STAGING'
             self.datamodel_name = f"{connector_id}_{staging_name}"
             self.fields=None
             self.only_hits=False
             self.mdmKey = 'mdmCreated'
+        elif get_staging_from_golden:
+            self.index_type = 'MASTER'
+            self.datamodel_name = f"{datamodel_name}Master"
+            self.fields = 'mdmStagingRecord'
+            self.only_hits=False
+            self.mdmKey = 'mdmStagingRecord.mdmCreated'
         else:
             self.index_type = 'MASTER'
             self.datamodel_name = f"{datamodel_name}Golden"
@@ -430,6 +444,9 @@ def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None, index_t
     if not only_hits:
         query = [i['hits'] for i in query]
         query = list(itertools.chain(*query))
+        if fields:
+            query = [elem.get(fields, elem) for elem in query if
+                     elem.get(fields,None)]
 
     if return_df:
         return pd.DataFrame(query)
