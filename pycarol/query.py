@@ -239,7 +239,7 @@ class Query:
                         f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function.')
 
             if self.print_status:
-                print('{}/{}'.format(downloaded, to_get), )#end='\r')
+                print('{}/{}'.format(downloaded, to_get), end='\r')
             if self.save_results:
                 file.write(json.dumps(result, ensure_ascii=False))
                 file.write('\n')
