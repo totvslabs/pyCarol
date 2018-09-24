@@ -35,8 +35,10 @@ class Staging:
             assert crosswalk_auto_create, "You should provide a crosswalk"
             self.create_schema(_sample_json, staging_name, connector_id=connector_id, crosswalk_list=crosswalk_auto_create)
             _crosswalk = crosswalk_auto_create
+            print('provided crosswalk ',_crosswalk)
         else:
-            _crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
+            _crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()[0]
+            print('fetched crosswalk ',_crosswalk)
 
         if is_df and not force:
             assert data.duplicated(subset=_crosswalk).sum() == 0, \
