@@ -37,7 +37,8 @@ class Staging:
             _crosswalk = crosswalk_auto_create
             print('provided crosswalk ',_crosswalk)
         else:
-            _crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()[0]
+            _crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
+            _crosswalk = list(_crosswalk)[0]
             print('fetched crosswalk ',_crosswalk)
 
         if is_df and not force:
