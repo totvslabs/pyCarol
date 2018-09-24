@@ -1,8 +1,6 @@
 import re
 import json
 import pandas as pd
-#import ipywidgets as widgets
-#import IPython.display as dsplay
 from itertools import starmap
 
 from .entity import *
