@@ -1,9 +1,10 @@
 import re
 import json
 import pandas as pd
-import ipywidgets as widgets
-import IPython.display as dsplay
- 
+#import ipywidgets as widgets
+#import IPython.display as dsplay
+from itertools import starmap
+
 from .entity import *
 from .skill import *
 from ..named_query import *
@@ -40,7 +41,8 @@ class NLP:
             return response
         else:
             partial_match = []
-            for idx, matching_record in enumerate(matching_records):
+            #for idx, matching_record in enumerate(matching_records):
+            for matching_record in matching_records:
                 query_model = matching_record['queryModel']
                 hits = matching_record['hits']
                 if 'primaryKey' in matching_record:
@@ -53,31 +55,24 @@ class NLP:
                 else:
                     secondaryKey = None
                     opts = [hit[primary_key] for hit in hits]
-
                 if 'displayName' is matching_record:
                     display_name = matching_record['displayName']
                 else:
                     display_name = query_model
-                opts = [display_name + ':'] + opts
-                partial_match.append(widgets.ToggleButtons(
-                    options=opts,
-                    disabled=False,
-                    button_style=''
-                ))
-                def changed(change):
-                    for i, button in enumerate(partial_match):
-                        if button == change.owner:
-                            record = matching_records[i]
-                            partial_match[i].disabled = True
-                            if 'secondaryKey' in record:
-                                hit = [x for x in record['hits'] if (x[record['primaryKey']] + ' ' + x[record['secondaryKey']]) == change.new]
-                            else:
-                                hit = [x for x in record['hits'] if x[record['primaryKey']] == change.new]
-                            resp = self.__fixed_query__(skill_name, record['queryModel'], hit[0])
-                            print(json.dumps(resp, sort_keys=True, indent=4, ensure_ascii=False))
-
-                partial_match[idx].observe(changed, 'value')
-                dsplay.display(partial_match[idx])
+                    
+                print('\n' + display_name + ':')
+                print('\n'.join(starmap('{}- {}'.format, enumerate(opts, 1))))
+                user_input = input('Type the number related to the option you want: \n')
+                while not user_input.isdigit() or int(user_input) > len(opts):
+                    if user_input.isdigit() and int(user_input) > len(opts):
+                        print('Numerical input should be in the list. \n')
+                    else:
+                        print('Input should be a number. \n')
+                    user_input = input('Type the number related to the option you want: \n')
+                resp = self.__fixed_query__(skill_name, query_model, hits[int(user_input) - 1])
+                print('\n' + json.dumps(resp, sort_keys=True, indent=4, ensure_ascii=False))                     
+                #else:
+                 #   print('Input should be number.')
             
     def __fixed_query__(self, skill_name, query_model, query_params):
         url_filter = "v1/ai/nlp/query/"
