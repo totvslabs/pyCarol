@@ -36,6 +36,8 @@ class Storage(metaclass=KeySingleton):
         local_file_name = '/tmp/carolina/cache/' + s3_file_name.replace("/", "-")
 
         if parquet:
+            if not isinstance(obj, pd.DataFrame):
+                raise ValueError("Object to be saved as parquet must be a DataFrame")
             obj.to_parquet(local_file_name)
         else:
             with gzip.open(local_file_name, 'wb') as f:
