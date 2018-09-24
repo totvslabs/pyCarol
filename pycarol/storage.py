@@ -48,23 +48,15 @@ class Storage(metaclass=KeySingleton):
         if obj is None:
             return None
 
-        has_cache = os.path.isfile(local_file_name)
-
-        if has_cache:
-            localts = os.stat(local_file_name).st_mtime
-        else:
-            localts = 0
+        localts = os.stat(local_file_name).st_mtime
         s3ts = calendar.timegm(obj.last_modified.timetuple())
 
         # Local cache is outdated
         if localts < s3ts:
             self.bucket.download_file(s3_file_name, local_file_name)
 
-        if os.path.isfile(local_file_name):
-            with gzip.open(local_file_name, 'rb') as f:
-                return pickle.load(f)
-        else:
-            return None
+        with gzip.open(local_file_name, 'rb') as f:
+            return pickle.load(f)
 
 
 def _save_async(cloner, name, obj):
