@@ -3,10 +3,53 @@ from urllib3.util.retry import Retry
 import requests
 from requests.adapters import HTTPAdapter
 import json
+import os
+import os.path
+from pycarol.auth.ApiKeyAuth import ApiKeyAuth
+from pycarol.auth.PwdAuth import PwdAuth
 
 
 class Carol:
-    def __init__(self, domain, app_name, auth, connector_id='0a0829172fc2433c9aa26460c31b78f0', port=443, verbose=False):
+    def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False):
+        settings = dict()
+        if os.path.isfile('app_config.json'):
+            with open('app_config.json', 'r') as f:
+                settings = json.load(f)
+
+            if domain is None:
+                domain = settings.get('domain', os.getenv('CAROLTENANT'))
+            if app_name is None:
+                app_name = settings.get('app_name', os.getenv('CAROLAPPNAME'))
+
+            app_config = settings.get(domain)
+            if app_config is not None:
+                if auth is None:
+                    auth_token = app_config.get('oauth_token')
+                    if auth_token is not None:
+                        auth = ApiKeyAuth(auth_token)
+                    else:
+                        auth_user = app_config.get('auth_user')
+                        auth_pwd = app_config.get('auth_pwd')
+                        if auth_user is not None and auth_pwd is not None:
+                            auth = PwdAuth(auth_user, auth_pwd)
+                        else:
+                            auth_token = os.getenv('CAROLAPPOAUTH')
+                            if auth_token is not None:
+                                auth = ApiKeyAuth(auth_token)
+                            else:
+                                auth_user = os.getenv('CAROLUSER')
+                                auth_pwd = os.getenv('CAROLPWD')
+                                if auth_user is not None and auth_pwd is not None:
+                                    auth = PwdAuth(auth_user, auth_pwd)
+
+                if connector_id is None:
+                    connector_id = app_config.get('connector_id', os.getenv('CAROLCONNECTORID', '0a0829172fc2433c9aa26460c31b78f0'))
+
+        if domain is None or app_name is None or auth is None:
+            raise ValueError("domain, app_name and auth must be specified as parameters, in the app_config.json file " +
+                             "or in the environment variables CAROLTENANT, CAROLAPPOAUTH OR CAROLUSER+CAROLPWD and " +
+                             "CAROLCONNECTORID")
+
         self.domain = domain
         self.app_name = app_name
         self.port = port

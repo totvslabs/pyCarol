@@ -1,0 +1,8 @@
+{
+  "domain": "rui",
+  "app_name": "testApp",
+  "rui": {
+    "auth_user": "william.monti@totvs.com",
+    "auth_pwd": "totvs123"
+  }
+}
