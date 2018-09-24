@@ -39,7 +39,6 @@ class NLP:
             return response
         else:
             partial_match = []
-            #for idx, matching_record in enumerate(matching_records):
             for matching_record in matching_records:
                 query_model = matching_record['queryModel']
                 hits = matching_record['hits']
@@ -60,17 +59,15 @@ class NLP:
                     
                 print('\n' + display_name + ':')
                 print('\n'.join(starmap('{}- {}'.format, enumerate(opts, 1))))
-                user_input = input('Type the number related to the option you want: \n')
+                user_input = input('Type the number related to the option you want: ')
                 while not user_input.isdigit() or int(user_input) > len(opts):
                     if user_input.isdigit() and int(user_input) > len(opts):
                         print('Numerical input should be in the list. \n')
                     else:
                         print('Input should be a number. \n')
-                    user_input = input('Type the number related to the option you want: \n')
+                    user_input = input('Type the number related to the option you want: ')
                 resp = self.__fixed_query__(skill_name, query_model, hits[int(user_input) - 1])
                 print('\n' + json.dumps(resp, sort_keys=True, indent=4, ensure_ascii=False))                     
-                #else:
-                 #   print('Input should be number.')
             
     def __fixed_query__(self, skill_name, query_model, query_params):
         url_filter = "v1/ai/nlp/query/"
