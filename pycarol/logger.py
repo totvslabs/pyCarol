@@ -24,8 +24,8 @@ class CarolHandler(logging.Handler):
         # logger.log.addHandler(<handle obj>)
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, level=logging.NOTSET):
+        super().__init__(level)
         process_type = os.environ.get('CAROLPROCESSTYPE', '')
         tenant = os.environ.get('CAROLTENANT', '')
         app_name = os.environ.get('CAROLAPPNAME', '')
