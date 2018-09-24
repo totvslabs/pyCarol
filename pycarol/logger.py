@@ -44,7 +44,7 @@ class CarolHandler(logging.Handler):
             self.handler = client.get_default_handler()
         else:
             raise ValueError('Tried to create a CarolHandler but no credentials for a service were found.')
-        self.handler.addFormatter(self.formatter)
+        self.handler.setFormatter(self.formatter)
 
     def emit(self, record):
         return self.handler.emit(record)
