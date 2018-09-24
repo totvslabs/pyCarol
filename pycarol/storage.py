@@ -2,6 +2,7 @@ import os
 import pickle
 import calendar
 import gzip
+import pandas as pd
 from multiprocessing import Process
 from pycarol.carol_cloner import Cloner
 from pycarol.utils import KeySingleton
@@ -29,17 +30,21 @@ class Storage(metaclass=KeySingleton):
 
         return p
 
-    def save(self, name, obj):
+    def save(self, name, obj, parquet=False):
         self._init_if_needed()
         s3_file_name = '{}/files/{}/{}'.format(self.carol.tenant['mdmId'], self.carol.app_name, name)
         local_file_name = '/tmp/carolina/cache/' + s3_file_name.replace("/", "-")
-        with gzip.open(local_file_name, 'wb') as f:
-            pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+        if parquet:
+            obj.to_parquet(local_file_name)
+        else:
+            with gzip.open(local_file_name, 'wb') as f:
+                pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
         self.bucket.upload_file(local_file_name, s3_file_name)
         os.utime(local_file_name, None)
 
-    def load(self, name):
+    def load(self, name, parquet=False):
         self._init_if_needed()
         s3_file_name = '{}/files/{}/{}'.format(self.carol.tenant['mdmId'], self.carol.app_name, name)
         local_file_name = '/tmp/carolina/cache/' + s3_file_name.replace("/", "-")
@@ -48,15 +53,25 @@ class Storage(metaclass=KeySingleton):
         if obj is None:
             return None
 
-        localts = os.stat(local_file_name).st_mtime
+        has_cache = os.path.isfile(local_file_name)
+
+        if has_cache:
+            localts = os.stat(local_file_name).st_mtime
+        else:
+            localts = 0
         s3ts = calendar.timegm(obj.last_modified.timetuple())
 
         # Local cache is outdated
         if localts < s3ts:
             self.bucket.download_file(s3_file_name, local_file_name)
 
-        with gzip.open(local_file_name, 'rb') as f:
-            return pickle.load(f)
+        if os.path.isfile(local_file_name):
+            if parquet:
+                return pd.read_parquet(local_file_name)
+            with gzip.open(local_file_name, 'rb') as f:
+                return pickle.load(f)
+        else:
+            return None
 
 
 def _save_async(cloner, name, obj):
