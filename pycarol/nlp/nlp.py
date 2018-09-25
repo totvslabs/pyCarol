@@ -29,12 +29,14 @@ class NLP:
         data_json['question'] = question
 
         response = self.carol.call_api(url_filter, data=data_json)
-        skill_name = response['parentSkill']
+        if 'parentSkill' in response:
+            skill_name = response['parentSkill']
         matching_records = []
-        for matching_record in response['matchingRecords']:
-            hits = matching_record['hits']
-            if len(hits) >= 2:
-                matching_records.append(matching_record)
+        if 'matchingRecords' in response: 
+            for matching_record in response['matchingRecords']:
+                hits = matching_record['hits']
+                if len(hits) > 1:
+                    matching_records.append(matching_record)
         if len(matching_records) < 1:
             return response
         else:
