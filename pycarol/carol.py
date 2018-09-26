@@ -61,6 +61,16 @@ class Carol:
         self.auth.login(self)
         self.response = None
 
+        self.long_task_id = settings.get('long_task_id', os.getenv('LONGTASKID'))
+        self.debug = settings.get('debug', os.getenv('DEBUG'))
+        self.env = settings.get('env', os.getenv('ENV'))
+        self.dry_run = settings.get('dry_run', os.getenv('DRYRUN'))
+        self.git = settings.get('git', os.getenv('GIT'))
+        self.file_name = settings.get('file_name', os.getenv('FILENAME'))
+        self.function_name = settings.get('function_name', os.getenv('FUNCTIONNAME'))
+        self.carol_batch_name = settings.get('carol_batch_name', os.getenv('CAROLBATCHNAME'))
+        self.carol_process_type = settings.get('carol_process_type', os.getenv('CAROLPROCESSTYPE'))
+
     def build_ws_url(self, path):
         return 'wss://{}.carol.ai:{}/websocket/{}'.format(self.domain, self.port, path)
 
@@ -96,7 +106,7 @@ class Carol:
         data_json = None
         if method == 'GET':
             pass
-            
+
         elif (method == 'POST') or (method == 'DELETE') or (method == 'PUT'):
             headers['content-type'] = content_type
 
@@ -108,7 +118,7 @@ class Carol:
                                       status_forcelist=status_forcelist)
         response = section.request(method=method, url=url, data=data, json=data_json,
                                    headers=headers, params=params)
-        
+
         if self.verbose:
             if data_json is not None:
                 print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data_json, params))
