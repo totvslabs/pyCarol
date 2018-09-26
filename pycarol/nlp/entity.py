@@ -14,19 +14,14 @@ class Entity:
             
     def add_values(self, values):
         self._json['nlpValues'].append(values)
-        values += values
+        values += values  #???
         
     def _update_json(self):
         self._json['nlpName'] = self.name
         self._json['nlpValues'] = self.values
         self._json['nlpCanonicalValue'] = self.canonical_value
-               
-        if 'mdmCreated' in self._json:
-            self._json.pop('mdmCreated')
-        if 'mdmId' in self._json:
-            self._json.pop('mdmId')
-        if 'mdmLastUpdated' in self._json:
-            self._json.pop('mdmLastUpdated')
-        if 'mdmTenantId' in self._json:
-            self._json.pop('mdmTenantId')
-        
+
+        self._json.pop('mdmCreated',None)
+        self._json.pop('mdmId',None)
+        self._json.pop('mdmLastUpdated',None)
+        self._json.pop('mdmTenantId',None)

@@ -29,35 +29,26 @@ class NLP:
         data_json['question'] = question
 
         response = self.carol.call_api(url_filter, data=data_json)
-        if 'parentSkill' in response:
-            skill_name = response['parentSkill']
+
+        skill_name = response.get('parentSkill')
         matching_records = []
-        if 'matchingRecords' in response: 
-            for matching_record in response['matchingRecords']:
-                hits = matching_record['hits']
-                if len(hits) > 1:
-                    matching_records.append(matching_record)
-        if len(matching_records) < 1:
+        for matching_record in response.get('matchingRecords',[]):
+            if matching_record.get('hits'):
+                matching_records.append(matching_record)
+        if not matching_record:
             return response
         else:
             partial_match = []
             for matching_record in matching_records:
                 query_model = matching_record['queryModel']
                 hits = matching_record['hits']
-                if 'primaryKey' in matching_record:
-                    primary_key = matching_record['primaryKey']
-                else:
-                    primary_key = None
-                if 'secondaryKey' in matching_record:
-                    secondary_key = matching_record['secondaryKey']
+                primary_key = matching_record.get('primaryKey')
+                secondary_key = matching_record.get('secondaryKey')
+                if secondary_key:
                     opts = [(hit[primary_key] + ' ' + hit[secondary_key]) for hit in hits]
                 else:
-                    secondaryKey = None
                     opts = [hit[primary_key] for hit in hits]
-                if 'displayName' is matching_record:
-                    display_name = matching_record['displayName']
-                else:
-                    display_name = query_model
+                display_name = matching_record.get('displayName',query_model)
                     
                 print('\n' + display_name + ':')
                 print('\n'.join(starmap('{}- {}'.format, enumerate(opts, 1))))

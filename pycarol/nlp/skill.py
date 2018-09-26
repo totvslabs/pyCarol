@@ -49,67 +49,76 @@ class Skill:
             self.context_model = None
     
     def add_text(self, text):
-        _text_element = {}
-        _text_element['type'] = 'html'
-        _text_element['width'] = 0
-        _text_element['height'] = 0
-        _text_element['content'] = text
+        _text_element = dict(
+            type='html',
+            width=0,
+            height=0,
+            content=text
+        )
         self.texts.append(text)
         self._json['nlpAnswerModel']['nlpSkillAnswerData'].append(_text_element)
     
     def add_entities_required(self, required):
-        for entity in required:
-            self.required.append(entity)
+        assert isinstance(required,list)
+        self.required.extend(required)
         self._json['nlpRequiredEntityTypes'] = self.required
 
     def add_entities_at_least_one(self, at_least_one):
-        for entity in at_least_one:
-            self.at_least_one.append(entity)
+        assert isinstance(at_least_one, list)
+        self.at_least_one.extend(at_least_one)
         self._json['nlpAtLeastOneEntityType'] = self.at_least_one
         
     def add_entities_optional(self, optional):
-        for entity in optional:
-            self.optional.append(entity)
+        assert isinstance(optional, list)
+        self.optional.append(optional)
         self._json['nlpOptionalEntityTypes'] = self.optional
     
     def add_related_skills(self, related_skills):
-        for related_skill in related_skills:
-            self.related_skills.append(related_skill)
+        assert isinstance(related_skills, list)
+        self.related_skills.extend(related_skills)
         self._json['nlpAnswerModel']['nlpRelatedSkills'] = self.related_skills
         
     def add_rich_element(self, url, content_type='image', width=200, height=200):
-        _rich_element = {}
-        _rich_element['type'] = content_type
-        _rich_element['width'] = width
-        _rich_element['height'] = height
-        _rich_element['url'] = url
+        _rich_element = dict(
+            type=content_type,
+            width=width,
+            height=height,
+            url=url
+        )
         self.rich_elements.append(_rich_element)
         self._json['nlpAnswerModel']['nlpSkillAnswerData'] = self.rich_elements
         
-    def add_context_model(self, context_model_name, missing_message, complete_message, confirmation_message, entity_fields = None, numerical_fields = None, text_fields = None):
-        _context_model = {}
-        _context_model['nlpName'] = context_model_name
-        _context_model['nlpMissingMessage'] = missing_message
-        _context_model['nlpCompleteMessage'] = complete_message
+    def add_context_model(self, context_model_name, missing_message, complete_message, confirmation_message,
+                          entity_fields = None, numerical_fields = None, text_fields = None):
+        _context_model = dict(
+            nlpName=context_model_name,
+            nlpMissingMessage=missing_message,
+            nlpCompleteMessage=complete_message,
+            nlpConfirmationMessage=confirmation_message
+        )
+
         if entity_fields is not None:
             _context_model['nlpEntityFieldList'] = entity_fields
         if numerical_fields is not None:
             _context_model['nlpNumericalFieldList'] = numerical_fields
         if text_fields is not None:
             _context_model['nlpTextFieldList'] = text_fields
-        _context_model['nlpConfirmationMessage'] = confirmation_message
+
         self.context_model = _context_model
         self._json['nlpContextModel'] = self.context_model
         
-    def add_query_model(self, query_model_name, display_name, query_name, primary_key = None, secondary_key = None, output_params = {}, input_params = {}, flags = [], sort_by = None, sort_direction = 'ASC', disambiguate = False):
-        _query_model = {}
-        _query_model['nlpDisplayName'] = display_name
-        _query_model['nlpQueryName'] = query_name
-        _query_model['nlpSortDirection'] = sort_direction
-        _query_model['nlpDisambiguate'] = disambiguate
-        _query_model['nlpOutputParams'] = output_params
-        _query_model['nlpInputParams'] = input_params
-        _query_model['nlpFlags'] = flags
+    def add_query_model(self, query_model_name, display_name, query_name, primary_key = None, secondary_key = None,
+                        output_params = {}, input_params = {}, flags = [], sort_by = None, sort_direction = 'ASC',
+                        disambiguate = False):
+        _query_model = dict(
+            nlpDisplayName = display_name,
+            nlpQueryName = query_name,
+            nlpSortDirection = sort_direction,
+            nlpDisambiguate = disambiguate,
+            nlpOutputParams = output_params,
+            nlpInputParams = input_params,
+            nlpFlags = flags
+        )
         if primary_key is not None:
             _query_model['nlpPrimaryKey'] = primary_key
         if secondary_key is not None:
@@ -135,16 +144,11 @@ class Skill:
         self._json['nlpAnswerModel']['nlpSkillAnswerData'] = []
         for text in self.texts:
             self._json['nlpAnswerModel']['nlpSkillAnswerData'].append({'type': 'html', 'width': 0, 'height': 0, 'content': text})
-        for rich_element in self.rich_elements:
-            self._json['nlpAnswerModel']['nlpSkillAnswerData'].append(rich_element)
-        
-        if 'mdmCreated' in self._json:
-            self._json.pop('mdmCreated')
-        if 'mdmId' in self._json:
-            self._json.pop('mdmId')
-        if 'mdmLastUpdated' in self._json:
-            self._json.pop('mdmLastUpdated')
-        if 'mdmTenantId' in self._json:
-            self._json.pop('mdmTenantId')
+        self._json['nlpAnswerModel']['nlpSkillAnswerData'].extend(self.rich_elements)
+
+        self._json.pop('mdmCreated',None)
+        self._json.pop('mdmId',None)
+        self._json.pop('mdmLastUpdated',None)
+        self._json.pop('mdmTenantId',None)
      
 
