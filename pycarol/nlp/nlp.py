@@ -33,7 +33,7 @@ class NLP:
         skill_name = response.get('parentSkill')
         matching_records = []
         for matching_record in response.get('matchingRecords',[]):
-            if len(matching_record.get('hits')) > 1:
+            if len(matching_record.get('hits',[])) > 1:
                 matching_records.append(matching_record)
         if not matching_records:
             return response
