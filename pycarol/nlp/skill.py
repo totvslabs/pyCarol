@@ -5,48 +5,22 @@ class Skill:
         self.name = json['nlpName']
         self.texts = []
         self.rich_elements = []
+        self.required = json.get('nlpRequiredEntityTypes', [])
+        self.optional = json.get('nlpOptionalEntityTypes', [])
+        self.at_least_one = json.get('nlpAtLeastOneEntityType', [])
+        self.example_question = json.get('nlpExampleQuestion')
+        self.context_model = json.get('nlpContextModel')
+        self.voice = json.get('nlpAnswerModel', {}).get('nlpVoiceMessage')
+        self.query_models = json.get('nlpAnswerModel', {}).get('nlpNamedQueryModels', {})
+        self.related_skills = json.get('nlpAnswerModel', {}).get('nlpRelatedSkills', [])
+        self.fallback_answer = json.get('nlpAnswerModel', {}).get('nlpFallbackAnswer')
+        
         if 'nlpAnswerModel' in json and 'nlpSkillAnswerData' in json['nlpAnswerModel']:
             for element in json['nlpAnswerModel']['nlpSkillAnswerData']:
                 if 'url' not in element and 'content' in element:
                     self.texts.append(element['content'])
                 else:
                     self.rich_elements.append(element)
-        if 'nlpAnswerModel' in json and 'nlpVoiceMessage' in json['nlpAnswerModel']:
-            self.voice = json['nlpAnswerModel']['nlpVoiceMessage']
-        else:
-            self.voice = None
-        if 'nlpAnswerModel' in json and 'nlpNamedQueryModels' in json['nlpAnswerModel']:
-            self.query_models = json['nlpAnswerModel']['nlpNamedQueryModels']
-        else:
-            self.query_models = {}
-        if 'nlpRequiredEntityTypes' in json:
-            self.required = json['nlpRequiredEntityTypes']
-        else:
-            self.required = []
-        if 'nlpOptionalEntityTypes' in json:
-            self.optional = json['nlpOptionalEntityTypes']
-        else:
-            self.optional = []            
-        if 'nlpAtLeastOneEntityType' in json:
-            self.at_least_one = json['nlpAtLeastOneEntityType']
-        else:
-            self.at_least_one = []            
-        if 'nlpAnswerModel' in json and 'nlpRelatedSkills' in json['nlpAnswerModel']:
-            self.related_skills = json['nlpAnswerModel']['nlpRelatedSkills']
-        else:
-            self.related_skills = []            
-        if 'nlpExampleQuestion' in json:
-            self.example_question = json['nlpExampleQuestion']
-        else:
-            self.example_question = None
-        if 'nlpAnswerModel' in json and 'nlpFallbackAnswer' in json['nlpAnswerModel']:
-            self.fallback_answer = json['nlpAnswerModel']['nlpFallbackAnswer']
-        else:
-            self.fallback_answer = None            
-        if 'nlpContextModel' in json:
-            self.context_model = json['nlpContextModel']
-        else:
-            self.context_model = None
     
     def add_text(self, text):
         _text_element = dict(
@@ -56,7 +30,12 @@ class Skill:
             content=text
         )
         self.texts.append(text)
-        self._json['nlpAnswerModel']['nlpSkillAnswerData'].append(_text_element)
+        if 'nlpAnswerModel' in self._json and 'nlpSkillAnswerData' in self._json['nlpAnswerModel']:
+            self._json['nlpAnswerModel']['nlpSkillAnswerData'].append(_text_element)
+        else:
+            if 'nlpAnswerModel' not in self._json:
+                self._json['nlpAnswerModel'] = {}
+            self._json['nlpAnswerModel']['nlpSkillAnswerData'] = [_text_element]
     
     def add_entities_required(self, required):
         assert isinstance(required,list)
@@ -70,13 +49,15 @@ class Skill:
         
     def add_entities_optional(self, optional):
         assert isinstance(optional, list)
-        self.optional.append(optional)
+        self.optional.extend(optional)
         self._json['nlpOptionalEntityTypes'] = self.optional
     
     def add_related_skills(self, related_skills):
         assert isinstance(related_skills, list)
         self.related_skills.extend(related_skills)
-        self._json['nlpAnswerModel']['nlpRelatedSkills'] = self.related_skills
+        if 'nlpAnswerModel' not in self._json:
+            self._json['nlpAnswerModel'] = {}
+        self._json['nlpAnswerModel']['nlpRelatedSkills'] = self.related_skills            
         
     def add_rich_element(self, url, content_type='image', width=200, height=200):
         _rich_element = dict(
@@ -86,7 +67,12 @@ class Skill:
             url=url
         )
         self.rich_elements.append(_rich_element)
-        self._json['nlpAnswerModel']['nlpSkillAnswerData'] = self.rich_elements
+        if 'nlpAnswerModel' in self._json and 'nlpSkillAnswerData' in self._json['nlpAnswerModel']:
+            self._json['nlpAnswerModel']['nlpSkillAnswerData'].append(_rich_element)
+        else:
+            if 'nlpAnswerModel' not in self._json:
+                self._json['nlpAnswerModel'] = {}
+            self._json['nlpAnswerModel']['nlpSkillAnswerData'] = [_rich_element]
         
     def add_context_model(self, context_model_name, missing_message, complete_message, confirmation_message,
                           entity_fields = None, numerical_fields = None, text_fields = None):
@@ -108,7 +94,7 @@ class Skill:
         self._json['nlpContextModel'] = self.context_model
         
     def add_query_model(self, query_model_name, display_name, query_name, primary_key = None, secondary_key = None,
-                        output_params = {}, input_params = {}, flags = [], sort_by = None, sort_direction = 'ASC',
+                        output_params = {}, input_params = {}, flags = None, sort_by = None, sort_direction = 'ASC',
                         disambiguate = False):
         _query_model = dict(
             nlpDisplayName = display_name,
@@ -119,6 +105,8 @@ class Skill:
             nlpInputParams = input_params,
             nlpFlags = flags
         )
+        if flags is None:
+            _query_model['nlpFlag'] = []
         if primary_key is not None:
             _query_model['nlpPrimaryKey'] = primary_key
         if secondary_key is not None:
@@ -126,11 +114,17 @@ class Skill:
         if sort_by is not None:
             _query_model['nlpSortBy'] = sort_by
         self.query_models.update({query_model_name : _query_model})
+        if 'nlpAnswerModel' not in self._json:
+            self._json['nlpAnswerModel'] = []
         self._json['nlpAnswerModel']['nlpNamedQueryModels'] = self.query_models
 
         
     def _update_json(self):
         self._json['nlpName'] = self.name
+        if 'nlpAnswerModel' not in self._json:
+            self._json['nlpAnswerModel'] = {}
+        if self.texts and self.voice is None:
+            self.voice = self.texts[0]
         self._json['nlpAnswerModel']['nlpVoiceMessage'] = self.voice
         self._json['nlpAnswerModel']['nlpNamedQueryModels'] = self.query_models
         self._json['nlpRequiredEntityTypes'] = self.required

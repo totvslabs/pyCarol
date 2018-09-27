@@ -33,9 +33,9 @@ class NLP:
         skill_name = response.get('parentSkill')
         matching_records = []
         for matching_record in response.get('matchingRecords',[]):
-            if matching_record.get('hits'):
+            if len(matching_record.get('hits')) > 1:
                 matching_records.append(matching_record)
-        if not matching_record:
+        if not matching_records:
             return response
         else:
             partial_match = []
@@ -71,6 +71,7 @@ class NLP:
         return response
     
     # COPY SKILLS AND ENTITIES FROM REMOTE TENANT
+    @staticmethod
     def copy_data(nlp_from, nlp_to):
         """
         Copy skills and entities from a remote tenant
@@ -131,9 +132,12 @@ class NLP:
         :return: Skill object
         """
         url_filter = "v1/ai/skill/name/{}".format(name)
-        response = self.carol.call_api(url_filter)
-        print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False)) 
-        return Skill(response)
+        try:
+            response = self.carol.call_api(url_filter)
+            print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False)) 
+            return Skill(response)
+        except Exception as e:
+            print(str(e))
     
     def get_skill_by_id(self, id):
         """
@@ -144,9 +148,12 @@ class NLP:
         :rtype: Skill object
         """
         url_filter = "v1/ai/skill/{}".format(id)
-        response = self.carol.call_api(url_filter)
-        print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
-        return Skill(response)
+        try:
+            response = self.carol.call_api(url_filter)
+            print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
+            return Skill(response)
+        except Exception as e:
+            print(str(e))       
     
     # GET ENTITIES
     def get_entity(self, name):
@@ -158,9 +165,12 @@ class NLP:
         :rtype: Entity object
         """
         url_filter = "v1/ai/skillEntity/name/{}".format(name)
-        response = self.carol.call_api(url_filter)
-        print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
-        return Entity(response)
+        try:
+            response = self.carol.call_api(url_filter)
+            print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
+            return Entity(response)
+        except Exception as e:
+            print(str(e))
     
     def get_entity_by_id(self, id):
         """
@@ -171,9 +181,12 @@ class NLP:
         :rtype: Entity object
         """        
         url_filter = "v1/ai/skillEntity/{}".format(id)
-        response = self.carol.call_api(url_filter)
-        print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
-        return Entity(response)
+        try:
+            response = self.carol.call_api(url_filter)
+            print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
+            return Entity(response)
+        except Exception as e:
+            print(str(e))     
 
     def get_entities(self, print_response=True, offset=0, page_size=100, sort_order='ASC', sort_by=None):
         """

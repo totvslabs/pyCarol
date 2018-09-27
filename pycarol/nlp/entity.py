@@ -3,18 +3,13 @@ class Entity:
     def __init__(self, json):
         self._json = json
         self.name = json['nlpName']
-        if 'nlpValues' in json:
-            self.values = json['nlpValues']
-        else:
-            self.values = []
-        if 'nlpCanonicalValue' in json:
-            self.canonical_value = json['nlpCanonicalValue']
-        else:
-            self.canonical_value = None
+        self.values = json.get('nlpValues', [])
+        self.canonical_value = json.get('nlpCanonicalValue')
             
     def add_values(self, values):
-        self._json['nlpValues'].append(values)
-        values += values  #???
+        assert isinstance(values, list)
+        self.values.extend(values)
+        self._json['nlpValues'] = self.values
         
     def _update_json(self):
         self._json['nlpName'] = self.name
