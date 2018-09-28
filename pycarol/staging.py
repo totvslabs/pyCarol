@@ -31,12 +31,21 @@ class Staging:
             data = [data]
             data_size = len(data)
 
-        if not schema and auto_create_schema:
+        if (not schema) and (auto_create_schema):
             assert crosswalk_auto_create, "You should provide a crosswalk"
             self.create_schema(_sample_json, staging_name, connector_id=connector_id, crosswalk_list=crosswalk_auto_create)
             _crosswalk = crosswalk_auto_create
+            print('provided crosswalk ',_crosswalk)
+        elif auto_create_schema:
+            assert crosswalk_auto_create, "You should provide a crosswalk"
+            self.create_schema(_sample_json, staging_name, connector_id=connector_id,
+                               crosswalk_list=crosswalk_auto_create, overwrite=True)
+            _crosswalk = crosswalk_auto_create
+            print('provided crosswalk ',_crosswalk)
         else:
             _crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
+            _crosswalk = list(_crosswalk)[0]
+            print('fetched crosswalk ',_crosswalk)
 
         if is_df and not force:
             assert data.duplicated(subset=_crosswalk).sum() == 0, \
@@ -103,17 +112,14 @@ class Staging:
             query_string = {"connectorId": connector_id}
 
         has_schema = self.get_schema(staging_name,connector_id=connector_id) is not None
-        if has_schema:
+        if has_schema and overwrite:
             method = 'PUT'
         else:
             method = 'POST'
 
         resp = self.carol.call_api('v2/staging/tables/{}/schema'.format(staging_name), data=schema, method=method,
                                    params=query_string)
-        if resp.get('mdmId'):
-            print('Schema sent successfully!')
-        else:
-            print('Failed to send schema: ' + resp)
+
 
     def _check_crosswalk_in_data(self, schema, _sample_json):
         crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()

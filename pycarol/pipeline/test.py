@@ -28,6 +28,7 @@ from ..auth import ApiKeyAuth
     
 """
 
+
 class mock_carol_query:
     def __init__(self, *mock_queries):
         """

@@ -33,6 +33,23 @@ class SettingsDefinition(luigi.Task):
     app = None
 
     @classmethod
+    def get_params(cls):
+        """
+        Returns all of the Parameters for this Task, including luigi_extension's new Parameter class.
+        """
+        # We want to do this here and not at class instantiation, or else there is no room to extend classes dynamically
+        params = []
+        for param_name in dir(cls):
+            param_obj = getattr(cls, param_name)
+            if not (isinstance(param_obj, Parameter) or isinstance(param_obj, luigi.Parameter)):
+                continue
+            params.append((param_name, param_obj))
+
+        # The order the parameters are created matters. See Parameter class
+        params.sort(key=lambda t: t[1]._counter)
+        return params
+
+    @classmethod
     def initialization(cls):
         """ Define this function to do some logic on the parameters after they are extracted but before setting them
         on task. Parameters are saved on a variable named app.
@@ -50,6 +67,7 @@ class SettingsDefinition(luigi.Task):
         if cls.app is None:
             cls.app = {}
         app_carol = None
+        logger.debug('Getting Parameters data...')
         for k, v in cls.get_params():
             if v.carol:
                 if app_carol is None:
@@ -70,11 +88,14 @@ class SettingsDefinition(luigi.Task):
                 # TODO Add try catch to log error an not throw exception when a value is not found on app
                 try:
                     if v.carol_name is not None:
+                        logger.debug(f'{v.carol_name}: {app_carol[v.carol_name]}')
                         v = app_carol[v.carol_name]
                     else:
                         v = app_carol[k]
+                        logger.debug(f'{k}: {v}')
                 except KeyError as e:
                     logger.error(f"Could not set up variable from Carol. Key = {str(e)}")
+                    logger.debug(app_carol)
 
             cls.app.update({k: v})
 
@@ -92,3 +113,5 @@ class Parameter(luigi.Parameter):
         self.carol = carol
         if carol:
             self.default = None
+
+
