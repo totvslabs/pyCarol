@@ -324,7 +324,6 @@ class ParQuery:
         step.append([max_v, None])
         return step
 
-
     def _get_min_max(self):
         j = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": f"{self.datamodel_name}"}],
              "aggregationList": [{"type": "MINIMUM", "name": "MINIMUM", "params": [f"{self.mdmKey}"]},
@@ -336,7 +335,6 @@ class ParQuery:
         max_v = query.results[0]['aggs']['MAXIMUM']['value']
         print(f"Total Hits to download: {query.total_hits}")
         return min_v, max_v
-
 
     def go(self, datamodel_name=None, slices=1000, staging_name=None, connector_id=None, connector_name=None,
            get_staging_from_golden=False ):
