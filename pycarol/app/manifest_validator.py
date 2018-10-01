@@ -26,11 +26,7 @@ class ManifestValidator():
                     return False, '"algorithmName" not found in the "{}" process called "{}"'.format(process_type, process['name'])
                 if 'algorithmTitle' not in process:
                     return False, '"algorithmTitle" not found in the "{}" process called "{}"'.format(process_type, process['name'])
-                if 'instanceProperties' not in process:
-                    return False, '"instanceProperties" not found in the "{}" process called "{}"'.format(process_type, process['name'])
-                if 'instanceProperties' not in process:
-                    return False, '"instanceProperties" not found in the "{}" process called "{}"'.format(process_type, process['name'])
-                if 'properties' not in process['instanceProperties']:
+                if process_type == 'online' and 'properties' not in process['instanceProperties']:
                     return False, '"properties" not found in the "{}" process called "{}"'.format(process_type, process['name'])
 
                 if 'git' in process:

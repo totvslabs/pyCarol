@@ -30,6 +30,14 @@ class ManifestParser():
         return None
 
 
+    def has_instance_properties_batch(self, name):
+        process = self.has_batch_process_name(name)
+        if process:
+            if 'instanceProperties' in process and process['instanceProperties'] != {}:
+                return True
+        return False
+
+
     def chosen_profile_batch(self, name):
         process = self.has_batch_process_name(name)
         if process:
@@ -84,8 +92,9 @@ class ManifestParser():
     def luigi_workers_batch(self, name):
         process = self.has_batch_process_name(name)
         if process and 'luigi' in process['instanceProperties']:
-            return process['instanceProperties']['luigi']['workers']
-        return None
+            if process and 'workers' in process['instanceProperties']['luigi']:
+                return process['instanceProperties']['luigi']['workers']
+        return '2'
 
 
     def instance_environment_variables_batch(self, name):
@@ -98,8 +107,12 @@ class ManifestParser():
     def algorithm_description_batch(self, name):
         process = self.has_batch_process_name(name)
         if process:
-            return process['algorithmDescription']['pt-br']
-        return None
+            if 'algorithmDescription' in process:
+                if 'pt-br' in process:
+                    return process['algorithmDescription']['pt-br']
+                elif 'en-us' in process:
+                    return process['algorithmDescription']['en-us']
+        return ''
 
 
     def algorithm_name_batch(self, name):
@@ -119,8 +132,12 @@ class ManifestParser():
     def algorithm_title_batch(self, name):
         process = self.has_batch_process_name(name)
         if process:
-            return process['algorithmDescription']['pt-br']
-        return None
+            if 'algorithmTitle' in process:
+                if 'pt-br' in process:
+                    return process['algorithmTitle']['pt-br']
+                elif 'en-us' in process:
+                    return process['algorithmTitle']['en-us']
+        return ''
 
 
     def git_batch(self, name):
@@ -128,6 +145,14 @@ class ManifestParser():
         if process and 'git' in process:
             return process['git']
         return None
+
+
+    def has_instance_properties_online(self, name):
+        process = self.has_online_process_name(name)
+        if process:
+            if 'instanceProperties' in process and process['instanceProperties'] != {}:
+                return True
+        return False
 
 
     def docker_image_online(self, name):
@@ -179,8 +204,12 @@ class ManifestParser():
     def algorithm_description_online(self, name):
         process = self.has_online_process_name(name)
         if process:
-            return process['algorithmDescription']['pt-br']
-        return None
+            if 'algorithmDescription' in process:
+                if 'pt-br' in process:
+                    return process['algorithmDescription']['pt-br']
+                elif 'en-us' in process:
+                    return process['algorithmDescription']['en-us']
+        return ''
 
 
     def name_online(self, name):
@@ -200,8 +229,12 @@ class ManifestParser():
     def algorithm_title_online(self, name):
         process = self.has_online_process_name(name)
         if process:
-            return process['algorithmTitle']['pt-br']
-        return None
+            if 'algorithmTitle' in process:
+                if 'pt-br' in process:
+                    return process['algorithmTitle']['pt-br']
+                elif 'en-us' in process:
+                    return process['algorithmTitle']['en-us']
+        return ''
 
 
     def git_online(self, name):
