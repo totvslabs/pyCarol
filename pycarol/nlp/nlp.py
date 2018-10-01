@@ -59,10 +59,10 @@ class NLP:
                     else:
                         print('Input should be a number. \n')
                     user_input = input('Type the number related to the option you want: ')
-                resp = self.__fixed_query__(skill_name, query_model, hits[int(user_input) - 1])
+                resp = self.__fixed_query(skill_name, query_model, hits[int(user_input) - 1])
                 print('\n' + json.dumps(resp, sort_keys=True, indent=4, ensure_ascii=False))                     
             
-    def __fixed_query__(self, skill_name, query_model, query_params):
+    def __fixed_query(self, skill_name, query_model, query_params):
         url_filter = "v1/ai/nlp/query/"
         data_json = {}
         data_json['skillName'] = skill_name
@@ -132,12 +132,9 @@ class NLP:
         :return: Skill object
         """
         url_filter = "v1/ai/skill/name/{}".format(name)
-        try:
-            response = self.carol.call_api(url_filter)
-            print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False)) 
-            return Skill(response)
-        except Exception as e:
-            print(str(e))
+        response = self.carol.call_api(url_filter)
+        print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False)) 
+        return Skill(response)
     
     def get_skill_by_id(self, id):
         """
@@ -148,12 +145,9 @@ class NLP:
         :rtype: Skill object
         """
         url_filter = "v1/ai/skill/{}".format(id)
-        try:
-            response = self.carol.call_api(url_filter)
-            print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
-            return Skill(response)
-        except Exception as e:
-            print(str(e))       
+        response = self.carol.call_api(url_filter)
+        print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
+        return Skill(response)
     
     # GET ENTITIES
     def get_entity(self, name):
@@ -165,12 +159,9 @@ class NLP:
         :rtype: Entity object
         """
         url_filter = "v1/ai/skillEntity/name/{}".format(name)
-        try:
-            response = self.carol.call_api(url_filter)
-            print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
-            return Entity(response)
-        except Exception as e:
-            print(str(e))
+        response = self.carol.call_api(url_filter)
+        print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
+        return Entity(response)
     
     def get_entity_by_id(self, id):
         """
@@ -181,12 +172,9 @@ class NLP:
         :rtype: Entity object
         """        
         url_filter = "v1/ai/skillEntity/{}".format(id)
-        try:
-            response = self.carol.call_api(url_filter)
-            print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
-            return Entity(response)
-        except Exception as e:
-            print(str(e))     
+        response = self.carol.call_api(url_filter)
+        print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
+        return Entity(response)
 
     def get_entities(self, print_response=True, offset=0, page_size=100, sort_order='ASC', sort_by=None):
         """
@@ -291,11 +279,8 @@ class NLP:
             url_filter = "v1/ai/skill/name/{}"
         url_filter = url_filter.format(obj.name)
         obj._update_json()
-        try: 
-            response = self.carol.call_api(url_filter, method = 'PUT', data=obj._json)
-            return response
-        except Exception as e:
-            return str(e)
+        response = self.carol.call_api(url_filter, method = 'PUT', data=obj._json)
+        return response
     
     # DELETE
     def delete_skill(self, name):
@@ -307,11 +292,8 @@ class NLP:
         :rtype: str
         """
         url_filter = "v1/ai/skill/name/{}".format(name)
-        try: 
-            response = self.carol.call_api(url_filter, method = 'DELETE')
-            return response
-        except Exception as e:
-            return str(e)
+        response = self.carol.call_api(url_filter, method = 'DELETE')
+        return response
         
     def delete_entity(self, name):
         """
@@ -322,8 +304,5 @@ class NLP:
         :rtype: str
         """
         url_filter = "v1/ai/skillEntity/name/{}".format(name)
-        try: 
-            response = self.carol.call_api(url_filter, method = 'DELETE')
-            return response
-        except Exception as e:
-            return str(e)
+        response = self.carol.call_api(url_filter, method = 'DELETE')
+        return response
