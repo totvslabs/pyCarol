@@ -227,8 +227,11 @@ class NLP:
         """   
         _array_fields = ['nlpValues', 'nlpRequiredEntityTypes', 'nlpOptionalEntityTypes', 'nlpAtLeastOneEntityType', 'nlpRelatedSkills']
         _answer_model_fields = ['nlpVoiceMessage', 'nlpRelatedSkills', 'nlpFallbackAnswer', 'nlpSkillAnswerData']
+        _replaceHeaders = {'Name': 'nlpName', 'Required': 'nlpRequiredEntityTypes', 'Optional': 'nlpOptionalEntityTypes', 'At least one': 'nlpAtLeastOneEntityType', 'Related skills': 'nlpRelatedSkills',
+                          'Voice message': 'nlpVoiceMessage', 'Text message': 'nlpSkillAnswerData', 'Fallback answer': 'nlpFallbackAnswer', 'Example question': 'nlpExampleQuestion'}
         data = pd.read_csv(name_csv + '.csv', sep=';')
         headers = list(data)
+        headers = [_replaceHeaders[header] for header in headers]
         for idx in range(len(data.index)):
             _json = {}
             _json['nlpAnswerModel'] = {}
