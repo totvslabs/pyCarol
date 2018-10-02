@@ -22,7 +22,8 @@ class Carol:
         return 'wss://{}.carol.ai:{}/websocket/{}'.format(self.domain, self.port, path)
 
     @staticmethod
-    def _retry_session(retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524)):
+    def _retry_session(retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524),
+                       method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE'])):
         session = session or requests.Session()
         retry = Retry(
             total=retries,
@@ -30,6 +31,7 @@ class Carol:
             connect=retries,
             backoff_factor=backoff_factor,
             status_forcelist=status_forcelist,
+            method_whitelist=method_whitelist,
         )
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
@@ -37,7 +39,8 @@ class Carol:
         return session
 
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json',
-                 retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524)):
+                 retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524),
+                 method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE'])):
         url = 'https://{}.carol.ai:{}/api/{}'.format(self.domain, self.port, path)
 
         if method is None:
@@ -62,7 +65,7 @@ class Carol:
                 data = None
 
         section = self._retry_session(retries=retries, session=session, backoff_factor=backoff_factor,
-                                      status_forcelist=status_forcelist)
+                                      status_forcelist=status_forcelist,method_whitelist=method_whitelist)
         response = section.request(method=method, url=url, data=data, json=data_json,
                                    headers=headers, params=params)
         
