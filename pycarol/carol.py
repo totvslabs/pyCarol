@@ -74,12 +74,12 @@ class Carol:
                 print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data, params))
             print("        Headers: {}".format(headers))
 
-        if downloadable:
-            return response
-
-        response.encoding = 'utf-8'
-        self.response = response
         if response.ok:
+            if downloadable:
+                return response
+
+            response.encoding = 'utf-8'
+            self.response = response
             return json.loads(response.text)
         else:
             raise Exception(response.text)
