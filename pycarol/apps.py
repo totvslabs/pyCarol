@@ -1,3 +1,5 @@
+import zipfile, io
+
 class Apps:
     def __init__(self, carol):
         self.carol = carol
@@ -94,12 +96,16 @@ class Apps:
         return self.app_settings
 
 
-    def download_app(self,carolappname, carolappversion):
-        import shutil
+    def download_app(self,carolappname, carolappversion, file_path, extract=False):
 
         url = f'v1/carolApps/download/{carolappname}/version/{carolappversion}'
 
-        r = self.carol.call_api(url, method='GET', stream=True)
+        r = self.carol.call_api(url, method='GET', stream=True, downloadable=True)
 
-        with open('teste.jar', 'wb') as f:
-            shutil.copyfileobj(r.raw, f)
+        if extract:
+            r = zipfile.ZipFile(io.BytesIO(r.content))
+            r.extractall(file_path)
+        else:
+            with open(file_path, 'wb') as out:  ## Open temporary file as bytes
+                out.write(io.BytesIO(r.content).read())
+

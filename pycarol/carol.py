@@ -37,7 +37,8 @@ class Carol:
         return session
 
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json',
-                 retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524), **kwds):
+                 retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524),
+                 downloadable=False,  **kwds):
         url = 'https://{}.carol.ai:{}/api/{}'.format(self.domain, self.port, path)
 
         if method is None:
@@ -72,6 +73,9 @@ class Carol:
             else:
                 print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data, params))
             print("        Headers: {}".format(headers))
+
+        if downloadable:
+            return response
 
         response.encoding = 'utf-8'
         self.response = response
