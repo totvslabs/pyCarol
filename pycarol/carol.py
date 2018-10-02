@@ -37,7 +37,7 @@ class Carol:
         return session
 
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json',
-                 retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524)):
+                 retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524), **kwds):
         url = 'https://{}.carol.ai:{}/api/{}'.format(self.domain, self.port, path)
 
         if method is None:
@@ -64,7 +64,7 @@ class Carol:
         section = self._retry_session(retries=retries, session=session, backoff_factor=backoff_factor,
                                       status_forcelist=status_forcelist)
         response = section.request(method=method, url=url, data=data, json=data_json,
-                                   headers=headers, params=params)
+                                   headers=headers, params=params, **kwds)
         
         if self.verbose:
             if data_json is not None:

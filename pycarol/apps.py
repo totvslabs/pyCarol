@@ -92,3 +92,14 @@ class Apps:
             self.full_settings.update({i['mdmName']: i for i in query_list.get('mdmTenantAppSettingValues')})
 
         return self.app_settings
+
+
+    def download_app(self,carolappname, carolappversion):
+        import shutil
+
+        url = f'v1/carolApps/download/{carolappname}/version/{carolappversion}'
+
+        r = self.carol.call_api(url, method='GET', stream=True)
+
+        with open('teste.jar', 'wb') as f:
+            shutil.copyfileobj(r.raw, f)
