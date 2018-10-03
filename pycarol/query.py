@@ -165,7 +165,9 @@ class Query:
         downloaded = 0
         while count < to_get:
 
-            result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params)
+            result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params,
+                                         method_whitelist=frozenset(['HEAD', 'TRACE', 'GET',
+                                                                     'PUT', 'OPTIONS', 'DELETE', 'POST']))
 
             if set_param:
                 self.total_hits = result["totalHits"]
@@ -254,7 +256,9 @@ class Query:
         """
         self.json_query = json_query
         url_filter = "v2/queries/filter?offset={}&pageSize={}&indexType={}".format(str(0), str(0), self.index_type)
-        result = self.carol.call_api(url_filter, data=self.json_query)
+        result = self.carol.call_api(url_filter, data=self.json_query,
+                                     method_whitelist=frozenset(['HEAD', 'TRACE', 'GET',
+                                                                 'PUT', 'OPTIONS', 'DELETE', 'POST']))
         self.total_hits = result["totalHits"]
         return self.total_hits
 
@@ -297,7 +301,9 @@ class Query:
         self.querystring = {"indexType": self.index_type}
         url_filter = "v2/queries/filter"
         result = self.carol.call_api(url_filter, data=self.json_query,
-                                     params=self.querystring, method='DELETE')
+                                     params=self.querystring, method='DELETE',
+                                     method_whitelist=frozenset(['HEAD', 'TRACE', 'GET',
+                                                                 'PUT', 'OPTIONS']))
 
         print('Deleted: ', result)
 
