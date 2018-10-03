@@ -6,6 +6,8 @@ import os
 import sys
 import json
 
+from pycarol.app.health_check_online import HealthCheckOnline
+
 class OnlineApi():
     """ Class to execute Online API locally
     Use the command line "gunicorn run_me:flask" to execute the code below as an API.
@@ -61,6 +63,7 @@ class OnlineApi():
 
         self._dynamic_import()
         self._load_endpoints()
+        self._health_check_carol()
 
 
     def _log_append(self, msg):
@@ -84,6 +87,11 @@ class OnlineApi():
                         self.endpoints = online.get_endpoints()
         except Exception as e:
             self._log_append('Problem when try to load module. Module: {}. Error: {}'.format(self.module_name, str(e)))
+
+
+    def _health_check_carol(self):
+        healthCheckOnline = HealthCheckOnline(self.logs)
+        healthCheckOnline.send_status_carol()
 
 
     def get_api(self, debug=False):
