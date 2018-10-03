@@ -248,19 +248,21 @@ class Query:
         if self.save_results:
             file.close()
 
-    def check_total_hits(self, json_query):
+    def check_total_hits(self, json_query, index_type= "MASTER"):
         """
         Check the total hits for a given query
         :param json_query: Json object with the query to use
         :return: number of records for this query
         """
+
+        querystring = {"indexType": index_type}
         self.json_query = json_query
-        url_filter = "v2/queries/filter?offset={}&pageSize={}&indexType={}".format(str(0), str(0), self.index_type)
-        result = self.carol.call_api(url_filter, data=self.json_query,
+        url_filter = "v2/queries/count"
+        result = self.carol.call_api(url_filter, data=self.json_query, method='POST', params=querystring,
                                      method_whitelist=frozenset(['HEAD', 'TRACE', 'GET',
                                                                  'PUT', 'OPTIONS', 'DELETE', 'POST']))
-        self.total_hits = result["totalHits"]
-        return self.total_hits
+        self.total_hits = result
+        return result
 
     def named(self, named_query, params=None, json_query=None):
         if json_query is not None and params is not None:
