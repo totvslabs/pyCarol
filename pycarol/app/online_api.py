@@ -6,6 +6,8 @@ import os
 import sys
 import json
 
+from pycarol.app.health_check_online import HealthCheckOnline
+
 class OnlineApi():
     """ Class to execute Online API locally
     Use the command line "gunicorn run_me:flask" to execute the code below as an API.
@@ -61,6 +63,7 @@ class OnlineApi():
 
         self._dynamic_import()
         self._load_endpoints()
+        self._health_check_carol()
 
 
     def _log_append(self, msg):
@@ -70,9 +73,9 @@ class OnlineApi():
 
     def _dynamic_import(self):
         try:
-            self.imported_module = import_module('{}{}'.format(self.file_path, self.module_name))
+            self.imported_module = import_module(f'{self.file_path}{self.module_name}')
         except Exception as e:
-            self._log_append('Problem when importing file. Module: {}. Error: {}'.format(self.module_name, str(e)))
+            self._log_append(f'Problem when importing file. Module: {self.module_name}. Error: {str(e)}')
 
 
     def _load_endpoints(self):
@@ -83,17 +86,23 @@ class OnlineApi():
                         online = getattr(self.imported_module, i)
                         self.endpoints = online.get_endpoints()
         except Exception as e:
-            self._log_append('Problem when try to load module. Module: {}. Error: {}'.format(self.module_name, str(e)))
+            self._log_append(f'Problem when trying to load module. Module: {self.module_name}. Error: {str(e)}')
+
+
+    def _health_check_carol(self):
+        healthCheckOnline = HealthCheckOnline(self.logs)
+        healthCheckOnline.send_status_carol()
 
 
     def get_api(self, debug=False):
         flask = Flask(__name__)
+        base_url = f'{self.domain}/{self.app_name}/{self.app_version}/{self.online_name}'
 
         @flask.route('/', methods=['GET','POST'])
         def base():
-            return 'Running! Use http:// .../{}/{}/{}/{}/api/(endpoint)'.format(self.domain, self.app_name, self.app_version, self.online_name)
+            return f'Running! Use http:// .../{base_url}/api/(endpoint)'
 
-        @flask.route('/{}/{}/{}/{}/api/<prediction_path>'.format(self.domain, self.app_name, self.app_version, self.online_name), methods=['GET','POST'])
+        @flask.route(f'/{base_url}/api/<prediction_path>', methods=['GET','POST'])
         def app(prediction_path):
 
             try:
@@ -106,15 +115,15 @@ class OnlineApi():
                 r = r.tolist()
             return json.dumps(r)
 
-        @flask.route('/{}/{}/{}/{}/statusz'.format(self.domain, self.app_name, self.app_version, self.online_name))
+        @flask.route(f'/{base_url}/statusz')
         def app_statusz():
             return 'ok'
 
-        @flask.route('/{}/{}/{}/{}/healthz'.format(self.domain, self.app_name, self.app_version, self.online_name))
+        @flask.route(f'/{base_url}/healthz')
         def app_healthz():
             return 'ok'
 
-        @flask.route('/{}/{}/{}/{}/logs'.format(self.domain, self.app_name, self.app_version, self.online_name))
+        @flask.route(f'/{base_url}/logs')
         def app_logs():
             return str(self.logs)
 
