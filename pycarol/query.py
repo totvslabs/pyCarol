@@ -6,7 +6,6 @@ import dask
 import pandas as pd
 from pycarol.connectors import Connectors
 
-
 class Query:
     """ It implements the calls for the following endpoints:
         1. POST - /api/v2/queries/filter
@@ -166,7 +165,9 @@ class Query:
         downloaded = 0
         while count < to_get:
 
-            result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params)
+            result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params,
+                                         method_whitelist=frozenset(['HEAD', 'TRACE', 'GET',
+                                                                     'PUT', 'OPTIONS', 'DELETE', 'POST']))
 
             if set_param:
                 self.total_hits = result["totalHits"]
@@ -255,7 +256,9 @@ class Query:
         """
         self.json_query = json_query
         url_filter = "v2/queries/filter?offset={}&pageSize={}&indexType={}".format(str(0), str(0), self.index_type)
-        result = self.carol.call_api(url_filter, data=self.json_query)
+        result = self.carol.call_api(url_filter, data=self.json_query,
+                                     method_whitelist=frozenset(['HEAD', 'TRACE', 'GET',
+                                                                 'PUT', 'OPTIONS', 'DELETE', 'POST']))
         self.total_hits = result["totalHits"]
         return self.total_hits
 
@@ -298,7 +301,9 @@ class Query:
         self.querystring = {"indexType": self.index_type}
         url_filter = "v2/queries/filter"
         result = self.carol.call_api(url_filter, data=self.json_query,
-                                     params=self.querystring, method='DELETE')
+                                     params=self.querystring, method='DELETE',
+                                     method_whitelist=frozenset(['HEAD', 'TRACE', 'GET',
+                                                                 'PUT', 'OPTIONS']))
 
         print('Deleted: ', result)
 
@@ -324,7 +329,6 @@ class ParQuery:
         step.append([max_v, None])
         return step
 
-
     def _get_min_max(self):
         j = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": f"{self.datamodel_name}"}],
              "aggregationList": [{"type": "MINIMUM", "name": "MINIMUM", "params": [f"{self.mdmKey}"]},
@@ -336,7 +340,6 @@ class ParQuery:
         max_v = query.results[0]['aggs']['MAXIMUM']['value']
         print(f"Total Hits to download: {query.total_hits}")
         return min_v, max_v
-
 
     def go(self, datamodel_name=None, slices=1000, staging_name=None, connector_id=None, connector_name=None,
            get_staging_from_golden=False ):
