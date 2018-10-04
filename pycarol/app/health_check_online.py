@@ -39,7 +39,7 @@ class HealthCheckOnline():
 
     def send_status_carol(self):
         if self.domain:
-            carol = self.carol_auth
+            carol = self.carol_auth()
             tasks = Tasks(carol)
             task = tasks.get_task(task_id=self.long_task_id)
 
