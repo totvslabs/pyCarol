@@ -3,6 +3,7 @@ import json
 
 class DataModel:
 
+
     def __init__(self, carol):
         self.carol = carol
 
@@ -108,7 +109,7 @@ class DataModel:
         return self
 
 
-    def export(self, dm_name=None, dm_id=None, status=True ):
+    def export(self, dm_name=None, dm_id=None, status=True):
 
         if dm_name:
             dm_id= self.get_by_name(dm_name).entity_template_.get(dm_name)['mdmId']
@@ -117,5 +118,5 @@ class DataModel:
             assert dm_id
 
         url = f'v1/entities/templates/{dm_id}/exporter/{status}'
-        resp = self.carol.call_api(url, method='POST')
+        self.carol.call_api(url, method='POST')
 
