@@ -7,7 +7,7 @@ class DataModel:
         self.carol = carol
 
         self.fields_dict = {}
-        self.entityTemplate_ = {}
+        self.entity_template_ = {}
 
     def _build_query_params(self):
         if self.sort_by is None:
@@ -35,8 +35,10 @@ class DataModel:
             raise print('Type incorrect, it should be "id" or "name"')
 
         resp = self.carol.call_api(url, method='GET')
-        self.entityTemplate_ = {resp['mdmName'] : resp}
+        self.entity_template_ = {resp['mdmName'] : resp}
         self.fields_dict.update({resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
+        return resp
+
 
     def get_all(self, offset=0, page_size=-1, sort_order='ASC',
                 sort_by=None, print_status=False,
@@ -90,6 +92,7 @@ class DataModel:
         return self
 
     def get_by_name(self,name):
+
         self._get(name, by = 'name')
         return self
 
@@ -103,3 +106,16 @@ class DataModel:
         resp = self.carol.call_api(url_snapshot, method='GET')
         self.snapshot_ = {resp['entityTemplateName']: resp}
         return self
+
+
+    def export(self, dm_name=None, dm_id=None, status=True ):
+
+        if dm_name:
+            dm_id= self.get_by_name(dm_name).entity_template_.get(dm_name)['mdmId']
+
+        else:
+            assert dm_id
+
+        url = f'v1/entities/templates/{dm_id}/exporter/{status}'
+        resp = self.carol.call_api(url, method='POST')
+
