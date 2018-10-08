@@ -94,7 +94,7 @@ class Skill:
         self._json['nlpContextModel'] = self.context_model
         
     def add_query_model(self, query_model_name, display_name, query_name, primary_key = None, secondary_key = None,
-                        output_params = {}, input_params = {}, flags = None, sort_by = None, sort_direction = 'ASC',
+                        output_params = None, input_params = {}, flags = None, sort_by = None, sort_direction = 'ASC',
                         disambiguate = False):
         _query_model = dict(
             nlpDisplayName = display_name,
@@ -105,6 +105,8 @@ class Skill:
             nlpInputParams = input_params,
             nlpFlags = flags
         )
+        if output_params is None:
+            _query_model['nlpOutputParams'] = []
         if flags is None:
             _query_model['nlpFlag'] = []
         if primary_key is not None:
@@ -144,5 +146,3 @@ class Skill:
         self._json.pop('mdmId',None)
         self._json.pop('mdmLastUpdated',None)
         self._json.pop('mdmTenantId',None)
-     
-
