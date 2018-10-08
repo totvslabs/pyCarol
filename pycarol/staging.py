@@ -1,13 +1,63 @@
 from .schemaGenerator import *
 import pandas as pd
+from .query import Query
+from datetime import datetime
 
 
 class Staging:
     def __init__(self, carol):
         self.carol = carol
 
+
+    def _delete(self,dm_name):
+
+        now = datetime.now().isoformat(timespec='seconds')
+        json_query = {
+                      "mustList": [
+                        {
+                          "mdmFilterType": "TYPE_FILTER",
+                          "mdmValue": dm_name+'Golden'
+                        },
+                        {
+                          "mdmFilterType": "RANGE_FILTER",
+                          "mdmKey": "mdmLastUpdated",
+                          "mdmValue": [
+                            None,
+                            now
+                          ]
+                        }
+                      ]
+                    }
+        try:
+            Query(self.carol).delete(json_query)
+        except:
+            pass
+
+        json_query = {
+                      "mustList": [
+                        {
+                          "mdmFilterType": "TYPE_FILTER",
+                          "mdmValue": dm_name+'Rejected'
+                        },
+                        {
+                          "mdmFilterType": "RANGE_FILTER",
+                          "mdmKey": "mdmLastUpdated",
+                          "mdmValue": [
+                            None,
+                            now
+                          ]
+                        }
+                      ]
+                    }
+        try:
+            Query(self.carol,index_type='STAGING').delete(json_query)
+        except:
+            pass
+
+
+
     def send_data(self, staging_name, data=None, connector_id=None, step_size=100, print_stats=False,
-                  auto_create_schema=False, crosswalk_auto_create=None, force=False):
+                  auto_create_schema=False, crosswalk_auto_create=None, force=False, dm_to_delete=None):
 
         if connector_id is None:
             connector_id = self.carol.connector_id
@@ -51,6 +101,9 @@ class Staging:
             assert data.duplicated(subset=_crosswalk).sum() == 0, \
                 "crosswalk is not unique on dataframe. set force=True to send it anyway."
 
+        if dm_to_delete is not None:
+            self._delete(dm_to_delete)
+
 
         url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
         gen = self._stream_data(data, data_size, step_size, is_df)
@@ -59,7 +112,6 @@ class Staging:
         data_json = gen.__next__()
         while ite:
             self.carol.call_api(url, data=data_json)
-
             cont += len(data_json)
             if print_stats:
                 print('{}/{} sent'.format(cont, data_size), end='\r')
