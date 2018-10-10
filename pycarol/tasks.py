@@ -26,7 +26,6 @@ class Tasks:
 
     def _set_task_by_json(self, json_task):
         self.task_id = json_task['mdmId']
-        self.mdm_data = json_task['mdmData']
         self.mdm_user_id = json_task['mdmUserId']
         self.mdm_connector_id = json_task['mdmConnectorId']
         self.mdm_task_ready = json_task['mdmTaskReady']
@@ -43,6 +42,9 @@ class Tasks:
         self.mdm_created = json_task['mdmCreated']
         self.mdm_last_updated = json_task['mdmLastUpdated']
         self.mdm_tenant_id = json_task['mdmTenantId']
+
+        if 'mdmData' in json_task:
+            self.mdm_data = json_task['mdmData']
 
     def create(self, task_type, task_group, data={}):
         """
