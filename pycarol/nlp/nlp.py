@@ -5,6 +5,7 @@ from itertools import starmap
 
 from .entity import *
 from .skill import *
+from .skill_config import *
 from ..named_query import *
 
 class NLP:
@@ -72,12 +73,15 @@ class NLP:
     
     # COPY SKILLS AND ENTITIES FROM REMOTE TENANT
     @staticmethod
-    def copy_data(nlp_from, nlp_to):
+    def copy_data(nlp_from, nlp_to, copy_skill_config=False):
         """
         Copy skills and entities from a remote tenant
         :param remote_nlp: NLP object created from remote tenant
         :type remote_nlp: NLP object
         """
+        if copy_skill_config:
+            skill_config = nlp_from.get_skill_config(False)
+            response = nlp_to.create(skill_config, False)        
         skills = nlp_from.get_skills(print_response=False)
         for skill in skills:
             if skill.query_models != '{}':
@@ -101,6 +105,7 @@ class NLP:
             response = nlp_to.create(entity, False)
             if response is not None:
                 print(entity.name + ': \n' + str(response) + '\n')
+
         return 'Copy finished'
         
     # GET SKILLS
@@ -196,17 +201,34 @@ class NLP:
             self.entities.append(_entity)
         return self.entities
     
+    # GET SKILL CONFIG
+    def get_skill_config(self, print_response=True):
+        """
+        Get entity using the entity name
+        :param name: entity's name
+        :type name: str
+        :return: Entity object
+        :rtype: Entity object
+        """
+        url_filter = "v1/ai/skillConfig/name/{}".format(self.carol.tenant['mdmId'])
+        response = self.carol.call_api(url_filter)
+        if print_response:
+            print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
+        return SkillConfig(response)
+    
     # POST
     def create(self, obj, print_success=True):
         """
         Create entity/skill on tenant
-        :param obj: Skill/Entity object
-        :type obj: Skill/Entity object
+        :param obj: Skill/Entity/SkillConfig object
+        :type obj: Skill/Entity/SkillConfig object
         :return: response from request
         :rtype: str
         """            
         if isinstance(obj, Entity):
             url_filter = "v1/ai/skillEntity"
+        elif isinstance(obj, SkillConfig):
+            url_filter = "v1/ai/skillConfig"
         else:
             url_filter = "v1/ai/skill"
         obj._update_json()
@@ -271,13 +293,16 @@ class NLP:
     def update(self, obj):
         """
         Update entity/skill on tenant
-        :param obj: Skill/Entity object
-        :type obj: Skill/Entity object
+        :param obj: Skill/Entity/SkillConfig object
+        :type obj: Skill/Entity/SkillConfig object
         :return: response from request
         :rtype: str
         """   
         if isinstance(obj, Entity):
             url_filter = "v1/ai/skillEntity/name/{}"
+        elif isinstance(obj, SkillConfig):
+            url_filter = "v1/ai/skillConfig/name/{}"
+            obj.name = self.carol.tenant['mdmId']
         else:
             url_filter = "v1/ai/skill/name/{}"
         url_filter = url_filter.format(obj.name)
@@ -288,7 +313,7 @@ class NLP:
     # DELETE
     def delete_skill(self, name):
         """
-        Delete skill using the skill name
+        Delete skill using its name
         :param name: skill's name
         :type name: str
         :return: response from request
@@ -300,12 +325,24 @@ class NLP:
         
     def delete_entity(self, name):
         """
-        Delete entity using the entity name
+        Delete entity using its name
         :param name: entity's name
         :type name: str
         :return: response from request
         :rtype: str
         """
         url_filter = "v1/ai/skillEntity/name/{}".format(name)
+        response = self.carol.call_api(url_filter, method = 'DELETE')
+        return response
+    
+    def delete_skill_config(self):
+        """
+        Delete skill config using tenant id
+        :param name: tenant id
+        :type name: str
+        :return: response from request
+        :rtype: str
+        """
+        url_filter = "v1/ai/skillConfig/name/{}".format('tenantId_' + self.carol.tenant['mdmId'])
         response = self.carol.call_api(url_filter, method = 'DELETE')
         return response
