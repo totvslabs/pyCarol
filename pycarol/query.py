@@ -4,7 +4,8 @@ import itertools
 from joblib import Parallel, delayed
 import dask
 import pandas as pd
-from pycarol.connectors import Connectors
+from .connectors import Connectors
+from .named_query import NamedQuery
 
 class Query:
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=100, sort_order='ASC', sort_by=None,
@@ -204,7 +205,7 @@ class Query:
         downloaded = 0
         while count < to_get:
 
-            result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params,
+            result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params, timeout=240,
                                          method_whitelist=frozenset(['HEAD', 'TRACE', 'GET',
                                                                      'PUT', 'OPTIONS', 'DELETE', 'POST']))
 
@@ -320,9 +321,9 @@ class Query:
         return self
 
     def named_query_params(self, named_query):
-        named = nq.namedQueries(self.token_object)
-        named.getParamByName(named_query=named_query)
-        return named.paramDict
+        named = NamedQuery(self.carol)
+        named.by_name(named_query=named_query)
+        return named.param_dict
 
     def query(self, json_query):
         self.json_query = json_query

@@ -52,7 +52,6 @@ class NamedQuery:
             for key, value in self.named_query_dict.items():
                 self.param_dict[key] = re.findall(r'\{\{(.*?)\}\}', json.dumps(value, ensure_ascii=False))
 
-
     def get_all(self):
 
         self._build_query_params()
