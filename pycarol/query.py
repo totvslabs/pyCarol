@@ -4,7 +4,8 @@ import itertools
 from joblib import Parallel, delayed
 import dask
 import pandas as pd
-from pycarol.connectors import Connectors
+from .connectors import Connectors
+from .named_query import NamedQuery
 
 class Query:
     """ It implements the calls for the following endpoints:
@@ -281,9 +282,9 @@ class Query:
         return self
 
     def named_query_params(self, named_query):
-        named = nq.namedQueries(self.token_object)
-        named.getParamByName(named_query=named_query)
-        return named.paramDict
+        named = NamedQuery(self.carol)
+        named.by_name(named_query=named_query)
+        return named.param_dict
 
     def query(self, json_query):
         self.json_query = json_query
