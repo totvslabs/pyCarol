@@ -165,7 +165,7 @@ class Query:
         downloaded = 0
         while count < to_get:
 
-            result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params,
+            result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params, timeout=240,
                                          method_whitelist=frozenset(['HEAD', 'TRACE', 'GET',
                                                                      'PUT', 'OPTIONS', 'DELETE', 'POST']))
 
