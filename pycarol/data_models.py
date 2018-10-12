@@ -108,15 +108,36 @@ class DataModel:
         self.snapshot_ = {resp['entityTemplateName']: resp}
         return self
 
+    def export(self, dm_name=None, dm_id=None, sync_dm=True, full_export=False):
+        """
 
-    def export(self, dm_name=None, dm_id=None, status=True):
+        Export datamodel to s3
+
+        This method will trigger or pause the exposrt of the data in the datamodel to
+        s3
+
+        :param dm_name: `str`, default `None`
+            Datamodel Name
+        :param dm_id: `str`, default `None`
+            Datamodel id
+        :param sync_dm: `bool`, default `True`
+            Sync the datamodel
+        :param full_export: `bool`, default `True`
+            Do a resync of the datamodel
+        :return:
+        """
+
+        if sync_dm:
+            status = 'RUNNING'
+        else:
+            status = 'PAUSED'
 
         if dm_name:
             dm_id= self.get_by_name(dm_name).entity_template_.get(dm_name)['mdmId']
-
         else:
             assert dm_id
 
-        url = f'v1/entities/templates/{dm_id}/exporter/{status}'
-        self.carol.call_api(url, method='POST')
+        query_params = {"status": status, "fullExport":full_export}
+        url = f'v1/entities/templates/{dm_id}/exporter'
+        self.carol.call_api(url, method='POST', params=query_params)
 
