@@ -113,7 +113,7 @@ class DataModel:
 
         Export datamodel to s3
 
-        This method will trigger or pause the exposrt of the data in the datamodel to
+        This method will trigger or pause the export of the data in the datamodel to
         s3
 
         :param dm_name: `str`, default `None`
@@ -121,10 +121,10 @@ class DataModel:
         :param dm_id: `str`, default `None`
             Datamodel id
         :param sync_dm: `bool`, default `True`
-            Sync the datamodel
+            Sync the data model
         :param full_export: `bool`, default `True`
-            Do a resync of the datamodel
-        :return:
+            Do a resync of the data model
+        :return: None
         """
 
         if sync_dm:
