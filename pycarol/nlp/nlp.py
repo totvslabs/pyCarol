@@ -3,10 +3,10 @@ import json
 import pandas as pd
 from itertools import starmap
 
-from pycarol.nlp.entity import Entity
-from pycarol.nlp.skill import Skill
-from pycarol.nlp.skill_config import SkillConfig
-from pycarol.named_query import NamedQuery
+from .entity import Entity
+from .skill import Skill
+from .skill_config import SkillConfig
+from ..named_query import NamedQuery
 
 class NLP:
 
