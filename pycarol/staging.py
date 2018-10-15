@@ -1,13 +1,63 @@
 from .schemaGenerator import *
 import pandas as pd
+from .query import Query
+from datetime import datetime
 
 
 class Staging:
     def __init__(self, carol):
         self.carol = carol
 
+
+    def _delete(self,dm_name):
+
+        now = datetime.now().isoformat(timespec='seconds')
+        json_query = {
+                      "mustList": [
+                        {
+                          "mdmFilterType": "TYPE_FILTER",
+                          "mdmValue": dm_name+'Golden'
+                        },
+                        {
+                          "mdmFilterType": "RANGE_FILTER",
+                          "mdmKey": "mdmLastUpdated",
+                          "mdmValue": [
+                            None,
+                            now
+                          ]
+                        }
+                      ]
+                    }
+        try:
+            Query(self.carol).delete(json_query)
+        except:
+            pass
+
+        json_query = {
+                      "mustList": [
+                        {
+                          "mdmFilterType": "TYPE_FILTER",
+                          "mdmValue": dm_name+'Rejected'
+                        },
+                        {
+                          "mdmFilterType": "RANGE_FILTER",
+                          "mdmKey": "mdmLastUpdated",
+                          "mdmValue": [
+                            None,
+                            now
+                          ]
+                        }
+                      ]
+                    }
+        try:
+            Query(self.carol,index_type='STAGING').delete(json_query)
+        except:
+            pass
+
+
+
     def send_data(self, staging_name, data=None, connector_id=None, step_size=100, print_stats=False,
-                  auto_create_schema=False, crosswalk_auto_create=None, force=False):
+                  auto_create_schema=False, crosswalk_auto_create=None, force=False, dm_to_delete=None):
 
         if connector_id is None:
             connector_id = self.carol.connector_id
@@ -31,16 +81,28 @@ class Staging:
             data = [data]
             data_size = len(data)
 
-        if not schema and auto_create_schema:
+        if (not schema) and (auto_create_schema):
             assert crosswalk_auto_create, "You should provide a crosswalk"
             self.create_schema(_sample_json, staging_name, connector_id=connector_id, crosswalk_list=crosswalk_auto_create)
             _crosswalk = crosswalk_auto_create
+            print('provided crosswalk ',_crosswalk)
+        elif auto_create_schema:
+            assert crosswalk_auto_create, "You should provide a crosswalk"
+            self.create_schema(_sample_json, staging_name, connector_id=connector_id,
+                               crosswalk_list=crosswalk_auto_create, overwrite=True)
+            _crosswalk = crosswalk_auto_create
+            print('provided crosswalk ',_crosswalk)
         else:
             _crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
+            _crosswalk = list(_crosswalk)[0]
+            print('fetched crosswalk ',_crosswalk)
 
         if is_df and not force:
             assert data.duplicated(subset=_crosswalk).sum() == 0, \
                 "crosswalk is not unique on dataframe. set force=True to send it anyway."
+
+        if dm_to_delete is not None:
+            self._delete(dm_to_delete)
 
 
         url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
@@ -50,7 +112,6 @@ class Staging:
         data_json = gen.__next__()
         while ite:
             self.carol.call_api(url, data=data_json)
-
             cont += len(data_json)
             if print_stats:
                 print('{}/{} sent'.format(cont, data_size), end='\r')
@@ -103,17 +164,14 @@ class Staging:
             query_string = {"connectorId": connector_id}
 
         has_schema = self.get_schema(staging_name,connector_id=connector_id) is not None
-        if has_schema:
+        if has_schema and overwrite:
             method = 'PUT'
         else:
             method = 'POST'
 
         resp = self.carol.call_api('v2/staging/tables/{}/schema'.format(staging_name), data=schema, method=method,
                                    params=query_string)
-        if resp.get('mdmId'):
-            print('Schema sent successfully!')
-        else:
-            print('Failed to send schema: ' + resp)
+
 
     def _check_crosswalk_in_data(self, schema, _sample_json):
         crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()

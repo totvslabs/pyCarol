@@ -75,7 +75,8 @@ class Carol:
         return 'wss://{}.carol.ai:{}/websocket/{}'.format(self.domain, self.port, path)
 
     @staticmethod
-    def _retry_session(retries=5, session=None, backoff_factor=0.3, status_forcelist=(500, 502, 503, 504, 524)):
+    def _retry_session(retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524),
+                       method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE'])):
         session = session or requests.Session()
         retry = Retry(
             total=retries,
@@ -83,14 +84,19 @@ class Carol:
             connect=retries,
             backoff_factor=backoff_factor,
             status_forcelist=status_forcelist,
+            method_whitelist=method_whitelist,
         )
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
         session.mount('https://', adapter)
         return session
 
-    def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json',
-                 retries=5, session=None, backoff_factor=0.3, status_forcelist=(500, 502, 503, 504)):
+
+    def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json',retries=5,
+                 session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524), downloadable=False,
+                 method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']),
+                 **kwds):
+      
         url = 'https://{}.carol.ai:{}/api/{}'.format(self.domain, self.port, path)
 
         if method is None:
@@ -115,10 +121,10 @@ class Carol:
                 data = None
 
         section = self._retry_session(retries=retries, session=session, backoff_factor=backoff_factor,
-                                      status_forcelist=status_forcelist)
+                                      status_forcelist=status_forcelist, method_whitelist=method_whitelist)
         response = section.request(method=method, url=url, data=data, json=data_json,
-                                   headers=headers, params=params)
-
+                                   headers=headers, params=params, **kwds)
+        
         if self.verbose:
             if data_json is not None:
                 print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data_json, params))
@@ -126,9 +132,12 @@ class Carol:
                 print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data, params))
             print("        Headers: {}".format(headers))
 
-        response.encoding = 'utf-8'
-        self.response = response
         if response.ok:
+            if downloadable:
+                return response
+
+            response.encoding = 'utf-8'
+            self.response = response
             return json.loads(response.text)
         else:
             raise Exception(response.text)

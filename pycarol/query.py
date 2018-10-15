@@ -1,24 +1,65 @@
 import json
 from websocket import create_connection
-# import itertools
-# from joblib import Parallel, delayed
+import itertools
+from joblib import Parallel, delayed
 import dask
 import pandas as pd
+from .connectors import Connectors
+from .named_query import NamedQuery
 
 class Query:
-    """ It implements the calls for the following endpoints:
-        1. POST - /api/v2/queries/filter
-        2. POST - /api/v2/queries/named/{query_name}
-        2. DELETE - /api/v2/queries/filter
-        2. POST - /api/v2/queries/filter/{scrollId}
-
-    Usage::
-
-    """
-    def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=50, sort_order='ASC', sort_by=None,
+    def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=100, sort_order='ASC', sort_by=None,
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
                  save_results=False, filename='query_result.json', print_status=True, safe_check=False,
-                 get_errors=False, flush_result=False, use_stream=False):
+                 get_errors=False, flush_result=False, use_stream=False, get_times=False):
+
+        """
+
+        Class to query data from Carol.
+
+        This class can be used to query data from data models and stagings tables, query using named queries and delete
+        records.
+
+        :param carol: Carol object
+            Carol object.
+        :param max_hits: `int`, default float('inf')
+            number of records that will be downloaded.
+        :param offset: `int`, default 0
+            offset for pagination. Only used when `scrollable=False`
+        :param page_size: `int`, default 100
+            number of records downloaded in each pagination. The maximum value is 1000
+        :param sort_order: `str`, default 'ASC'
+            Sort ascending ('ASC') vs. descending ('DESC').
+        :param sort_by: `str`,  default `None`
+            Name to sort by.
+        :param scrollable: `bool`, default True
+            Use scroll for pagination. This should be the main way of doing, unless you are querying few data.
+        :param index_type: `str`, default 'MASTER'
+            Query data from 'MASTER', 'STAGING'
+        :param only_hits: `bool`, default 'True'
+            Return only results in the response path $hits.mdmGoldenFieldAndValues
+        :param fields: `list`, default `None`
+            Fileds to return in response. e.g., ["mdmGoldenFieldAndValues.mdmtaxid", "mdmGoldenFieldAndValues.date"]
+        :param get_aggs: `bool`, default `False`
+            To be used if the query/named query has aggravations
+        :param save_results: `bool`, default `False`
+            If save the result of the query in the file specified in `filename`
+        :param filename: `str`, default `query_result.json`
+            File path to save the response.
+        :param print_status: `bool`, default `True`
+            Print the numer of records in each interaction.
+        :param safe_check:  `bool`, default `False`
+            To be used if there are repeated records (same mdmId)
+        :param get_errors: `bool`, default `False`
+            To get the errors in the goldenRecords, if any.
+        :param flush_result: `bool`, default `False`
+            To be used with save_results, it will not copy the result to memory, only to the file.
+        :param use_stream: `bool`, default `False`
+            Use the stram of data.
+        :param get_times: `bool`, default `False`
+            It will create a list of times that each pagination took.
+
+        """
 
         self.carol = carol
         self.max_hits = max_hits
@@ -39,7 +80,7 @@ class Query:
         self.safe_check = safe_check
         self.get_errors = get_errors
         self.flush_result = flush_result
-
+        self.get_times = get_times
         self.named_query = None
         self.callback = None
 
@@ -48,6 +89,7 @@ class Query:
         self.drop_list = None
         self.json_query = None
         self.total_hits = None
+        self.query_times = []
 
         self.results = []
 
@@ -163,7 +205,9 @@ class Query:
         downloaded = 0
         while count < to_get:
 
-            result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params)
+            result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params, timeout=240,
+                                         method_whitelist=frozenset(['HEAD', 'TRACE', 'GET',
+                                                                     'PUT', 'OPTIONS', 'DELETE', 'POST']))
 
             if set_param:
                 self.total_hits = result["totalHits"]
@@ -193,7 +237,11 @@ class Query:
             else:
                 raise Exception('No Scroll Id to use. Something is wrong')
 
+            if self.get_times:
+                self.query_times.append(result.pop('took'))
+
             if self.only_hits:
+
                 result = result['hits']
                 if self.safe_check:
                     self.mdmId_list.extend([mdm_id['mdmId'] for mdm_id in result])
@@ -212,7 +260,6 @@ class Query:
                     self.results.extend(result)
             else:
                 result.pop('count')
-                result.pop('took')
                 result.pop('totalHits')
                 # result.pop('scrollId')
                 if not self.flush_result:
@@ -241,17 +288,21 @@ class Query:
         if self.save_results:
             file.close()
 
-    def check_total_hits(self, json_query):
+    def check_total_hits(self, json_query, index_type= "MASTER"):
         """
         Check the total hits for a given query
         :param json_query: Json object with the query to use
         :return: number of records for this query
         """
+
+        querystring = {"indexType": index_type}
         self.json_query = json_query
-        url_filter = "v2/queries/filter?offset={}&pageSize={}&indexType={}".format(str(0), str(0), self.index_type)
-        result = self.carol.call_api(url_filter, data=self.json_query)
-        self.total_hits = result["totalHits"]
-        return self.total_hits
+        url_filter = "v2/queries/count"
+        result = self.carol.call_api(url_filter, data=self.json_query, method='POST', params=querystring,
+                                     method_whitelist=frozenset(['HEAD', 'TRACE', 'GET',
+                                                                 'PUT', 'OPTIONS', 'DELETE', 'POST']))
+        self.total_hits = result
+        return result
 
     def named(self, named_query, params=None, json_query=None):
         if json_query is not None and params is not None:
@@ -270,9 +321,9 @@ class Query:
         return self
 
     def named_query_params(self, named_query):
-        named = nq.namedQueries(self.token_object)
-        named.getParamByName(named_query=named_query)
-        return named.paramDict
+        named = NamedQuery(self.carol)
+        named.by_name(named_query=named_query)
+        return named.param_dict
 
     def query(self, json_query):
         self.json_query = json_query
@@ -292,15 +343,23 @@ class Query:
         self.querystring = {"indexType": self.index_type}
         url_filter = "v2/queries/filter"
         result = self.carol.call_api(url_filter, data=self.json_query,
-                                     params=self.querystring, method='DELETE')
+                                     params=self.querystring, method='DELETE',
+                                     method_whitelist=frozenset(['HEAD', 'TRACE', 'GET',
+                                                                 'PUT', 'OPTIONS']))
 
         print('Deleted: ', result)
 
 
 class ParQuery:
 
-    def __init__(self, carol):
+    def __init__(self, carol, backend='dask', return_df=True, verbose=50, n_jobs=4):
         self.carol = carol
+        self.return_df=return_df
+        self.backend = backend
+        self.verbose=verbose
+        self.n_jobs=n_jobs
+
+        assert self.backend=='dask' or self.backend == 'joblib'
 
     @staticmethod
     def ranges(min_v, max_v, nb):
@@ -312,61 +371,136 @@ class ParQuery:
         step.append([max_v, None])
         return step
 
-    def go(self, datamodel_name, slices=1000, verbose=50, n_jobs=1):
-        assert slices < 9999, '10k is the largest slice possible'
+    def _get_min_max(self):
+        j = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": f"{self.datamodel_name}"}],
+             "aggregationList": [{"type": "MINIMUM", "name": "MINIMUM", "params": [f"{self.mdmKey}"]},
+                                 {"type": "MAXIMUM", "name": "MAXIMUM", "params": [f"{self.mdmKey}"]}]}
 
-        j = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": f"{datamodel_name}Golden"}],
-             "aggregationList": [{"type": "MINIMUM", "name": "MINIMUM", "params": ["mdmCounterForEntity"]},
-                                 {"type": "MAXIMUM", "name": "MAXIMUM", "params": ["mdmCounterForEntity"]}]}
-
-        query = Query(self.carol, only_hits=False, get_aggs=True, save_results=False,
+        query = Query(self.carol, index_type=self.index_type, only_hits=False, get_aggs=True, save_results=False,
                       print_status=True, page_size=0).query(j).go()
         min_v = query.results[0]['aggs']['MINIMUM']['value']
         max_v = query.results[0]['aggs']['MAXIMUM']['value']
-        chunks = self.ranges(min_v, max_v, slices)
-
         print(f"Total Hits to download: {query.total_hits}")
-        print(f"Number of chunks: {len(chunks)}")
+        return min_v, max_v
 
-        #         list_to_compute = Parallel(n_jobs=n_jobs,
-        #                                    verbose=verbose)(delayed(_par_query)(RANGE_FILTER=RANGE_FILTER,
-        #                                                                         page_size=4999,
-        #                                                                         login = self.carol,
-        #                                                                         datamodel_name=datamodel_name)
-        #                                                     for RANGE_FILTER in chunks)
+    def go(self, datamodel_name=None, slices=1000, page_size=1000, staging_name=None, connector_id=None, connector_name=None,
+           get_staging_from_golden=False ):
+        assert slices < 9999, '10k is the largest slice possible'
 
-        #         self.results = list(itertools.chain(*list_to_compute))
-        list_to_compute = dask.delayed(list)([
-            _par_query(
-                datamodel_name=datamodel_name,
+        self.page_size=page_size
+
+        if datamodel_name is None:
+            assert connector_id or connector_name
+            assert staging_name
+
+            if not connector_id:
+                connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
+
+            self.index_type = 'STAGING'
+            self.datamodel_name = f"{connector_id}_{staging_name}"
+            self.fields=None
+            self.only_hits=False
+            self.mdmKey = 'mdmCreated'
+        elif get_staging_from_golden:
+            self.index_type = 'MASTER'
+            self.datamodel_name = f"{datamodel_name}Master"
+            self.fields = 'mdmStagingRecord'
+            self.only_hits=False
+            self.mdmKey = 'mdmStagingRecord.mdmCreated'
+        else:
+            self.index_type = 'MASTER'
+            self.datamodel_name = f"{datamodel_name}Golden"
+            self.fields = 'mdmGoldenFieldAndValues'
+            self.only_hits=True
+            self.mdmKey = 'mdmCounterForEntity'
+
+        min_v, max_v = self._get_min_max()
+        self.chunks = self.ranges(min_v, max_v, slices)
+
+        print(f"Number of chunks: {len(self.chunks)}")
+
+
+        if self.backend=='dask':
+            list_to_compute = self._dask_backend()
+        elif self.backend=='joblib':
+            list_to_compute = self._joblib_backend()
+        else:
+            raise KeyError
+
+        if self.return_df:
+            return pd.concat(list_to_compute,ignore_index=True)
+        list_to_compute = list(itertools.chain(*list_to_compute))
+        return list_to_compute
+
+
+    def _dask_backend(self):
+
+        list_to_compute = []
+        for RANGE_FILTER in self.chunks:
+            y = dask.delayed(_par_query)(
+                datamodel_name=self.datamodel_name,
                 RANGE_FILTER=RANGE_FILTER,
-                page_size=4999,
+                page_size=self.page_size,
                 login=self.carol,
+                index_type=self.index_type,
+                fields=self.fields,
+                only_hits=self.only_hits,
+                mdmKey=self.mdmKey,
+                return_df=self.return_df,
             )
-            for RANGE_FILTER in chunks
-        ])
-        # results = dd.from_delayed(list_to_compute)
-        results = pd.DataFrame(list_to_compute.compute())
-        return results
+            list_to_compute.append(y)
 
-@dask.delayed
-def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None):
+        return dask.compute(*list_to_compute)
+
+    def _joblib_backend(self):
+
+        list_to_compute = Parallel(n_jobs=self.n_jobs,
+                                   verbose=self.verbose)(delayed(_par_query)(
+                                                        datamodel_name=self.datamodel_name,
+                                                        RANGE_FILTER=RANGE_FILTER,
+                                                        page_size=self.page_size,
+                                                        login=self.carol,
+                                                        index_type=self.index_type,
+                                                        fields=self.fields,
+                                                        only_hits=self.only_hits,
+                                                        mdmKey=self.mdmKey,
+                                                        return_df=self.return_df,
+                                                                             )
+                                                    for RANGE_FILTER in self.chunks)
+        return list_to_compute
+
+
+def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None, index_type='MASTER',fields=None, mdmKey=None,
+               only_hits=True, return_df=True):
     json_query = {
         "mustList": [
             {
                 "mdmFilterType": "TYPE_FILTER",
-                "mdmValue": f"{datamodel_name}Golden"
+                "mdmValue": datamodel_name
             },
             {
                 "mdmFilterType": "RANGE_FILTER",
-                "mdmKey": "mdmCounterForEntity",
+                "mdmKey": f"{mdmKey}",
                 "mdmValue": RANGE_FILTER
             }
         ]
 
     }
 
-    query = Query(login, page_size=page_size, save_results=False, print_status=False,
-                  fields='mdmGoldenFieldAndValues').query(json_query).go()
-    return query.results
+    query = Query(login, page_size=page_size, save_results=False, print_status=False, index_type=index_type,
+                  only_hits=only_hits,
+                  fields=fields).query(json_query).go()
+    query = query.results
+
+    if not only_hits:
+        query = [i['hits'] for i in query]
+        query = list(itertools.chain(*query))
+        if fields:
+            query = [elem.get(fields, elem) for elem in query if
+                     elem.get(fields,None)]
+
+    if return_df:
+        return pd.DataFrame(query)
+
+    return query
 
