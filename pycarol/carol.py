@@ -11,6 +11,27 @@ from pycarol.auth.PwdAuth import PwdAuth
 
 class Carol:
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False):
+        """
+
+        This class handle all Carol`s API calls
+
+        It will handle all API calls, for a given authentication method.
+
+        :param domain: `str`
+            Teanant name
+        :param app_name: `str`
+            Carol app name.
+        :param auth: `PwdAuth` or `ApiKeyAuth` object
+            Auth Carol object to handle authentication
+        :param connector_id: `str`, default `0a0829172fc2433c9aa26460c31b78f0`
+            Connector Id
+        :param port: `int`, default 443
+            Port to be used (when running locally)
+        :param verbose: `bool`, default `False
+            If True will print the header, method and URL of each API call.
+        """
+
+
         settings = dict()
         if os.path.isfile('app_config.json'):
             with open('app_config.json', 'r') as f:
@@ -72,11 +93,33 @@ class Carol:
         self.carol_process_type = settings.get('carol_process_type', os.getenv('CAROLPROCESSTYPE'))
 
     def build_ws_url(self, path):
+        """
+        Return the URS to be used with websocket and queries.
+        :param path: `str`
+            API and point.
+        :return: str
+        """
         return 'wss://{}.carol.ai:{}/websocket/{}'.format(self.domain, self.port, path)
 
     @staticmethod
     def _retry_session(retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524),
                        method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE'])):
+        """
+
+        :param retries: `int`, default `5`
+            Number of retries for the API all
+        :param session: Session objectn defaut `None`
+            It allows you to persist certain parameters across requests.
+        :param backoff_factor: `float`, default `0.5`
+            Backoff factor to apply between attempts. It will
+            sleep for: {backoff factor} * (2 ^ ({retries} - 1)) seconds
+        :param status_forcelist: `iterable`, default (500, 502, 503, 504, 524)
+            A set of integer HTTP status codes that we should force a retry on.
+             A retry is initiated if the request method is in method_whitelist and the response status code is in status_forcelist.
+        :param method_whitelist: `iterable`, default frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']))
+            Set of uppercased HTTP method verbs that we should retry on.
+        :return: session object
+        """
         session = session or requests.Session()
         retry = Retry(
             total=retries,
