@@ -4,22 +4,62 @@ import itertools
 from joblib import Parallel, delayed
 import dask
 import pandas as pd
-from pycarol.connectors import Connectors
+from .connectors import Connectors
+from .named_query import NamedQuery
 
 class Query:
-    """ It implements the calls for the following endpoints:
-        1. POST - /api/v2/queries/filter
-        2. POST - /api/v2/queries/named/{query_name}
-        2. DELETE - /api/v2/queries/filter
-        2. POST - /api/v2/queries/filter/{scrollId}
-
-    Usage::
-
-    """
-    def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=50, sort_order='ASC', sort_by=None,
+    def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=100, sort_order='ASC', sort_by=None,
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
                  save_results=False, filename='query_result.json', print_status=True, safe_check=False,
                  get_errors=False, flush_result=False, use_stream=False, get_times=False):
+
+        """
+
+        Class to query data from Carol.
+
+        This class can be used to query data from data models and stagings tables, query using named queries and delete
+        records.
+
+        :param carol: Carol object
+            Carol object.
+        :param max_hits: `int`, default float('inf')
+            number of records that will be downloaded.
+        :param offset: `int`, default 0
+            offset for pagination. Only used when `scrollable=False`
+        :param page_size: `int`, default 100
+            number of records downloaded in each pagination. The maximum value is 1000
+        :param sort_order: `str`, default 'ASC'
+            Sort ascending ('ASC') vs. descending ('DESC').
+        :param sort_by: `str`,  default `None`
+            Name to sort by.
+        :param scrollable: `bool`, default True
+            Use scroll for pagination. This should be the main way of doing, unless you are querying few data.
+        :param index_type: `str`, default 'MASTER'
+            Query data from 'MASTER', 'STAGING'
+        :param only_hits: `bool`, default 'True'
+            Return only results in the response path $hits.mdmGoldenFieldAndValues
+        :param fields: `list`, default `None`
+            Fileds to return in response. e.g., ["mdmGoldenFieldAndValues.mdmtaxid", "mdmGoldenFieldAndValues.date"]
+        :param get_aggs: `bool`, default `False`
+            To be used if the query/named query has aggravations
+        :param save_results: `bool`, default `False`
+            If save the result of the query in the file specified in `filename`
+        :param filename: `str`, default `query_result.json`
+            File path to save the response.
+        :param print_status: `bool`, default `True`
+            Print the numer of records in each interaction.
+        :param safe_check:  `bool`, default `False`
+            To be used if there are repeated records (same mdmId)
+        :param get_errors: `bool`, default `False`
+            To get the errors in the goldenRecords, if any.
+        :param flush_result: `bool`, default `False`
+            To be used with save_results, it will not copy the result to memory, only to the file.
+        :param use_stream: `bool`, default `False`
+            Use the stram of data.
+        :param get_times: `bool`, default `False`
+            It will create a list of times that each pagination took.
+
+        """
 
         self.carol = carol
         self.max_hits = max_hits
@@ -165,7 +205,7 @@ class Query:
         downloaded = 0
         while count < to_get:
 
-            result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params,
+            result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params, timeout=240,
                                          method_whitelist=frozenset(['HEAD', 'TRACE', 'GET',
                                                                      'PUT', 'OPTIONS', 'DELETE', 'POST']))
 
@@ -281,9 +321,9 @@ class Query:
         return self
 
     def named_query_params(self, named_query):
-        named = nq.namedQueries(self.token_object)
-        named.getParamByName(named_query=named_query)
-        return named.paramDict
+        named = NamedQuery(self.carol)
+        named.by_name(named_query=named_query)
+        return named.param_dict
 
     def query(self, json_query):
         self.json_query = json_query
@@ -343,10 +383,11 @@ class ParQuery:
         print(f"Total Hits to download: {query.total_hits}")
         return min_v, max_v
 
-    def go(self, datamodel_name=None, slices=1000, staging_name=None, connector_id=None, connector_name=None,
+    def go(self, datamodel_name=None, slices=1000, page_size=1000, staging_name=None, connector_id=None, connector_name=None,
            get_staging_from_golden=False ):
         assert slices < 9999, '10k is the largest slice possible'
 
+        self.page_size=page_size
 
         if datamodel_name is None:
             assert connector_id or connector_name
@@ -399,7 +440,7 @@ class ParQuery:
             y = dask.delayed(_par_query)(
                 datamodel_name=self.datamodel_name,
                 RANGE_FILTER=RANGE_FILTER,
-                page_size=4999,
+                page_size=self.page_size,
                 login=self.carol,
                 index_type=self.index_type,
                 fields=self.fields,
@@ -417,7 +458,7 @@ class ParQuery:
                                    verbose=self.verbose)(delayed(_par_query)(
                                                         datamodel_name=self.datamodel_name,
                                                         RANGE_FILTER=RANGE_FILTER,
-                                                        page_size=4999,
+                                                        page_size=self.page_size,
                                                         login=self.carol,
                                                         index_type=self.index_type,
                                                         fields=self.fields,
