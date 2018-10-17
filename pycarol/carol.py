@@ -66,6 +66,9 @@ class Carol:
                 if connector_id is None:
                     connector_id = app_config.get('connector_id', os.getenv('CAROLCONNECTORID', '0a0829172fc2433c9aa26460c31b78f0'))
 
+        if connector_id is None:
+            connector_id = '0a0829172fc2433c9aa26460c31b78f0'
+
         if domain is None or app_name is None or auth is None:
             raise ValueError("domain, app_name and auth must be specified as parameters, in the app_config.json file " +
                              "or in the environment variables CAROLTENANT, CAROLAPPOAUTH OR CAROLUSER+CAROLPWD and " +
