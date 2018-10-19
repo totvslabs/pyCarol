@@ -81,7 +81,7 @@ class SettingsDefinition(luigi.Task):
                             else:
                                 try:
                                     app_carol[key] = json.loads(value)
-                                except json.JSONDecodeError:
+                                except:
                                     pass
                     else:
                         app_carol = cls.app  # If no login token specified, assume it is already declared on app
