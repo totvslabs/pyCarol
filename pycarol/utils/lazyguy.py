@@ -1,37 +1,38 @@
-from .. import entityTemplateCarol as ett
-from .. import entity_template_types
-from .. staging import Staging as stg
+from ..entity_template_types import EntityTemplateTypeIds
 from ..verticals import Verticals
+from ..data_models import CreateDataModel
+
 import random
 import json
 
+
 class lazeDM(object):
-    def __init__(self,carol):
+    def __init__(self, carol):
         self.carol = carol
 
-
-    def start(self,json_sample,mdmName, publish = True, profileTitle = None ,overwrite = True, mdmVerticalIds=None, mdmVerticalNames='retail', mdmEntityTemplateTypeIds=None,
-               mdmEntityTemplateTypeNames='product', mdmLabel=None, mdmGroupName='Others',
-               mdmTransactionDataModel=False):
+    def start(self, json_sample, dm_name, publish=True, profile_title=None, overwrite=True, vertical_ids=None,
+              vertical_names='retail', entity_template_type_ids=None,
+              entity_template_type_names='product', dm_label=None,
+              group_name='Others', transaction_dm=False):
 
         if publish:
-            assert  profileTitle in json_sample
+            assert profile_title in json_sample
 
-        if ((mdmVerticalNames is None) and (mdmVerticalIds is None)):
-            self.verticalsNameIdsDict = Verticals(self.carol).getAll()
-            mdmVerticalNames = random.choice(self.verticalsNameIdsDict.keys())
-            mdmVerticalIds = self.verticalsNameIdsDict.get(mdmVerticalNames)
-        if ((mdmEntityTemplateTypeIds is None) and (mdmEntityTemplateTypeNames is None)):
-            self.entityTemplateTypesDict = entity_template_types.entityTemplateTypeIds(self.carol).getAll()
-            mdmEntityTemplateTypeNames = random.choice(self.entityTemplateTypesDict.keys())
-            mdmEntityTemplateTypeIds = self.entityTemplateTypesDict.get(mdmEntityTemplateTypeNames)
+        if ((vertical_names is None) and (vertical_ids is None)):
+            self.verticals_dict = Verticals(self.carol).all()
+            vertical_names = random.choice(self.verticals_dict.keys())
+            vertical_ids = self.verticals_dict.get(vertical_names)
+        if ((entity_template_type_ids is None) and (entity_template_type_names is None)):
+            self.entityTemplateTypesDict = EntityTemplateTypeIds(self.carol).all()
+            entity_template_type_names = random.choice(self.entityTemplateTypesDict.keys())
+            entity_template_type_ids = self.entityTemplateTypesDict.get(entity_template_type_names)
 
+        tDM = CreateDataModel(self.carol)
+        tDM.create(dm_name, overwrite=overwrite, vertical_ids=vertical_ids, vertical_names=vertical_names,
+                   entity_template_type_ids=entity_template_type_ids,
+                   entity_template_type_names=entity_template_type_names,
+                   dm_label=dm_label, group_name=group_name, transaction_dm=transaction_dm)
 
-        tDM = ett.createTemplate(self.carol)
-        tDM.create(mdmName,overwrite=overwrite, mdmVerticalIds=mdmVerticalIds, mdmVerticalNames=mdmVerticalNames,
-                   mdmEntityTemplateTypeIds=mdmEntityTemplateTypeIds,mdmEntityTemplateTypeNames=mdmEntityTemplateTypeNames,
-                   mdmLabel=mdmLabel, mdmGroupName=mdmGroupName,   mdmTransactionDataModel=mdmTransactionDataModel)
+        dm_id = tDM.template_dict[dm_name]['mdmId']
 
-        entityTemplateId = tDM.template_dict[mdmName]['mdmId']
-
-        tDM.from_json(json_sample, profileTitle= profileTitle, publish= publish, entityTemplateId=entityTemplateId)
+        tDM.from_json(json_sample, profile_title=profile_title, publish=publish, dm_id=dm_id)

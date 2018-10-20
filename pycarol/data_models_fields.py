@@ -69,7 +69,7 @@ class DataModelFields(object):
             query = query['hits']
             self.fields_data.extend(query)
             self.fields_dict.update({i['mdmName']: i for i in query})
-            self.querystring['offset'] = count
+            self.query_params['offset'] = count
             if print_status:
                 print('{}/{}'.format(count, self.total_hits), end ='\r')
             if save_file:

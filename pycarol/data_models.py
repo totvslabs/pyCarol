@@ -1,5 +1,7 @@
 import json
 from .data_models_fields import DataModelFields
+from .verticals import Verticals
+import time
 
 class DataModel:
 
@@ -224,73 +226,48 @@ class CreateDataModel(object):
         self.all_possible_types = self.fields._possible_types
         self.all_possible_fields = self.fields.fields_dict
 
-    def from_snapshot(self,snapshot, publish = False, overwrite = False):
+    def from_snapshot(self,snapshot, publish=False, overwrite=False):
 
         while True:
             url = 'v1/entities/templates/snapshot'
-            self.lastResponse = self.carol.call_api(url=url, method='POST', data=snapshot)
+            resp = self.carol.call_api(url=url, method='POST', data=snapshot)
 
-            #TODO: AQUIIIIII!!!!
-            if not self.lastResponse.ok:
-                # error handler for token
-                if self.lastResponse.reason == 'Unauthorized':
-                    self.token_object.refreshToken()
-                    self.headers = {'Authorization': self.token_object.access_token,
-                                    'Content-Type': 'application/json'}
-                    continue
-                elif ('Record already exists' in self.lastResponse.json()['errorMessage']) and (overwrite):
-                    del_DM = deleteTemplate(self.token_object)
-                    find_temp = entityTemplate(self.token_object)
-                    find_temp.getByName(snap_shot['entityTemplateName'])
-                    entityTemplateId = find_temp.entityTemplate_.get(snap_shot['entityTemplateName']).get('mdmId',None)
-                    if entityTemplateId is None: #if None
+            if not resp.ok:
+                if ('Record already exists' in self.lastResponse.json()['errorMessage']) and (overwrite):
+                    del_DM = DataModel(self.carol)
+                    del_DM.get_by_name(snapshot['entityTemplateName'])
+                    dm_id = del_DM.entity_template_.get(snapshot['entityTemplateName']).get('mdmId',None)
+                    if dm_id is None: #if None
                         continue
-                    entitySpace = find_temp.entityTemplate_.get(snap_shot['entityTemplateName'])['mdmEntitySpace']
-                    del_DM.delete(entityTemplateId,entitySpace)
+                    entity_space = del_DM.entity_template_.get(snapshot['entityTemplateName'])['mdmEntitySpace']
+                    del_DM.delete(dm_id=dm_id, entity_space=entity_space)
                     time.sleep(0.5) #waint for deletion
                     continue
 
-                raise Exception(self.lastResponse.text)
             break
-        print('Data Model {} created'.format(snap_shot['entityTemplateName']))
-        self.lastResponse.encoding = 'utf8'
-        response = json.loads(self.lastResponse.text)
-        self.template_dict.update({response['mdmName']: response})
+        print('Data Model {} created'.format(snapshot['entityTemplateName']))
+        self.template_dict.update({resp['mdmName']: resp})
         if publish:
-            self.publishTemplate(response['mdmId'])
+            self.publish_template(resp['mdmId'])
 
 
+    def publish_template(self, dm_id):
 
-    def publishTemplate(self,entityTemplateId):
+        url = f'v1/entities/templates/{dm_id}/publish'
+        resp = self.carol.call_api(url=url, method='POST')
+        return resp
 
-        while True:
-            url = 'https://{}.carol.ai{}/api/v1/entities/templates/{}/publish'.format(self.token_object.domain , self.dev,
-                                                                                    entityTemplateId)
-            self.lastResponse =  requests.post(url=url, headers=self.headers)
-            if not self.lastResponse.ok:
-                # error handler for token
-                if self.lastResponse.reason == 'Unauthorized':
-                    self.token_object.refreshToken()
-                    self.headers = {'Authorization': self.token_object.access_token,
-                                    'Content-Type': 'application/json'}
-                    continue
-                raise Exception(self.lastResponse.text)
-            break
-
-
-
-
-    def _checkVerticals(self):
-        self.verticalsNameIdsDict = verticals(self.token_object).getAll()
+    def _check_verticals(self):
+        self.vertical_names = Verticals(self.carol).all()
 
         if self.mdmVerticalIds is not None:
-            for key, value in self.verticalsNameIdsDict.items():
+            for key, value in self.vertical_names.items():
                 if value == self.mdmVerticalIds:
                     self.mdmVerticalIds = value
                     self.mdmVerticalNames = key
                     return
         else:
-            for key, value in self.verticalsNameIdsDict.items():
+            for key, value in self.vertical_names.items():
                 if key == self.mdmVerticalNames:
                     self.mdmVerticalIds = value
                     self.mdmVerticalNames = key
@@ -298,10 +275,10 @@ class CreateDataModel(object):
 
         raise Exception('{}/{} are not valid values for mdmVerticalNames/mdmVerticalIds./n'
                         ' Possible values are: {}'.format(self.mdmVerticalNames, self.mdmVerticalIds,
-                                                          self.verticalsNameIdsDict))
+                                                          self.vertical_names))
 
     def _checkEntityTemplateTypes(self):
-        self.entityTemplateTypesDict = entityTemplateTypeIds(self.token_object).getAll()
+        self.entityTemplateTypesDict = entityTemplateTypeIds(self.carol).all()
 
         if self.mdmEntityTemplateTypeIds is not None:
             for key, value in self.entityTemplateTypesDict.items():
@@ -523,7 +500,7 @@ class CreateDataModel(object):
 
         if publish:
             self._profileTitle(profileTitle, self.entityTemplateId)
-            self.publishTemplate(self.entityTemplateId)
+            self.publish_template(self.entityTemplateId)
 
                 #to_create = create_field(prop, value)
                 #print(to_create)
