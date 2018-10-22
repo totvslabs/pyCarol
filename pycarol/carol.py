@@ -140,8 +140,28 @@ class Carol:
 
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json',retries=5,
                  session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524), downloadable=False,
-                 method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']),
+                 method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']), errors='raise',
                  **kwds):
+        """
+
+        :param path:
+        :param method:
+        :param data:
+        :param auth:
+        :param params:
+        :param content_type:
+        :param retries:
+        :param session:
+        :param backoff_factor:
+        :param status_forcelist:
+        :param downloadable:
+        :param method_whitelist:
+        :param errors : {‘ignore’, ‘raise’}, default ‘raise’
+                If ‘raise’, then invalid request will raise an exception
+                If ‘ignore’, then invalid request will return the request response
+        :param kwds:
+        :return:
+        """
       
         url = 'https://{}.carol.ai:{}/api/{}'.format(self.domain, self.port, path)
 
@@ -178,7 +198,7 @@ class Carol:
                 print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data, params))
             print("        Headers: {}".format(headers))
 
-        if response.ok:
+        if response.ok or errors=='ignore':
             if downloadable:
                 return response
 

@@ -31,8 +31,9 @@ class lazeDM(object):
         tDM.create(dm_name, overwrite=overwrite, vertical_ids=vertical_ids, vertical_names=vertical_names,
                    entity_template_type_ids=entity_template_type_ids,
                    entity_template_type_names=entity_template_type_names,
-                   dm_label=dm_label, group_name=group_name, transaction_dm=transaction_dm)
+                   label=dm_label, group_name=group_name, transaction_data_model=transaction_dm)
 
         dm_id = tDM.template_dict[dm_name]['mdmId']
 
         tDM.from_json(json_sample, profile_title=profile_title, publish=publish, dm_id=dm_id)
+        print('Done!')

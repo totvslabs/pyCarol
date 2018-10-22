@@ -148,7 +148,7 @@ class DataModel:
             resp = self.get_by_name(dm_name)
             dm_id = resp['mdmId']
 
-        url = "v1/entities/templates/{dm_id}"
+        url = f"v1/entities/templates/{dm_id}"
         querystring = {"entitySpace": entity_space}
 
         return self.carol.call_api(url, method='DELETE', params=querystring)
@@ -253,7 +253,7 @@ class CreateDataModel(object):
 
     def publish_template(self, dm_id):
         url = f'v1/entities/templates/{dm_id}/publish'
-        resp = self.carol.call_api(url=url, method='POST')
+        resp = self.carol.call_api(path=url, method='POST')
         return resp
 
     def _check_verticals(self):
@@ -279,7 +279,7 @@ class CreateDataModel(object):
     def _check_entity_template_types(self):
         self.template_type_dict = EntityTemplateTypeIds(self.carol).all()
 
-        if self.mdmEntityTemplateTypeIds is not None:
+        if self.entity_template_type_ids is not None:
             for key, value in self.template_type_dict.items():
                 if value == self.entity_template_type_ids:
                     self.entity_template_type_ids = value
@@ -334,39 +334,33 @@ class CreateDataModel(object):
                    "mdmEntityTemplateTypeIds": [self.entity_template_type_ids],
                    "mdmTransactionDataModel": self.transaction_data_model, "mdmProfileTitleFields": []}
 
-        # TODO: AQQQUUIIII
+
         while True:
             url_filter = "v1/entities/templates"
-            self.lastResponse = requests.post(url=url_filter, headers=self.headers, json=payload)
-            if not self.lastResponse.ok:
-                # error handler for token
-                if ('Record already exists' in self.lastResponse.json()['errorMessage']) and (overwrite):
-                    del_DM = DataModel(self.carol)
-                    del_DM.get_by_name(self.dm_name)
-                    dm_id = del_DM.entity_template_.get(self.dm_name).get('mdmId', None)
-                    if dm_id is None:  # if None
-                        continue
-                    entity_space = del_DM.entity_template_.get(self.dm_name)['mdmEntitySpace']
-                    del_DM.delete(dm_id=dm_id, entity_space=entity_space)
-                    time.sleep(0.5)  # waint for deletion
+            resp = self.carol.call_api(url_filter, data=payload, method='POST', errors='ignore')
+            # error handler for token
+            if ('already exists' in resp.get('errorMessage',[])) and (overwrite):
+                del_DM = DataModel(self.carol)
+                del_DM.get_by_name(self.dm_name)
+                dm_id = del_DM.entity_template_.get(self.dm_name).get('mdmId', None)
+                if dm_id is None:  # if None
                     continue
-                raise Exception(self.lastResponse.text)
+                entity_space = del_DM.entity_template_.get(self.dm_name)['mdmEntitySpace']
+                del_DM.delete(dm_id=dm_id, entity_space=entity_space)
+                time.sleep(0.5)  # waint for deletion
+                continue
             break
 
-        self.lastResponse.encoding = 'utf8'
-        response = json.loads(self.lastResponse.text)
-        self.template_dict.update({response['mdmName']: response})
+        self.template_dict.update({resp['mdmName']: resp})
 
     def _profile_title(self, profile_title, dm_id):
         if isinstance(profile_title, str):
             profile_title = [profile_title]
 
-            profile_title = [i.lower() for i in profile_title]
+        profile_title = [i.lower() for i in profile_title]
 
         url = f"v1/entities/templates/{dm_id}/profileTitle"
-
-        payload = profile_title  # list of fields
-        resp = self.carol.call_api(url=url, method='POST', data=payload)
+        resp = self.carol.call_api(path=url, method='POST', data=profile_title)
         return resp
 
     def add_field(self, field_name, dm_id=None, parent_field_id=""):
@@ -376,75 +370,64 @@ class CreateDataModel(object):
         else:
             est_ = DataModel(self.carol)
             est_.get_by_id(dm_id)
-            if est_.entityTemplate_ == {}:
+            if est_.entity_template_ == {}:
                 print('Template does not exisit')
                 return
-            self.entityTemplateId = entityTemplateId
-            _, template_ = est_.entityTemplate_.popitem()
+            self.dm_id = dm_id
+            _, template_ = est_.entity_template_.popitem()
             self.current_fields = [i for i in template_['mdmFieldsFull'].keys()]
-            if fieldName.lower() in self.current_fields:
-                print("'{}' already in the template".format(fieldName))
+            if field_name.lower() in self.current_fields:
+                print("'{}' already in the template".format(field_name))
                 return
 
-        field_to_send = self.all_possible_fields.get(fieldName, [])
-        if field_to_send == []:
+        field_to_send = self.all_possible_fields.get(field_name)
+        if field_to_send is None:
             print('Field does not exist')
             return
-        querystring = {"parentFieldId": parentFieldId}
-        while True:
-            url = "https://{}.carol.ai{}/api/v1/entities/templates/{}/onboardField/{}".format(self.token_object.domain,
-                                                                                              self.dev,
-                                                                                              self.entityTemplateId,
-                                                                                              field_to_send['mdmId'])
-            response = requests.request("POST", url, headers=self.headers, params=querystring)
-            if not response.ok:
-                # error handler for token
-                if response.reason == 'Unauthorized':
-                    self.token_object.refreshToken()
-                    self.headers = {'Authorization': self.token_object.access_token,
-                                    'Content-Type': 'application/json'}
-                    continue
-                raise Exception(response.text)
-            break
+        querystring = {"parentFieldId": parent_field_id}
 
-    def _labelsAndDesc(self, prop):
+        url = f"v1/entities/templates/{self.dm_id}/onboardField/{field_to_send['mdmId']}"
+        resp = self.carol.call_api(path=url, method='POST', params=querystring)
 
-        if self.mdmLabelMap is None:
+
+    def _labels_and_desc(self, prop):
+
+        if self.label_map is None:
             label = prop
         else:
-            label = self.mdmLabelMap.get(prop, [])
-            if label == []:
+            label = self.label_map.get(prop)
+            if label is None:
                 label = prop
             else:
                 label = {"en-US": label}
 
-        if self.mdmDescriptionMap is None:
+        if self.description_map is None:
             description = prop
         else:
-            description = self.mdmDescriptionMap.get(prop, [])
-            if description == []:
+            description = self.description_map.get(prop)
+            if description is None:
                 description = prop
             else:
                 description = {"en-US": description}
 
         return label, description
 
-    def from_json(self, json_sample, profileTitle=None, publish=False, entityTemplateId=None,
-                  mdmLabelMap=None, mdmDescriptionMap=None):
+    def from_json(self, json_sample, profile_title=None, publish=False, dm_id=None,
+                  label_map=None, description_map=None):
 
         if publish:
-            assert profileTitle in json_sample
+            assert profile_title in json_sample
 
-        self.mdmLabelMap = mdmLabelMap
-        self.mdmDescriptionMap = mdmDescriptionMap
+        self.label_map = label_map
+        self.description_map = description_map
 
-        if entityTemplateId is None:
-            assert self.template_dict != {}
-            templateName, templateJson = self.template_dict.copy().popitem()
-            self.entityTemplateId = templateJson['mdmId']
+        if dm_id is None:
+            assert self.template_dict is not None
+            template_name, template_json = self.template_dict.copy().popitem()
+            self.dm_id = template_json['mdmId']
 
         else:
-            self.entityTemplateId = entityTemplateId
+            self.dm_id = dm_id
 
         self.json_sample = json_sample
 
@@ -462,7 +445,7 @@ class CreateDataModel(object):
                     ent_.pop('mdmLastUpdated')
                     ent_.pop('mdmTenantId')
                     if (ent_['mdmMappingDataType'].lower() == entity_type.ent_type):
-                        self.addField(prop, parentFieldId="")
+                        self.add_field(prop, parent_field_id="")
                     else:
                         print('problem, {} not created, field name matches with an already'
                               'created field but different type'.format(prop))
@@ -471,20 +454,18 @@ class CreateDataModel(object):
             else:
                 if not entity_type.ent_type == 'nested':
 
-                    currentLabel, currentDescription = self._labelsAndDesc(prop)
-                    self.fields.create(mdmName=prop, mdmMappingDataType=entity_type.ent_type, mdmFieldType='PRIMITIVE',
-                                       mdmLabel=currentLabel, mdmDescription=currentDescription)
+                    current_label, current_description = self._labels_and_desc(prop)
+                    self.fields.create(mdm_name=prop, mdm_mpping_data_type=entity_type.ent_type, mdm_field_type='PRIMITIVE',
+                                       mdm_label=current_label, mdm_description=current_description)
                     self.all_possible_fields = self.fields.fields_dict
-                    self.addField(prop, parentFieldId="")
+                    self.add_field(prop, parent_field_id="")
                 else:
                     print('Nested fields are not supported')
 
         if publish:
-            self._profileTitle(profileTitle, self.entityTemplateId)
-            self.publish_template(self.entityTemplateId)
+            self._profile_title(profile_title, self.dm_id)
+            self.publish_template(self.dm_id)
 
-            # to_create = create_field(prop, value)
-            # print(to_create)
 
     # not done
     def _nested(self, mdmName, value, parentId=''):
