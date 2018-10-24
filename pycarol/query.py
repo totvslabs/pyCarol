@@ -363,6 +363,8 @@ class ParQuery:
 
     @staticmethod
     def ranges(min_v, max_v, nb):
+        if min_v == max_v:
+            max_v += 1
         step = int((max_v - min_v) / nb) + 1
         step = list(range(min_v, max_v, step))
         if step[-1] != max_v:
