@@ -142,6 +142,24 @@ class Carol:
                  session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524), downloadable=False,
                  method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']),
                  **kwds):
+
+        """
+
+        :param path:
+        :param method: 
+        :param data:
+        :param auth:
+        :param params:
+        :param content_type:
+        :param retries:
+        :param session:
+        :param backoff_factor:
+        :param status_forcelist:
+        :param downloadable:
+        :param method_whitelist:
+        :param kwds:
+        :return:
+        """
       
         url = 'https://{}.carol.ai:{}/api/{}'.format(self.domain, self.port, path)
 
