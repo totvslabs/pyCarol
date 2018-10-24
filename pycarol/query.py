@@ -363,6 +363,8 @@ class ParQuery:
 
     @staticmethod
     def ranges(min_v, max_v, nb):
+        if min_v == max_v:
+            max_v += 1
         step = int((max_v - min_v) / nb) + 1
         step = list(range(min_v, max_v, step))
         if step[-1] != max_v:
@@ -378,6 +380,9 @@ class ParQuery:
 
         query = Query(self.carol, index_type=self.index_type, only_hits=False, get_aggs=True, save_results=False,
                       print_status=True, page_size=0).query(j).go()
+
+        if query.results[0].get('aggs') is None:
+            return None, None
         min_v = query.results[0]['aggs']['MINIMUM']['value']
         max_v = query.results[0]['aggs']['MAXIMUM']['value']
         print(f"Total Hits to download: {query.total_hits}")
@@ -415,6 +420,8 @@ class ParQuery:
             self.mdmKey = 'mdmCounterForEntity'
 
         min_v, max_v = self._get_min_max()
+        if (min_v is None) and (max_v is None):
+            return []
         self.chunks = self.ranges(min_v, max_v, slices)
 
         print(f"Number of chunks: {len(self.chunks)}")

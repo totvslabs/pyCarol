@@ -142,10 +142,10 @@ class Carol:
                  session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524), downloadable=False,
                  method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']), errors='raise',
                  **kwds):
-        """
 
+        """
         :param path:
-        :param method:
+        :param method: 
         :param data:
         :param auth:
         :param params:
