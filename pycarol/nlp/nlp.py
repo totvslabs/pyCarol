@@ -1,11 +1,11 @@
-import re
 import json
 import pandas as pd
+
 from itertools import starmap
 
-from .entity import *
-from .skill import *
-from ..named_query import *
+from .entity import Entity
+from .skill import Skill
+from ..named_query import NamedQuery
 
 class NLP:
 

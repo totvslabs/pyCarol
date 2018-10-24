@@ -1,22 +1,32 @@
 class Entity:
     
-    def __init__(self, json):
-        self._json = json
-        self.name = json['nlpName']
-        self.values = json.get('nlpValues', [])
-        self.canonical_value = json.get('nlpCanonicalValue')
-            
+    def __init__(self, name, values, canonical_value=None):
+        self.name = name
+        self.values = values
+        self.canonical_value = canonical_value
+
+        self._json_data = {}
+        self._update_json()
+
+    @classmethod
+    def from_json(cls, json_data):
+        return cls(name=json_data['nlpName'],
+                   values=json_data.get('nlpValues', []),
+                   canonical_value=json_data.get('nlpCanonicalValue'))
+
     def add_values(self, values):
-        assert isinstance(values, list)
-        self.values.extend(values)
-        self._json['nlpValues'] = self.values
+        if isinstance(values, list):
+            self.values.extend(values)
+        else:
+            self.values.append(values)
+        self._json_data['nlpValues'] = self.values
         
     def _update_json(self):
-        self._json['nlpName'] = self.name
-        self._json['nlpValues'] = self.values
-        self._json['nlpCanonicalValue'] = self.canonical_value
+        self._json_data['nlpName'] = self.name
+        self._json_data['nlpValues'] = self.values
+        self._json_data['nlpCanonicalValue'] = self.canonical_value
 
-        self._json.pop('mdmCreated',None)
-        self._json.pop('mdmId',None)
-        self._json.pop('mdmLastUpdated',None)
-        self._json.pop('mdmTenantId',None)
+        self._json_data.pop('mdmCreated',None)
+        self._json_data.pop('mdmId',None)
+        self._json_data.pop('mdmLastUpdated',None)
+        self._json_data.pop('mdmTenantId',None)
