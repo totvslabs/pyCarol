@@ -5,6 +5,7 @@ from requests.adapters import HTTPAdapter
 import json
 import os
 import os.path
+import pyperclip
 from pycarol.auth.ApiKeyAuth import ApiKeyAuth
 from pycarol.auth.PwdAuth import PwdAuth
 
@@ -209,3 +210,17 @@ class Carol:
                              params = {"connectorId": connector_id})
 
         return resp
+    
+    def copy_token(self):
+        if isinstance(self.auth, PwdAuth):
+            token = self.auth._token.access_token
+            pyperclip.copy(token)
+            print("Copied auth token to clipboard: " + token)
+        elif isinstance(self.auth, ApiKeyAuth):
+            token = self.auth.api_key
+            pyperclip.copy(token)
+            print("Copied API Key to clipboard: " + token)
+        else:
+            raise Exception("Auth object not set. Can't fetch token.")
+            
+            
