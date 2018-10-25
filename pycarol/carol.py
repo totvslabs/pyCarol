@@ -163,7 +163,7 @@ class Carol:
         :param kwds:
         :return:
         """
-      
+
         url = 'https://{}.carol.ai:{}/api/{}'.format(self.domain, self.port, path)
 
         if method is None:
@@ -230,7 +230,7 @@ class Carol:
                              params = {"connectorId": connector_id})
 
         return resp
-    
+
     def copy_token(self):
         if isinstance(self.auth, PwdAuth):
             token = self.auth._token.access_token
@@ -242,5 +242,5 @@ class Carol:
             print("Copied API Key to clipboard: " + token)
         else:
             raise Exception("Auth object not set. Can't fetch token.")
-            
-            
+
+
