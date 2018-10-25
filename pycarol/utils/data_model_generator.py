@@ -6,7 +6,7 @@ import random
 import json
 
 
-class lazeDM(object):
+class DataModelGenerator(object):
 
     """
     This class will create a Datamodel from a python dictionary. Today, it is not allowed nested fileds in the dictionary.
@@ -17,7 +17,7 @@ class lazeDM(object):
     from pycarol.auth.ApiKeyAuth import ApiKeyAuth
     from pycarol.carol import Carol
 
-    from pycarol.utils import lazyguy
+    from pycarol.utils.data_model_generator import DataModelGenerator
 
     json_sample = {'atende_sus': 'Sim',
                    'estabelecimento': 'Hospital Raimundo Chaar',
@@ -27,7 +27,7 @@ class lazeDM(object):
                    'uf': 'AC'}
 
     login = Carol('foo_tenant, 'foo', auth=PwdAuth('foo@totvs.com.br', 'foo123'))
-    la = lazyguy.lazeDM(login)
+    la = DataModelGenerator(login)
     la.start(json_sample, dm_name='hfair', profile_title='estabelecimento', publish=True, overwrite=True)
     ```
 
