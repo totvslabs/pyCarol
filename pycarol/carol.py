@@ -5,7 +5,6 @@ from requests.adapters import HTTPAdapter
 import json
 import os
 import os.path
-import pyperclip
 from pycarol.auth.ApiKeyAuth import ApiKeyAuth
 from pycarol.auth.PwdAuth import PwdAuth
 
@@ -231,6 +230,7 @@ class Carol:
         return resp
 
     def copy_token(self):
+        import pyperclip
         if isinstance(self.auth, PwdAuth):
             token = self.auth._token.access_token
             pyperclip.copy(token)

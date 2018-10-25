@@ -23,26 +23,19 @@ class Connectors:
         if label is None:
             label = name
 
-        try:
-            resp = self.carol.call_api('v1/connectors', data={
-                'mdmName': name,
-                'mdmGroupName': group_name,
-                'mdmLabel': {"en-US": label}
-            })
-            connector_id = resp['mdmId']
-            print('Connector created: connector ID = {}'.format(connector_id))
-            return connector_id
+        resp = self.carol.call_api('v1/connectors', data={
+            'mdmName': name,
+            'mdmGroupName': group_name,
+            'mdmLabel': {"en-US": label}
+        }, errors='ignore')
+        if ('already exists' in resp.get('errorMessage', [])):
+            if overwrite:
+                self.delete_by_name(name)
+                return self.create(name, label, group_name, False)
+            else:
+                return self.get_by_name(name)['mdmId']
 
-        except Exception as e:
-            if e.args:
-                emsg = e.args[0]['errorMessage']
-                if 'Record already exists' in emsg:
-                    if overwrite:
-                        self.delete_by_name(name)
-                        return self.create(name, label, group_name, False)
-                    else:
-                        return self.get_by_name(name)['mdmId']
-            raise e
+        raise Exception(resp)
 
     def get_by_name(self, name):
         """
@@ -110,7 +103,7 @@ class Connectors:
         connectors = self.get_all(print_status=False)
         for connector in connectors:
             current_connector = connector['mdmId']
-            conn_stats = self.connectorStats(current_connector)
+            conn_stats = self.stats(current_connector)
             for i in conn_stats[current_connector]:
                 d[i].append(current_connector)
 
