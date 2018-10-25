@@ -28,6 +28,8 @@ class Connectors:
             'mdmGroupName': group_name,
             'mdmLabel': {"en-US": label}
         }, errors='ignore')
+        if resp.get('mdmId') is not None:
+            return resp.get('mdmId')
         if ('already exists' in resp.get('errorMessage', [])):
             if overwrite:
                 self.delete_by_name(name)
@@ -35,7 +37,9 @@ class Connectors:
             else:
                 return self.get_by_name(name)['mdmId']
 
-        raise Exception(resp)
+        else:
+            raise Exception(resp)
+
 
     def get_by_name(self, name):
         """
@@ -53,7 +57,7 @@ class Connectors:
         self.delete_by_id(mdm_id, force_deletion)
 
     def delete_by_id(self, mdm_id, force_deletion=True):
-        self.carol.call_api('v1/connectors/{}?forceDeletion={}'.format(mdm_id, force_deletion))
+        self.carol.call_api('v1/connectors/{}?forceDeletion={}'.format(mdm_id, force_deletion), method='DELETE')
 
     def get_all(self, offset=0, page_size=-1, sort_order='ASC', sort_by=None, include_connectors = False,
                 include_mappings=False, include_consumption=False, print_status=True, save_results=False,
