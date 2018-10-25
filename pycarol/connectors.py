@@ -34,15 +34,15 @@ class Connectors:
             return connector_id
 
         except Exception as e:
-            emsg = e.args[0]['errorMessage']
-            if 'Record already exists' in emsg:
-                if overwrite:
-                    self.delete_by_name(name)
-                    return self.create(name, label, group_name, False)
-                else:
-                    return self.get_by_name(name)['mdmId']
-            else:
-                raise e
+            if e.args:
+                emsg = e.args[0]['errorMessage']
+                if 'Record already exists' in emsg:
+                    if overwrite:
+                        self.delete_by_name(name)
+                        return self.create(name, label, group_name, False)
+                    else:
+                        return self.get_by_name(name)['mdmId']
+            raise e
 
     def get_by_name(self, name):
         """
