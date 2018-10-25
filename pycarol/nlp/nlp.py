@@ -1,11 +1,11 @@
-import re
 import json
 import pandas as pd
+
 from itertools import starmap
 
-from .entity import *
-from .skill import *
-from ..named_query import *
+from .entity import Entity
+from .skill import Skill
+from ..named_query import NamedQuery
 
 class NLP:
 
@@ -118,12 +118,12 @@ class NLP:
        
         response = self.carol.call_api(url_filter, params=params)
         for skill in response['hits']:
-            _skill = Skill(skill)
+            _skill = Skill.from_json(skill)
             if print_response:
                 print(json.dumps(skill, sort_keys=True, indent=4, ensure_ascii=False))
             self.skills.append(_skill)
         return self.skills
-    
+
     def get_skill(self, name):
         """
         Get skill using the skill name
@@ -134,7 +134,7 @@ class NLP:
         url_filter = "v1/ai/skill/name/{}".format(name)
         response = self.carol.call_api(url_filter)
         print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False)) 
-        return Skill(response)
+        return Skill.from_json(response)
     
     def get_skill_by_id(self, id):
         """
@@ -147,7 +147,7 @@ class NLP:
         url_filter = "v1/ai/skill/{}".format(id)
         response = self.carol.call_api(url_filter)
         print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
-        return Skill(response)
+        return Skill.from_json(response)
     
     # GET ENTITIES
     def get_entity(self, name):
@@ -161,7 +161,7 @@ class NLP:
         url_filter = "v1/ai/skillEntity/name/{}".format(name)
         response = self.carol.call_api(url_filter)
         print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
-        return Entity(response)
+        return Entity.from_json(response)
     
     def get_entity_by_id(self, id):
         """
@@ -174,7 +174,7 @@ class NLP:
         url_filter = "v1/ai/skillEntity/{}".format(id)
         response = self.carol.call_api(url_filter)
         print(json.dumps(response, sort_keys=True, indent=4, ensure_ascii=False))
-        return Entity(response)
+        return Entity.from_json(response)
 
     def get_entities(self, print_response=True, offset=0, page_size=100, sort_order='ASC', sort_by=None):
         """
@@ -190,7 +190,7 @@ class NLP:
 
         response = self.carol.call_api(url_filter, params=params)
         for entity in response['hits']:
-            _entity = Entity(entity)
+            _entity = Entity.from_json(entity)
             if print_response:
                 print(json.dumps(entity, sort_keys=True, indent=4, ensure_ascii=False))
             self.entities.append(_entity)
@@ -262,9 +262,9 @@ class NLP:
                             _json[header] = item                        
                         
             if 'nlpValues' in headers:
-                response = self.create(Entity(_json))
+                response = self.create(Entity.from_json(_json))
             else:
-                response = self.create(Skill(_json))
+                response = self.create(Skill.from_json(_json))
             print(_json['nlpName'] + ': \n' + str(response) + '\n')
     
     # PUT
