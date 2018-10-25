@@ -144,7 +144,6 @@ class Carol:
                  method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']), errors='raise',
                  **kwds):
         """
-
         :param path:
         :param method:
         :param data:
