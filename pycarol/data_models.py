@@ -132,7 +132,7 @@ class DataModel:
             status = 'PAUSED'
 
         if dm_name:
-            dm_id = self.get_by_name(dm_name).entity_template_.get(dm_name)['mdmId']
+            dm_id = self.get_by_name(dm_name)['mdmId']
         else:
             assert dm_id
 
