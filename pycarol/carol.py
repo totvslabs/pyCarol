@@ -1,12 +1,12 @@
-from .tenants import Tenants
 from urllib3.util.retry import Retry
 import requests
 from requests.adapters import HTTPAdapter
 import json
 import os
 import os.path
-from pycarol.auth.ApiKeyAuth import ApiKeyAuth
-from pycarol.auth.PwdAuth import PwdAuth
+from .auth.ApiKeyAuth import ApiKeyAuth
+from .auth.PwdAuth import PwdAuth
+from .tenants import Tenants
 
 
 class Carol:
