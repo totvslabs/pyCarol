@@ -208,7 +208,7 @@ class Carol:
                 return json.loads(response.text)
 
             elif response.reason == 'Unauthorized':
-                self.auth.authenticate_request() #It will refresh token if Unauthorized
+                self.auth.get_access_token()  #It will refresh token if Unauthorized
                 __count+=1
                 if __count<5: #To avoid infinity loops
                     continue
