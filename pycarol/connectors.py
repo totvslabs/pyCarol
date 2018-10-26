@@ -23,26 +23,23 @@ class Connectors:
         if label is None:
             label = name
 
-        try:
-            resp = self.carol.call_api('v1/connectors', data={
-                'mdmName': name,
-                'mdmGroupName': group_name,
-                'mdmLabel': {"en-US": label}
-            })
-            connector_id = resp['mdmId']
-            print('Connector created: connector ID = {}'.format(connector_id))
-            return connector_id
+        resp = self.carol.call_api('v1/connectors', data={
+            'mdmName': name,
+            'mdmGroupName': group_name,
+            'mdmLabel': {"en-US": label}
+        }, errors='ignore')
+        if resp.get('mdmId') is not None:
+            return resp.get('mdmId')
+        if ('already exists' in resp.get('errorMessage', [])):
+            if overwrite:
+                self.delete_by_name(name)
+                return self.create(name, label, group_name, False)
+            else:
+                return self.get_by_name(name)['mdmId']
 
-        except Exception as e:
-            if e.args:
-                emsg = e.args[0]['errorMessage']
-                if 'Record already exists' in emsg:
-                    if overwrite:
-                        self.delete_by_name(name)
-                        return self.create(name, label, group_name, False)
-                    else:
-                        return self.get_by_name(name)['mdmId']
-            raise e
+        else:
+            raise Exception(resp)
+
 
     def get_by_name(self, name):
         """
@@ -60,7 +57,7 @@ class Connectors:
         self.delete_by_id(mdm_id, force_deletion)
 
     def delete_by_id(self, mdm_id, force_deletion=True):
-        self.carol.call_api('v1/connectors/{}?forceDeletion={}'.format(mdm_id, force_deletion))
+        self.carol.call_api('v1/connectors/{}?forceDeletion={}'.format(mdm_id, force_deletion), method='DELETE')
 
     def get_all(self, offset=0, page_size=-1, sort_order='ASC', sort_by=None, include_connectors = False,
                 include_mappings=False, include_consumption=False, print_status=True, save_results=False,
@@ -110,7 +107,7 @@ class Connectors:
         connectors = self.get_all(print_status=False)
         for connector in connectors:
             current_connector = connector['mdmId']
-            conn_stats = self.connectorStats(current_connector)
+            conn_stats = self.stats(current_connector)
             for i in conn_stats[current_connector]:
                 d[i].append(current_connector)
 
