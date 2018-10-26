@@ -185,26 +185,35 @@ class Carol:
                 data_json = data
                 data = None
 
-        section = self._retry_session(retries=retries, session=session, backoff_factor=backoff_factor,
-                                      status_forcelist=status_forcelist, method_whitelist=method_whitelist)
-        response = section.request(method=method, url=url, data=data, json=data_json,
-                                   headers=headers, params=params, **kwds)
-        
-        if self.verbose:
-            if data_json is not None:
-                print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data_json, params))
-            else:
-                print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data, params))
-            print("        Headers: {}".format(headers))
+        __count = 0
+        while True:
+            section = self._retry_session(retries=retries, session=session, backoff_factor=backoff_factor,
+                                          status_forcelist=status_forcelist, method_whitelist=method_whitelist)
+            response = section.request(method=method, url=url, data=data, json=data_json,
+                                       headers=headers, params=params, **kwds)
 
-        if response.ok or errors=='ignore':
-            if downloadable:
-                return response
+            if self.verbose:
+                if data_json is not None:
+                    print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data_json, params))
+                else:
+                    print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data, params))
+                print("        Headers: {}".format(headers))
 
-            response.encoding = 'utf-8'
-            self.response = response
-            return json.loads(response.text)
-        else:
+            if response.ok or errors == 'ignore':
+                if downloadable:  #Used when downloading carol app file.
+                    return response
+
+                response.encoding = 'utf-8'
+                self.response = response
+                return json.loads(response.text)
+
+            elif response.reason == 'Unauthorized':
+                self.auth.get_access_token()  #It will refresh token if Unauthorized
+                __count+=1
+                if __count<5: #To avoid infinity loops
+                    continue
+                else:
+                    raise Exception('Too many retries to refresh token.\n',response.text)
             raise Exception(response.text)
 
     def issue_api_key(self):

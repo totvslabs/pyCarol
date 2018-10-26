@@ -1,7 +1,7 @@
 import json
 
 
-class EntityTemplateTypeIds(object):
+class DataModelTypeIds(object):
     def __init__(self, carol):
 
         self.carol = carol
@@ -19,7 +19,7 @@ class EntityTemplateTypeIds(object):
 
 
     def all(self, offset=0, page_size=100, sort_order='ASC', sort_by=None, print_status=True, save_file=False,
-               filename='data/EntityTemplateTypeIds.json'):
+               filename='data/DataModelTypeIds.json'):
 
         self.offset = offset
         self.page_size = page_size

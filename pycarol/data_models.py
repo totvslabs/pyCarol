@@ -1,6 +1,6 @@
 import json
 from .data_models_fields import DataModelFields
-from .entity_template_types import EntityTemplateTypeIds
+from .data_model_types import DataModelTypeIds
 from .verticals import Verticals
 import time
 
@@ -277,7 +277,7 @@ class CreateDataModel(object):
                                                           self.verticals_dict))
 
     def _check_entity_template_types(self):
-        self.template_type_dict = EntityTemplateTypeIds(self.carol).all()
+        self.template_type_dict = DataModelTypeIds(self.carol).all()
 
         if self.entity_template_type_ids is not None:
             for key, value in self.template_type_dict.items():
