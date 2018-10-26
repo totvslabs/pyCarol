@@ -1,4 +1,4 @@
-from ..entity_template_types import EntityTemplateTypeIds
+from ..data_model_types import DataModelTypeIds
 from ..verticals import Verticals
 from ..data_models import CreateDataModel
 
@@ -72,7 +72,7 @@ class DataModelGenerator(object):
             vertical_names = random.choice(self.verticals_dict.keys())
             vertical_ids = self.verticals_dict.get(vertical_names)
         if ((entity_template_type_ids is None) and (entity_template_type_names is None)):
-            self.entityTemplateTypesDict = EntityTemplateTypeIds(self.carol).all()
+            self.entityTemplateTypesDict = DataModelTypeIds(self.carol).all()
             entity_template_type_names = random.choice(self.entityTemplateTypesDict.keys())
             entity_template_type_ids = self.entityTemplateTypesDict.get(entity_template_type_names)
 
