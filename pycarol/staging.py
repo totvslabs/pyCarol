@@ -1,5 +1,6 @@
-from .schemaGenerator import *
+from .schema_generator import carolSchemaGenerator
 import pandas as pd
+import json
 from .query import Query
 from datetime import datetime
 

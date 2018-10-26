@@ -1,12 +1,12 @@
-from .tenants import Tenants
 from urllib3.util.retry import Retry
 import requests
 from requests.adapters import HTTPAdapter
 import json
 import os
 import os.path
-from pycarol.auth.ApiKeyAuth import ApiKeyAuth
-from pycarol.auth.PwdAuth import PwdAuth
+from .auth.ApiKeyAuth import ApiKeyAuth
+from .auth.PwdAuth import PwdAuth
+from .tenants import Tenants
 
 
 class Carol:
@@ -140,9 +140,28 @@ class Carol:
 
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json',retries=5,
                  session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524), downloadable=False,
-                 method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']),
+                 method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']), errors='raise',
                  **kwds):
-      
+        """
+        :param path:
+        :param method:
+        :param data:
+        :param auth:
+        :param params:
+        :param content_type:
+        :param retries:
+        :param session:
+        :param backoff_factor:
+        :param status_forcelist:
+        :param downloadable:
+        :param method_whitelist:
+        :param errors : {‘ignore’, ‘raise’}, default ‘raise’
+                If ‘raise’, then invalid request will raise an exception
+                If ‘ignore’, then invalid request will return the request response
+        :param kwds:
+        :return:
+        """
+
         url = 'https://{}.carol.ai:{}/api/{}'.format(self.domain, self.port, path)
 
         if method is None:
@@ -166,26 +185,35 @@ class Carol:
                 data_json = data
                 data = None
 
-        section = self._retry_session(retries=retries, session=session, backoff_factor=backoff_factor,
-                                      status_forcelist=status_forcelist, method_whitelist=method_whitelist)
-        response = section.request(method=method, url=url, data=data, json=data_json,
-                                   headers=headers, params=params, **kwds)
-        
-        if self.verbose:
-            if data_json is not None:
-                print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data_json, params))
-            else:
-                print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data, params))
-            print("        Headers: {}".format(headers))
+        __count = 0
+        while True:
+            section = self._retry_session(retries=retries, session=session, backoff_factor=backoff_factor,
+                                          status_forcelist=status_forcelist, method_whitelist=method_whitelist)
+            response = section.request(method=method, url=url, data=data, json=data_json,
+                                       headers=headers, params=params, **kwds)
 
-        if response.ok:
-            if downloadable:
-                return response
+            if self.verbose:
+                if data_json is not None:
+                    print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data_json, params))
+                else:
+                    print("Calling {} {}. Payload: {}. Params: {}".format(method, url, data, params))
+                print("        Headers: {}".format(headers))
 
-            response.encoding = 'utf-8'
-            self.response = response
-            return json.loads(response.text)
-        else:
+            if response.ok or errors == 'ignore':
+                if downloadable:  #Used when downloading carol app file.
+                    return response
+
+                response.encoding = 'utf-8'
+                self.response = response
+                return json.loads(response.text)
+
+            elif response.reason == 'Unauthorized':
+                self.auth.get_access_token()  #It will refresh token if Unauthorized
+                __count+=1
+                if __count<5: #To avoid infinity loops
+                    continue
+                else:
+                    raise Exception('Too many retries to refresh token.\n',response.text)
             raise Exception(response.text)
 
     def issue_api_key(self):
@@ -209,3 +237,18 @@ class Carol:
                              params = {"connectorId": connector_id})
 
         return resp
+
+    def copy_token(self):
+        import pyperclip
+        if isinstance(self.auth, PwdAuth):
+            token = self.auth._token.access_token
+            pyperclip.copy(token)
+            print("Copied auth token to clipboard: " + token)
+        elif isinstance(self.auth, ApiKeyAuth):
+            token = self.auth.api_key
+            pyperclip.copy(token)
+            print("Copied API Key to clipboard: " + token)
+        else:
+            raise Exception("Auth object not set. Can't fetch token.")
+
+
