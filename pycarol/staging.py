@@ -221,7 +221,7 @@ class Staging:
         return self.carol.call_api(url, method='POST', params=query_params)
 
 
-    def export_all(self, connector_id=None, connector_name=None, sync_staging=True, full_export=False, verbose=False ):
+    def export_all(self, connector_id=None, connector_name=None, sync_staging=True, full_export=False):
         """
 
         Export all Stagings from a connector to s3
@@ -249,9 +249,3 @@ class Staging:
         for staging in conn_stats.get(connector_id):
             resp = self.export(staging_name=staging, connector_id=connector_id,
                         sync_staging=sync_staging, full_export=full_export )
-
-            if verbose:
-                print(resp)
-
-
-        pass

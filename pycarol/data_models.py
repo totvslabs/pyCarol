@@ -1,8 +1,12 @@
 import json
 from .data_models_fields import DataModelFields
 from .data_model_types import DataModelTypeIds
+from .carolina import Carolina
 from .verticals import Verticals
+from .utils.importers import _build_url_parquet, _import_dask
 import time
+
+
 
 
 class DataModel:
@@ -43,6 +47,34 @@ class DataModel:
         self.entity_template_ = {resp['mdmName']: resp}
         self.fields_dict.update({resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
+
+
+    def fetch_parquet(self, dm_name, merge_records=True, backend='dask'):
+        """
+
+        :param dm_name: `str`
+            Data model name to be imported
+        :param merge_records: `bool`, default `True`
+            This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
+            one should keep only the last records.
+        :return:
+        """
+
+        assert backend=='dask' or backend=='pandas'
+
+        carolina = Carolina(self.carol)
+        carolina._init_if_needed()
+
+        access_id = carolina.ai_access_key_id
+        access_key = carolina.ai_secret_key
+
+        url = _build_url_parquet(tenant_id=self.carol.tenant['mdmId'], dm_name=dm_name )
+
+        if backend=='dask':
+            d =_import_dask(url=url, access_key=access_key, access_id=access_id, merge_records=merge_records )
+
+        return d
+
 
     def get_all(self, offset=0, page_size=-1, sort_order='ASC',
                 sort_by=None, print_status=False,
@@ -161,6 +193,8 @@ class DataModel:
             else:
                 f[field['mdmName']] = self._get_name_type_DMS(field['mdmFields'])
         return f
+
+
 
 
 class entIntType(object):
