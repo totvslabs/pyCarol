@@ -3,6 +3,7 @@ import pandas as pd
 import json
 from .query import Query
 from datetime import datetime
+from .connectors import Connectors
 
 
 class Staging:
@@ -178,5 +179,43 @@ class Staging:
         crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
         if all(name in _sample_json for name in crosswalk):
             pass
+
+
+    def export(self,staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False):
+        """
+
+        Export Staging to s3
+
+        This method will trigger or pause the export of the data in the staging to
+        s3.
+
+        :param staging_name: `str`, default `None`
+            Datamodel Name
+        :param sync_staging: `bool`, default `True`
+            Sync the data model
+        :param connector_name: `str`
+            Connector name
+        :param connector_id: `str`
+            Connector id
+        :param full_export: `bool`, default `True`
+            Do a resync of the data model
+        :return: None
+        """
+
+        if sync_staging:
+            status = 'RUNNING'
+        else:
+            status = 'PAUSED'
+
+        if connector_name:
+            conn = Connectors(self.carol).get_by_name(connector_name)['mdmId']
+            connector_id = self.get_by_name(connector_name)['mdmId']
+        else:
+            assert connector_id
+
+
+        query_params = {"status": status, "fullExport": full_export}
+        url = f'v2/staging/{connector_id}/{staging_name}/exporter'
+        return self.carol.call_api(url, method='POST', params=query_params)
 
 
