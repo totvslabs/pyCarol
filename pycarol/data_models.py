@@ -60,6 +60,8 @@ class DataModel:
         :return:
         """
 
+        #TODO: should we validate if the export is active?
+
         assert backend=='dask' or backend=='pandas'
 
         carolina = Carolina(self.carol)
@@ -67,11 +69,13 @@ class DataModel:
 
         access_id = carolina.ai_access_key_id
         access_key = carolina.ai_secret_key
-
+        aws_session_token =carolina.ai_access_token
         url = _build_url_parquet(tenant_id=self.carol.tenant['mdmId'], dm_name=dm_name )
 
         if backend=='dask':
-            d =_import_dask(url=url, access_key=access_key, access_id=access_id, merge_records=merge_records )
+            d =_import_dask(url=url, access_key=access_key,
+                            access_id=access_id, aws_session_token=aws_session_token,
+                            merge_records=merge_records )
 
         return d
 
