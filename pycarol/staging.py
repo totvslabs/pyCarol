@@ -180,6 +180,9 @@ class Staging:
         if all(name in _sample_json for name in crosswalk):
             pass
 
+    def _connector_by_name(self, connector_name):
+        return Connectors(self.carol).get_by_name(connector_name)['mdmId']
+
 
     def export(self,staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False):
         """
@@ -208,8 +211,7 @@ class Staging:
             status = 'PAUSED'
 
         if connector_name:
-            conn = Connectors(self.carol).get_by_name(connector_name)['mdmId']
-            connector_id = self.get_by_name(connector_name)['mdmId']
+            connector_id = self._connector_by_name(connector_name)
         else:
             assert connector_id
 
@@ -219,3 +221,37 @@ class Staging:
         return self.carol.call_api(url, method='POST', params=query_params)
 
 
+    def export_all(self, connector_id=None, connector_name=None, sync_staging=True, full_export=False, verbose=False ):
+        """
+
+        Export all Stagings from a connector to s3
+
+        This method will trigger or pause the export of all stagings  to
+        s3.
+
+        :param sync_staging: `bool`, default `True`
+            Sync the data model
+        :param connector_name: `str`
+            Connector name
+        :param connector_id: `str`
+            Connector id
+        :param full_export: `bool`, default `True`
+            Do a resync of the data model
+        :return: None
+        """
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            assert connector_id
+
+        conn_stats = Connectors(self.carol).stats(connector_id=connector_id)
+
+        for staging in conn_stats.get(connector_id):
+            resp = self.export(staging_name=staging, connector_id=connector_id,
+                        sync_staging=sync_staging, full_export=full_export )
+
+            if verbose:
+                print(resp)
+
+
+        pass
