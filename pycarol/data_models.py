@@ -49,7 +49,6 @@ class DataModel:
         return resp
 
 
-
     def fetch_parquet(self, dm_name, merge_records=True, backend='dask', n_jobs=1):
         """
 
@@ -67,8 +66,6 @@ class DataModel:
 
         carolina = Carolina(self.carol)
         carolina._init_if_needed()
-
-
 
         if backend=='dask':
             access_id = carolina.ai_access_key_id
