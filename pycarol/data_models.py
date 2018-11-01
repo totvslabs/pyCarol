@@ -4,7 +4,6 @@ from .data_model_types import DataModelTypeIds
 from .carolina import Carolina
 from .verticals import Verticals
 from .utils.importers import _import_dask, _import_pandas
-from . import __BUCKET_NAME__
 import time
 
 
@@ -51,7 +50,7 @@ class DataModel:
 
 
 
-    def fetch_parquet(self, dm_name, merge_records=True, backend='dask'):
+    def fetch_parquet(self, dm_name, merge_records=True, backend='dask', n_jobs=1):
         """
 
         :param dm_name: `str`
@@ -81,7 +80,8 @@ class DataModel:
 
         elif backend=='pandas':
             s3 = carolina.s3
-            _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'])
+            _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
+                           n_jobs=n_jobs)
 
 
         return d
