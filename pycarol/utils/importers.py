@@ -36,7 +36,8 @@ def _import_pandas(s3, dm_name, tenant_id, n_jobs=1, verbose=10 ):
             print(i)
             obj=s3.Object(__BUCKET_NAME__, file)
             buffer = io.BytesIO()
-            df_list.append(pd.read_parquet(obj.download_fileobj(buffer)))
+            obj.download_fileobj(buffer)
+            df_list.append(pd.read_parquet(buffer))
         return pd.concat(df_list, ignore_index=True)
 
     else:
