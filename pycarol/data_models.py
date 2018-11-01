@@ -3,7 +3,8 @@ from .data_models_fields import DataModelFields
 from .data_model_types import DataModelTypeIds
 from .carolina import Carolina
 from .verticals import Verticals
-from .utils.importers import _build_url_parquet, _import_dask
+from .utils.importers import _import_dask, _import_pandas
+from . import __BUCKET_NAME__
 import time
 
 
@@ -49,6 +50,7 @@ class DataModel:
         return resp
 
 
+
     def fetch_parquet(self, dm_name, merge_records=True, backend='dask'):
         """
 
@@ -67,15 +69,20 @@ class DataModel:
         carolina = Carolina(self.carol)
         carolina._init_if_needed()
 
-        access_id = carolina.ai_access_key_id
-        access_key = carolina.ai_secret_key
-        aws_session_token =carolina.ai_access_token
-        url = _build_url_parquet(tenant_id=self.carol.tenant['mdmId'], dm_name=dm_name )
+
 
         if backend=='dask':
-            d =_import_dask(url=url, access_key=access_key,
-                            access_id=access_id, aws_session_token=aws_session_token,
+            access_id = carolina.ai_access_key_id
+            access_key = carolina.ai_secret_key
+            aws_session_token = carolina.ai_access_token
+            d =_import_dask(dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
+                            access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
                             merge_records=merge_records )
+
+        elif backend=='pandas':
+            s3 = carolina.s3
+            _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'])
+
 
         return d
 
