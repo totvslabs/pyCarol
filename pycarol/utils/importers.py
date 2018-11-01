@@ -8,7 +8,7 @@ from joblib import Parallel, delayed
 def _get_file_paths(s3, tenant_id, dm_name):
     bucket = s3.Bucket(__BUCKET_NAME__)
     parq =list(bucket.objects.filter(Prefix=f'carol_export/{tenant_id}/{dm_name}/golden'))
-    return [i.key for i in bucket.objects.all() if i.key.endswith('.parquet')]
+    return [i.key for i in parq if i.key.endswith('.parquet')]
 
 
 def _build_url_parquet(tenant_id, dm_name):
@@ -32,10 +32,11 @@ def _import_pandas(s3, dm_name, tenant_id, n_jobs=1, verbose=10 ):
     file_paths = _get_file_paths(s3=s3, tenant_id=tenant_id, dm_name=dm_name)
     if n_jobs==1:
         df_list = []
-        for file in file_paths:
+        for i,file in enumerate(file_paths):
+            print(i)
             obj=s3.Object(__BUCKET_NAME__, file)
             buffer = io.BytesIO()
-            df_list.append(obj.download_fileobj(buffer))
+            df_list.append(pd.read_parquet(obj.download_fileobj(buffer)))
         return pd.concat(df_list, ignore_index=True)
 
     else:
