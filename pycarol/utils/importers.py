@@ -33,13 +33,13 @@ def _import_pandas(s3, dm_name, tenant_id, n_jobs=1, verbose=10 ):
     if n_jobs==1:
         df_list = []
         for file in file_paths:
-            s3.Object(__BUCKET_NAME__, file)
+            obj=s3.Object(__BUCKET_NAME__, file)
             buffer = io.BytesIO()
-            df_list.append(object.download_fileobj(buffer))
+            df_list.append(obj.download_fileobj(buffer))
         return pd.concat(df_list, ignore_index=True)
 
     else:
-        raise(NotImplementedError, 'need to think how to pickle the objects')
+        raise Exception('need to think how to pickle the objects')
         list_to_compute = Parallel(n_jobs=n_jobs,
                                    verbose=verbose)(delayed(_par_paquet)(
                                                             s3,file
