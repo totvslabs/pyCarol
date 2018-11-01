@@ -80,7 +80,7 @@ class DataModel:
 
         elif backend=='pandas':
             s3 = carolina.s3
-            _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
+            d = _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
                            n_jobs=n_jobs)
 
 
