@@ -28,17 +28,29 @@ def _import_dask(dm_name, tenant_id, access_id, access_key, aws_session_token, m
 
 def _import_pandas(s3, dm_name, tenant_id, n_jobs=1, verbose=10 ):
 
-    file_paths = _get_file_paths(s3=s3,tenant_id=tenant_id, dm_name=dm_name)
-    list_to_compute = Parallel(n_jobs=n_jobs,
-                               verbose=verbose)(delayed(_par_paquet)(
-                                                        s3.Object(__BUCKET_NAME__, file)
-                                                    )
-                                                for file in file_paths)
 
-    df = pd.concat(list_to_compute, ignore_index=True)
-    return df
+    file_paths = _get_file_paths(s3=s3, tenant_id=tenant_id, dm_name=dm_name)
+    if n_jobs==1:
+        df_list = []
+        for file in file_paths:
+            s3.Object(__BUCKET_NAME__, file)
+            buffer = io.BytesIO()
+            df_list.append(object.download_fileobj(buffer))
+        return pd.concat(df_list, ignore_index=True)
+
+    else:
+        NotImplementedError, 'need to think how to pickle the objects'
+        list_to_compute = Parallel(n_jobs=n_jobs,
+                                   verbose=verbose)(delayed(_par_paquet)(
+                                                            s3,file
+                                                        )
+                                                    for file in file_paths)
+
+        df = pd.concat(list_to_compute, ignore_index=True)
+        return df
 
 
-def _par_paquet(object):
+def _par_paquet(s3,file):
+    s3.Object(__BUCKET_NAME__, file)
     buffer = io.BytesIO()
     return object.download_fileobj(buffer)
