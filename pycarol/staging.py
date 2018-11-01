@@ -183,6 +183,12 @@ class Staging:
     def _connector_by_name(self, connector_name):
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
+    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None,):
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            assert connector_id
+
 
     def export(self,staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False):
         """
