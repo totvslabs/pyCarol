@@ -29,6 +29,7 @@ class Filter:
 
         def type(self, value):
             self._must_list.append(TYPE_FILTER(value=value))
+            return self
 
         def must(self, must):
             must.set_key_prefix(self.key_prefix)
