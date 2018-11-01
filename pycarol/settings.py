@@ -1,4 +1,4 @@
-from pycarol.utils import KeySingleton
+from pycarol.utils.utils import KeySingleton
 from pycarol.apps import Apps
 
 
