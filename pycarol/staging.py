@@ -3,6 +3,7 @@ import pandas as pd
 import json
 from .query import Query
 from datetime import datetime
+from .filter import Filter, RANGE_FILTER
 
 
 class Staging:
@@ -13,43 +14,23 @@ class Staging:
     def _delete(self,dm_name):
 
         now = datetime.now().isoformat(timespec='seconds')
-        json_query = {
-                      "mustList": [
-                        {
-                          "mdmFilterType": "TYPE_FILTER",
-                          "mdmValue": dm_name+'Golden'
-                        },
-                        {
-                          "mdmFilterType": "RANGE_FILTER",
-                          "mdmKey": "mdmLastUpdated",
-                          "mdmValue": [
-                            None,
-                            now
-                          ]
-                        }
-                      ]
-                    }
+
+        json_query = Filter.Builder()\
+            .type(dm_name + "Golden")\
+            .must(RANGE_FILTER("mdmLastUpdated", [None, now]))\
+            .build().to_json()
+
+
         try:
             Query(self.carol).delete(json_query)
         except:
             pass
 
-        json_query = {
-                      "mustList": [
-                        {
-                          "mdmFilterType": "TYPE_FILTER",
-                          "mdmValue": dm_name+'Rejected'
-                        },
-                        {
-                          "mdmFilterType": "RANGE_FILTER",
-                          "mdmKey": "mdmLastUpdated",
-                          "mdmValue": [
-                            None,
-                            now
-                          ]
-                        }
-                      ]
-                    }
+        json_query = Filter.Builder()\
+            .type(dm_name + "Rejected")\
+            .must(RANGE_FILTER("mdmLastUpdated", [None, now]))\
+            .build().to_json()
+
         try:
             Query(self.carol,index_type='STAGING').delete(json_query)
         except:
