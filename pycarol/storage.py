@@ -104,6 +104,22 @@ class Storage(metaclass=KeySingleton):
         else:
             return None
 
+    def exists(self, name):
+        self._init_if_needed()
+        s3_file_name = 'storage/{}/{}/files/{}'.format(self.carol.tenant['mdmId'], self.carol.app_name, name)
+
+        obj = self.bucket.Object(s3_file_name)
+        if obj is None:
+            return False
+
+        try:
+            calendar.timegm(obj.last_modified.timetuple())
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == "404":
+                return False
+
+        return True
+
     def delete(self, name):
         self._init_if_needed()
         s3_file_name = 'storage/{}/{}/files/{}'.format(self.carol.tenant['mdmId'], self.carol.app_name, name)
