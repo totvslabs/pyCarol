@@ -11,7 +11,7 @@ def _get_file_paths_golden(s3, tenant_id, dm_name):
     return [i.key for i in parq if i.key.endswith('.parquet')]
 
 
-def _get_file_paths_staging(s3, tenant_id, dm_name):
+def _get_file_paths_staging(s3, tenant_id, connector_id,staging_name):
     bucket = s3.Bucket(__BUCKET_NAME__)
     parq =list(bucket.objects.filter(Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/staging'))
     return [i.key for i in parq if i.key.endswith('.parquet')]
@@ -43,10 +43,14 @@ def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_reco
     return d.compute()
 
 
-def _import_pandas(s3, dm_name, tenant_id, n_jobs=1, verbose=10 ):
+def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None,
+                   staging_name=None, n_jobs=1, verbose=10, golden=False):
 
-
-    file_paths = _get_file_paths_golden(s3=s3, tenant_id=tenant_id, dm_name=dm_name)
+    if golden:
+        file_paths = _get_file_paths_golden(s3=s3, tenant_id=tenant_id, dm_name=dm_name)
+    else:
+        file_paths = _get_file_paths_staging(s3=s3, tenant_id=tenant_id, staging_name=staging_name,
+                                             connector_id=connector_id)
     if n_jobs==1:
         df_list = []
         for i,file in enumerate(file_paths):
