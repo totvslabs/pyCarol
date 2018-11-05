@@ -8,5 +8,5 @@ setup(
     name='pycarol',
     version='0.1',
     packages=packages,
-    maintainer='TOTVS Labs',
+    maintainer='TOTVS Labs'
 )
