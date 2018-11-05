@@ -4,6 +4,8 @@ import json
 from .query import Query
 from datetime import datetime
 from .connectors import Connectors
+from .carolina import Carolina
+from .utils.importers import _import_dask, _import_pandas
 
 
 class Staging:
@@ -183,12 +185,25 @@ class Staging:
     def _connector_by_name(self, connector_name):
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
-    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None,):
+    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',
+                      merge_records=True):
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
         else:
             assert connector_id
 
+        assert backend=='dask' or backend=='pandas'
+
+        carolina = Carolina(self.carol)
+        carolina._init_if_needed()
+        if backend=='dask':
+            access_id = carolina.ai_access_key_id
+            access_key = carolina.ai_secret_key
+            aws_session_token = carolina.ai_access_token
+
+            d = _import_dask(tenant_id=self.carol.tenant['mdmId'],connector_id=connector_id, staging_name=staging_name,
+                             access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
+                             merge_records=merge_records, golden=False)
 
     def export(self,staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False):
         """

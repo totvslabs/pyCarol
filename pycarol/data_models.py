@@ -73,7 +73,7 @@ class DataModel:
             aws_session_token = carolina.ai_access_token
             d =_import_dask(dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
                             access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
-                            merge_records=merge_records )
+                            merge_records=merge_records, golden=True)
 
         elif backend=='pandas':
             s3 = carolina.s3
