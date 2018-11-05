@@ -6,6 +6,8 @@ import dask
 import pandas as pd
 from .connectors import Connectors
 from .named_query import NamedQuery
+from .filter import Filter, MAXIMUM, MINIMUM
+from .filter import RANGE_FILTER as RF
 
 class Query:
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=100, sort_order='ASC', sort_by=None,
@@ -332,7 +334,7 @@ class Query:
     def all(self, dm_name):
         if not dm_name.endswith('Golden'):
             dm_name = dm_name + 'Golden'
-        self.json_query = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": dm_name}]}
+        self.json_query = Filter.Builder().type(dm_name).build().to_json()
         self.index_type = 'MASTER'
         return self
 
@@ -374,9 +376,10 @@ class ParQuery:
         return step
 
     def _get_min_max(self):
-        j = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": f"{self.datamodel_name}"}],
-             "aggregationList": [{"type": "MINIMUM", "name": "MINIMUM", "params": [f"{self.mdmKey}"]},
-                                 {"type": "MAXIMUM", "name": "MAXIMUM", "params": [f"{self.mdmKey}"]}]}
+        j = Filter.Builder()\
+            .type(self.datamodel_name)\
+            .aggregation_list([MINIMUM(name='MINIMUM',params= self.mdmKey), MAXIMUM(name='MAXIMUM', params=self.mdmKey)])\
+            .build().to_json()
 
         query = Query(self.carol, index_type=self.index_type, only_hits=False, get_aggs=True, save_results=False,
                       print_status=True, page_size=0).query(j).go()
@@ -479,20 +482,10 @@ class ParQuery:
 
 def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None, index_type='MASTER',fields=None, mdmKey=None,
                only_hits=True, return_df=True):
-    json_query = {
-        "mustList": [
-            {
-                "mdmFilterType": "TYPE_FILTER",
-                "mdmValue": datamodel_name
-            },
-            {
-                "mdmFilterType": "RANGE_FILTER",
-                "mdmKey": f"{mdmKey}",
-                "mdmValue": RANGE_FILTER
-            }
-        ]
-
-    }
+    json_query = Filter.Builder()\
+        .type(datamodel_name)\
+        .must(RF(key=mdmKey, value=RANGE_FILTER))\
+        .build().to_json()
 
     query = Query(login, page_size=page_size, save_results=False, print_status=False, index_type=index_type,
                   only_hits=only_hits,
