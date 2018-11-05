@@ -1,6 +1,6 @@
 from pycarol.query import *
 import pandas as pd
-from pycarol.utils import KeySingleton
+from pycarol.utils.utils import KeySingleton
 from pycarol.tasks import Tasks
 
 

@@ -5,7 +5,7 @@ import gzip
 import pandas as pd
 from multiprocessing import Process
 from pycarol.carol_cloner import Cloner
-from pycarol.utils import KeySingleton
+from pycarol.utils.utils import KeySingleton
 from pycarol.carolina import Carolina
 
 
@@ -20,7 +20,7 @@ class Storage(metaclass=KeySingleton):
             return
 
         self.s3 = Carolina(self.carol).get_s3()
-        self.bucket = self.s3.Bucket("carolina-dev-ca-central-1")
+        self.bucket = self.s3.Bucket("carol-internal")
         if not os.path.exists('/tmp/carolina/cache'):
             os.makedirs('/tmp/carolina/cache')
 
@@ -30,9 +30,9 @@ class Storage(metaclass=KeySingleton):
 
         return p
 
-    def save(self, name, obj, parquet=False):
+    def save(self, name, obj, parquet=False, cache=True):
         self._init_if_needed()
-        s3_file_name = '{}/files/{}/{}'.format(self.carol.tenant['mdmId'], self.carol.app_name, name)
+        s3_file_name = 'storage/{}/{}/files/{}'.format(self.carol.tenant['mdmId'], self.carol.app_name, name)
         local_file_name = '/tmp/carolina/cache/' + s3_file_name.replace("/", "-")
 
         if parquet:
@@ -48,7 +48,7 @@ class Storage(metaclass=KeySingleton):
 
     def load(self, name, parquet=False):
         self._init_if_needed()
-        s3_file_name = '{}/files/{}/{}'.format(self.carol.tenant['mdmId'], self.carol.app_name, name)
+        s3_file_name = 'storage/{}/{}/files/{}'.format(self.carol.tenant['mdmId'], self.carol.app_name, name)
         local_file_name = '/tmp/carolina/cache/' + s3_file_name.replace("/", "-")
 
         obj = self.bucket.Object(s3_file_name)

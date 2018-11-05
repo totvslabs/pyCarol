@@ -27,6 +27,10 @@ class Filter:
             self._aggregation_list = []
             self.key_prefix = key_prefix
 
+        def type(self, value):
+            self._must_list.append(TYPE_FILTER(value=value))
+            return self
+
         def must(self, must):
             must.set_key_prefix(self.key_prefix)
             self._must_list.append(must)
