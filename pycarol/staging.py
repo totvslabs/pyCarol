@@ -204,6 +204,7 @@ class Staging:
             d = _import_dask(tenant_id=self.carol.tenant['mdmId'],connector_id=connector_id, staging_name=staging_name,
                              access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
                              merge_records=merge_records, golden=False)
+        return d
 
     def export(self,staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False):
         """
