@@ -294,63 +294,63 @@ class Aggregation:
         return json
 
 class TERM(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='term', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.TERM, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class TERMS(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='terms', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.TERMS, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class NESTED(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='nested', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.NESTED, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class FILTER(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None, query_param=None):
+    def __init__(self, name='filter', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None, query_param=None):
         super().__init__(agg_type= AGG.FILTER, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order, query_param=query_param)
 
 class MINIMUM(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='minimum', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.MINIMUM, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class MAXIMUM(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='maximum', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.MAXIMUM, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class AVERAGE(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='average', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.AVERAGE, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class COUNT(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='count', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.COUNT, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class SUM(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='sum', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.SUM, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class STATS(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='stats', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.STATS, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class EXTENDED_STATS(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='extendedStats', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.EXTENDED_STATS, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class DATE_HISTOGRAM(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='dateHistogram', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.DATE_HISTOGRAM, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class HISTOGRAM(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='histogram', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.HISTOGRAM, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class RANGE(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='range', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.RANGE, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class CARDINALITY(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='cardinality', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.CARDINALITY, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class AGG(Enum):
