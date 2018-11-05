@@ -378,7 +378,7 @@ class ParQuery:
     def _get_min_max(self):
         j = Filter.Builder()\
             .type(self.datamodel_name)\
-            .aggregation_list([MINIMUM(self.mdmKey, self.mdmKey), MAXIMUM(self.mdmKey, self.mdmKey)])\
+            .aggregation_list([MINIMUM(name='MINIMUM',params= self.mdmKey), MAXIMUM(name='MAXIMUM', params=self.mdmKey)])\
             .build().to_json()
 
         query = Query(self.carol, index_type=self.index_type, only_hits=False, get_aggs=True, save_results=False,
