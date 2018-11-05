@@ -1,11 +1,11 @@
-from pycarol.utils import KeySingleton
+from .utils import KeySingleton
 import redis
 
 
 class Cache(metaclass=KeySingleton):
     def __init__(self, carol):
         self.carol = carol
-        self.r = redis.StrictRedis(host='104.196.240.161', port=6379, db=0)
+        self.r = redis.StrictRedis(host='127.0.0.1', port=6379, db=0)
 
     def set(self, key, val):
         key = '{}-{}-{}'.format(self.carol.tenant['mdmId'], self.carol.app_name, key)
