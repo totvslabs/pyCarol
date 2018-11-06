@@ -31,7 +31,6 @@ class Query:
         :param sort_order: `str`, default 'ASC'
             Sort ascending ('ASC') vs. descending ('DESC').
         :param sort_by: `str`,  default `None`
-            Name to sort by.
         :param scrollable: `bool`, default True
             Use scroll for pagination. This should be the main way of doing, unless you are querying few data.
         :param index_type: `str`, default 'MASTER'
@@ -435,7 +434,7 @@ class ParQuery:
             raise KeyError
 
         if self.return_df:
-            return pd.concat(list_to_compute,ignore_index=True)
+            return pd.concat(list_to_compute,ignore_index=True,sort=True)
         list_to_compute = list(itertools.chain(*list_to_compute))
         return list_to_compute
 
