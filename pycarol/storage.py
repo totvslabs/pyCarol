@@ -52,9 +52,13 @@ class Storage(metaclass=KeySingleton):
                 return
             else:
                 joblib.dump(obj, local_file_name)
-        else:
+        elif format == 'pickle':
             with gzip.open(local_file_name, 'wb') as f:
                 pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+        elif format == 'file':
+            local_file_name = obj
+        else:
+            raise ValueError("Supported formats are pickle, joblib or file")
 
         self.bucket.upload_file(local_file_name, s3_file_name)
         os.utime(local_file_name, None)
@@ -99,8 +103,13 @@ class Storage(metaclass=KeySingleton):
             elif format == 'joblib':
                 import joblib
                 return joblib.load(local_file_name)
-            with gzip.open(local_file_name, 'rb') as f:
-                return pickle.load(f)
+            elif format == 'pickle':
+                with gzip.open(local_file_name, 'rb') as f:
+                    return pickle.load(f)
+            elif format == 'file':
+                return local_file_name
+            else:
+                raise ValueError("Supported formats are pickle, joblib or file")
         else:
             return None
 
