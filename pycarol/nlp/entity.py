@@ -30,3 +30,4 @@ class Entity:
         self._json_data.pop('mdmId',None)
         self._json_data.pop('mdmLastUpdated',None)
         self._json_data.pop('mdmTenantId',None)
+
