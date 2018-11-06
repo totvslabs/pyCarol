@@ -4,6 +4,9 @@ from .data_model_types import DataModelTypeIds
 from .carolina import Carolina
 from .verticals import Verticals
 from .utils.importers import _import_dask, _import_pandas
+from .filter import TYPE_FILTER, Filter
+from .query import Query
+import itertools
 import time
 
 
@@ -63,6 +66,11 @@ class DataModel:
         #TODO: should we validate if the export is active?
 
         assert backend=='dask' or backend=='pandas'
+
+        #validate export
+        dms = self._get_dm_export_stats()
+        if not dms.get(dm_name):
+            raise Exception(f'"{dm_name}" is not set to export data, \n use `dm = DataModel(login).export(dm_name="{dm_name}", sync_dm=True) to activate')
 
         carolina = Carolina(self.carol)
         carolina._init_if_needed()
@@ -201,6 +209,33 @@ class DataModel:
             else:
                 f[field['mdmName']] = self._get_name_type_DMS(field['mdmFields'])
         return f
+
+    def _get_dm_export_stats(self):
+        """
+        Get export status for data models
+
+        :return: `dict`
+            dict with the information of which data model is exporting its data.
+        """
+
+        json_q = Filter.Builder(key_prefix="") \
+            .must(TYPE_FILTER(value="mdmEntityTemplateExport")).build().to_json()
+
+        query = Query(self.carol, index_type='CONFIG', page_size=1000, only_hits=False)
+        query.query(json_q, ).go()
+
+        dm_results = query.results
+        dm_results = [elem.get('hits', elem) for elem in dm_results
+                      if elem.get('hits', None)]
+        dm_results = list(itertools.chain(*dm_results))
+
+        dm = DataModel(self.carol).get_all().template_data
+        dm = {i['mdmId']: i['mdmName'] for i in dm}
+
+        if dm_results is not None:
+            return {dm[i['mdmEntityTemplateId']]: i for i in dm_results}
+
+        return dm_results
 
 
 

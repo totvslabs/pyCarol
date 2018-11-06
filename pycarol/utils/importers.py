@@ -59,6 +59,8 @@ def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None,
             buffer = io.BytesIO()
             obj.download_fileobj(buffer)
             df_list.append(pd.read_parquet(buffer))
+        if not df_list:
+            return []
         return pd.concat(df_list, ignore_index=True)
 
     else:

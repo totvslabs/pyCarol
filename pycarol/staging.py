@@ -6,7 +6,9 @@ from datetime import datetime
 from .connectors import Connectors
 from .carolina import Carolina
 from .utils.importers import _import_dask, _import_pandas
-from .filter import Filter, RANGE_FILTER
+from .filter import Filter, RANGE_FILTER, TYPE_FILTER
+import itertools
+
 
 
 class Staging:
@@ -175,6 +177,11 @@ class Staging:
 
         assert backend=='dask' or backend=='pandas'
 
+        #validate export
+        stags = self._get_staging_export_stats()
+        if not stags.get(staging_name):
+            raise Exception(f'"{staging_name}" is not set to export data, \n use `dm = Staging(login).export(staging_name="{staging_name}",connector_id="{connector_id}", sync_staging=True) to activate')
+
         carolina = Carolina(self.carol)
         carolina._init_if_needed()
         if backend=='dask':
@@ -258,3 +265,24 @@ class Staging:
         for staging in conn_stats.get(connector_id):
             resp = self.export(staging_name=staging, connector_id=connector_id,
                         sync_staging=sync_staging, full_export=full_export )
+
+    def _get_staging_export_stats(self):
+        """
+        Get export status for data models
+
+        :return: `dict`
+            dict with the information of which staging table is exporting its data.
+        """
+
+        query = Query(self.carol, index_type='CONFIG', only_hits=False)
+
+        json_q = Filter.Builder(key_prefix="") \
+            .must(TYPE_FILTER(value="mdmStagingDataExport")).build().to_json()
+
+        query.query(json_q, ).go()
+        staging_results = query.results
+        staging_results = [elem.get('hits', elem) for elem in staging_results
+                           if elem.get('hits', None)]
+        staging_results = list(itertools.chain(*staging_results))
+        if staging_results is not None:
+            return {i['mdmStagingType']: i for i in staging_results}
