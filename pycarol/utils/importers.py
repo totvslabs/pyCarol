@@ -24,7 +24,7 @@ def _build_url_parquet_staging(tenant_id, staging_name, connector_id):
 
 
 def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_records=False,
-                 dm_name=None,golden=False,
+                 dm_name=None,golden=False,return_dask_graph=False,
                  connector_id=None, staging_name=None):
 
     #TODO: merge_records
@@ -40,7 +40,10 @@ def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_reco
                                               "secret": access_key,
                                               "token":aws_session_token})
 
-    return d.compute()
+    if return_dask_graph:
+        return d
+    else:
+        return d.compute()
 
 
 def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None,

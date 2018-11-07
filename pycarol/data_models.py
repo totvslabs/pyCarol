@@ -52,7 +52,7 @@ class DataModel:
         return resp
 
 
-    def fetch_parquet(self, dm_name, merge_records=True, backend='dask', n_jobs=1):
+    def fetch_parquet(self, dm_name, merge_records=True, backend='dask', n_jobs=1, return_dask_graph=False):
         """
 
         :param dm_name: `str`
@@ -60,12 +60,19 @@ class DataModel:
         :param merge_records: `bool`, default `True`
             This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
             one should keep only the last records.
+        :param backend: ['dask','pandas'], default `dask`
+            if to use either dask or pandas to fetch the data
+        :param n_jobs: `int`, default `1`
+            To be used with `backend='pandas'`. It is the number of threads to load the data from carol export.
+        :param return_dask_graph: `bool`, default `false`
+            If to return the dask graph or the dataframe.
         :return:
         """
 
-        #TODO: should we validate if the export is active?
-
         assert backend=='dask' or backend=='pandas'
+
+        if return_dask_graph:
+            assert backend == 'dask'
 
         #validate export
         dms = self._get_dm_export_stats()
@@ -81,7 +88,7 @@ class DataModel:
             aws_session_token = carolina.ai_access_token
             d =_import_dask(dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
                             access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
-                            merge_records=merge_records, golden=True)
+                            merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph)
 
         elif backend=='pandas':
             s3 = carolina.s3
