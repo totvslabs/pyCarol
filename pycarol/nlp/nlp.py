@@ -209,9 +209,9 @@ class NLP:
             url_filter = "v1/ai/skillEntity"
         else:
             url_filter = "v1/ai/skill"
-        obj._update_json()
+        obj._update_json_data()
         try:
-            response = self.carol.call_api(url_filter, method = 'POST', data=obj._json)
+            response = self.carol.call_api(url_filter, method = 'POST', data=obj._json_data)
             if print_success:
                 return response
         except Exception as e:
@@ -281,8 +281,8 @@ class NLP:
         else:
             url_filter = "v1/ai/skill/name/{}"
         url_filter = url_filter.format(obj.name)
-        obj._update_json()
-        response = self.carol.call_api(url_filter, method = 'PUT', data=obj._json)
+        obj._update_json_data()
+        response = self.carol.call_api(url_filter, method = 'PUT', data=obj._json_data)
         return response
     
     # DELETE
