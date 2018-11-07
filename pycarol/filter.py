@@ -104,10 +104,11 @@ class FilterType:
         self.values_query = values_query
 
     def set_key_prefix(self, key_prefix):
-        if self.key:
-            self.key = key_prefix + '.' + self.key
-        if self.values_field:
-            self.values_field = key_prefix + '.' + self.values_field
+        if key_prefix:
+            if self.key:
+                self.key = key_prefix + '.' + self.key
+            if self.values_field:
+                self.values_field = key_prefix + '.' + self.values_field
 
     def to_json(self):
         json = {}
