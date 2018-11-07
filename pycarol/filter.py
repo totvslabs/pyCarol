@@ -104,6 +104,7 @@ class FilterType:
         self.values_query = values_query
 
     def set_key_prefix(self, key_prefix):
+        #only add if not none
         if key_prefix:
             if self.key:
                 self.key = key_prefix + '.' + self.key
