@@ -169,13 +169,16 @@ class Staging:
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',
-                      merge_records=True, n_jobs=1):
+                      merge_records=True, n_jobs=1, return_dask_graph=False):
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
         else:
             assert connector_id
 
         assert backend=='dask' or backend=='pandas'
+
+        if return_dask_graph:
+            assert backend == 'dask'
 
         #validate export
         stags = self._get_staging_export_stats()
@@ -191,7 +194,7 @@ class Staging:
 
             d = _import_dask(tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, staging_name=staging_name,
                              access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
-                             merge_records=merge_records, golden=False)
+                             merge_records=merge_records, golden=False,return_dask_graph=return_dask_graph)
             return d
         elif backend=='pandas':
             s3 = carolina.s3
