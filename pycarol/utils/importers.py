@@ -25,7 +25,7 @@ def _build_url_parquet_staging(tenant_id, staging_name, connector_id):
 
 def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_records=False,
                  dm_name=None,golden=False,return_dask_graph=False,
-                 connector_id=None, staging_name=None):
+                 connector_id=None, staging_name=None, columns=None):
 
     #TODO: merge_records
     if golden:
@@ -38,7 +38,8 @@ def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_reco
     url = url + '*.parquet'
     d = dd.read_parquet(url, storage_options={"key": access_id,
                                               "secret": access_key,
-                                              "token":aws_session_token})
+                                              "token":aws_session_token},
+                        columns=columns)
 
     if return_dask_graph:
         return d
