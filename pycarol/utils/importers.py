@@ -5,6 +5,10 @@ import io
 from joblib import Parallel, delayed
 
 
+__STAGING_FIELDS = ['mdmCounterForEntity','mdmId']
+__DM_FIELDS = ['mdmCounterForEntity','mdmId']
+
+
 def _get_file_paths_golden(s3, tenant_id, dm_name):
     bucket = s3.Bucket(__BUCKET_NAME__)
     parq =list(bucket.objects.filter(Prefix=f'carol_export/{tenant_id}/{dm_name}/golden'))
@@ -27,6 +31,10 @@ def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_reco
                  dm_name=None,golden=False,return_dask_graph=False,
                  connector_id=None, staging_name=None, columns=None):
 
+    if columns:
+        columns +=__STAGING_FIELDS
+        columns = list(set(columns))
+
     #TODO: merge_records
     if golden:
         url = _build_url_parquet_golden(tenant_id=tenant_id,
@@ -47,8 +55,12 @@ def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_reco
         return d.compute()
 
 
-def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None,
+def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
                    staging_name=None, n_jobs=1, verbose=10, golden=False):
+
+    if columns:
+        columns +=__DM_FIELDS
+        columns = list(set(columns))
 
     if golden:
         file_paths = _get_file_paths_golden(s3=s3, tenant_id=tenant_id, dm_name=dm_name)
@@ -62,7 +74,7 @@ def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None,
             obj=s3.Object(__BUCKET_NAME__, file)
             buffer = io.BytesIO()
             obj.download_fileobj(buffer)
-            df_list.append(pd.read_parquet(buffer))
+            df_list.append(pd.read_parquet(buffer,columns=columns))
         if not df_list:
             return []
         return pd.concat(df_list, ignore_index=True)
