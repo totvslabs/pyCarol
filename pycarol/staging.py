@@ -166,10 +166,41 @@ class Staging:
             pass
 
     def _connector_by_name(self, connector_name):
+        """
+        Get connector id given connector name
+
+        :param connector_name: `str`
+            Connector name
+        :return: `str`
+            Connector Id
+        """
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',
                       merge_records=True, n_jobs=1, return_dask_graph=False, columns=None):
+        """
+
+        Fetch parquet from a staging table.
+
+        :param staging_name: `str`,
+            Staging name to fetch parquet of
+        :param connector_id: `str`, default `None`
+            Connector id to fetch parquet of
+        :param connector_name: `str`, default `None`
+            Connector name to fetch parquet of
+        :param backend: ['dask','pandas'], default `dask`
+            if to use either dask or pandas to fetch the data
+        :param merge_records: `bool`, default `True`
+            This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
+            one should keep only the last records.
+        :param n_jobs: `int`, default `1`
+            To be used with `backend='pandas'`. It is the number of threads to load the data from carol export.
+        :param return_dask_graph: `bool`, default `false`
+            If to return the dask graph or the dataframe.
+        :param columns: `list`, default `None`
+            List of columns to fetch.
+        :return:
+        """
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
         else:

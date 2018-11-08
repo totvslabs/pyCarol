@@ -10,12 +10,37 @@ __DM_FIELDS = ['mdmCounterForEntity','mdmId']
 
 
 def _get_file_paths_golden(s3, tenant_id, dm_name):
+
+    """
+
+    Get all files to be imported from s3
+
+    :param s3: `Boto3 Object`
+        OBject to handle s3 calls
+    :param tenant_id: `str`
+        Tenant ID
+    :param dm_name: `str`
+        Data model name
+    :return: `list`
+        List of paths of files to be imported.
+    """
     bucket = s3.Bucket(__BUCKET_NAME__)
     parq =list(bucket.objects.filter(Prefix=f'carol_export/{tenant_id}/{dm_name}/golden'))
     return [i.key for i in parq if i.key.endswith('.parquet')]
 
 
 def _get_file_paths_staging(s3, tenant_id, connector_id,staging_name):
+    """
+
+    :param s3: `Boto3 Object`
+        OBject to handle s3 calls
+    :param tenant_id:
+    :param connector_id:
+    :param staging_name: `str`,
+            Staging name
+    :return: `list`
+        List of paths of files to be imported.
+    """
     bucket = s3.Bucket(__BUCKET_NAME__)
     parq =list(bucket.objects.filter(Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/staging'))
     return [i.key for i in parq if i.key.endswith('.parquet')]
