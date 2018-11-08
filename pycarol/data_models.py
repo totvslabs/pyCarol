@@ -52,7 +52,7 @@ class DataModel:
         return resp
 
 
-    def fetch_parquet(self, dm_name, merge_records=True, backend='dask', n_jobs=1, return_dask_graph=False):
+    def fetch_parquet(self, dm_name, merge_records=True, backend='dask', n_jobs=1, return_dask_graph=False, columns=None):
         """
 
         :param dm_name: `str`
@@ -66,6 +66,8 @@ class DataModel:
             To be used with `backend='pandas'`. It is the number of threads to load the data from carol export.
         :param return_dask_graph: `bool`, default `false`
             If to return the dask graph or the dataframe.
+        :param columns: `list`, default `None`
+            List of columns to fetch.
         :return:
         """
 
@@ -88,12 +90,12 @@ class DataModel:
             aws_session_token = carolina.ai_access_token
             d =_import_dask(dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
                             access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
-                            merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph)
+                            merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph, columns=columns)
 
         elif backend=='pandas':
             s3 = carolina.s3
             d = _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
-                           n_jobs=n_jobs, golden=True)
+                               n_jobs=n_jobs, golden=True, columns=columns)
 
 
         return d
