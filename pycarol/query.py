@@ -444,7 +444,7 @@ class ParQuery:
             raise KeyError
 
         if self.return_df:
-            return pd.concat(list_to_compute,ignore_index=True)
+            return pd.concat(list_to_compute, ignore_index=True, sort=True)
         list_to_compute = list(itertools.chain(*list_to_compute))
         return list_to_compute
 
