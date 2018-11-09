@@ -1,7 +1,7 @@
 import json
 from .data_models_fields import DataModelFields
 from .data_model_types import DataModelTypeIds
-from .verticals import Verticals
+from pycarol.verticals import Verticals
 import time
 
 

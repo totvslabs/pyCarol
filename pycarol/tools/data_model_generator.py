@@ -1,9 +1,8 @@
-from ..data_model_types import DataModelTypeIds
+from pycarol.datamodel.data_model_types import DataModelTypeIds
 from ..verticals import Verticals
-from ..data_models import CreateDataModel
+from pycarol.datamodel.data_models import CreateDataModel
 
 import random
-import json
 
 
 class DataModelGenerator(object):
