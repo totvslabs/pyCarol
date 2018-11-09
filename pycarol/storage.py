@@ -8,6 +8,7 @@ from pycarol.carol_cloner import Cloner
 from pycarol.utils.singleton import KeySingleton
 from pycarol.carolina import Carolina
 import botocore
+from . import __BUCKET_NAME__
 
 class Storage(metaclass=KeySingleton):
     def __init__(self, carol):
@@ -20,7 +21,7 @@ class Storage(metaclass=KeySingleton):
             return
 
         self.s3 = Carolina(self.carol).get_s3()
-        self.bucket = self.s3.Bucket("carol-internal")
+        self.bucket = self.s3.Bucket(__BUCKET_NAME__)
         if not os.path.exists('/tmp/carolina/cache'):
             os.makedirs('/tmp/carolina/cache')
 
@@ -32,7 +33,7 @@ class Storage(metaclass=KeySingleton):
 
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
         self._init_if_needed()
-        s3_file_name = 'storage/{}/{}/files/{}'.format(self.carol.tenant['mdmId'], self.carol.app_name, name)
+        s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
         local_file_name = '/tmp/carolina/cache/' + s3_file_name.replace("/", "-")
 
         if parquet:
@@ -64,7 +65,7 @@ class Storage(metaclass=KeySingleton):
 
     def load(self, name, format='pickle', parquet=False, cache=True):
         self._init_if_needed()
-        s3_file_name = 'storage/{}/{}/files/{}'.format(self.carol.tenant['mdmId'], self.carol.app_name, name)
+        s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
         local_file_name = '/tmp/carolina/cache/' + s3_file_name.replace("/", "-")
 
         obj = self.bucket.Object(s3_file_name)
