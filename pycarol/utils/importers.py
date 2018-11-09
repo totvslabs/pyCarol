@@ -96,7 +96,6 @@ def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
     if n_jobs==1:
         df_list = []
         for i,file in tqdm(enumerate(file_paths)):
-            print(i)
             obj=s3.Object(__BUCKET_NAME__, file)
             buffer = io.BytesIO()
             obj.download_fileobj(buffer)
