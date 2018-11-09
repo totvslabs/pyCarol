@@ -1,4 +1,4 @@
-from .utils import KeySingleton
+from .utils.singleton import KeySingleton
 import redis
 
 
