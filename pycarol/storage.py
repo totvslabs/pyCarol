@@ -8,7 +8,7 @@ from pycarol.carol_cloner import Cloner
 from pycarol.utils.singleton import KeySingleton
 from pycarol.carolina import Carolina
 import botocore
-from . import __BUCKET_NAME__
+from . import __BUCKET_NAME__, __TEMP_STORAGE__
 
 class Storage(metaclass=KeySingleton):
     def __init__(self, carol):
@@ -22,8 +22,8 @@ class Storage(metaclass=KeySingleton):
 
         self.s3 = Carolina(self.carol).get_s3()
         self.bucket = self.s3.Bucket(__BUCKET_NAME__)
-        if not os.path.exists('/tmp/carolina/cache'):
-            os.makedirs('/tmp/carolina/cache')
+        if not os.path.exists(__TEMP_STORAGE__):
+            os.makedirs(__TEMP_STORAGE__)
 
     def save_async(self, name, obj):
         p = Process(target=_save_async, args=(Cloner(self.carol), name, obj))
@@ -34,7 +34,7 @@ class Storage(metaclass=KeySingleton):
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
         self._init_if_needed()
         s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
-        local_file_name = '/tmp/carolina/cache/' + s3_file_name.replace("/", "-")
+        local_file_name = os.path.join(__TEMP_STORAGE__,s3_file_name.replace("/", "-"))
 
         if parquet:
             if not isinstance(obj, pd.DataFrame):
@@ -66,7 +66,7 @@ class Storage(metaclass=KeySingleton):
     def load(self, name, format='pickle', parquet=False, cache=True):
         self._init_if_needed()
         s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
-        local_file_name = '/tmp/carolina/cache/' + s3_file_name.replace("/", "-")
+        local_file_name = os.path.join(__TEMP_STORAGE__,s3_file_name.replace("/", "-"))
 
         obj = self.bucket.Object(s3_file_name)
         if obj is None:
@@ -136,7 +136,7 @@ class Storage(metaclass=KeySingleton):
         if obj is not None:
             obj.delete()
 
-        local_file_name = '/tmp/carolina/cache/' + s3_file_name.replace("/", "-")
+        local_file_name = os.path.join(__TEMP_STORAGE__,s3_file_name.replace("/", "-"))
         if os.path.isfile(local_file_name):
             os.remove(local_file_name)
 
