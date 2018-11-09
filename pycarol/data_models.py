@@ -1,11 +1,13 @@
 import json
+import itertools
 from .data_models_fields import DataModelFields
 from .data_model_types import DataModelTypeIds
-from .query import Query
+from .utils.importers import _import_dask, _import_pandas
 from .verticals import Verticals
-from .filter import Filter, MAXIMUM, MINIMUM
+from .carolina import Carolina
+from .query import Query
 from .filter import RANGE_FILTER as RF
-from .utils.miscellaneous import ranges
+from .filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
 import time
 
 
@@ -47,6 +49,56 @@ class DataModel:
         self.entity_template_ = {resp['mdmName']: resp}
         self.fields_dict.update({resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
+
+
+    def fetch_parquet(self, dm_name, merge_records=True, backend='dask', n_jobs=1, return_dask_graph=False, columns=None):
+        """
+
+        :param dm_name: `str`
+            Data model name to be imported
+        :param merge_records: `bool`, default `True`
+            This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
+            one should keep only the last records.
+        :param backend: ['dask','pandas'], default `dask`
+            if to use either dask or pandas to fetch the data
+        :param n_jobs: `int`, default `1`
+            To be used with `backend='pandas'`. It is the number of threads to load the data from carol export.
+        :param return_dask_graph: `bool`, default `false`
+            If to return the dask graph or the dataframe.
+        :param columns: `list`, default `None`
+            List of columns to fetch.
+        :return:
+        """
+
+        assert backend=='dask' or backend=='pandas'
+
+        if return_dask_graph:
+            assert backend == 'dask'
+
+        #validate export
+        dms = self._get_dm_export_stats()
+        if not dms.get(dm_name):
+            raise Exception(f'"{dm_name}" is not set to export data, \n use `dm = DataModel(login).export(dm_name="{dm_name}", sync_dm=True) to activate')
+
+        carolina = Carolina(self.carol)
+        carolina._init_if_needed()
+
+        if backend=='dask':
+            access_id = carolina.ai_access_key_id
+            access_key = carolina.ai_secret_key
+            aws_session_token = carolina.ai_access_token
+            d =_import_dask(dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
+                            access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
+                            merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph, columns=columns)
+
+        elif backend=='pandas':
+            s3 = carolina.s3
+            d = _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
+                               n_jobs=n_jobs, golden=True, columns=columns)
+
+
+        return d
+
 
     def get_all(self, offset=0, page_size=-1, sort_order='ASC',
                 sort_by=None, print_status=False,
@@ -166,6 +218,34 @@ class DataModel:
                 f[field['mdmName']] = self._get_name_type_DMS(field['mdmFields'])
         return f
 
+
+    def _get_dm_export_stats(self):
+        """
+        Get export status for data models
+
+        :return: `dict`
+            dict with the information of which data model is exporting its data.
+        """
+
+        json_q = Filter.Builder(key_prefix="") \
+            .must(TYPE_FILTER(value="mdmEntityTemplateExport")).build().to_json()
+
+        query = Query(self.carol, index_type='CONFIG', page_size=1000, only_hits=False)
+        query.query(json_q, ).go()
+
+        dm_results = query.results
+        dm_results = [elem.get('hits', elem) for elem in dm_results
+                      if elem.get('hits', None)]
+        dm_results = list(itertools.chain(*dm_results))
+
+        dm = DataModel(self.carol).get_all().template_data
+        dm = {i['mdmId']: i['mdmName'] for i in dm}
+
+        if dm_results is not None:
+            return {dm[i['mdmEntityTemplateId']]: i for i in dm_results}
+
+        return dm_results
+
     def _get_min_max(self):
         j = Filter.Builder()\
             .type(self.datamodel_name)\
@@ -229,6 +309,7 @@ class DataModel:
 
             result = self.carol.call_api(url_filter, data=json_query, params=query_params)
             print(f"To go: {c}/{len(chunks)}")
+
 
 
 class entIntType(object):
