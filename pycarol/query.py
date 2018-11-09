@@ -379,18 +379,22 @@ class ParQuery:
             .build().to_json()
 
         query = Query(self.carol, index_type=self.index_type, only_hits=False, get_aggs=True, save_results=False,
-                      print_status=True, page_size=0).query(j).go()
+                      print_status=True, page_size=1,).query(j).go()
 
+        sample = query.results[0].get('hits')[0]
         if query.results[0].get('aggs') is None:
             return None, None
         min_v = query.results[0]['aggs']['MINIMUM']['value']
         max_v = query.results[0]['aggs']['MAXIMUM']['value']
         print(f"Total Hits to download: {query.total_hits}")
-        return min_v, max_v
+        return min_v, max_v, sample
 
     def go(self, datamodel_name=None, slices=1000, page_size=1000, staging_name=None, connector_id=None, connector_name=None,
-           get_staging_from_golden=False ):
+           get_staging_from_golden=False, fields=None ):
         assert slices < 9999, '10k is the largest slice possible'
+
+        if fields is None:
+            fields = []
 
         self.page_size=page_size
 
@@ -403,6 +407,7 @@ class ParQuery:
 
             self.index_type = 'STAGING'
             self.datamodel_name = f"{connector_id}_{staging_name}"
+            self.fields_to_get = fields
             self.fields=None
             self.only_hits=False
             self.mdmKey = 'mdmCreated'
@@ -410,21 +415,25 @@ class ParQuery:
             self.index_type = 'MASTER'
             self.datamodel_name = f"{datamodel_name}Master"
             self.fields = 'mdmStagingRecord'
+
             self.only_hits=False
             self.mdmKey = 'mdmStagingRecord.mdmCreated'
         else:
             self.index_type = 'MASTER'
             self.datamodel_name = f"{datamodel_name}Golden"
             self.fields = 'mdmGoldenFieldAndValues'
+            self.fields_to_get = [self.fields+'.'+i if self.fields not in i else i for i in fields]
             self.only_hits=True
             self.mdmKey = 'mdmCounterForEntity'
 
-        min_v, max_v = self._get_min_max()
+        min_v, max_v, sample = self._get_min_max()
         if (min_v is None) and (max_v is None):
             return []
         self.chunks = ranges(min_v, max_v, slices)
-
         print(f"Number of chunks: {len(self.chunks)}")
+
+        if get_staging_from_golden:
+            self.fields_to_get = [self.fields+'.'+i for i in sample.get(self.fields).keys() for j in fields if j+'_' in i]
 
 
         if self.backend=='dask':
@@ -454,6 +463,7 @@ class ParQuery:
                 only_hits=self.only_hits,
                 mdmKey=self.mdmKey,
                 return_df=self.return_df,
+                fields_to_get=self.fields_to_get,
             )
             list_to_compute.append(y)
 
@@ -472,13 +482,14 @@ class ParQuery:
                                                         only_hits=self.only_hits,
                                                         mdmKey=self.mdmKey,
                                                         return_df=self.return_df,
+                                                        fields_to_get=self.fields_to_get,
                                                                              )
                                                     for RANGE_FILTER in self.chunks)
         return list_to_compute
 
 
 def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None, index_type='MASTER',fields=None, mdmKey=None,
-               only_hits=True, return_df=True):
+               only_hits=True, return_df=True, fields_to_get=None):
     json_query = Filter.Builder()\
         .type(datamodel_name)\
         .must(RF(key=mdmKey, value=RANGE_FILTER))\
@@ -486,7 +497,7 @@ def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None, index_t
 
     query = Query(login, page_size=page_size, save_results=False, print_status=False, index_type=index_type,
                   only_hits=only_hits,
-                  fields=fields).query(json_query).go()
+                  fields=fields_to_get).query(json_query).go()
     query = query.results
 
     if not only_hits:
