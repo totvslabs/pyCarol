@@ -207,7 +207,7 @@ class Carol:
                 self.response = response
                 return json.loads(response.text)
 
-            elif response.reason == 'Unauthorized':
+            elif (response.reason == 'Unauthorized') and  isinstance(self.auth,PwdAuth):
                 self.auth.get_access_token()  #It will refresh token if Unauthorized
                 __count+=1
                 if __count<5: #To avoid infinity loops
