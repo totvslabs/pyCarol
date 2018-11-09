@@ -3,6 +3,12 @@ import pandas as pd
 import json
 from .query import Query
 from datetime import datetime
+from .connectors import Connectors
+from .carolina import Carolina
+from .utils.importers import _import_dask, _import_pandas
+from .filter import Filter, RANGE_FILTER, TYPE_FILTER
+import itertools
+
 
 
 class Staging:
@@ -13,43 +19,23 @@ class Staging:
     def _delete(self,dm_name):
 
         now = datetime.now().isoformat(timespec='seconds')
-        json_query = {
-                      "mustList": [
-                        {
-                          "mdmFilterType": "TYPE_FILTER",
-                          "mdmValue": dm_name+'Golden'
-                        },
-                        {
-                          "mdmFilterType": "RANGE_FILTER",
-                          "mdmKey": "mdmLastUpdated",
-                          "mdmValue": [
-                            None,
-                            now
-                          ]
-                        }
-                      ]
-                    }
+
+        json_query = Filter.Builder()\
+            .type(dm_name + "Golden")\
+            .must(RANGE_FILTER("mdmLastUpdated", [None, now]))\
+            .build().to_json()
+
+
         try:
             Query(self.carol).delete(json_query)
         except:
             pass
 
-        json_query = {
-                      "mustList": [
-                        {
-                          "mdmFilterType": "TYPE_FILTER",
-                          "mdmValue": dm_name+'Rejected'
-                        },
-                        {
-                          "mdmFilterType": "RANGE_FILTER",
-                          "mdmKey": "mdmLastUpdated",
-                          "mdmValue": [
-                            None,
-                            now
-                          ]
-                        }
-                      ]
-                    }
+        json_query = Filter.Builder()\
+            .type(dm_name + "Rejected")\
+            .must(RANGE_FILTER("mdmLastUpdated", [None, now]))\
+            .build().to_json()
+
         try:
             Query(self.carol,index_type='STAGING').delete(json_query)
         except:
@@ -179,4 +165,158 @@ class Staging:
         if all(name in _sample_json for name in crosswalk):
             pass
 
+    def _connector_by_name(self, connector_name):
+        """
+        Get connector id given connector name
 
+        :param connector_name: `str`
+            Connector name
+        :return: `str`
+            Connector Id
+        """
+        return Connectors(self.carol).get_by_name(connector_name)['mdmId']
+
+    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',
+                      merge_records=True, n_jobs=1, return_dask_graph=False, columns=None):
+        """
+
+        Fetch parquet from a staging table.
+
+        :param staging_name: `str`,
+            Staging name to fetch parquet of
+        :param connector_id: `str`, default `None`
+            Connector id to fetch parquet of
+        :param connector_name: `str`, default `None`
+            Connector name to fetch parquet of
+        :param backend: ['dask','pandas'], default `dask`
+            if to use either dask or pandas to fetch the data
+        :param merge_records: `bool`, default `True`
+            This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
+            one should keep only the last records.
+        :param n_jobs: `int`, default `1`
+            To be used with `backend='pandas'`. It is the number of threads to load the data from carol export.
+        :param return_dask_graph: `bool`, default `false`
+            If to return the dask graph or the dataframe.
+        :param columns: `list`, default `None`
+            List of columns to fetch.
+        :return:
+        """
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            assert connector_id
+
+        assert backend=='dask' or backend=='pandas'
+
+        if return_dask_graph:
+            assert backend == 'dask'
+
+        #validate export
+        stags = self._get_staging_export_stats()
+        if not stags.get(staging_name):
+            raise Exception(f'"{staging_name}" is not set to export data, \n use `dm = Staging(login).export(staging_name="{staging_name}",connector_id="{connector_id}", sync_staging=True) to activate')
+
+        carolina = Carolina(self.carol)
+        carolina._init_if_needed()
+        if backend=='dask':
+            access_id = carolina.ai_access_key_id
+            access_key = carolina.ai_secret_key
+            aws_session_token = carolina.ai_access_token
+
+            d = _import_dask(tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, staging_name=staging_name,
+                             access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
+                             merge_records=merge_records, golden=False,return_dask_graph=return_dask_graph,columns=columns)
+            return d
+        elif backend=='pandas':
+            s3 = carolina.s3
+            d = _import_pandas(s3=s3,  tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id,
+                               staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns)
+            return d
+
+
+    def export(self,staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False):
+        """
+
+        Export Staging to s3
+
+        This method will trigger or pause the export of the data in the staging to
+        s3.
+
+        :param staging_name: `str`, default `None`
+            Datamodel Name
+        :param sync_staging: `bool`, default `True`
+            Sync the data model
+        :param connector_name: `str`
+            Connector name
+        :param connector_id: `str`
+            Connector id
+        :param full_export: `bool`, default `True`
+            Do a resync of the data model
+        :return: None
+        """
+
+        if sync_staging:
+            status = 'RUNNING'
+        else:
+            status = 'PAUSED'
+
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            assert connector_id
+
+
+        query_params = {"status": status, "fullExport": full_export}
+        url = f'v2/staging/{connector_id}/{staging_name}/exporter'
+        return self.carol.call_api(url, method='POST', params=query_params)
+
+
+    def export_all(self, connector_id=None, connector_name=None, sync_staging=True, full_export=False):
+        """
+
+        Export all Stagings from a connector to s3
+
+        This method will trigger or pause the export of all stagings  to
+        s3.
+
+        :param sync_staging: `bool`, default `True`
+            Sync the data model
+        :param connector_name: `str`
+            Connector name
+        :param connector_id: `str`
+            Connector id
+        :param full_export: `bool`, default `True`
+            Do a resync of the data model
+        :return: None
+        """
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            assert connector_id
+
+        conn_stats = Connectors(self.carol).stats(connector_id=connector_id)
+
+        for staging in conn_stats.get(connector_id):
+            resp = self.export(staging_name=staging, connector_id=connector_id,
+                        sync_staging=sync_staging, full_export=full_export )
+
+    def _get_staging_export_stats(self):
+        """
+        Get export status for data models
+
+        :return: `dict`
+            dict with the information of which staging table is exporting its data.
+        """
+
+        query = Query(self.carol, index_type='CONFIG', only_hits=False)
+
+        json_q = Filter.Builder(key_prefix="") \
+            .must(TYPE_FILTER(value="mdmStagingDataExport")).build().to_json()
+
+        query.query(json_q, ).go()
+        staging_results = query.results
+        staging_results = [elem.get('hits', elem) for elem in staging_results
+                           if elem.get('hits', None)]
+        staging_results = list(itertools.chain(*staging_results))
+        if staging_results is not None:
+            return {i['mdmStagingType']: i for i in staging_results}

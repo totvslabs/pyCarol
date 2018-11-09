@@ -1,5 +1,5 @@
-from pycarol.utils import KeySingleton
-from pycarol.apps import Apps
+from .utils.singleton import KeySingleton
+from .apps import Apps
 
 
 class Settings(metaclass=KeySingleton):

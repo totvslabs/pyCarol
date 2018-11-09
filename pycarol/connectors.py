@@ -96,7 +96,14 @@ class Connectors:
             file.close()
         return connectors
 
-    def stats(self, connector_id):
+    def stats(self, connector_id=None, connector_name=None):
+
+        if connector_name:
+            connector_id = self.get_by_name(connector_name)['mdmId']
+        else:
+            assert connector_id
+
+
         response = self.carol.call_api('v1/connectors/{}/stats'.format(connector_id))
 
         conn_stats = response['aggs']

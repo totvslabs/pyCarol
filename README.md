@@ -307,7 +307,7 @@ This package implements some of Carol's APIs. The following endpoints are implem
         2. POST - /api/v2/apiKey/issue
         3. POST - /api/v2/apiKey/revoke
 
-    - v2 Tenants (utils.py)
+    - v2 Tenant (utils.py)
         1. GET - /api/v2/tenants/domain/{domain}
 
     - v2 Queries (queriesCarol.py)
