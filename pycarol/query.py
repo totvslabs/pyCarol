@@ -356,6 +356,14 @@ class Query:
 class ParQuery:
 
     def __init__(self, carol, backend='dask', return_df=True, verbose=50, n_jobs=4):
+        """
+
+        :param carol:
+        :param backend:
+        :param return_df:
+        :param verbose:
+        :param n_jobs:
+        """
         self.carol = carol
         self.return_df=return_df
         self.backend = backend
