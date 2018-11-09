@@ -8,6 +8,7 @@ from .connectors import Connectors
 from .named_query import NamedQuery
 from .filter import Filter, MAXIMUM, MINIMUM
 from .filter import RANGE_FILTER as RF
+from .utils.miscellaneous import ranges
 
 class Query:
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=100, sort_order='ASC', sort_by=None,
@@ -41,7 +42,7 @@ class Query:
         :param only_hits: `bool`, default 'True'
             Return only results in the response path $hits.mdmGoldenFieldAndValues
         :param fields: `list`, default `None`
-            Fileds to return in response. e.g., ["mdmGoldenFieldAndValues.mdmtaxid", "mdmGoldenFieldAndValues.date"]
+            Fields to return in response. e.g., ["mdmGoldenFieldAndValues.mdmtaxid", "mdmGoldenFieldAndValues.date"]
         :param get_aggs: `bool`, default `False`
             To be used if the query/named query has aggravations
         :param save_results: `bool`, default `False`
@@ -363,18 +364,6 @@ class ParQuery:
 
         assert self.backend=='dask' or self.backend == 'joblib'
 
-    @staticmethod
-    def ranges(min_v, max_v, nb):
-        if min_v == max_v:
-            max_v += 1
-        step = int((max_v - min_v) / nb) + 1
-        step = list(range(min_v, max_v, step))
-        if step[-1] != max_v:
-            step.append(max_v)
-        step = [[step[i], step[i + 1] - 1] for i in range(len(step) - 1)]
-        step.append([max_v, None])
-        return step
-
     def _get_min_max(self):
         j = Filter.Builder()\
             .type(self.datamodel_name)\
@@ -425,7 +414,7 @@ class ParQuery:
         min_v, max_v = self._get_min_max()
         if (min_v is None) and (max_v is None):
             return []
-        self.chunks = self.ranges(min_v, max_v, slices)
+        self.chunks = ranges(min_v, max_v, slices)
 
         print(f"Number of chunks: {len(self.chunks)}")
 

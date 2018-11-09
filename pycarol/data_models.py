@@ -1,7 +1,11 @@
 import json
 from .data_models_fields import DataModelFields
 from .data_model_types import DataModelTypeIds
+from .query import Query
 from .verticals import Verticals
+from .filter import Filter, MAXIMUM, MINIMUM
+from .filter import RANGE_FILTER as RF
+from .utils.miscellaneous import ranges
 import time
 
 
@@ -161,6 +165,70 @@ class DataModel:
             else:
                 f[field['mdmName']] = self._get_name_type_DMS(field['mdmFields'])
         return f
+
+    def _get_min_max(self):
+        j = Filter.Builder()\
+            .type(self.datamodel_name)\
+            .aggregation_list([MINIMUM(name='MINIMUM',params= self.mdm_key), MAXIMUM(name='MAXIMUM',
+                                                                                     params=self.mdm_key)])\
+            .build().to_json()
+
+        query = Query(self.carol, index_type=self.index_type, only_hits=False, get_aggs=True, save_results=False,
+                      print_status=True, page_size=0).query(j).go()
+
+        if query.results[0].get('aggs') is None:
+            return None, None
+        min_v = query.results[0]['aggs']['MINIMUM']['value']
+        max_v = query.results[0]['aggs']['MAXIMUM']['value']
+        print(f"Total Hits to reprocess: {query.total_hits}")
+        return min_v, max_v
+
+    def reprocess(self, datamodel_name, n_of_tasks=10, copy_or_move='move', record_type='ALL'):
+        """
+        Reprocess records from a data model
+
+        :param datamodel_name: `str`
+            Data model name
+        :param n_of_tasks: `int`, default `10`
+            Number of process to split the reprocess.
+        :param copy_or_move: `str`, default `move`
+            Either `move` or `copy` to staging.
+        :param record_type:  `str`, default `ALL`
+            Type of records to reprocess. `All`, `Golden` or `Rejected`
+        :return: None
+        """
+
+        assert copy_or_move=='copy' or copy_or_move=='move', 'copy_or_move soulb be "copy" or "move"'
+
+        if copy_or_move=='copy':
+            copy_or_move = False
+        else:
+            copy_or_move = True
+
+        self.mdm_id = self.get_by_name(datamodel_name)['mdmId']
+
+        self.index_type = 'MASTER'
+        self.datamodel_name = datamodel_name+'Golden'
+        self.mdm_key = 'mdmCounterForEntity'
+        min_v, max_v = self._get_min_max()
+
+        chunks = ranges(min_v, max_v, n_of_tasks)
+        print(f"Number of chunks: {len(chunks)}")
+
+
+        url_filter = f"v1/entities/templates/{self.mdm_id}/reprocess"
+
+
+        for c,i in enumerate(chunks):
+            json_query = Filter.Builder() \
+                .must(RF(key=self.mdm_key, value=i)) \
+                .build().to_json()
+
+            query_params = {"recordType": record_type, "fuzzy": "false",
+                           "deleteRecords": copy_or_move}
+
+            result = self.carol.call_api(url_filter, data=json_query, params=query_params)
+            print(f"To go: {c}/{len(chunks)}")
 
 
 class entIntType(object):
