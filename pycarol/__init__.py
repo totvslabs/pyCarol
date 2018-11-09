@@ -1,7 +1,7 @@
 import os
 import tempfile
 
-__version__ = '0.1'
+__version__ = '2.3'
 
 
 __BUCKET_NAME__= 'carol-internal'
