@@ -9,7 +9,6 @@ from pycarol.utils import KeySingleton
 from pycarol.carolina import Carolina
 import botocore
 
-
 class Storage(metaclass=KeySingleton):
     def __init__(self, carol):
         self.carol = carol
@@ -115,7 +114,7 @@ class Storage(metaclass=KeySingleton):
 
     def exists(self, name):
         self._init_if_needed()
-        s3_file_name = 'storage/{}/{}/files/{}'.format(self.carol.tenant['mdmId'], self.carol.app_name, name)
+        s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
 
         obj = self.bucket.Object(s3_file_name)
         if obj is None:
@@ -131,7 +130,7 @@ class Storage(metaclass=KeySingleton):
 
     def delete(self, name):
         self._init_if_needed()
-        s3_file_name = 'storage/{}/{}/files/{}'.format(self.carol.tenant['mdmId'], self.carol.app_name, name)
+        s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
         obj = self.bucket.Object(s3_file_name)
         if obj is not None:
             obj.delete()
