@@ -5,7 +5,7 @@ import gzip
 import pandas as pd
 from multiprocessing import Process
 from pycarol.carol_cloner import Cloner
-from pycarol.utils import KeySingleton
+from pycarol.utils.singleton import KeySingleton
 from pycarol.carolina import Carolina
 import botocore
 
