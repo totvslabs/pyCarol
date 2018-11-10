@@ -1,4 +1,4 @@
-from .ApiKeyAuth_cloner import *
+from .ApiKeyAuth_cloner import ApiKeyAuthCloner
 
 
 class ApiKeyAuth:
