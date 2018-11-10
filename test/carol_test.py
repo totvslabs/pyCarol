@@ -3,6 +3,7 @@ import sys
 sys.path.append('../.')
 from pycarol.auth.ApiKeyAuth import ApiKeyAuth
 from pycarol.carol import Carol
+from pycarol.filter import Filter
 
 def carol_constructor():
     return Carol(domain='rui',
@@ -33,14 +34,7 @@ class CarolTestCase(unittest.TestCase):
     def test_call_api_post(self):
         carol = carol_constructor()
         
-        query = {
-              "mustList": [
-                {
-                  "mdmFilterType": "TYPE_FILTER",
-                  "mdmValue": "mdmreceiptGolden"
-                }
-              ]
-            }
+        query = Filter.Builder().type("mdmreceiptGolden").build().to_json()
         
         path = 'v2/queries/filter'
         method = 'POST'
