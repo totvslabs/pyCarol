@@ -8,6 +8,7 @@ from .carolina import Carolina
 from .query import Query
 from .filter import RANGE_FILTER as RF
 from .filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
+from .utils.miscellaneous import ranges
 import time
 
 
