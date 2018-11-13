@@ -5,6 +5,7 @@ class DataModelBuild:
     """ Automatize the process of building and maintaining a Data Model
 
         Methods to get, interpret and update information about data model structure, which includes:
+
             * Data Models
             * Fields
             * Validation Rules
@@ -17,7 +18,7 @@ class DataModelBuild:
         self.field_functions = None
         self.field_functions_id = None
 
-    def _get_all_dm(self):
+    def get_all_dm(self):
         """ Set up data models
 
             Updates:
@@ -37,7 +38,7 @@ class DataModelBuild:
         :return: Dict with selected data model information following MDM Model
         """
         if self.dms is None:
-            self._get_all_dm()
+            self.get_all_dm()
         for d in self.dms:
             if d['mdmName'] == dm_name:
                 return d
@@ -51,6 +52,9 @@ class DataModelBuild:
         """
         dm = self.get_dm(dm_name)
         return dm['mdmFields']
+
+    def get_fields_names(self, dm_name):
+        return [f['mdmName'] for f in self.get_fields(dm_name)]
 
     def select_field(self, dm_name, field_name):
         """ Get a specific field from a data model
@@ -114,7 +118,7 @@ class DataModelBuild:
         return dm['mdmEntityValidationRuleIds']
 
     def get_dm_rule(self, ruleId, templateId):
-        """ Get specific rule from datamodel
+        """ Get specific rule from data_model
 
         :param ruleId: Id of the validation rule
         :param templateId: Id of the template
@@ -140,9 +144,25 @@ class DataModelBuild:
         return self.carol.call_api(post_url, data=update_id, method='PUT')
 
     def create_rule_from_uniform_type(self, dm_name, field_name, uniform_type):
+        """ Use uniform type to generate a new rule
+
+        :param dm_name: Data Model Name
+        :param field_name: Field Name
+        :param uniform_type: Uniform Type object
+        :return: success
+        """
         return self.create_rule(dm_name, field_name, 'MATCHES', [uniform_type.create_regex()])
 
-    def _generate_rule_body(self, templateId, dm_name, field_name, rule_name, params, state='CREATED'):
+    def _generate_rule_body(self, templateId, dm_name, field_name, rule_name, params):
+        """ Generate body for API call to create new Validation Rule
+
+        :param templateId: Template ID
+        :param dm_name: Data Model name
+        :param field_name: Field Name
+        :param rule_name: Rule Name
+        :param params: Parameters (list)
+        :return:
+        """
         field_func = self.get_field_function(rule_name)
         field_id = self.select_field(dm_name, field_name)['mdmId']
 

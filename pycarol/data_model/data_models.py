@@ -9,7 +9,6 @@ class DataModel:
 
     def __init__(self, carol):
         self.carol = carol
-
         self.fields_dict = {}
         self.entity_template_ = {}
 
@@ -389,7 +388,6 @@ class CreateDataModel(object):
         url = f"v1/entities/templates/{self.dm_id}/onboardField/{field_to_send['mdmId']}"
         resp = self.carol.call_api(path=url, method='POST', params=querystring)
 
-
     def _labels_and_desc(self, prop):
 
         if self.label_map is None:
@@ -465,7 +463,6 @@ class CreateDataModel(object):
         if publish:
             self._profile_title(profile_title, self.dm_id)
             self.publish_template(self.dm_id)
-
 
     # not done
     def _nested(self, mdmName, value, parentId=''):
