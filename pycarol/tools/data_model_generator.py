@@ -1,6 +1,6 @@
-from pycarol.data_model.data_model_types import DataModelTypeIds
+from ..data_model.data_model_types import DataModelTypeIds
 from ..verticals import Verticals
-from pycarol.data_model.data_models import CreateDataModel
+from ..data_model.data_models import CreateDataModel
 
 import random
 
