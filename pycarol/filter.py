@@ -111,8 +111,7 @@ class FilterType:
                 self.values_field = key_prefix + '.' + self.values_field
 
     def to_json(self):
-        json = {}
-        json['mdmFilterType'] = self.filter_type.value
+        json = {'mdmFilterType': self.filter_type.value}
         if self.key:
             json['mdmKey'] = self.key
         if self.value:
@@ -185,7 +184,7 @@ class WILDCARD_CUSTOM_FILTER(FilterType):
         super().__init__(filter_type = FT.WILDCARD_CUSTOM_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
 
 class EXISTS_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
+    def __init__(self, key, values_field = None, values_query = None):
         super().__init__(filter_type = FT.EXISTS_FILTER, key=key, values_field=values_field, values_query=values_query)
 
 class SIMPLE_QUERY_STRING(FilterType):
@@ -193,68 +192,68 @@ class SIMPLE_QUERY_STRING(FilterType):
         super().__init__(filter_type = FT.SIMPLE_QUERY_STRING, key=key, value=value, values_field=values_field, values_query=values_query)
 
 class MISSING_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
+    def __init__(self, key, values_field = None, values_query = None):
         super().__init__(filter_type = FT.MISSING_FILTER, key=key, values_field=values_field, values_query=values_query)
 
 class GEODISTANCE_FILTER(FilterType):
     def __init__(self, path, key, range_values, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.GEODISTANCE_FILTER, path=path, key=key, range_values=range, values_field=values_field, values_query=values_query)
+        super().__init__(filter_type = FT.GEODISTANCE_FILTER, path=path, key=key, range_values=range_values, values_field=values_field, values_query=values_query)
 
 class NESTED(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_TERM_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_TERM_FILTERM, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_TERM_FILTERM, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_TERMS_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_TERMS_FILTERM, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_TERMS_FILTERM, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_RANGE_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_RANGE_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_RANGE_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_MATCH_ALL_TERMS_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_MATCH_ALL_TERMS_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_MATCH_ALL_TERMS_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_MATCH_ANY_TERM_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_MATCH_ANY_TERM_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_MATCH_ANY_TERM_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_TERM_FUZZY_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_TERM_FUZZY_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_TERM_FUZZY_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_TERMS_FUZZY_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_TERMS_FUZZY_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_TERMS_FUZZY_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_WILDCARD_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_WILDCARD_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_WILDCARD_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_WILDCARD_CUSTOM_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_WILDCARD_CUSTOM_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_WILDCARD_CUSTOM_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_EXISTS_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_EXISTS_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_EXISTS_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_SIMPLE_QUERY_STRING(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_SIMPLE_QUERY_STRING, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_SIMPLE_QUERY_STRING, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_MISSING_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_MISSING_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_MISSING_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_GEODISTANCE_FILTER(FilterType):
     def __init__(self, path, key, range_values, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_GEODISTANCE_FILTER, path=path, key=key, range_values=range, values_field=values_field, values_query=values_query)
+        super().__init__(filter_type = FT.NESTED_GEODISTANCE_FILTER, path=path, key=key, range_values=range_values, values_field=values_field, values_query=values_query)
 
 class Aggregation:
     def __init__(self, agg_type, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by = None, sort_order = None, query_param = None):
