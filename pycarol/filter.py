@@ -240,8 +240,8 @@ class NESTED_WILDCARD_CUSTOM_FILTER(FilterType):
         super().__init__(filter_type = FT.NESTED_WILDCARD_CUSTOM_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_EXISTS_FILTER(FilterType):
-    def __init__(self, key, value, path, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_EXISTS_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
+    def __init__(self, key, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_EXISTS_FILTER, key=key, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_SIMPLE_QUERY_STRING(FilterType):
     def __init__(self, key, value, path, values_field = None, values_query = None):
