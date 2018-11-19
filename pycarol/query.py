@@ -381,9 +381,10 @@ class ParQuery:
         query = Query(self.carol, index_type=self.index_type, only_hits=False, get_aggs=True, save_results=False,
                       print_status=True, page_size=1,).query(j).go()
 
-        sample = query.results[0].get('hits')[0]
+
         if query.results[0].get('aggs') is None:
             return None, None
+        sample = query.results[0].get('hits')[0]
         min_v = query.results[0]['aggs']['MINIMUM']['value']
         max_v = query.results[0]['aggs']['MAXIMUM']['value']
         print(f"Total Hits to download: {query.total_hits}")
