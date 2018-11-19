@@ -383,7 +383,7 @@ class ParQuery:
 
 
         if query.results[0].get('aggs') is None:
-            return None, None
+            return None, None, None
         sample = query.results[0].get('hits')[0]
         min_v = query.results[0]['aggs']['MINIMUM']['value']
         max_v = query.results[0]['aggs']['MAXIMUM']['value']
