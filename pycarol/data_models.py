@@ -264,7 +264,7 @@ class DataModel:
         print(f"Total Hits to reprocess: {query.total_hits}")
         return min_v, max_v
 
-    def reprocess(self, datamodel_name, n_of_tasks=10, copy_or_move='move', record_type='ALL'):
+    def reprocess(self, datamodel_name, n_of_tasks=10, copy_or_move='move', record_type='ALL', query_filter=None):
         """
         Reprocess records from a data model
 
@@ -276,10 +276,14 @@ class DataModel:
             Either `move` or `copy` to staging.
         :param record_type:  `str`, default `ALL`
             Type of records to reprocess. `All`, `Golden` or `Rejected`
+        :param query_filter:  `Filter Object`, default `None`
+            The Filter instance to reprocess the data on.
         :return: None
         """
 
         assert copy_or_move=='copy' or copy_or_move=='move', 'copy_or_move soulb be "copy" or "move"'
+        if query_filter:
+            assert isinstance(query_filter,Filter.Builder)
 
         if copy_or_move=='copy':
             copy_or_move = False
@@ -301,9 +305,14 @@ class DataModel:
 
 
         for c,i in enumerate(chunks):
-            json_query = Filter.Builder() \
-                .must(RF(key=self.mdm_key, value=i)) \
-                .build().to_json()
+
+
+            if query_filter is not None:
+                json_query = query_filter.must(RF(key=self.mdm_key, value=i)).build().to_json()
+            else:
+                json_query = Filter.Builder() \
+                    .must(RF(key=self.mdm_key, value=i)) \
+                    .build().to_json()
 
             query_params = {"recordType": record_type, "fuzzy": "false",
                            "deleteRecords": copy_or_move}
