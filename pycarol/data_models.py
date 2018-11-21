@@ -276,7 +276,7 @@ class DataModel:
             Either `move` or `copy` to staging.
         :param record_type:  `str`, default `ALL`
             Type of records to reprocess. `All`, `Golden` or `Rejected`
-        :param query_filter:  `Filter Object`, default `None`
+        :param query_filter:  `Filter.Builder Object`, default `None`
             The Filter instance to reprocess the data on.
         :return: None
         """
