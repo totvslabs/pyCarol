@@ -149,7 +149,7 @@ class TERM_FILTER(FilterType):
 
 class TERMS_FILTER(FilterType):
     def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.TERMS_FILTERM, key=key, value=value, values_field=values_field, values_query=values_query)
+        super().__init__(filter_type = FT.TERMS_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
 
 class RANGE_FILTER(FilterType):
     def __init__(self, key, value, values_field = None, values_query = None):
