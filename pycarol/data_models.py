@@ -281,7 +281,7 @@ class DataModel:
         :return: None
         """
 
-        assert copy_or_move=='copy' or copy_or_move=='move', 'copy_or_move soulb be "copy" or "move"'
+        assert copy_or_move=='copy' or copy_or_move=='move', 'copy_or_move shoulb be "copy" or "move"'
         if query_filter:
             assert isinstance(query_filter,Filter.Builder)
 
