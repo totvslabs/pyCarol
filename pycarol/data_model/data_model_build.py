@@ -136,12 +136,13 @@ class DataModelBuild:
         """
         templateId = self.get_dm(dm_name)['mdmId']
         post_url = f'v1/entities/templates/{templateId}/entityValidationRules'
-        body = self._generate_rule_body(templateId, dm_name, field_name, rule_name, params)
+        body = self.generate_rule_body(templateId, dm_name, field_name, rule_name, params)
         rule = self.carol.call_api(post_url, data=body, method='POST')
 
         post_url = f'v1/entities/templates/{templateId}'
-        update_id = {"mdmEntityValidationRuleIds": [[rule['mdmId']]]}
-        return self.carol.call_api(post_url, data=update_id, method='PUT')
+        rule_id = rule['mdmId']
+        update_id = {"mdmEntityValidationRuleIds": [[rule_id]]}
+        return rule_id, self.carol.call_api(post_url, data=update_id, method='PUT')
 
     def create_rule_from_uniform_type(self, dm_name, field_name, uniform_type):
         """ Use uniform type to generate a new rule
@@ -149,11 +150,12 @@ class DataModelBuild:
         :param dm_name: Data Model Name
         :param field_name: Field Name
         :param uniform_type: Uniform Type object
+
         :return: success
         """
         return self.create_rule(dm_name, field_name, 'MATCHES', [uniform_type.create_regex()])
 
-    def _generate_rule_body(self, templateId, dm_name, field_name, rule_name, params):
+    def generate_rule_body(self, templateId, dm_name, field_name, rule_name, params):
         """ Generate body for API call to create new Validation Rule
 
         :param templateId: Template ID
@@ -161,6 +163,7 @@ class DataModelBuild:
         :param field_name: Field Name
         :param rule_name: Rule Name
         :param params: Parameters (list)
+
         :return:
         """
         field_func = self.get_field_function(rule_name)

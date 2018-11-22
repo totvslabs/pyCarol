@@ -6,7 +6,7 @@ import os
 import os.path
 from .auth.ApiKeyAuth import ApiKeyAuth
 from .auth.PwdAuth import PwdAuth
-from .tenants import Tenants
+from .tenant import Tenant
 
 
 class Carol:
@@ -78,7 +78,7 @@ class Carol:
         self.app_name = app_name
         self.port = port
         self.verbose = verbose
-        self.tenant = Tenants(self).get_tenant_by_domain(domain)
+        self.tenant = Tenant(self).get_tenant_by_domain(domain)
         self.connector_id = connector_id
         self.auth = auth
         self.auth.set_connector_id(self.connector_id)
@@ -207,7 +207,7 @@ class Carol:
                 self.response = response
                 return json.loads(response.text)
 
-            elif response.reason == 'Unauthorized':
+            elif (response.reason == 'Unauthorized') and  isinstance(self.auth,PwdAuth):
                 self.auth.get_access_token()  #It will refresh token if Unauthorized
                 __count+=1
                 if __count<5: #To avoid infinity loops

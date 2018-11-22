@@ -5,6 +5,7 @@ sys.path.append('../.')
 from pycarol.auth.ApiKeyAuth import ApiKeyAuth
 from pycarol.carol import Carol
 from pycarol.query import Query
+from pycarol.filter import Filter
 
 def carol_constructor():
     return Carol(domain='rui',
@@ -70,14 +71,7 @@ class QueryTestCase(unittest.TestCase):
     def test_go_filter_query(self):
         carol = carol_constructor()
         
-        search_query = {
-                  "mustList": [
-                    {
-                      "mdmFilterType": "TYPE_FILTER",
-                      "mdmValue": "customermanufacturingGolden"
-                    }
-                  ]
-                }
+        search_query = Filter.Builder().type("customermanufacturingGolden").build().to_json()
         
         query_result = Query(carol, page_size=1000, print_status=False).query(search_query).go()
         self.assertTrue(len(query_result.results) > 0)
@@ -86,15 +80,8 @@ class QueryTestCase(unittest.TestCase):
     def test_go_only_hits_false_query(self):
         carol = carol_constructor()
         
-        search_query = {
-                  "mustList": [
-                    {
-                      "mdmFilterType": "TYPE_FILTER",
-                      "mdmValue": "customermanufacturingGolden"
-                    }
-                  ]
-                }
-        
+        search_query = Filter.Builder().type("customermanufacturingGolden").build().to_json()
+
         query_result = Query(carol, page_size=2, max_hits=1, only_hits=False, print_status=False).query(search_query).go()
         self.assertTrue(len(query_result.results) > 0)
     
@@ -102,15 +89,8 @@ class QueryTestCase(unittest.TestCase):
     def test_go_save_results_query(self):
         carol = carol_constructor()
         
-        search_query = {
-                  "mustList": [
-                    {
-                      "mdmFilterType": "TYPE_FILTER",
-                      "mdmValue": "customermanufacturingGolden"
-                    }
-                  ]
-                }
-        
+        search_query = Filter.Builder().type("customermanufacturingGolden").build().to_json()
+
         if os.path.isfile('./query_result.json'):
             os.remove('./query_result.json')
         
@@ -129,15 +109,8 @@ class QueryTestCase(unittest.TestCase):
         carol = carol_constructor()
         callback = queryCallback()
         
-        search_query = {
-                  "mustList": [
-                    {
-                      "mdmFilterType": "TYPE_FILTER",
-                      "mdmValue": "customermanufacturingGolden"
-                    }
-                  ]
-                }
-        
+        search_query = Filter.Builder().type("customermanufacturingGolden").build().to_json()
+
         query_result = Query(carol, page_size=1000, print_status=False).query(search_query).go(callback=callback)
         self.assertTrue(callback.called)
     

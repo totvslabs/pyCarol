@@ -6,6 +6,9 @@ import dask
 import pandas as pd
 from .connectors import Connectors
 from .named_query import NamedQuery
+from .filter import Filter, MAXIMUM, MINIMUM
+from .filter import RANGE_FILTER as RF
+from .utils.miscellaneous import ranges
 
 class Query:
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=100, sort_order='ASC', sort_by=None,
@@ -39,7 +42,7 @@ class Query:
         :param only_hits: `bool`, default 'True'
             Return only results in the response path $hits.mdmGoldenFieldAndValues
         :param fields: `list`, default `None`
-            Fileds to return in response. e.g., ["mdmGoldenFieldAndValues.mdmtaxid", "mdmGoldenFieldAndValues.date"]
+            Fields to return in response. e.g., ["mdmGoldenFieldAndValues.mdmtaxid", "mdmGoldenFieldAndValues.date"]
         :param get_aggs: `bool`, default `False`
             To be used if the query/named query has aggravations
         :param save_results: `bool`, default `False`
@@ -332,7 +335,7 @@ class Query:
     def all(self, dm_name):
         if not dm_name.endswith('Golden'):
             dm_name = dm_name + 'Golden'
-        self.json_query = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": dm_name}]}
+        self.json_query = Filter.Builder().type(dm_name).build().to_json()
         self.index_type = 'MASTER'
         return self
 
@@ -353,6 +356,14 @@ class Query:
 class ParQuery:
 
     def __init__(self, carol, backend='dask', return_df=True, verbose=50, n_jobs=4):
+        """
+
+        :param carol:
+        :param backend:
+        :param return_df:
+        :param verbose:
+        :param n_jobs:
+        """
         self.carol = carol
         self.return_df=return_df
         self.backend = backend
@@ -361,36 +372,30 @@ class ParQuery:
 
         assert self.backend=='dask' or self.backend == 'joblib'
 
-    @staticmethod
-    def ranges(min_v, max_v, nb):
-        if min_v == max_v:
-            max_v += 1
-        step = int((max_v - min_v) / nb) + 1
-        step = list(range(min_v, max_v, step))
-        if step[-1] != max_v:
-            step.append(max_v)
-        step = [[step[i], step[i + 1] - 1] for i in range(len(step) - 1)]
-        step.append([max_v, None])
-        return step
-
     def _get_min_max(self):
-        j = {"mustList": [{"mdmFilterType": "TYPE_FILTER", "mdmValue": f"{self.datamodel_name}"}],
-             "aggregationList": [{"type": "MINIMUM", "name": "MINIMUM", "params": [f"{self.mdmKey}"]},
-                                 {"type": "MAXIMUM", "name": "MAXIMUM", "params": [f"{self.mdmKey}"]}]}
+        j = Filter.Builder()\
+            .type(self.datamodel_name)\
+            .aggregation_list([MINIMUM(name='MINIMUM',params= self.mdmKey), MAXIMUM(name='MAXIMUM', params=self.mdmKey)])\
+            .build().to_json()
 
         query = Query(self.carol, index_type=self.index_type, only_hits=False, get_aggs=True, save_results=False,
-                      print_status=True, page_size=0).query(j).go()
+                      print_status=True, page_size=1,).query(j).go()
+
 
         if query.results[0].get('aggs') is None:
-            return None, None
+            return None, None, None
+        sample = query.results[0].get('hits')[0]
         min_v = query.results[0]['aggs']['MINIMUM']['value']
         max_v = query.results[0]['aggs']['MAXIMUM']['value']
         print(f"Total Hits to download: {query.total_hits}")
-        return min_v, max_v
+        return min_v, max_v, sample
 
     def go(self, datamodel_name=None, slices=1000, page_size=1000, staging_name=None, connector_id=None, connector_name=None,
-           get_staging_from_golden=False ):
+           get_staging_from_golden=False, fields=None ):
         assert slices < 9999, '10k is the largest slice possible'
+
+        if fields is None:
+            fields = []
 
         self.page_size=page_size
 
@@ -403,6 +408,7 @@ class ParQuery:
 
             self.index_type = 'STAGING'
             self.datamodel_name = f"{connector_id}_{staging_name}"
+            self.fields_to_get = fields
             self.fields=None
             self.only_hits=False
             self.mdmKey = 'mdmCreated'
@@ -410,21 +416,25 @@ class ParQuery:
             self.index_type = 'MASTER'
             self.datamodel_name = f"{datamodel_name}Master"
             self.fields = 'mdmStagingRecord'
+
             self.only_hits=False
             self.mdmKey = 'mdmStagingRecord.mdmCreated'
         else:
             self.index_type = 'MASTER'
             self.datamodel_name = f"{datamodel_name}Golden"
             self.fields = 'mdmGoldenFieldAndValues'
+            self.fields_to_get = [self.fields+'.'+i if self.fields not in i else i for i in fields]
             self.only_hits=True
             self.mdmKey = 'mdmCounterForEntity'
 
-        min_v, max_v = self._get_min_max()
+        min_v, max_v, sample = self._get_min_max()
         if (min_v is None) and (max_v is None):
             return []
-        self.chunks = self.ranges(min_v, max_v, slices)
-
+        self.chunks = ranges(min_v, max_v, slices)
         print(f"Number of chunks: {len(self.chunks)}")
+
+        if get_staging_from_golden:
+            self.fields_to_get = [self.fields+'.'+i for i in sample.get(self.fields).keys() for j in fields if j+'_' in i]
 
 
         if self.backend=='dask':
@@ -435,7 +445,7 @@ class ParQuery:
             raise KeyError
 
         if self.return_df:
-            return pd.concat(list_to_compute,ignore_index=True)
+            return pd.concat(list_to_compute, ignore_index=True, sort=True)
         list_to_compute = list(itertools.chain(*list_to_compute))
         return list_to_compute
 
@@ -454,6 +464,7 @@ class ParQuery:
                 only_hits=self.only_hits,
                 mdmKey=self.mdmKey,
                 return_df=self.return_df,
+                fields_to_get=self.fields_to_get,
             )
             list_to_compute.append(y)
 
@@ -472,31 +483,22 @@ class ParQuery:
                                                         only_hits=self.only_hits,
                                                         mdmKey=self.mdmKey,
                                                         return_df=self.return_df,
+                                                        fields_to_get=self.fields_to_get,
                                                                              )
                                                     for RANGE_FILTER in self.chunks)
         return list_to_compute
 
 
 def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None, index_type='MASTER',fields=None, mdmKey=None,
-               only_hits=True, return_df=True):
-    json_query = {
-        "mustList": [
-            {
-                "mdmFilterType": "TYPE_FILTER",
-                "mdmValue": datamodel_name
-            },
-            {
-                "mdmFilterType": "RANGE_FILTER",
-                "mdmKey": f"{mdmKey}",
-                "mdmValue": RANGE_FILTER
-            }
-        ]
-
-    }
+               only_hits=True, return_df=True, fields_to_get=None):
+    json_query = Filter.Builder()\
+        .type(datamodel_name)\
+        .must(RF(key=mdmKey, value=RANGE_FILTER))\
+        .build().to_json()
 
     query = Query(login, page_size=page_size, save_results=False, print_status=False, index_type=index_type,
                   only_hits=only_hits,
-                  fields=fields).query(json_query).go()
+                  fields=fields_to_get).query(json_query).go()
     query = query.results
 
     if not only_hits:

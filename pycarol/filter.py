@@ -104,14 +104,14 @@ class FilterType:
         self.values_query = values_query
 
     def set_key_prefix(self, key_prefix):
-        if self.key:
-            self.key = key_prefix + '.' + self.key
-        if self.values_field:
-            self.values_field = key_prefix + '.' + self.values_field
+        if key_prefix:
+            if self.key:
+                self.key = key_prefix + '.' + self.key
+            if self.values_field:
+                self.values_field = key_prefix + '.' + self.values_field
 
     def to_json(self):
-        json = {}
-        json['mdmFilterType'] = self.filter_type.value
+        json = {'mdmFilterType': self.filter_type.value}
         if self.key:
             json['mdmKey'] = self.key
         if self.value:
@@ -149,7 +149,7 @@ class TERM_FILTER(FilterType):
 
 class TERMS_FILTER(FilterType):
     def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.TERMS_FILTERM, key=key, value=value, values_field=values_field, values_query=values_query)
+        super().__init__(filter_type = FT.TERMS_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
 
 class RANGE_FILTER(FilterType):
     def __init__(self, key, value, values_field = None, values_query = None):
@@ -184,7 +184,7 @@ class WILDCARD_CUSTOM_FILTER(FilterType):
         super().__init__(filter_type = FT.WILDCARD_CUSTOM_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
 
 class EXISTS_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
+    def __init__(self, key, values_field = None, values_query = None):
         super().__init__(filter_type = FT.EXISTS_FILTER, key=key, values_field=values_field, values_query=values_query)
 
 class SIMPLE_QUERY_STRING(FilterType):
@@ -192,68 +192,68 @@ class SIMPLE_QUERY_STRING(FilterType):
         super().__init__(filter_type = FT.SIMPLE_QUERY_STRING, key=key, value=value, values_field=values_field, values_query=values_query)
 
 class MISSING_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
+    def __init__(self, key, values_field = None, values_query = None):
         super().__init__(filter_type = FT.MISSING_FILTER, key=key, values_field=values_field, values_query=values_query)
 
 class GEODISTANCE_FILTER(FilterType):
     def __init__(self, path, key, range_values, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.GEODISTANCE_FILTER, path=path, key=key, range_values=range, values_field=values_field, values_query=values_query)
+        super().__init__(filter_type = FT.GEODISTANCE_FILTER, path=path, key=key, range_values=range_values, values_field=values_field, values_query=values_query)
 
 class NESTED(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_TERM_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_TERM_FILTERM, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_TERM_FILTERM, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_TERMS_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_TERMS_FILTERM, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_TERMS_FILTERM, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_RANGE_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_RANGE_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_RANGE_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_MATCH_ALL_TERMS_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_MATCH_ALL_TERMS_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_MATCH_ALL_TERMS_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_MATCH_ANY_TERM_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_MATCH_ANY_TERM_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_MATCH_ANY_TERM_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_TERM_FUZZY_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_TERM_FUZZY_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_TERM_FUZZY_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_TERMS_FUZZY_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_TERMS_FUZZY_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_TERMS_FUZZY_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_WILDCARD_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_WILDCARD_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_WILDCARD_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_WILDCARD_CUSTOM_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_WILDCARD_CUSTOM_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_WILDCARD_CUSTOM_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_EXISTS_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_EXISTS_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_EXISTS_FILTER, key=key, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_SIMPLE_QUERY_STRING(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_SIMPLE_QUERY_STRING, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_SIMPLE_QUERY_STRING, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_MISSING_FILTER(FilterType):
-    def __init__(self, key, value, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_MISSING_FILTER, key=key, value=value, values_field=values_field, values_query=values_query)
+    def __init__(self, key, value, path, values_field = None, values_query = None):
+        super().__init__(filter_type = FT.NESTED_MISSING_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_GEODISTANCE_FILTER(FilterType):
     def __init__(self, path, key, range_values, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_GEODISTANCE_FILTER, path=path, key=key, range_values=range, values_field=values_field, values_query=values_query)
+        super().__init__(filter_type = FT.NESTED_GEODISTANCE_FILTER, path=path, key=key, range_values=range_values, values_field=values_field, values_query=values_query)
 
 class Aggregation:
     def __init__(self, agg_type, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by = None, sort_order = None, query_param = None):
@@ -294,63 +294,63 @@ class Aggregation:
         return json
 
 class TERM(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='term', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.TERM, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class TERMS(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='terms', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.TERMS, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class NESTED(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='nested', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.NESTED, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class FILTER(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None, query_param=None):
+    def __init__(self, name='filter', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None, query_param=None):
         super().__init__(agg_type= AGG.FILTER, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order, query_param=query_param)
 
 class MINIMUM(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='minimum', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.MINIMUM, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class MAXIMUM(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='maximum', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.MAXIMUM, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class AVERAGE(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='average', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.AVERAGE, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class COUNT(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='count', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.COUNT, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class SUM(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='sum', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.SUM, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class STATS(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='stats', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.STATS, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class EXTENDED_STATS(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='extendedStats', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.EXTENDED_STATS, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class DATE_HISTOGRAM(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='dateHistogram', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.DATE_HISTOGRAM, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class HISTOGRAM(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='histogram', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.HISTOGRAM, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class RANGE(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='range', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.RANGE, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class CARDINALITY(Aggregation):
-    def __init__(self, name, params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
+    def __init__(self, name='cardinality', params=None, sub_aggregations=None, size=10, shard_size=10, min_doc_count=0, sort_by=None, sort_order=None):
         super().__init__(agg_type= AGG.CARDINALITY, name=name, params=params, sub_aggregations=sub_aggregations, size=size, shard_size=shard_size, min_doc_count=min_doc_count, sort_by=sort_by, sort_order=sort_order)
 
 class AGG(Enum):

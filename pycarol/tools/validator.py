@@ -1,7 +1,7 @@
-from pycarol.query import *
+from ..query import *
 import pandas as pd
-from pycarol.utils.utils import KeySingleton
-from pycarol.tasks import Tasks
+from ..utils.singleton import KeySingleton
+from ..tasks import Tasks
 
 
 class Validator(metaclass=KeySingleton):
