@@ -318,7 +318,7 @@ class DataModel:
                            "deleteRecords": copy_or_move}
 
             result = self.carol.call_api(url_filter, data=json_query, params=query_params)
-            print(f"To go: {c}/{len(chunks)}")
+            print(f"To go: {c+1}/{len(chunks)}")
 
 
 
