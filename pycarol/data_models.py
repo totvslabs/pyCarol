@@ -248,8 +248,10 @@ class DataModel:
         return dm_results
 
     def _get_min_max(self):
+
+        #TODO: for merged only .must(RF(key='mdmMasterCount', value=[2, None]))\
         j = Filter.Builder()\
-            .type(self.datamodel_name)\
+            .type(self.datamodel_name) \
             .aggregation_list([MINIMUM(name='MINIMUM',params= self.mdm_key), MAXIMUM(name='MAXIMUM',
                                                                                      params=self.mdm_key)])\
             .build().to_json()
