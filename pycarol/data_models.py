@@ -10,6 +10,7 @@ from .filter import RANGE_FILTER as RF
 from .filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
 from .utils.miscellaneous import ranges
 import time
+import copy
 
 
 class DataModel:
@@ -310,7 +311,8 @@ class DataModel:
 
 
             if query_filter is not None:
-                json_query = query_filter.must(RF(key=self.mdm_key, value=i)).build().to_json()
+                query_filter_to_use = copy.deepcopy(query_filter)
+                json_query = query_filter_to_use.must(RF(key=self.mdm_key, value=i)).build().to_json()
             else:
                 json_query = Filter.Builder() \
                     .must(RF(key=self.mdm_key, value=i)) \
