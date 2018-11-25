@@ -248,14 +248,19 @@ class DataModel:
 
         return dm_results
 
-    def _get_min_max(self):
+    def _get_min_max(self, query_filter=None):
 
-        #TODO: for merged only .must(RF(key='mdmMasterCount', value=[2, None]))\
-        j = Filter.Builder()\
-            .type(self.datamodel_name) \
-            .aggregation_list([MINIMUM(name='MINIMUM',params= self.mdm_key), MAXIMUM(name='MAXIMUM',
-                                                                                     params=self.mdm_key)])\
-            .build().to_json()
+        if query_filter is not None:
+            j = query_filter.type(self.datamodel_name) \
+                .aggregation_list([MINIMUM(name='MINIMUM',params= self.mdm_key), MAXIMUM(name='MAXIMUM',
+                                                                                         params=self.mdm_key)])\
+                .build().to_json()
+        else:
+            j = Filter.Builder()\
+                .type(self.datamodel_name) \
+                .aggregation_list([MINIMUM(name='MINIMUM',params= self.mdm_key), MAXIMUM(name='MAXIMUM',
+                                                                                         params=self.mdm_key)])\
+                .build().to_json()
 
         query = Query(self.carol, index_type=self.index_type, only_hits=False, get_aggs=True, save_results=False,
                       print_status=True, page_size=0).query(j).go()
@@ -298,7 +303,7 @@ class DataModel:
         self.index_type = 'MASTER'
         self.datamodel_name = datamodel_name+'Golden'
         self.mdm_key = 'mdmCounterForEntity'
-        min_v, max_v = self._get_min_max()
+        min_v, max_v = self._get_min_max(query_filter=query_filter)
 
         chunks = ranges(min_v, max_v, n_of_tasks)
         print(f"Number of chunks: {len(chunks)}")
@@ -308,8 +313,6 @@ class DataModel:
 
 
         for c,i in enumerate(chunks):
-
-
             if query_filter is not None:
                 query_filter_to_use = copy.deepcopy(query_filter)
                 json_query = query_filter_to_use.must(RF(key=self.mdm_key, value=i)).build().to_json()
