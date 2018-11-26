@@ -201,6 +201,10 @@ class Staging:
             List of columns to fetch.
         :return:
         """
+
+
+        if columns:
+            columns.extend(['mdmId', 'mdmCounterForEntity'])
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
         else:
@@ -231,6 +235,13 @@ class Staging:
             s3 = carolina.s3
             d = _import_pandas(s3=s3,  tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id,
                                staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns)
+
+            if merge_records:
+                d.sort_values('mdmCounterForEntity', inplace=True)
+                d.reset_index(inplace=True, drop=True)
+                d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
+                d.reset_index(inplace=True, drop=True)
+
             return d
 
 
