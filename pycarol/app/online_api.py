@@ -1,12 +1,13 @@
 from importlib import import_module
 from flask import Flask, request
 import numpy as np
-
 import os
 import sys
 import json
 
 from pycarol.app.health_check_online import HealthCheckOnline
+from pycarol.app.online_request import OnlineRequest
+
 
 class OnlineApi():
     """ Class to execute Online API locally
@@ -110,7 +111,7 @@ class OnlineApi():
             except:
                 return 'Endpoint not found'
 
-            r = pred(request.json)
+            r = pred(OnlineRequest(values=request.values, json=request.json))
             if type(r) is np.ndarray:
                 r = r.tolist()
             return json.dumps(r)
