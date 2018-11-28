@@ -96,6 +96,7 @@ class DataModel:
                             access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
                             merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph, columns=columns)
 
+
             #TODO: Merge_records dask.
 
         elif backend=='pandas':
@@ -103,12 +104,15 @@ class DataModel:
             d = _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
                                n_jobs=n_jobs, golden=True, columns=columns)
 
-
-            if merge_records:
+        if merge_records:
+            if not return_dask_graph:
                 d.sort_values('mdmCounterForEntity', inplace=True)
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
                 d.reset_index(inplace=True, drop=True)
+            else:
+                # TODO: Merge_records dask.
+                raise NotImplementedError('Need to think how to do this when using dask and return graph')
 
 
         return d
