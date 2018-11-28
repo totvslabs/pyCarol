@@ -236,11 +236,15 @@ class Staging:
             d = _import_pandas(s3=s3,  tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id,
                                staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns)
 
-            if merge_records:
+        if merge_records:
+            if not return_dask_graph:
                 d.sort_values('mdmCounterForEntity', inplace=True)
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
                 d.reset_index(inplace=True, drop=True)
+            else:
+                # TODO: Merge_records dask.
+                raise NotImplementedError('Need to think how to do this when using dask and return graph')
 
             return d
 
