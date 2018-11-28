@@ -113,8 +113,9 @@ class DataModel:
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
                 d.reset_index(inplace=True, drop=True)
             else:
-                # TODO: Merge_records dask.
-                raise NotImplementedError('Need to think how to do this when using dask and return graph')
+                d = d.set_index('mdmCounterForEntity', sorted=True) \
+                    .drop_duplicates(subset='mdmId', keep='last') \
+                    .reset_index(drop=True)
 
         return d
 
