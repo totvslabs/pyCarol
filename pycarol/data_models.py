@@ -103,6 +103,8 @@ class DataModel:
             s3 = carolina.s3
             d = _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
                                n_jobs=n_jobs, golden=True, columns=columns)
+        else:
+            raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}' )
 
         if merge_records:
             if not return_dask_graph:
