@@ -246,7 +246,7 @@ class Staging:
                 # TODO: Merge_records dask.
                 raise NotImplementedError('Need to think how to do this when using dask and return graph')
 
-            return d
+        return d
 
 
     def export(self,staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False):
