@@ -202,9 +202,6 @@ class Staging:
         :return:
         """
 
-
-        if columns:
-            columns.extend(['mdmId', 'mdmCounterForEntity'])
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
         else:

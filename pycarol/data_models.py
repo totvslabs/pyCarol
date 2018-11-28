@@ -72,9 +72,6 @@ class DataModel:
         :return:
         """
 
-        if columns:
-            columns.extend(['mdmId','mdmCounterForEntity'])
-
         assert backend=='dask' or backend=='pandas'
 
         if return_dask_graph:
