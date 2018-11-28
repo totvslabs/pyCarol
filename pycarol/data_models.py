@@ -97,8 +97,6 @@ class DataModel:
                             merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph, columns=columns)
 
 
-            #TODO: Merge_records dask.
-
         elif backend=='pandas':
             s3 = carolina.s3
             d = _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
