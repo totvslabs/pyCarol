@@ -72,6 +72,9 @@ class DataModel:
         :return:
         """
 
+        if columns:
+            columns.extend(['mdmId','mdmCounterForEntity'])
+
         assert backend=='dask' or backend=='pandas'
 
         if return_dask_graph:
@@ -93,10 +96,19 @@ class DataModel:
                             access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
                             merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph, columns=columns)
 
+            #TODO: Merge_records dask.
+
         elif backend=='pandas':
             s3 = carolina.s3
             d = _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
                                n_jobs=n_jobs, golden=True, columns=columns)
+
+
+            if merge_records:
+                d.sort_values('mdmCounterForEntity', inplace=True)
+                d.reset_index(inplace=True, drop=True)
+                d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
+                d.reset_index(inplace=True, drop=True)
 
 
         return d
