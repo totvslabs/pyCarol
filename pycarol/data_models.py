@@ -114,7 +114,6 @@ class DataModel:
                 # TODO: Merge_records dask.
                 raise NotImplementedError('Need to think how to do this when using dask and return graph')
 
-
         return d
 
 
