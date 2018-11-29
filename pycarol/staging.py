@@ -176,7 +176,7 @@ class Staging:
         """
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
-    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',
+    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',verbose=0,
                       merge_records=True, n_jobs=1, return_dask_graph=False, columns=None):
         """
 
@@ -188,6 +188,8 @@ class Staging:
             Connector id to fetch parquet of
         :param connector_name: `str`, default `None`
             Connector name to fetch parquet of
+        :param verbose: `int`, default `0`
+            Verbosity
         :param backend: ['dask','pandas'], default `dask`
             if to use either dask or pandas to fetch the data
         :param merge_records: `bool`, default `True`
@@ -233,7 +235,7 @@ class Staging:
 
         elif backend=='pandas':
             s3 = carolina.s3
-            d = _import_pandas(s3=s3,  tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id,
+            d = _import_pandas(s3=s3,  tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
                                staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns)
         else:
             raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}' )
