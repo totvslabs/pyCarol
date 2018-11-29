@@ -105,7 +105,7 @@ def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
         return pd.concat(df_list, ignore_index=True)
 
     else:
-        raise Exception('need to think how to pickle the objects')
+        raise NotImplementedError('need to think how to pickle the objects')
         list_to_compute = Parallel(n_jobs=n_jobs,
                                    verbose=verbose)(delayed(_par_paquet)(
                                                             s3,file
