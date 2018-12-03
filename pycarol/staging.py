@@ -206,7 +206,10 @@ class Staging:
 
 
         if columns:
+            old_columns = columns
+            columns = [i.replace("-","_") for i in columns]
             columns.extend(['mdmId', 'mdmCounterForEntity'])
+            old_columns = dict(zip([i.replace("-", "_") for i in columns], old_columns))
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
         else:
@@ -242,11 +245,13 @@ class Staging:
 
         if merge_records:
             if not return_dask_graph:
+                d.rename(columns=old_columns, inplace=True)
                 d.sort_values('mdmCounterForEntity', inplace=True)
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
                 d.reset_index(inplace=True, drop=True)
             else:
+                d.rename(columns=old_columns, inplace=True)
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                      .drop_duplicates(subset='mdmId', keep='last') \
                      .reset_index(drop=True)
