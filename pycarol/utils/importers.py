@@ -82,7 +82,7 @@ def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_reco
 
 
 def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
-                   staging_name=None, n_jobs=1, verbose=10, golden=False):
+                   staging_name=None, n_jobs=1, verbose=0, golden=False):
 
     if columns:
         columns +=__DM_FIELDS
