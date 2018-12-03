@@ -111,7 +111,7 @@ class TestFieldValidation(unittest.TestCase):
         success, logs = Fieldmock.Nestedthree.validate(data, ignore_errors=False)
         self.assertTrue(success)
 
-    @patch('app.datamodel.dm_git.validation_rule.uniform_data_rule.MdmUniformType.get_rule',
+    @patch('pycarol.pipeline.validation_rule.uniform_data_rule.MdmUniformType.get_rule',
            return_value=MdmUniformType('test', 'Test description', version='1.0.0', values={'a': [1., 2., 3.]}))
     def test_uniform_rule_validation(self, mocked):
         data = pd.DataFrame({'nestedtwo': [1., 2., 3., 4., 5., 6.]})
@@ -121,7 +121,7 @@ class TestFieldValidation(unittest.TestCase):
         success, logs = Fieldmock.Nestedtwo.validate(data, ignore_errors=False)
         self.assertTrue(success)
 
-    @patch('app.datamodel.dm_git.validation_rule.uniform_data_rule.MdmUniformType.get_rule',
+    @patch('pycarol.pipeline.validation_rule.uniform_data_rule.MdmUniformType.get_rule',
            return_value=MdmUniformType('test', 'Test description', version='1.0.0', values={'a': [1., 2., 3.]}))
     def test_all_validation(self, mocked):
         data = pd.DataFrame({

@@ -2,10 +2,10 @@ from unittest.mock import patch, MagicMock, PropertyMock
 import unittest
 import luigi
 from luigi_extension import Task, inherit_list
-from pycarol.pipeline.parameter import SettingsDefinition, Parameter, set_parameters
-from pycarol.query import Query
-from pycarol.carol import Carol
-from pycarol.auth import ApiKeyAuth
+from ..parameter import SettingsDefinition, Parameter, set_parameters
+from ...query import Query
+from ...carol import Carol
+from ...auth import ApiKeyAuth
 
 """ 
 # Task Execution

@@ -1,5 +1,5 @@
-from app.datamodel.dm_git.data_model import DataModel, Field
-from app.datamodel.dm_git.validation_rule import ValidationRule, MdmUniformType
+from ...data_model import DataModel, Field
+from ...validation_rule import ValidationRule, MdmUniformType
 
 """ Test comment outside
 """

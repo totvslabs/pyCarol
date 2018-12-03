@@ -1,4 +1,4 @@
-from app.datamodel.dm_git.data_model import DataModel, Field
+from ...data_model import DataModel, Field
 
 """ Test comment outside
 """
