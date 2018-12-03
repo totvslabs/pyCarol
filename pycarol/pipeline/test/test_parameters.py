@@ -2,10 +2,10 @@ from unittest.mock import patch, MagicMock, PropertyMock
 import unittest
 import luigi
 from luigi_extension import Task, inherit_list
-from .parameter import SettingsDefinition, Parameter, set_parameters
-from ..query import Query
-from ..carol import Carol
-from ..auth import ApiKeyAuth
+from pycarol.pipeline.parameter import SettingsDefinition, Parameter, set_parameters
+from pycarol.query import Query
+from pycarol.carol import Carol
+from pycarol.auth import ApiKeyAuth
 
 """ 
 # Task Execution
@@ -26,6 +26,8 @@ from ..auth import ApiKeyAuth
     If your test case involves Carol related tasks, use the Carol keyword. E.g. TestCarolMyTest. This way, Carol updates
     will be able to be checked. 
     
+    # TODO:
+        - Check significant parameters behavior
 """
 
 
