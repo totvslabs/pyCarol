@@ -11,6 +11,7 @@ from .filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
 from .utils.miscellaneous import ranges
 import time
 import copy
+import warnings
 
 
 class DataModel:
@@ -101,6 +102,9 @@ class DataModel:
             s3 = carolina.s3
             d = _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
                                n_jobs=n_jobs, golden=True, columns=columns)
+            if d is None:
+                warnings.warn("No data to fetch!", UserWarning)
+                return None
         else:
             raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}' )
 
