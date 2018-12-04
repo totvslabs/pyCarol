@@ -52,29 +52,3 @@ class TestDataModel(unittest.TestCase):
 # Receives inputs[0] from an Igestion Task, returns success, logs
 class TestDataModelValidation(unittest.TestCase):
     pass
-
-
-class TestDataModelCarolApi(unittest.TestCase):
-    def test_add_meta_data(self):
-        # TODO
-        pass
-
-    def test_create_new_data_model_at_carol(self):
-        # TODO
-        pass
-
-    def test_get_data_model_from_carol(self):
-        # TODO
-        pass
-
-    def test_edit_data_model_at_carol(self):
-        # TODO
-        pass
-
-    def test_delete_data_model_from_carol(self):
-        # TODO
-        pass
-
-    def test_add_validation_rules_to_carol(self):
-        # TODO
-        pass

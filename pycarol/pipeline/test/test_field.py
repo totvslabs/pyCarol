@@ -89,7 +89,7 @@ class TestFieldValidation(unittest.TestCase):
 
     def test_type_validation(self):
         data = pd.DataFrame({'nestedonedeep': ['a', 'b', 'c', 'd', 'e', 'f']})
-        success, logs = Fieldmock.Nestedone.Nestedonedeep.validate(data)
+        success, logs = Fieldmock.Nestedone.Nestedonedeep.validate(data, ignore_errors=True)
         self.assertFalse(success)
         data = pd.DataFrame({'nestedonedeep': [-1, 0, 1, 2, 3, 4]})
         success, logs = Fieldmock.Nestedone.Nestedonedeep.validate(data, ignore_errors=False)
@@ -97,7 +97,7 @@ class TestFieldValidation(unittest.TestCase):
 
     def test_custom_validation(self):
         data = pd.DataFrame({'nestedonedeep': [1, 2, 3, 4, 5, 6]})
-        success, logs = Fieldmock.Nestedone.Nestedonedeep.validate(data)
+        success, logs = Fieldmock.Nestedone.Nestedonedeep.validate(data, ignore_errors=True)
         self.assertFalse(success)
         data = pd.DataFrame({'nestedonedeep': [-1, 0, 1, 2, 3, 4]})
         success, logs = Fieldmock.Nestedone.Nestedonedeep.validate(data, ignore_errors=False)
@@ -105,7 +105,7 @@ class TestFieldValidation(unittest.TestCase):
 
     def test_validation_rule_validation(self):
         data = pd.DataFrame({'nestedthree': [1., 2., 3., 4., 5., 6.]})
-        success, logs = Fieldmock.Nestedthree.validate(data)
+        success, logs = Fieldmock.Nestedthree.validate(data, ignore_errors=True)
         self.assertFalse(success)
         data = pd.DataFrame({'nestedthree': [1., 1., 1., 1., 1., 1.]})
         success, logs = Fieldmock.Nestedthree.validate(data, ignore_errors=False)
@@ -115,7 +115,7 @@ class TestFieldValidation(unittest.TestCase):
            return_value=MdmUniformType('test', 'Test description', version='1.0.0', values={'a': [1., 2., 3.]}))
     def test_uniform_rule_validation(self, mocked):
         data = pd.DataFrame({'nestedtwo': [1., 2., 3., 4., 5., 6.]})
-        success, logs = Fieldmock.Nestedtwo.validate(data)
+        success, logs = Fieldmock.Nestedtwo.validate(data, ignore_errors=True)
         self.assertFalse(success)
         data = pd.DataFrame({'nestedtwo': [1., 1., 2., 2., 3., 3.]})
         success, logs = Fieldmock.Nestedtwo.validate(data, ignore_errors=False)
@@ -129,9 +129,8 @@ class TestFieldValidation(unittest.TestCase):
             'fieldmock_nestedtwo': [1, 2, 3, 4, 5, 6],
             'fieldmock_nestedthree': [1., 2., 3., 4., 5., 6.]
         })
-        success, logs = Fieldmock.validate(data)
+        success, logs = Fieldmock.validate(data, ignore_errors=True)
         self.assertFalse(success)
-        print(logs)
 
         data = pd.DataFrame({
             'nestedone_nestedonedeep': [1, 2, 3, 4, 5, 6],
@@ -141,22 +140,4 @@ class TestFieldValidation(unittest.TestCase):
         success, logs = Fieldmock.Nestedtwo.validate(data, ignore_errors=False)
         self.assertTrue(success)
 
-
-class TestFieldCarolApi(unittest.TestCase):
-    def test_add_meta_data(self):
-        pass
-
-    def test_create_new_field_at_carol(self):
-        pass
-
-    def test_get_field_from_carol(self):
-        pass
-
-    def test_edit_field_at_carol(self):
-        pass
-
-    def test_delete_field_from_carol(self):
-        pass
-
-    def test_get_nested_validation_rules(self):
-        pass
+    # TODO: Test logs
