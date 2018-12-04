@@ -204,7 +204,7 @@ class Staging:
         :return:
         """
 
-
+        old_columns = None
         if columns:
             old_columns = columns
             columns = [i.replace("-","_") for i in columns]
@@ -245,13 +245,15 @@ class Staging:
 
         if merge_records:
             if not return_dask_graph:
-                d.rename(columns=old_columns, inplace=True)
+                if old_columns is not None:
+                    d.rename(columns=old_columns, inplace=True)
                 d.sort_values('mdmCounterForEntity', inplace=True)
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
                 d.reset_index(inplace=True, drop=True)
             else:
-                d.rename(columns=old_columns, inplace=True)
+                if old_columns is not None:
+                    d.rename(columns=old_columns, inplace=True)
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                      .drop_duplicates(subset='mdmId', keep='last') \
                      .reset_index(drop=True)
