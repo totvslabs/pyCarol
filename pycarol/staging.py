@@ -44,8 +44,10 @@ class Staging:
 
 
 
-    def send_data(self, staging_name, data=None, connector_id=None, step_size=100, print_stats=False,
+    def send_data(self, staging_name, data=None, connector_id=None, step_size=100, print_stats=False, gzip=False,
                   auto_create_schema=False, crosswalk_auto_create=None, force=False, dm_to_delete=None):
+
+        self.gzip = gzip
 
         if connector_id is None:
             connector_id = self.carol.connector_id
