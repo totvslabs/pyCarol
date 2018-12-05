@@ -1,5 +1,4 @@
 import json
-from websocket import create_connection
 import itertools
 from joblib import Parallel, delayed
 import dask
@@ -138,6 +137,7 @@ class Query:
         return self
 
     def _streamable_query_handler(self, callback=None):
+        from websocket import create_connection
         if not self.offset == 0:
             raise ValueError('It is not possible to use offset when using streaming')
 
