@@ -141,6 +141,7 @@ class Carol:
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json',retries=5,
                  session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524), downloadable=False,
                  method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']), errors='raise',
+                 extra_headers=None,
                  **kwds):
         """
         :param path:
@@ -155,6 +156,7 @@ class Carol:
         :param status_forcelist:
         :param downloadable:
         :param method_whitelist:
+        :param extra_headers:
         :param errors : {‘ignore’, ‘raise’}, default ‘raise’
                 If ‘raise’, then invalid request will raise an exception
                 If ‘ignore’, then invalid request will return the request response
@@ -162,6 +164,7 @@ class Carol:
         :return:
         """
 
+        extra_headers = extra_headers or {}
         url = 'https://{}.carol.ai:{}/api/{}'.format(self.domain, self.port, path)
 
         if method is None:
@@ -185,6 +188,7 @@ class Carol:
                 data_json = data
                 data = None
 
+        headers.update(extra_headers)
         __count = 0
         while True:
             section = self._retry_session(retries=retries, session=session, backoff_factor=backoff_factor,
