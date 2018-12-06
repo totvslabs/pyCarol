@@ -125,7 +125,7 @@ class Staging:
                     out = io.BytesIO()
                     with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
                         f.write(data_to_send.encode('utf-8'))
-                    yield out
+                    yield out.getvalue()
                 else:
                     yield json.loads(data_to_send)
             else:
@@ -135,7 +135,7 @@ class Staging:
                     out = io.BytesIO()
                     with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
                         f.write(json.dumps(data_to_send).encode('utf-8'))
-                    yield out
+                    yield out.getvalue()
                 else:
                     yield data_to_send
 
