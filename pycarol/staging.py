@@ -234,6 +234,7 @@ class Staging:
             columns = [i.replace("-","_") for i in columns]
             columns.extend(['mdmId', 'mdmCounterForEntity'])
             old_columns = dict(zip([i.replace("-", "_") for i in columns], old_columns))
+
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
         else:
