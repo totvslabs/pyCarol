@@ -32,9 +32,9 @@ class Carol:
             If True will print the header, method and URL of each API call.
         """
 
-
+        settings = dict()
         if auth is None and domain is None:
-            settings = dict()
+
             if os.path.isfile('app_config.json'):
                 with open('app_config.json', 'r') as f:
                     settings = json.load(f)
