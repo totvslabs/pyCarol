@@ -66,8 +66,16 @@ class Carol:
                 if connector_id is None:
                     connector_id = app_config.get('connector_id', os.getenv('CAROLCONNECTORID', '0a0829172fc2433c9aa26460c31b78f0'))
 
-        if connector_id is None:
-            connector_id = '0a0829172fc2433c9aa26460c31b78f0'
+        else: # env login
+            domain = os.getenv('CAROLTENANT')
+            app_name = os.getenv('CAROLAPPNAME')
+            auth_token = os.getenv('CAROLAPPOAUTH')
+            connector_id = os.getenv('CAROLCONNECTORID')
+            assert (domain and app_name and auth and connector_id,
+                    "One of the following env variables are missing:\n"+
+                    "CAROLTENANT:{}\nCAROLAPPNAME{}\nCAROLAPPOAUTH:{}\nCAROLCONNECTORID{}\n".format(
+                    domain,app_name,auth,connector_id))
+            auth = ApiKeyAuth(auth_token)
 
         if domain is None or app_name is None or auth is None:
             raise ValueError("domain, app_name and auth must be specified as parameters, in the app_config.json file " +
