@@ -11,6 +11,7 @@ from .filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
 from .utils.miscellaneous import ranges
 import time
 import copy
+import warnings
 
 
 class DataModel:
@@ -93,20 +94,27 @@ class DataModel:
                             access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
                             merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph, columns=columns)
 
-            #TODO: Merge_records dask.
 
         elif backend=='pandas':
             s3 = carolina.s3
             d = _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
                                n_jobs=n_jobs, golden=True, columns=columns)
+            if d is None:
+                warnings.warn("No data to fetch!", UserWarning)
+                return None
+        else:
+            raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}' )
 
-
-            if merge_records:
+        if merge_records:
+            if not return_dask_graph:
                 d.sort_values('mdmCounterForEntity', inplace=True)
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
                 d.reset_index(inplace=True, drop=True)
-
+            else:
+                d = d.set_index('mdmCounterForEntity', sorted=True) \
+                    .drop_duplicates(subset='mdmId', keep='last') \
+                    .reset_index(drop=True)
 
         return d
 

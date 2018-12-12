@@ -8,6 +8,8 @@ from .carolina import Carolina
 from .utils.importers import _import_dask, _import_pandas
 from .filter import Filter, RANGE_FILTER, TYPE_FILTER
 import itertools
+import warnings
+import gzip, io
 
 
 
@@ -44,7 +46,15 @@ class Staging:
 
 
     def send_data(self, staging_name, data=None, connector_id=None, step_size=100, print_stats=False,
-                  auto_create_schema=False, crosswalk_auto_create=None, force=False, dm_to_delete=None):
+                  gzip=True,  auto_create_schema=False, crosswalk_auto_create=None, force=False, dm_to_delete=None):
+
+        self.gzip = gzip
+        extra_headers = {}
+        content_type = 'application/json'
+        if self.gzip:
+            content_type=None
+            extra_headers["Content-Encoding"] = "gzip"
+            extra_headers['content-type'] = 'application/json'
 
         if connector_id is None:
             connector_id = self.carol.connector_id
@@ -94,14 +104,13 @@ class Staging:
 
         url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
         gen = self._stream_data(data, data_size, step_size, is_df)
-        cont = 0
+        self.cont = 0
         ite = True
         data_json = gen.__next__()
         while ite:
-            self.carol.call_api(url, data=data_json)
-            cont += len(data_json)
+            self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
             if print_stats:
-                print('{}/{} sent'.format(cont, data_size), end='\r')
+                print('{}/{} sent'.format(self.cont, data_size), end='\r')
             data_json = gen.__next__()
             if data_json == []:
                 break
@@ -109,11 +118,26 @@ class Staging:
     def _stream_data(self, data, data_size, step_size, is_df):
         for i in range(0,data_size, step_size):
             if is_df:
-                data_to_send = data.iloc[i:i + step_size].to_json(orient='records', date_format='iso', lines=False)
-                data_to_send = json.loads(data_to_send)
-                yield data_to_send
+                data_to_send = data.iloc[i:i + step_size]
+                self.cont += len(data_to_send)
+                data_to_send = data_to_send.to_json(orient='records', date_format='iso', lines=False)
+                if self.gzip:
+                    out = io.BytesIO()
+                    with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
+                        f.write(data_to_send.encode('utf-8'))
+                    yield out.getvalue()
+                else:
+                    yield json.loads(data_to_send)
             else:
-                yield data[i:i + step_size]
+                data_to_send = data[i:i + step_size]
+                self.cont += len(data_to_send)
+                if self.gzip:
+                    out = io.BytesIO()
+                    with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
+                        f.write(json.dumps(data_to_send).encode('utf-8'))
+                    yield out.getvalue()
+                else:
+                    yield data_to_send
 
         yield []
 
@@ -176,7 +200,7 @@ class Staging:
         """
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
-    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',
+    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',verbose=0,
                       merge_records=True, n_jobs=1, return_dask_graph=False, columns=None):
         """
 
@@ -188,6 +212,8 @@ class Staging:
             Connector id to fetch parquet of
         :param connector_name: `str`, default `None`
             Connector name to fetch parquet of
+        :param verbose: `int`, default `0`
+            Verbosity
         :param backend: ['dask','pandas'], default `dask`
             if to use either dask or pandas to fetch the data
         :param merge_records: `bool`, default `True`
@@ -201,6 +227,13 @@ class Staging:
             List of columns to fetch.
         :return:
         """
+
+        old_columns = None
+        if columns:
+            old_columns = columns
+            columns = [i.replace("-","_") for i in columns]
+            columns.extend(['mdmId', 'mdmCounterForEntity'])
+            old_columns = dict(zip([i.replace("-", "_") for i in columns], old_columns))
 
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
@@ -227,19 +260,33 @@ class Staging:
             d = _import_dask(tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, staging_name=staging_name,
                              access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
                              merge_records=merge_records, golden=False,return_dask_graph=return_dask_graph,columns=columns)
-            return d
+
         elif backend=='pandas':
             s3 = carolina.s3
-            d = _import_pandas(s3=s3,  tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id,
+            d = _import_pandas(s3=s3,  tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
                                staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns)
+            if d is None:
+                warnings.warn("No data to fetch!", UserWarning)
+                return None
+        else:
+            raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}' )
 
-            if merge_records:
+        if merge_records:
+            if not return_dask_graph:
+                if old_columns is not None:
+                    d.rename(columns=old_columns, inplace=True)
                 d.sort_values('mdmCounterForEntity', inplace=True)
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
                 d.reset_index(inplace=True, drop=True)
+            else:
+                if old_columns is not None:
+                    d.rename(columns=old_columns, inplace=True)
+                d = d.set_index('mdmCounterForEntity', sorted=True) \
+                     .drop_duplicates(subset='mdmId', keep='last') \
+                     .reset_index(drop=True)
 
-            return d
+        return d
 
 
     def export(self,staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False):

@@ -83,7 +83,7 @@ def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_reco
 
 
 def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
-                   staging_name=None, n_jobs=1, verbose=10, golden=False):
+                   staging_name=None, n_jobs=1, verbose=0, golden=False):
 
     if columns:
         columns = list(set(columns))
@@ -103,11 +103,11 @@ def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
             obj.download_fileobj(buffer)
             df_list.append(pd.read_parquet(buffer,columns=columns))
         if not df_list:
-            return []
+            return None
         return pd.concat(df_list, ignore_index=True)
 
     else:
-        raise Exception('need to think how to pickle the objects')
+        raise NotImplementedError('need to think how to pickle the objects')
         list_to_compute = Parallel(n_jobs=n_jobs,
                                    verbose=verbose)(delayed(_par_paquet)(
                                                             s3,file

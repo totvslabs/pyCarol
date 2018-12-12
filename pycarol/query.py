@@ -121,6 +121,7 @@ class Query:
     def go(self, callback=None):
         """
         """
+        self.results = []
         if self.json_query is None:
             raise ValueError("You must call all() or filter() or named() before calling go()")
 
