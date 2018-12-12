@@ -7,6 +7,7 @@ import os.path
 from .auth.ApiKeyAuth import ApiKeyAuth
 from .auth.PwdAuth import PwdAuth
 from .tenant import Tenant
+from . import __CONNECTOR_PYCAROL__
 
 
 class Carol:
@@ -23,7 +24,7 @@ class Carol:
             Carol app name.
         :param auth: `PwdAuth` or `ApiKeyAuth` object
             Auth Carol object to handle authentication
-        :param connector_id: `str`, default `0a0829172fc2433c9aa26460c31b78f0`
+        :param connector_id: `str`, default `__CONNECTOR_PYCAROL__`
             Connector Id
         :param port: `int`, default 443
             Port to be used (when running locally)
@@ -65,7 +66,7 @@ class Carol:
                                         auth = PwdAuth(auth_user, auth_pwd)
 
                     if connector_id is None:
-                        connector_id = app_config.get('connector_id', os.getenv('CAROLCONNECTORID', '0a0829172fc2433c9aa26460c31b78f0'))
+                        connector_id = app_config.get('connector_id', os.getenv('CAROLCONNECTORID', __CONNECTOR_PYCAROL__))
 
             else: # env login
                 domain = os.getenv('CAROLTENANT')
@@ -80,7 +81,7 @@ class Carol:
 
 
         if connector_id is None:
-            connector_id =  '0a0829172fc2433c9aa26460c31b78f0'
+            connector_id =  __CONNECTOR_PYCAROL__
 
         if domain is None or app_name is None or auth is None:
             raise ValueError("domain, app_name and auth must be specified as parameters, in the app_config.json file " +
