@@ -71,7 +71,7 @@ class Carol:
 
         if domain is None or app_name is None or auth is None:
             raise ValueError("domain, app_name and auth must be specified as parameters, in the app_config.json file " +
-                             "or in the environment variables CAROLTENANT, CAROLAPPOAUTH OR CAROLUSER+CAROLPWD and " +
+                             "or in the environment variables CAROLTENANT, CAROLAPPNAME, CAROLAPPOAUTH OR CAROLUSER+CAROLPWD and " +
                              "CAROLCONNECTORID")
 
         self.domain = domain
