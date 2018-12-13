@@ -10,6 +10,9 @@ validation rules, however, are not yet implemented on Carol. That's why we separ
 and what should be only stored on code.
 
 
+# TODO: Validation with external keys
+# TODO: Study SQL Alchemy
+
 """
 from ..data_models.data_model_build import DataModelBuild
 import inspect
@@ -28,6 +31,14 @@ class DataModel:
                     ...
         """
         return cls.__name__.lower()
+
+    @classmethod
+    def has_nested(cls):
+        # TODO
+        for field in cls.get_fields().values():
+            if len(field.get_fields()) > 0:
+                return True
+        return False
 
     @classmethod
     def add_field(cls, field):
@@ -213,6 +224,29 @@ class DataModel:
             logs['fields'].update({field_name: f_log})
 
         return success, logs
+
+    @classmethod
+    def get_dtypes(cls):
+        field_types = {}
+
+        def _get_inner_fields(field, nested=None):
+            field_name = field.get_name()
+            if field.TYPE != Field.TYPE.NESTED:
+                if nested is not None:
+                    field_name = '_'.join(nested + [field_name])
+                field_types.update({field_name: field.get_dtype()})
+            else:
+                if nested is None:
+                    nested = [field_name]
+                else:
+                    nested.append(field_name)
+                for f in field.get_fields().values():
+                    _get_inner_fields(f, nested)
+
+        for field in cls.get_fields().values():
+            _get_inner_fields(field)
+
+        return field_types
 
     @classmethod
     def update_version(cls, carol):

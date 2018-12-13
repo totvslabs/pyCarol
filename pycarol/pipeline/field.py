@@ -3,10 +3,12 @@
 """
 import inspect
 import sys
+import numpy as np
 from .validation_rule.validation_rule import ValidationRule
 from .validation_rule.uniform_data_rule import MdmUniformType
 from .validation_rule.validation_funcs import type_rules as type_rules_funcs
 
+# TODO: Relation: if this field is related to another data model
 # TODO: Type: Default value + Type custom validations
 
 
@@ -18,6 +20,8 @@ class Field:
         * custom_validation (data)
 
     """
+    _mandatory = False
+
     class TYPE:
         STRING = "STRING"
         NESTED = "NESTED"
@@ -132,11 +136,11 @@ class Field:
         """
         success = True
         logs = {}
-
+        logs.update({'success': False})
+        logs.update({'mandatory': cls._mandatory})
         if _nested is None:
             _nested = []
         _nested = _nested.copy()  # Python crazy way of dealing with lists
-
         _nested.append(cls.get_name())
 
         if cls.TYPE != Field.TYPE.NESTED:
@@ -146,11 +150,16 @@ class Field:
                 if not ignore_errors:
                     raise ValueError(f'Could not find field {cls.get_name()} in data.')
                 logs.update({'found': False})
-                success = False
+                if cls._mandatory:
+                    success = False
 
             else:
                 logs.update({'found': True})
-                data = data[field_key]
+                data = data[field_key].dropna()
+                if len(data) == 0:
+                    logs.update({'non_null': False})
+                    return False, logs
+
                 # Type Validation
                 type_fun = getattr(type_rules_funcs, 'validate_' + cls.TYPE.lower())  # Get type validation function
                 type_success = type_fun(data)
@@ -212,14 +221,16 @@ class Field:
         else:
             # Validate nested
             logs['nested'] = {}
+            logs['nested']['fields'] = {}
             for field_name, field in cls.get_fields().items():
                 if validate_nested:
                     f_success, f_logs = field.validate(data, ignore_errors=ignore_errors, _nested=_nested)
                     success = success and f_success
-                    logs['nested'].update({field_name : f_logs})
+                    logs['nested']['fields'].update({field_name: f_logs})
                 else:
-                    logs['nested'].update({field_name: (field, _nested)})
+                    logs['nested']['fields'].update({field_name: (field, _nested)})
 
+        logs.update({'success': success})
         return success, logs
 
     @classmethod
@@ -235,6 +246,19 @@ class Field:
         for field in cls.get_fields().values():
             rules += field.get_nested_validation_rules()
         return rules
+
+    @classmethod
+    def get_dtype(cls):
+        return {Field.TYPE.BOOLEAN: '?',  # boolean
+                Field.TYPE.STRING: 'O',  # (Python) objects
+                Field.TYPE.NESTED: 'O',  # (Python) objects
+                Field.TYPE.DATE: "M",
+                Field.TYPE.LONG: "i",
+                Field.TYPE.DOUBLE: "f",
+                Field.TYPE.BINARY: "O",
+                Field.TYPE.OBJECT: "O",
+                Field.TYPE.GEOPOINT: "O"
+            }[cls.TYPE]
 
     @classmethod
     def get_parent(cls):

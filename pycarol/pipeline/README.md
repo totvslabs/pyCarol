@@ -24,6 +24,10 @@
 
 
 ## Parameter
+Parameters define pipeline execution. Those parameters might come from Carol API or might be embedded on the docker
+image of the app.
+
+## Mappings
 
 
 # TODO

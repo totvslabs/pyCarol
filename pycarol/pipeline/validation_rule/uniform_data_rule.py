@@ -81,7 +81,7 @@ class MdmUniformType:
         :param auth: Authentication to access tenant, if applicable
         :return: MdmUniformType rule
         """
-        # TODO
+        # TODO: Change that to a service of rules, or other thing
         # List rules storage
         try:
             filename = id+'.json'

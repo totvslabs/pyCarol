@@ -2,7 +2,7 @@ from unittest.mock import patch, MagicMock, PropertyMock
 import unittest
 import luigi
 from luigi_extension import Task, inherit_list
-from ..parameter import SettingsDefinition, Parameter, set_parameters
+from ..luigi import SettingsDefinition, Parameter, set_parameters
 from ...query import Query
 from ...carol import Carol
 from ...auth import ApiKeyAuth
@@ -40,13 +40,13 @@ class mock_carol_query:
 
     def __call__(self, test_func):
         """
-        MOCK_QUERY:
+        MOCK_QUERY: pass a query, so any query with this exact value will be mocked
 
         MOCK_DM_QUERY: pass a datamodel so any query with "mdmValue" = MOCK_DM_QUERY + "Golden" will be mocked.
 
         QUERY_RESPONSE:
 
-        MAX_HITS:
+        MAX_HITS: define a maximum number of hits to a query
 
         RESPONSE_TYPE:
         It is expected that each query response follows a compact type, i.e. that query results should be similar to the
@@ -84,6 +84,7 @@ class mock_carol_query:
                     query_resp = dic['query_response']
                 if 'max_hits' in dic:
                     self.max_hits = dic['max_hits']
+                    self.get_all = False
                 response_type = 'compact'  # Default value for response_type
                 if 'response_type' in dic:
                     response_type = dic['response_type']

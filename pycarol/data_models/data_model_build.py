@@ -13,8 +13,10 @@ class DataModelBuild:
 
     def __init__(self, carol):
         self.carol = carol
+
         self.dms = None
         self.dms_id = None
+
         self.field_functions = None
         self.field_functions_id = None
 
@@ -25,11 +27,12 @@ class DataModelBuild:
                 self.dms: Dict with Data Model information, following MDM Model
                 self.dms_ds: Dict with {data_model_name:data_model_id} for convenience
 
-        :return: None
+        :return: self
         """
         dm = data_models.DataModel(self.carol).get_all()
         self.dms = dm.template_data
         self.dms_id = {d['mdmName']: d['mdmId'] for d in self.dms}
+        return self
 
     def get_dm(self, dm_name):
         """ Get a data model by its name
