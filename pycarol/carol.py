@@ -7,23 +7,21 @@ import os.path
 from .auth.ApiKeyAuth import ApiKeyAuth
 from .auth.PwdAuth import PwdAuth
 from .tenant import Tenant
+from . import __CONNECTOR_PYCAROL__
 
 
 class Carol:
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False):
         """
-
         This class handle all Carol`s API calls
-
         It will handle all API calls, for a given authentication method.
-
         :param domain: `str`
             Teanant name
         :param app_name: `str`
             Carol app name.
         :param auth: `PwdAuth` or `ApiKeyAuth` object
             Auth Carol object to handle authentication
-        :param connector_id: `str`, default `0a0829172fc2433c9aa26460c31b78f0`
+        :param connector_id: `str`, default `__CONNECTOR_PYCAROL__`
             Connector Id
         :param port: `int`, default 443
             Port to be used (when running locally)
@@ -31,47 +29,59 @@ class Carol:
             If True will print the header, method and URL of each API call.
         """
 
-
         settings = dict()
-        if os.path.isfile('app_config.json'):
-            with open('app_config.json', 'r') as f:
-                settings = json.load(f)
+        if auth is None and domain is None:
 
-            if domain is None:
-                domain = settings.get('domain', os.getenv('CAROLTENANT'))
-            if app_name is None:
-                app_name = settings.get('app_name', os.getenv('CAROLAPPNAME'))
+            if os.path.isfile('app_config.json'):
+                with open('app_config.json', 'r') as f:
+                    settings = json.load(f)
 
-            app_config = settings.get(domain)
-            if app_config is not None:
-                if auth is None:
-                    auth_token = app_config.get('oauth_token')
-                    if auth_token is not None:
-                        auth = ApiKeyAuth(auth_token)
-                    else:
-                        auth_user = app_config.get('auth_user')
-                        auth_pwd = app_config.get('auth_pwd')
-                        if auth_user is not None and auth_pwd is not None:
-                            auth = PwdAuth(auth_user, auth_pwd)
+                if domain is None:
+                    domain = settings.get('domain', os.getenv('CAROLTENANT'))
+                if app_name is None:
+                    app_name = settings.get('app_name', os.getenv('CAROLAPPNAME'))
+
+                app_config = settings.get(domain)
+                if app_config is not None:
+                    if auth is None:
+                        auth_token = app_config.get('oauth_token')
+                        if auth_token is not None:
+                            auth = ApiKeyAuth(auth_token)
                         else:
-                            auth_token = os.getenv('CAROLAPPOAUTH')
-                            if auth_token is not None:
-                                auth = ApiKeyAuth(auth_token)
+                            auth_user = app_config.get('auth_user')
+                            auth_pwd = app_config.get('auth_pwd')
+                            if auth_user is not None and auth_pwd is not None:
+                                auth = PwdAuth(auth_user, auth_pwd)
                             else:
-                                auth_user = os.getenv('CAROLUSER')
-                                auth_pwd = os.getenv('CAROLPWD')
-                                if auth_user is not None and auth_pwd is not None:
-                                    auth = PwdAuth(auth_user, auth_pwd)
+                                auth_token = os.getenv('CAROLAPPOAUTH')
+                                if auth_token is not None:
+                                    auth = ApiKeyAuth(auth_token)
+                                else:
+                                    auth_user = os.getenv('CAROLUSER')
+                                    auth_pwd = os.getenv('CAROLPWD')
+                                    if auth_user is not None and auth_pwd is not None:
+                                        auth = PwdAuth(auth_user, auth_pwd)
 
-                if connector_id is None:
-                    connector_id = app_config.get('connector_id', os.getenv('CAROLCONNECTORID', '0a0829172fc2433c9aa26460c31b78f0'))
+                    if connector_id is None:
+                        connector_id = app_config.get('connector_id', os.getenv('CAROLCONNECTORID', __CONNECTOR_PYCAROL__))
+
+            else: # env login
+                domain = os.getenv('CAROLTENANT')
+                app_name = os.getenv('CAROLAPPNAME')
+                auth_token = os.getenv('CAROLAPPOAUTH')
+                connector_id = os.getenv('CAROLCONNECTORID')
+                assert (domain is not None) and (app_name is not None) and (auth_token is not None) and (connector_id is not None),\
+                        "One of the following env variables are missing:\n " \
+                        f"CAROLTENANT: {domain}\nCAROLAPPNAME: {app_name}\nCAROLAPPOAUTH: {auth}\nCAROLCONNECTORID: {connector_id}\n"
+                auth = ApiKeyAuth(auth_token)
+
 
         if connector_id is None:
-            connector_id = '0a0829172fc2433c9aa26460c31b78f0'
+            connector_id =  __CONNECTOR_PYCAROL__
 
         if domain is None or app_name is None or auth is None:
             raise ValueError("domain, app_name and auth must be specified as parameters, in the app_config.json file " +
-                             "or in the environment variables CAROLTENANT, CAROLAPPOAUTH OR CAROLUSER+CAROLPWD and " +
+                             "or in the environment variables CAROLTENANT, CAROLAPPNAME, CAROLAPPOAUTH OR CAROLUSER+CAROLPWD and " +
                              "CAROLCONNECTORID")
 
         self.domain = domain
@@ -108,7 +118,6 @@ class Carol:
     def _retry_session(retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524),
                        method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE'])):
         """
-
         :param retries: `int`, default `5`
             Number of retries for the API all
         :param session: Session objectn defaut `None`
@@ -141,6 +150,7 @@ class Carol:
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json',retries=5,
                  session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524), downloadable=False,
                  method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']), errors='raise',
+                 extra_headers=None,
                  **kwds):
         """
         :param path:
@@ -155,6 +165,7 @@ class Carol:
         :param status_forcelist:
         :param downloadable:
         :param method_whitelist:
+        :param extra_headers:
         :param errors : {‘ignore’, ‘raise’}, default ‘raise’
                 If ‘raise’, then invalid request will raise an exception
                 If ‘ignore’, then invalid request will return the request response
@@ -162,6 +173,7 @@ class Carol:
         :return:
         """
 
+        extra_headers = extra_headers or {}
         url = 'https://{}.carol.ai:{}/api/{}'.format(self.domain, self.port, path)
 
         if method is None:
@@ -185,6 +197,7 @@ class Carol:
                 data_json = data
                 data = None
 
+        headers.update(extra_headers)
         __count = 0
         while True:
             section = self._retry_session(retries=retries, session=session, backoff_factor=backoff_factor,

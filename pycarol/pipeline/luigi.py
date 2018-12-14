@@ -28,6 +28,7 @@ class SettingsDefinition(luigi.Task):
     """
     api_token = None
     app_name = None
+    app_carol = None
     app = None
 
     @classmethod
@@ -62,31 +63,22 @@ class SettingsDefinition(luigi.Task):
         """ Updates cls.app with values from Carol or default
         :return:
         """
-
-        # TODO: Check if cls.app is a Parameter
-        if cls.app is None:  # Check if user has already set up parameters on cls.app
-            cls.app = {}
-        app_carol = None
         logger.debug('Getting Parameters data...')
         for k, v in cls.get_params():
             if v.carol:
-                if app_carol is None:
-                    if cls.api_token is not None:
-                        login = Carol()
-                        app_carol = Apps(login)
-                        app_carol.get_settings(os.get['CAROLAPPNAME'])
-                        app_carol = app_carol.app_settings
-                        for key, value in app_carol.items():  # to avoid empty strings.
-                            if value == '' or value is None:
-                                app_carol[key] = None
-                            else:
-                                try:
-                                    app_carol[key] = json.loads(value)
-                                except:
-                                    pass
-                    else:
-                        # If no login token specified, assume values were already declared on cls.app
-                        app_carol = cls.app
+                if cls.app_carol is None:
+                    login = Carol()
+                    app_carol = Apps(login)
+                    app_carol.get_settings(os.get['CAROLAPPNAME'])
+                    app_carol = app_carol.app_settings
+                    for key, value in app_carol.items():  # to avoid empty strings.
+                        if value == '' or value is None:
+                            app_carol[key] = None
+                        else:
+                            try:
+                                app_carol[key] = json.loads(value)
+                            except:
+                                pass
                 try:
                     if v.carol_name is not None:
                         logger.debug(f'{v.carol_name}: {app_carol[v.carol_name]}')

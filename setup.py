@@ -1,12 +1,8 @@
-from distutils.core import setup
-
-packages = ['pycarol', 'pycarol.auth', 'pycarol.app',
-            'pycarol.nlp', 'pycarol.pipeline', 'pycarol.utils']
-
+from setuptools import setup, find_packages
 
 setup(
     name='pycarol',
     version='0.1',
-    packages=packages,
+    packages=find_packages(exclude=['docs', 'doc']),
     maintainer='TOTVS Labs'
 )
