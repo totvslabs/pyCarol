@@ -177,17 +177,20 @@ class Tasks:
         resp = self.carol.call_api('v1/tasks/{}/progress/{}'.format(task_id, progress), data=progress_data)
         return resp
 
-    def cancel(self, task_id=None):
+    def cancel(self, task_id=None, force=False):
         """
         Cancel the task
         :param task_id: it's not necessary if self.mdm_id is defined
+        :param force: Force cancel
         :return: boolean
         """
 
         if task_id is None:
             task_id = self.task_id
 
-        resp = self.carol.call_api('v1/tasks/{}/cancel'.format(task_id), method="POST")
+        querystring = {"force": force}
+
+        resp = self.carol.call_api('v1/tasks/{}/cancel'.format(task_id), method="POST",params=querystring )
         if resp['success']:
             return True
         else:

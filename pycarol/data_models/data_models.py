@@ -11,6 +11,8 @@ from ..filter import RANGE_FILTER as RF
 from ..filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
 from ..utils.miscellaneous import ranges
 import time
+import copy
+import warnings
 
 
 class DataModel:
@@ -92,11 +94,27 @@ class DataModel:
                             access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
                             merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph, columns=columns)
 
+
         elif backend=='pandas':
             s3 = carolina.s3
             d = _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
                                n_jobs=n_jobs, golden=True, columns=columns)
+            if d is None:
+                warnings.warn("No data to fetch!", UserWarning)
+                return None
+        else:
+            raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}' )
 
+        if merge_records:
+            if not return_dask_graph:
+                d.sort_values('mdmCounterForEntity', inplace=True)
+                d.reset_index(inplace=True, drop=True)
+                d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
+                d.reset_index(inplace=True, drop=True)
+            else:
+                d = d.set_index('mdmCounterForEntity', sorted=True) \
+                    .drop_duplicates(subset='mdmId', keep='last') \
+                    .reset_index(drop=True)
 
         return d
 
@@ -247,12 +265,19 @@ class DataModel:
 
         return dm_results
 
-    def _get_min_max(self):
-        j = Filter.Builder()\
-            .type(self.datamodel_name)\
-            .aggregation_list([MINIMUM(name='MINIMUM',params= self.mdm_key), MAXIMUM(name='MAXIMUM',
-                                                                                     params=self.mdm_key)])\
-            .build().to_json()
+    def _get_min_max(self, query_filter=None):
+
+        if query_filter is not None:
+            j = query_filter.type(self.datamodel_name) \
+                .aggregation_list([MINIMUM(name='MINIMUM',params= self.mdm_key), MAXIMUM(name='MAXIMUM',
+                                                                                         params=self.mdm_key)])\
+                .build().to_json()
+        else:
+            j = Filter.Builder()\
+                .type(self.datamodel_name) \
+                .aggregation_list([MINIMUM(name='MINIMUM',params= self.mdm_key), MAXIMUM(name='MAXIMUM',
+                                                                                         params=self.mdm_key)])\
+                .build().to_json()
 
         query = Query(self.carol, index_type=self.index_type, only_hits=False, get_aggs=True, save_results=False,
                       print_status=True, page_size=0).query(j).go()
@@ -264,7 +289,7 @@ class DataModel:
         print(f"Total Hits to reprocess: {query.total_hits}")
         return min_v, max_v
 
-    def reprocess(self, datamodel_name, n_of_tasks=10, copy_or_move='move', record_type='ALL'):
+    def reprocess(self, datamodel_name, n_of_tasks=10, copy_or_move='move', record_type='ALL', query_filter=None):
         """
         Reprocess records from a data model
 
@@ -276,10 +301,14 @@ class DataModel:
             Either `move` or `copy` to staging.
         :param record_type:  `str`, default `ALL`
             Type of records to reprocess. `All`, `Golden` or `Rejected`
+        :param query_filter:  `Filter.Builder Object`, default `None`
+            The Filter instance to reprocess the data on.
         :return: None
         """
 
-        assert copy_or_move=='copy' or copy_or_move=='move', 'copy_or_move soulb be "copy" or "move"'
+        assert copy_or_move=='copy' or copy_or_move=='move', 'copy_or_move shoulb be "copy" or "move"'
+        if query_filter:
+            assert isinstance(query_filter,Filter.Builder)
 
         if copy_or_move=='copy':
             copy_or_move = False
@@ -291,7 +320,7 @@ class DataModel:
         self.index_type = 'MASTER'
         self.datamodel_name = datamodel_name+'Golden'
         self.mdm_key = 'mdmCounterForEntity'
-        min_v, max_v = self._get_min_max()
+        min_v, max_v = self._get_min_max(query_filter=query_filter)
 
         chunks = ranges(min_v, max_v, n_of_tasks)
         print(f"Number of chunks: {len(chunks)}")
@@ -301,15 +330,19 @@ class DataModel:
 
 
         for c,i in enumerate(chunks):
-            json_query = Filter.Builder() \
-                .must(RF(key=self.mdm_key, value=i)) \
-                .build().to_json()
+            if query_filter is not None:
+                query_filter_to_use = copy.deepcopy(query_filter)
+                json_query = query_filter_to_use.must(RF(key=self.mdm_key, value=i)).build().to_json()
+            else:
+                json_query = Filter.Builder() \
+                    .must(RF(key=self.mdm_key, value=i)) \
+                    .build().to_json()
 
             query_params = {"recordType": record_type, "fuzzy": "false",
                            "deleteRecords": copy_or_move}
 
             result = self.carol.call_api(url_filter, data=json_query, params=query_params)
-            print(f"To go: {c}/{len(chunks)}")
+            print(f"To go: {c+1}/{len(chunks)}")
 
 
 
