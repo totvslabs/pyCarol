@@ -26,8 +26,7 @@ class Parameter(Parameter):
 class SettingsDefinition(luigi.Task):
     """ Task that contains all parameters necessary for the pipeline execution
     """
-    api_token = None
-    app_name = None
+    app_name = os.environ.get('CAROLAPPNAME')
     app_carol = None
     app = None
 
@@ -64,32 +63,33 @@ class SettingsDefinition(luigi.Task):
         :return:
         """
         logger.debug('Getting Parameters data...')
+        if cls.app is None:
+            cls.app = {}
+
         for k, v in cls.get_params():
             if v.carol:
                 if cls.app_carol is None:
                     login = Carol()
-                    app_carol = Apps(login)
-                    app_carol.get_settings(os.get['CAROLAPPNAME'])
-                    app_carol = app_carol.app_settings
-                    for key, value in app_carol.items():  # to avoid empty strings.
+                    cls.app_carol = Apps(login)
+                    cls.app_carol.get_settings(cls.app_name)
+                    cls.app_carol = cls.app_carol.app_settings
+                    for key, value in cls.app_carol.items():  # to avoid empty strings.
                         if value == '' or value is None:
-                            app_carol[key] = None
+                            cls.app_carol[key] = None
                         else:
                             try:
-                                app_carol[key] = json.loads(value)
+                                cls.app_carol[key] = json.loads(value)
                             except:
                                 pass
                 try:
                     if v.carol_name is not None:
-                        logger.debug(f'{v.carol_name}: {app_carol[v.carol_name]}')
-                        v = app_carol[v.carol_name]
+                        logger.debug(f'{v.carol_name}: {cls.app_carol[v.carol_name]}')
+                        v = cls.app_carol[v.carol_name]
                     else:
-                        v = app_carol[k]
+                        v = cls.app_carol[k]
                         logger.debug(f'{k}: {v}')
                 except KeyError as e:
                     logger.warning(f"Could not set up variable from Carol. Key = {str(e)}")
-                    logger.debug(app_carol)
-
             cls.app.update({k: v})
 
         # TODO warn if parameters defined in class are not set in cls.app
@@ -171,8 +171,9 @@ class Ingestion(WrapperTask):
 
     def requires(self):
         from app import exec_config
-        params = self.ingestion_params[0][1]
-        params = dict(params)
+        ingestion_name, params = self.ingestion_params[0]
+        if params is None:
+            raise ValueError(f'Did not receive information for {ingestion_name}')
         if 'mapping' not in params:
             raise ValueError('Could not find mapping information for Ingestion task.')
         return self.clone(exec_config.get_ingestion_task(params['mapping'], dm_name=self.dm.get_name()), **params)

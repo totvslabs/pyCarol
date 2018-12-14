@@ -171,7 +171,8 @@ def display_dm_report(val, dm_name, ingestion=True):
     print_m('### Validation:')
     print_dm_validation(val.load(), data=df[0:10])
     if ingestion:
-        print_m('### Ingestion:')
+        ingestion_name, params = val.requires()[0].ingestion_params[0]
+        print_m(f'### Ingestion [ Mapping: {params["mapping"]} ]')
         print_m(f'#### Shape: {df.shape}')
         display(df.head())
         print_m('### Null data:')
@@ -198,7 +199,7 @@ def generate_report(pipeline_task, domain=None, dms=None, mute_luigi=True):
     print('Running luigi validation pipeline...')
     if mute_luigi:
         luigi.interface.setup_interface_logging.has_run = True
-    params = dict(task='validation')
+    params = dict(task='dm_validation')
     if domain is not None:
         params.update({'domain': domain})
     if dms is not None:
