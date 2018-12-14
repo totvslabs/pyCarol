@@ -16,7 +16,6 @@ setup(
         'boto3==1.9.16',
         'botocore==1.12.16',
         'cachetools==2.1.0',
-        'certifi==2018.8.24',
         'cffi==1.11.5',
         'chardet==3.0.4',
         'Click==7.0',
