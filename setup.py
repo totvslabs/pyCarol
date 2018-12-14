@@ -45,7 +45,7 @@ setup(
         'joblib==0.12.2',
         'locket==0.2.0',
         'lockfile==0.12.2',
-        'luigi==2.7.16',
+        'luigi==2.7.6',
         'MarkupSafe==1.0',
         'mkl-fft==1.0.6',
         'mkl-random==1.0.1',
