@@ -182,7 +182,7 @@ class DataModel:
         self.snapshot_ = {resp['entityTemplateName']: resp}
         return resp
 
-    def export(self, dm_name=None, dm_id=None, sync_dm=True, full_export=False):
+    def export(self, dm_name=None, dm_id=None, sync_dm=True, full_export=False, delete_previous=False):
         """
 
         Export datamodel to s3
@@ -198,6 +198,8 @@ class DataModel:
             Sync the data model
         :param full_export: `bool`, default `True`
             Do a resync of the data model
+        :param delete_previous: `bool`, default `False`
+            Delete previous exported files.
         :return: None
         """
 
@@ -211,7 +213,9 @@ class DataModel:
         else:
             assert dm_id
 
-        query_params = {"status": status, "fullExport": full_export}
+        query_params = {"status": status, "fullExport": full_export,
+                        "deletePrevious":delete_previous}
+
         url = f'v1/entities/templates/{dm_id}/exporter'
         return self.carol.call_api(url, method='POST', params=query_params)
 
