@@ -289,7 +289,8 @@ class Staging:
         return d
 
 
-    def export(self,staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False):
+    def export(self,staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False,
+               delete_previous=False):
         """
 
         Export Staging to s3
@@ -307,6 +308,8 @@ class Staging:
             Connector id
         :param full_export: `bool`, default `True`
             Do a resync of the data model
+        :param delete_previous: `bool`, default `False`
+            Delete previous exported files.
         :return: None
         """
 
@@ -320,8 +323,8 @@ class Staging:
         else:
             assert connector_id
 
-
-        query_params = {"status": status, "fullExport": full_export}
+        query_params = {"status": status, "fullExport": full_export,
+                        "deletePrevious":delete_previous}
         url = f'v2/staging/{connector_id}/{staging_name}/exporter'
         return self.carol.call_api(url, method='POST', params=query_params)
 
