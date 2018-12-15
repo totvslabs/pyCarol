@@ -219,8 +219,6 @@ class DataModel:
         url = f'v1/entities/templates/{dm_id}/exporter'
         return self.carol.call_api(url, method='POST', params=query_params)
 
-
-
     def export_all(self, sync_dm=True, full_export=False, delete_previous=False):
         """
 
@@ -248,9 +246,6 @@ class DataModel:
             dm_id= i['mdmId']
             self.export(dm_id=dm_id, sync_dm=sync_dm, full_export=full_export,
                             delete_previous=delete_previous)
-
-
-
 
     def delete(self, dm_id=None, dm_name=None, entity_space='WORKING'):
         # TODO: Check Possible entity_spaces
