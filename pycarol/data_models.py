@@ -246,7 +246,7 @@ class DataModel:
         for i in self.template_dict.values():
 
             dm_id= i['mdmId']
-            self.export_all(dm_id=dm_id, sync_dm=sync_dm, full_export=full_export,
+            self.export(dm_id=dm_id, sync_dm=sync_dm, full_export=full_export,
                             delete_previous=delete_previous)
 
 
