@@ -12,7 +12,6 @@ import warnings
 import gzip, io
 
 
-
 class Staging:
     def __init__(self, carol):
         self.carol = carol
