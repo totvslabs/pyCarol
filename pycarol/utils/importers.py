@@ -55,7 +55,7 @@ def _build_url_parquet_staging(tenant_id, staging_name, connector_id):
 
 def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_records=False,
                  dm_name=None,golden=False,return_dask_graph=False,
-                 connector_id=None, staging_name=None, columns=None):
+                 connector_id=None, staging_name=None, columns=None, max_hits=None):
 
     if columns:
         columns = list(set(columns))
@@ -83,7 +83,7 @@ def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_reco
 
 
 def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
-                   staging_name=None, n_jobs=1, verbose=0, golden=False):
+                   staging_name=None, n_jobs=1, verbose=0, golden=False, max_hits=None):
 
     if columns:
         columns = list(set(columns))
@@ -97,11 +97,18 @@ def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
                                              connector_id=connector_id)
     if n_jobs==1:
         df_list = []
+        count = 0
         for i,file in enumerate(tqdm(file_paths)):
             obj=s3.Object(__BUCKET_NAME__, file)
             buffer = io.BytesIO()
             obj.download_fileobj(buffer)
             df_list.append(pd.read_parquet(buffer,columns=columns))
+            if max_hits is not None:
+                count_old = count
+                count += len(df_list[i])
+                if count >=max_hits:
+                    df_list[i] = df_list[i].iloc[:max_hits-count_old]
+                    break
         if not df_list:
             return None
         return pd.concat(df_list, ignore_index=True)
