@@ -121,6 +121,9 @@ class set_parameters(object):
 
 
 class DataModelValidation(Task):
+    """ Task to execute Data Model validation
+
+    """
     domain = Parameter(default='Unspecified')
     ignore_errors = Parameter(default=True)
 
@@ -139,6 +142,9 @@ class DataModelValidation(Task):
 # Create Luigi mappings
 
 class StagingIngestion(Task):
+    """ Task to execute Staging ingestion
+
+    """
 
     domain = Parameter()
     connector_name = Parameter()
@@ -149,6 +155,7 @@ class StagingIngestion(Task):
     def easy_run(self, inputs):
         login = Carol()
         stag = Staging(login)
+        logger.debug(f'Executing parquet query for staging {self.staging_name}')
         return stag.fetch_parquet(staging_name=self.staging_name, connector_name=self.connector_name,
                                   backend='pandas', return_dask_graph=self.return_dask_graph,
                                   columns=list(self.cols), merge_records=True)
@@ -157,10 +164,16 @@ class StagingIngestion(Task):
 
 
 class Ingestion(WrapperTask):
-    """
+    """ Generic task for ingestion
+
+        This task will get from exec_config.get_ingestion_task which task should be executed.
+
         ingestion_params: dict with all necessary information for the ingestion. Must have at least one field named
-        'mapping'. Each mapping will have specific requirements that must be placed on this parameter. Refer to the
-        mapping documentation for more details.
+        'mapping'. Each mapping will have specific requirements that must be placed on this parameter.
+        Refer to the specific mapping documentation for more details.
+
+        E.g.
+        {'mapping':'carol_golden'} will execute mapping from Carol MDM Golden Records
 
     """
     domain = Parameter()
