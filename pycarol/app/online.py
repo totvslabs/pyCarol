@@ -28,7 +28,7 @@ class Online(object):
 
     def _validate_route(self, name):
         if not re.match("^[a-zA-Z0-9_]*$", name):
-            raise ValueError('Route name not support special characters, only "_". Route: "{}"'.format(name))
+            raise ValueError('Route name does not support special characters, only "_". Route: "{}"'.format(name))
         if len(name) > 30:
             raise ValueError('Route name should be smaller than 30 letters. Route: "{}" has {} letters'.format(name, str(len(name))))
         return True
