@@ -1,5 +1,6 @@
-from luigi_extension import Task, WrapperTask, inherit_list, Parameter
+from luigi_extension import Task, WrapperTask
 import luigi
+from luigi import Parameter, DictParameter
 import logging
 import json
 import os
@@ -177,16 +178,16 @@ class Ingestion(WrapperTask):
 
     """
     domain = Parameter()
-    dm = Parameter()
+    dm_name = Parameter()
 
-    ingestion_params = Parameter()
-    filter = Parameter()
+    ingestion_params = DictParameter()
+    filter = DictParameter()
 
     def requires(self):
         from app import exec_config
-        ingestion_name, params = self.ingestion_params[0]
-        if params is None:
-            raise ValueError(f'Did not receive information for {ingestion_name}')
-        if 'mapping' not in params:
+        if self.ingestion_params is None:
+            raise ValueError(f'Did not receive information for Ingestion. Received: {self.ingestion_params}')
+        if 'mapping' not in self.ingestion_params:
             raise ValueError('Could not find mapping information for Ingestion task.')
-        return self.clone(exec_config.get_ingestion_task(params['mapping'], dm_name=self.dm.get_name()), **params)
+        return self.clone(exec_config.get_ingestion_task(self.ingestion_params['mapping'], dm_name=self.dm_name),
+                          **self.ingestion_params)
