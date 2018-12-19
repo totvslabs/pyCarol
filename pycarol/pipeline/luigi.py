@@ -14,7 +14,18 @@ logger = logging.getLogger(__name__)
 class Parameter(Parameter):
     """ Extension of Parameter to include Carol information
     """
-    login_token = None
+
+    def __init__(self, default=None, carol=False, carol_name=None, **kwargs):
+        super().__init__(default=default, **kwargs)
+        self.carol_name = carol_name
+        self.carol = carol
+        if carol:
+            self.default = None
+
+
+class DictParameter(Parameter):
+    """ Extension of DictParameter to include Carol information
+    """
 
     def __init__(self, default=None, carol=False, carol_name=None, **kwargs):
         super().__init__(default=default, **kwargs)
