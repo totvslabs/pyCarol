@@ -101,11 +101,10 @@ class OnlineApi():
 
         @flask.route('/', methods=['GET','POST'])
         def base():
-            return f'Running! Use http:// .../{base_url}/api/(endpoint)'
+            return f'Running! Use /api/(endpoint)'
 
-        @flask.route(f'/{base_url}/api/<prediction_path>', methods=['GET','POST'])
+        @flask.route(f'/api/<prediction_path>', methods=['GET','POST'])
         def app(prediction_path):
-
             try:
                 pred = self.endpoints[str(prediction_path)]
             except:
@@ -116,15 +115,15 @@ class OnlineApi():
                 r = r.tolist()
             return json.dumps(r)
 
-        @flask.route(f'/{base_url}/statusz')
+        @flask.route(f'/statusz')
         def app_statusz():
             return 'ok'
 
-        @flask.route(f'/{base_url}/healthz')
+        @flask.route(f'/healthz')
         def app_healthz():
             return 'ok'
 
-        @flask.route(f'/{base_url}/logs')
+        @flask.route(f'/logs')
         def app_logs():
             return str(self.logs)
 
