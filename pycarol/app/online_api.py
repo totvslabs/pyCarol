@@ -94,37 +94,23 @@ class OnlineApi():
         healthCheckOnline = HealthCheckOnline(self.logs)
         healthCheckOnline.send_status_carol()
 
-
     def get_api(self, debug=False):
         flask = Flask(__name__)
         base_url = f'{self.domain}/{self.app_name}/{self.app_version}/{self.online_name}'
 
         @flask.route('/', methods=['GET','POST'])
         def base():
-            return f'Running! Use http:// .../{base_url}/api/(endpoint)'
+            return f'Running! Use /api/(endpoint) to access the app api'
 
-        @flask.route(f'/api/<prediction_path>', methods=['GET','POST'])
-        def app2(prediction_path):
+        @flask.route(f'/api/<api_path>', methods=['GET','POST'])
+        def app(api_path):
 
             try:
-                pred = self.endpoints[str(prediction_path)]
+                api = self.endpoints[str(api_path)]
             except:
                 return 'Endpoint not found'
 
-            r = pred(OnlineRequest(values=request.values, json=request.json))
-            if type(r) is np.ndarray:
-                r = r.tolist()
-            return json.dumps(r)
-
-        @flask.route(f'/{base_url}/api/<prediction_path>', methods=['GET','POST'])
-        def app(prediction_path):
-
-            try:
-                pred = self.endpoints[str(prediction_path)]
-            except:
-                return 'Endpoint not found'
-
-            r = pred(OnlineRequest(values=request.values, json=request.json))
+            r = api(OnlineRequest(values=request.values, json=request.json))
             if type(r) is np.ndarray:
                 r = r.tolist()
             return json.dumps(r)
@@ -148,10 +134,6 @@ class OnlineApi():
         @flask.route(f'/{base_url}/healthz')
         def app_healthz():
             return 'ok'
-
-        @flask.route(f'/{base_url}/logs')
-        def app_logs():
-            return str(self.logs)
 
         flask.debug = debug
         return flask
