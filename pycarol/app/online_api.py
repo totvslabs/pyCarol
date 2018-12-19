@@ -101,10 +101,24 @@ class OnlineApi():
 
         @flask.route('/', methods=['GET','POST'])
         def base():
-            return f'Running! Use /api/(endpoint)'
+            return f'Running! Use http:// .../{base_url}/api/(endpoint)'
 
         @flask.route(f'/api/<prediction_path>', methods=['GET','POST'])
+        def app2(prediction_path):
+
+            try:
+                pred = self.endpoints[str(prediction_path)]
+            except:
+                return 'Endpoint not found'
+
+            r = pred(OnlineRequest(values=request.values, json=request.json))
+            if type(r) is np.ndarray:
+                r = r.tolist()
+            return json.dumps(r)
+
+        @flask.route(f'/{base_url}/api/<prediction_path>', methods=['GET','POST'])
         def app(prediction_path):
+
             try:
                 pred = self.endpoints[str(prediction_path)]
             except:
@@ -116,14 +130,26 @@ class OnlineApi():
             return json.dumps(r)
 
         @flask.route(f'/statusz')
-        def app_statusz():
+        def app_statusz2():
             return 'ok'
 
         @flask.route(f'/healthz')
-        def app_healthz():
+        def app_healthz2():
             return 'ok'
 
         @flask.route(f'/logs')
+        def app_logs2():
+            return str(self.logs)
+
+        @flask.route(f'/{base_url}/statusz')
+        def app_statusz():
+            return 'ok'
+
+        @flask.route(f'/{base_url}/healthz')
+        def app_healthz():
+            return 'ok'
+
+        @flask.route(f'/{base_url}/logs')
         def app_logs():
             return str(self.logs)
 
