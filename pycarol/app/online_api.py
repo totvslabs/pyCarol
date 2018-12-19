@@ -97,33 +97,34 @@ class OnlineApi():
 
     def get_api(self, debug=False):
         flask = Flask(__name__)
+        base_url = f'{self.domain}/{self.app_name}/{self.app_version}/{self.online_name}'
 
-        @flask.route('/', methods=['GET', 'POST'])
+        @flask.route('/', methods=['GET','POST'])
         def base():
-            return f'Running! Use /api/(endpoint_api) to call the app apis'
+            return f'Running! Use http:// .../{base_url}/api/(endpoint)'
 
-        @flask.route(f'/api/<endpoint_path>', methods=['GET','POST'])
-        def app(endpoint_path):
+        @flask.route(f'/{base_url}/api/<prediction_path>', methods=['GET','POST'])
+        def app(prediction_path):
 
             try:
-                api = self.endpoints[str(endpoint_path)]
+                pred = self.endpoints[str(prediction_path)]
             except:
                 return 'Endpoint not found'
 
-            r = api(OnlineRequest(values=request.values, json=request.json))
+            r = pred(OnlineRequest(values=request.values, json=request.json))
             if type(r) is np.ndarray:
                 r = r.tolist()
             return json.dumps(r)
 
-        @flask.route(f'/statusz')
+        @flask.route(f'/{base_url}/statusz')
         def app_statusz():
             return 'ok'
 
-        @flask.route(f'/healthz')
+        @flask.route(f'/{base_url}/healthz')
         def app_healthz():
             return 'ok'
 
-        @flask.route(f'/logs')
+        @flask.route(f'/{base_url}/logs')
         def app_logs():
             return str(self.logs)
 
