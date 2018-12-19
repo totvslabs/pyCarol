@@ -23,7 +23,7 @@ class Parameter(Parameter):
             self.default = None
 
 
-class DictParameter(Parameter):
+class DictParameter(DictParameter):
     """ Extension of DictParameter to include Carol information
     """
 
