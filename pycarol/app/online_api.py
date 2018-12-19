@@ -96,7 +96,6 @@ class OnlineApi():
 
     def get_api(self, debug=False):
         flask = Flask(__name__)
-        base_url = f'{self.domain}/{self.app_name}/{self.app_version}/{self.online_name}'
 
         @flask.route('/', methods=['GET','POST'])
         def base():
@@ -116,24 +115,16 @@ class OnlineApi():
             return json.dumps(r)
 
         @flask.route(f'/statusz')
-        def app_statusz2():
-            return 'ok'
-
-        @flask.route(f'/healthz')
-        def app_healthz2():
-            return 'ok'
-
-        @flask.route(f'/logs')
-        def app_logs2():
-            return str(self.logs)
-
-        @flask.route(f'/{base_url}/statusz')
         def app_statusz():
             return 'ok'
 
-        @flask.route(f'/{base_url}/healthz')
+        @flask.route(f'/healthz')
         def app_healthz():
             return 'ok'
+
+        @flask.route(f'/logs')
+        def app_logs():
+            return str(self.logs)
 
         flask.debug = debug
         return flask
