@@ -98,9 +98,9 @@ class OnlineApi():
     def get_api(self, debug=False):
         flask = Flask(__name__)
 
-        @flask.route('/', methods=['GET','POST'])
+        @flask.route('/', methods=['GET', 'POST'])
         def base():
-            return f'Running! Use /api/(endpoint_api) to call the app api\'s'
+            return f'Running! Use /api/(endpoint_api) to call the app apis'
 
         @flask.route(f'/api/<endpoint_path>', methods=['GET','POST'])
         def app(endpoint_path):
