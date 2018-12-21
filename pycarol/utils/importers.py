@@ -58,6 +58,9 @@ def _build_url_parquet_staging(tenant_id, staging_name, connector_id):
 def _build_url_parquet_staging_master(tenant_id, staging_name, connector_id):
     return f's3://{__BUCKET_NAME__}/carol_export/{tenant_id}/{connector_id}_{staging_name}/master_staging/'
 
+def _build_url_parquet_staging_master_rejected(tenant_id, staging_name, connector_id):
+    return f's3://{__BUCKET_NAME__}/carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging/'
+
 
 def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_records=False,
                  dm_name=None,golden=False,return_dask_graph=False,
@@ -79,6 +82,9 @@ def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_reco
         url.append(_build_url_parquet_staging_master(tenant_id=tenant_id,
                                               staging_name=staging_name,
                                               connector_id=connector_id))
+        url.append(_build_url_parquet_staging_master_rejected(tenant_id=tenant_id,
+                                                     staging_name=staging_name,
+                                                     connector_id=connector_id))
 
     url = [i + '*.parquet' for i in url]
     d = dd.read_parquet(url, storage_options={"key": access_id,
