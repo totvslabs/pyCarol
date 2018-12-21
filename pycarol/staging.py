@@ -44,7 +44,7 @@ class Staging:
 
 
 
-    def send_data(self, staging_name, data=None, connector_id=None, step_size=100, print_stats=False,
+    def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100, print_stats=False,
                   gzip=True,  auto_create_schema=False, crosswalk_auto_create=None, force=False, dm_to_delete=None):
 
         self.gzip = gzip
@@ -55,8 +55,12 @@ class Staging:
             extra_headers["Content-Encoding"] = "gzip"
             extra_headers['content-type'] = 'application/json'
 
-        if connector_id is None:
-            connector_id = self.carol.connector_id
+
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            if connector_id is None:
+                connector_id = self.carol.connector_id
 
         schema = self.get_schema(staging_name,connector_id)
 
@@ -140,8 +144,12 @@ class Staging:
 
         yield []
 
-    def get_schema(self, staging_name, connector_id=None):
+    def get_schema(self, staging_name, connector_name=None, connector_id=None):
+
         query_string = None
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+
         if connector_id:
             query_string = {"connectorId": connector_id}
         try:
