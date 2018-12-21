@@ -62,7 +62,7 @@ class Staging:
             if connector_id is None:
                 connector_id = self.carol.connector_id
 
-        schema = self.get_schema(staging_name,connector_id)
+        schema = self.get_schema(staging_name,connector_id=connector_id)
 
         is_df = False
         if isinstance(data, pd.DataFrame):
