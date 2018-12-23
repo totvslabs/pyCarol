@@ -113,7 +113,8 @@ class Staging:
 
         if async_send:
             loop = asyncio.get_event_loop()
-            future = asyncio.ensure_future(self._send_data_asynchronous())
+            future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
+                                                                        url, extra_headers, content_type))
             loop.run_until_complete(future)
 
         else:
