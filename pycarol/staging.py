@@ -10,6 +10,8 @@ from .filter import Filter, RANGE_FILTER, TYPE_FILTER
 import itertools
 import warnings
 import gzip, io
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Staging:
@@ -110,28 +112,31 @@ class Staging:
 
 
         if async_send:
-            import asyncio
-            from concurrent.futures import ThreadPoolExecutor
-            with ThreadPoolExecutor(max_workers=10) as executor:
-                session = self.carol._retry_session()
-                # Set any session parameters here before calling `fetch`
-                loop = asyncio.get_event_loop()
-                tasks = [
-                    loop.run_in_executor(
-                        executor,
-                        self.send_a,
-                        *(session, url, data_json, extra_headers,content_type)  # Allows us to pass in multiple arguments to `fetch`
-                    )
-                    for data_json in self._stream_data(data, data_size, step_size, is_df)
-                ]
-                for response in await asyncio.gather(*tasks):
-                    pass
+            loop = asyncio.get_event_loop()
+            future = asyncio.ensure_future(self._send_data_asynchronous())
+            loop.run_until_complete(future)
+
         else:
             for data_json in self._stream_data(data, data_size, step_size, is_df):
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
                 if print_stats:
                     print('{}/{} sent'.format(self.cont, data_size), end='\r')
 
+
+    def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers, content_type):
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            session = self.carol._retry_session()
+            # Set any session parameters here before calling `fetch`
+            loop = asyncio.get_event_loop()
+            tasks = [
+                loop.run_in_executor(
+                    executor,
+                    self.send_a,
+                    *(session, url, data_json, extra_headers, content_type)
+                    # Allows us to pass in multiple arguments to `fetch`
+                )
+                for data_json in self._stream_data(data, data_size, step_size, is_df)
+            ]
 
     def send_a(self,session, url, data_json, extra_headers,content_type):
         self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type, session=session)
