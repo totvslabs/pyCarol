@@ -116,8 +116,6 @@ class Staging:
             future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
                                                                         url, extra_headers, content_type))
             loop.run_until_complete(future)
-            for response in await asyncio.gather( * tasks):
-                pass
 
         else:
             for data_json in self._stream_data(data, data_size, step_size, is_df):
@@ -125,8 +123,7 @@ class Staging:
                 if print_stats:
                     print('{}/{} sent'.format(self.cont, data_size), end='\r')
 
-
-    def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers, content_type):
+    async def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers, content_type):
         with ThreadPoolExecutor(max_workers=10) as executor:
             session = self.carol._retry_session()
             # Set any session parameters here before calling `fetch`
@@ -140,6 +137,8 @@ class Staging:
                 )
                 for data_json in self._stream_data(data, data_size, step_size, is_df)
             ]
+            for response in await asyncio.gather(*tasks):
+                pass
 
     def send_a(self,session, url, data_json, extra_headers,content_type):
         self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type, session=session)
