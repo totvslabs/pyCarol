@@ -116,6 +116,8 @@ class Staging:
             future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
                                                                         url, extra_headers, content_type))
             loop.run_until_complete(future)
+            for response in await asyncio.gather( * tasks):
+                pass
 
         else:
             for data_json in self._stream_data(data, data_size, step_size, is_df):
