@@ -45,7 +45,8 @@ class Staging:
 
 
     def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100, print_stats=False,
-                  gzip=True,  auto_create_schema=False, crosswalk_auto_create=None, force=False, dm_to_delete=None):
+                  gzip=True,  auto_create_schema=False, crosswalk_auto_create=None, force=False,
+                  dm_to_delete=None, async_send=False):
 
         self.gzip = gzip
         extra_headers = {}
@@ -54,7 +55,6 @@ class Staging:
             content_type=None
             extra_headers["Content-Encoding"] = "gzip"
             extra_headers['content-type'] = 'application/json'
-
 
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
@@ -106,17 +106,35 @@ class Staging:
 
 
         url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
-        gen = self._stream_data(data, data_size, step_size, is_df)
         self.cont = 0
-        ite = True
-        data_json = gen.__next__()
-        while ite:
-            self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
-            if print_stats:
-                print('{}/{} sent'.format(self.cont, data_size), end='\r')
-            data_json = gen.__next__()
-            if data_json == []:
-                break
+
+
+        if async_send:
+            import asyncio
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                session = self.carol._retry_session()
+                # Set any session parameters here before calling `fetch`
+                loop = asyncio.get_event_loop()
+                tasks = [
+                    loop.run_in_executor(
+                        executor,
+                        self.send_a,
+                        *(session, url, data_json, extra_headers,content_type)  # Allows us to pass in multiple arguments to `fetch`
+                    )
+                    for data_json in self._stream_data(data, data_size, step_size, is_df)
+                ]
+                for response in await asyncio.gather(*tasks):
+                    pass
+        else:
+            for data_json in self._stream_data(data, data_size, step_size, is_df):
+                self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
+                if print_stats:
+                    print('{}/{} sent'.format(self.cont, data_size), end='\r')
+
+
+    def send_a(self,session, url, data_json, extra_headers,content_type):
+        self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type, session=session)
 
     def _stream_data(self, data, data_size, step_size, is_df):
         for i in range(0,data_size, step_size):
