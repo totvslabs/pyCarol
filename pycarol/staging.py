@@ -124,7 +124,7 @@ class Staging:
                     print('{}/{} sent'.format(self.cont, data_size), end='\r')
 
     async def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers,
-                                      content_type,max_workers):
+                                      content_type, max_workers):
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             session = self.carol._retry_session()
             # Set any session parameters here before calling `fetch`
