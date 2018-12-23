@@ -47,7 +47,7 @@ class Staging:
 
 
     def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100, print_stats=False,
-                  gzip=True,  auto_create_schema=False, crosswalk_auto_create=None, force=False,
+                  gzip=True,  auto_create_schema=False, crosswalk_auto_create=None, force=False, max_workers=None,
                   dm_to_delete=None, async_send=False):
 
         self.gzip = gzip
@@ -124,7 +124,7 @@ class Staging:
                     print('{}/{} sent'.format(self.cont, data_size), end='\r')
 
     async def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers, content_type):
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
             session = self.carol._retry_session()
             # Set any session parameters here before calling `fetch`
             loop = asyncio.get_event_loop()
