@@ -116,6 +116,7 @@ class Staging:
             future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
                                                                         url, extra_headers, content_type, max_workers))
             loop.run_until_complete(future)
+            loop.close()
 
         else:
             for data_json in self._stream_data(data, data_size, step_size, is_df):
@@ -127,14 +128,14 @@ class Staging:
                                       content_type, max_workers):
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             session = self.carol._retry_session()
-            # Set any session parameters here before calling `fetch`
+            # Set any session parameters here before calling `send_a`
             loop = asyncio.get_event_loop()
             tasks = [
                 loop.run_in_executor(
                     executor,
                     self.send_a,
                     *(session, url, data_json, extra_headers, content_type)
-                    # Allows us to pass in multiple arguments to `fetch`
+                    # Allows us to pass in multiple arguments to `send_a`
                 )
                 for data_json in self._stream_data(data, data_size, step_size, is_df)
             ]
