@@ -46,9 +46,41 @@ class Staging:
 
 
 
-    def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100, print_stats=False,
+    def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100, print_stats=True,
                   gzip=True,  auto_create_schema=False, crosswalk_auto_create=None, force=False, max_workers=None,
                   dm_to_delete=None, async_send=False):
+
+        '''
+
+        :param staging_name:  `str`,
+            Staging name to send the data.
+        :param data: pandas data frame, json. default `None`
+            Data to be send to Carol
+        :param connector_name: `str`, default `None`
+            Connector name where the staging should be.
+        :param connector_id: `str`, default `None`
+            Connector Id where the staging should be.
+        :param step_size: `int`, default `100`
+            Number of records to be sent in each iteration. Max size for each batch is 10MB
+        :param print_stats: `bool`, default `True`
+            If print the status
+        :param gzip: `bool`, default `True`
+            If send each batch as a gzip file.
+        :param auto_create_schema: `bool`, default `False`
+            If to auto create the schema for the data being sent.
+        :param crosswalk_auto_create: `list`, default `None`
+            If `auto_create_schema=True`, one should send the crosswalk for the staging.
+        :param force: `bool`, default `False`
+            If `force=True` it will not check for repeated records according to crosswalk. If `False` it will check for
+            duplicates and raise an error if so.
+        :param max_workers: `int`, default `None`
+            To be used with `async_send=True`. Number of threads to use when sending.
+        :param dm_to_delete: `str`, default `None`
+            Name of the data model to be erased before send the data.
+        :param async_send: `bool`, default `False`
+            To use async to send the data. This is much faster than a sequential send.
+        :return: None
+        '''
 
         self.gzip = gzip
         extra_headers = {}
@@ -109,8 +141,6 @@ class Staging:
 
         url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
         self.cont = 0
-
-
         if async_send:
             loop = asyncio.get_event_loop()
             future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
