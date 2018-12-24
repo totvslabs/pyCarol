@@ -148,6 +148,7 @@ class Staging:
             if is_df:
                 data_to_send = data.iloc[i:i + step_size]
                 self.cont += len(data_to_send)
+                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
                 data_to_send = data_to_send.to_json(orient='records', date_format='iso', lines=False)
                 if self.gzip:
                     out = io.BytesIO()
@@ -159,6 +160,7 @@ class Staging:
             else:
                 data_to_send = data[i:i + step_size]
                 self.cont += len(data_to_send)
+                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
                 if self.gzip:
                     out = io.BytesIO()
                     with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
