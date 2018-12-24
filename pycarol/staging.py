@@ -169,8 +169,6 @@ class Staging:
                 else:
                     yield data_to_send
 
-        yield None
-
     def get_schema(self, staging_name, connector_name=None, connector_id=None):
 
         query_string = None
