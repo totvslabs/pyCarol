@@ -46,7 +46,9 @@ def _get_file_paths_staging(s3, tenant_id, connector_id,staging_name):
     parq_stag =list(bucket.objects.filter(Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/staging'))
     parq_master = list(bucket.objects.filter(
         Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/master_staging'))
-    parq = parq_stag + parq_master
+    parq_stag_rejected = list(bucket.objects.filter(
+        Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging'))
+    parq = parq_stag + parq_master + parq_stag_rejected
     return [i.key for i in parq if i.key.endswith('.parquet')]
 
 def _build_url_parquet_golden(tenant_id, dm_name):
