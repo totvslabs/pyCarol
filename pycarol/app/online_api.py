@@ -97,12 +97,14 @@ class OnlineApi():
 
         @flask.route(f'/api/<api_path>', methods=['GET','POST'])
         def app(api_path):
+            global request
             try:
                 api = self.endpoints[str(api_path)]
             except:
                 return 'Endpoint not found'
 
-            r = api(OnlineRequest(values=request.values, json=request.json))
+            request = OnlineRequest(values=request.values, json=request.json)
+            r = api()
             if type(r) is np.ndarray:
                 r = r.tolist()
             return json.dumps(r)
@@ -126,3 +128,6 @@ class OnlineApi():
         flask = self.get_api(debug)
         flask.run()
         return flask
+
+
+request = None
