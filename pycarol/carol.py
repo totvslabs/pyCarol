@@ -204,9 +204,11 @@ class Carol:
         headers.update(extra_headers)
         __count = 0
         while True:
-            section = self._retry_session(retries=retries, session=session, backoff_factor=backoff_factor,
-                                          status_forcelist=status_forcelist, method_whitelist=method_whitelist)
-            response = section.request(method=method, url=url, data=data, json=data_json,
+            if session is None:
+                session = self._retry_session(retries=retries, session=session, backoff_factor=backoff_factor,
+                                              status_forcelist=status_forcelist, method_whitelist=method_whitelist)
+
+            response = session.request(method=method, url=url, data=data, json=data_json,
                                        headers=headers, params=params, **kwds)
 
             if self.verbose:
