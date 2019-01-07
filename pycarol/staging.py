@@ -375,6 +375,27 @@ class Staging:
         :param delete_previous: `bool`, default `False`
             Delete previous exported files.
         :return: None
+
+
+        Usage:
+        To trigger the export the first time:
+
+        >>>from pycarol.staging import Staging
+        >>>from pycarol.auth.PwdAuth import PwdAuth
+        >>>from pycarol.carol import Carol
+        >>>login = Carol()
+        >>>stag  = Staging(login)
+        >>>stag.export(staging, connector_name=connector_name,sync_staging=True)
+
+        To do a resync, that is, start the sync from the begining without delete old data
+
+        >>>stag.export(staging, connector_name=connector_name,sync_staging=True, full_export=True)
+
+        To delete the old data:
+        >>>stag.export(staging, connector_name=connector_name,sync_staging=True, full_export=True, delete_previous=True)
+
+        To Pause a sync:
+        >>>stag.export(staging, connector_name=connector_name,sync_staging=False)
         """
 
         if sync_staging:
