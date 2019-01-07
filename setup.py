@@ -4,7 +4,7 @@ packages = ['pycarol', 'pycarol.auth', 'pycarol.app',
             'pycarol.nlp', 'pycarol.pipeline', 'pycarol.utils']
 setup(
     name='pycarol',
-    version='2.4.0-online',
+    version='2.6',
     description='Carol Python API',
     packages=packages,
     maintainer='TOTVS Labs',
