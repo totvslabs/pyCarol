@@ -2,11 +2,10 @@ from importlib import import_module
 from flask import Flask, request
 import numpy as np
 import os
-import sys
 import json
 
-from pycarol.app.health_check_online import HealthCheckOnline
-from pycarol.app.online_request import OnlineRequest
+from .health_check_online import HealthCheckOnline
+from .online_request import OnlineRequest
 
 
 class OnlineApi():
@@ -26,7 +25,6 @@ class OnlineApi():
         # "run_me" is the filename
         flask = OnlineApi('run_me').get_api()
     """
-
     def __init__(self, file_name=None, file_path='', domain=None, app_name=None, app_version=None, online_name=None):
         self.file_path = file_path
         self.imported_module = None
@@ -66,11 +64,9 @@ class OnlineApi():
         self._load_endpoints()
         self._health_check_carol()
 
-
     def _log_append(self, msg):
         self.logs.append(msg)
         print(msg)
-
 
     def _dynamic_import(self):
         try:
@@ -78,17 +74,15 @@ class OnlineApi():
         except Exception as e:
             self._log_append(f'Problem when importing file. Module: {self.module_name}. Error: {str(e)}')
 
-
     def _load_endpoints(self):
         try:
             if self.imported_module:
                 for i in dir(self.imported_module):
                     if type(getattr(self.imported_module, i)).__name__ == 'Online':
                         online = getattr(self.imported_module, i)
-                        self.endpoints = online.get_endpoints()
+                        self.endpoints.extend(online.get_endpoints())
         except Exception as e:
             self._log_append(f'Problem when trying to load module. Module: {self.module_name}. Error: {str(e)}')
-
 
     def _health_check_carol(self):
         healthCheckOnline = HealthCheckOnline(self.logs)
@@ -99,11 +93,10 @@ class OnlineApi():
 
         @flask.route('/', methods=['GET','POST'])
         def base():
-            return f'Running! Use /api/(endpoint) to access the app api'
+            return 'Running! Use /api/(endpoint) to access the app api'
 
         @flask.route(f'/api/<api_path>', methods=['GET','POST'])
         def app(api_path):
-
             try:
                 api = self.endpoints[str(api_path)]
             except:
@@ -128,7 +121,6 @@ class OnlineApi():
 
         flask.debug = debug
         return flask
-
 
     def run(self, debug=False):
         flask = self.get_api(debug)

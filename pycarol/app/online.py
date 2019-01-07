@@ -1,4 +1,3 @@
-
 import re
 
 class Online(object):
@@ -9,14 +8,9 @@ class Online(object):
         online = Online()
 
         @online.route("sample_endpoint")
-        def sample1_function(args):
-            return str(args)
-
-        @online.route("test")
-        def test_function(args):
-            return str(args)
+        def sample1_function(request):
+            return str(request)
     """
-
     def __init__(self):
         self.endpoints = {}
 
