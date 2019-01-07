@@ -388,7 +388,6 @@ class Staging:
         >>>stag.export(staging, connector_name=connector_name,sync_staging=True)
 
         To do a resync, that is, start the sync from the begining without delete old data
-
         >>>stag.export(staging, connector_name=connector_name,sync_staging=True, full_export=True)
 
         To delete the old data:
@@ -434,6 +433,8 @@ class Staging:
         :param delete_previous: `bool`, default `False`
             Delete previous exported files.
         :return: None
+
+        Usage: See `Staging.export()`
         """
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
