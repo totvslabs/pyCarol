@@ -28,7 +28,7 @@ class OnlineApi():
     def __init__(self, file_name=None, file_path='', domain=None, app_name=None, app_version=None, online_name=None):
         self.file_path = file_path
         self.imported_module = None
-        self.endpoints = []
+        self.endpoints = dict()
         self.logs = []
 
         if domain:
@@ -80,7 +80,7 @@ class OnlineApi():
                 for i in dir(self.imported_module):
                     if type(getattr(self.imported_module, i)).__name__ == 'Online':
                         online = getattr(self.imported_module, i)
-                        self.endpoints.extend(online.get_endpoints())
+                        self.endpoints.update(online.get_endpoints())
         except Exception as e:
             self._log_append(f'Problem when trying to load module. Module: {self.module_name}. Error: {str(e)}')
 
@@ -101,7 +101,7 @@ class OnlineApi():
             try:
                 api = self.endpoints[str(api_path)]
             except:
-                return f'Endpoint {api_path} not found - {self.endpoints}'
+                return f'Endpoint not found'
 
             request = OnlineRequest(values=request.values, json=request.json)
             r = api()
