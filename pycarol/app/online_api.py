@@ -91,17 +91,17 @@ class OnlineApi():
     def get_api(self, debug=False):
         flask = Flask(__name__)
 
-        @flask.route('/', methods=['GET','POST'])
+        @flask.route('/', methods=['GET', 'POST'])
         def base():
             return 'Running! Use /api/(endpoint) to access the app api'
 
-        @flask.route(f'/api/<api_path>', methods=['GET','POST'])
+        @flask.route(f'/api/<api_path>', methods=['GET', 'POST'])
         def app(api_path):
             global request
             try:
                 api = self.endpoints[str(api_path)]
             except:
-                return f'Endpoint not found - {self.endpoints}'
+                return f'Endpoint {api_path} not found - {self.endpoints}'
 
             request = OnlineRequest(values=request.values, json=request.json)
             r = api()
