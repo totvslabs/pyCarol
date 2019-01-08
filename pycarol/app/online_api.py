@@ -101,7 +101,7 @@ class OnlineApi():
             try:
                 api = self.endpoints[str(api_path)]
             except:
-                return 'Endpoint not found'
+                return f'Endpoint not found - {self.endpoints}'
 
             request = OnlineRequest(values=request.values, json=request.json)
             r = api()
