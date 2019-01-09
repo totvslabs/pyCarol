@@ -102,7 +102,7 @@ class OnlineApi():
             try:
                 api = self.endpoints[str(api_path)]
             except:
-                return f'Endpoint not found'
+                return f'Endpoint {api_path} not found'
 
             local.request = OnlineRequest(values=flask_request.values, json=flask_request.json)
             r = api()
