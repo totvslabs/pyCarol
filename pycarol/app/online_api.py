@@ -1,5 +1,6 @@
 from importlib import import_module
-from flask import Flask, request
+from flask import Flask
+from flask import request as flask_request
 import numpy as np
 import os
 import json
@@ -103,7 +104,7 @@ class OnlineApi():
             except:
                 return f'Endpoint not found'
 
-            request = OnlineRequest(values=request.values, json=request.json)
+            request = OnlineRequest(values=flask_request.values, json=flask_request.json)
             r = api()
             if type(r) is np.ndarray:
                 r = r.tolist()
