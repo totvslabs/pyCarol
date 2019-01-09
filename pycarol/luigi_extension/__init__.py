@@ -4,7 +4,7 @@ from .task import(
     inherit_dict
 )
 
-from.targets import (
+from .targets import (
     LocalTarget,
     PickleLocalTarget,
     KerasLocalTarget,

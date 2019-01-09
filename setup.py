@@ -1,7 +1,8 @@
 from distutils.core import setup
 
 packages = ['pycarol', 'pycarol.auth', 'pycarol.app',
-            'pycarol.nlp', 'pycarol.pipeline', 'pycarol.utils']
+            'pycarol.nlp', 'pycarol.pipeline', 'pycarol.utils',
+            'pycarol.luigi_extension']
 setup(
     name='pycarol',
     version='2.6',
