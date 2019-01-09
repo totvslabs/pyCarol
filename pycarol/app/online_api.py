@@ -7,6 +7,7 @@ import json
 
 from .health_check_online import HealthCheckOnline
 from .online_request import OnlineRequest
+from werkzeug.local import Local, LocalProxy
 
 
 class OnlineApi():
@@ -98,13 +99,12 @@ class OnlineApi():
 
         @flask.route(f'/api/<api_path>', methods=['GET', 'POST'])
         def app(api_path):
-            global request
             try:
                 api = self.endpoints[str(api_path)]
             except:
                 return f'Endpoint not found'
 
-            request = OnlineRequest(values=flask_request.values, json=flask_request.json)
+            local.request = OnlineRequest(values=flask_request.values, json=flask_request.json)
             r = api()
             if type(r) is np.ndarray:
                 r = r.tolist()
@@ -131,4 +131,5 @@ class OnlineApi():
         return flask
 
 
-request = None
+local = Local()
+request = LocalProxy(local, 'request')
