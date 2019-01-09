@@ -66,7 +66,7 @@ class PytorchPyCarolTarget(PyCarolTarget):
         import torch
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         torch.save(model_state_dict, self.path)
-        self.storage.save(self.path, function_output, format='file')
+        self.storage.save(self.path, self.path, format='file')
 
     def remove(self):
         self.storage.delete(self.path)
@@ -85,7 +85,7 @@ class KerasPyCarolTarget(PyCarolTarget):
     def dump(self, model):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         model.save(self.path)
-        self.storage.save(self.path, function_output, format='file')
+        self.storage.save(self.path, self.path, format='file')
 
     def remove(self):
         self.storage.delete(self.path)
