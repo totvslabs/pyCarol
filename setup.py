@@ -11,7 +11,7 @@ setup(
     maintainer='TOTVS Labs',
     install_requires=[
         'asn1crypto==0.24.0',
-        'bokeh==0.13.0',
+        'bokeh,
         'boto3==1.9.16',
         'botocore==1.12.16',
         'cachetools==2.1.0',
@@ -45,7 +45,7 @@ setup(
         'joblib==0.12.5',
         'locket==0.2.0',
         'lockfile==0.12.2',
-        'luigi==2.7.9',
+        'luigi,
         'markupsafe==1.1.0',
         'msgpack==0.5.6',
         'numpy==1.15.2',
