@@ -10,7 +10,7 @@ class TaskViewer(object):
     nodes = []
     selected_nodes = []
 
-    def __init__(self, task, update_period=30,parallel_update=False):
+    def __init__(self, task, parallel_update=True):
         self.dag = dict()
         # TaskViewer.nodes = []
         self.node_level = dict()
@@ -22,7 +22,6 @@ class TaskViewer(object):
         for i in self.range_nodes():
             self.set_dag_node_level(i, 0)
         self.rev_dag = self.get_reverse_dag()
-        self.update_period = update_period # seconds
         self.parallel_update = parallel_update
 
     def range_nodes(self):
@@ -117,8 +116,9 @@ class TaskViewer(object):
         return source_dict
 
     def update_complete(self):
+        import concurrent
         if self.parallel_update:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
                 complete = executor.map(lambda x: x.complete(), TaskViewer.nodes)
             self.complete = list(complete)
         else:
@@ -133,7 +133,7 @@ class TaskViewer(object):
         from bokeh.models.mappers import CategoricalColorMapper
         return CategoricalColorMapper(factors=factors, palette=Category10[nb_factors])
 
-    def plot_task(self, doc):
+    def plot_task(self, doc,web_app=False):
         # plot dashboard
         print('start plot_task')
         doc.clear()
@@ -181,7 +181,6 @@ class TaskViewer(object):
         from bokeh.models.callbacks import CustomJS
 
         def select_callback(attr, old, new):
-#             print('hey',new)
             TaskViewer.selected_nodes = [TaskViewer.nodes[i] for i in new]
 
         s1.selected.on_change('indices', select_callback)
@@ -197,15 +196,6 @@ class TaskViewer(object):
 
         remove_button.on_event(ButtonClick, remove_callback)
 
-        run_button = Button(label='Run Selected')
-
-        def run_callback(event):
-            target_list = s1.selected.indices
-            for t in target_list:
-                print('running', t)
-                TaskViewer.nodes[t].run()
-
-        run_button.on_event(ButtonClick, run_callback)
 
         removeupstream_button = Button(label='Remove Upstream')
 
@@ -224,113 +214,43 @@ class TaskViewer(object):
 
         removeupstream_button.on_event(ButtonClick, removeupstream_callback)
 
-        placeroute_button = Button(label='Place and Route')
-
-        def placeroute_callback(event):
-            step = 0.1
-
-            def get_adjacent_nodes():
-                ac_g = self.rev_dag
-                ac_g = {k: set(v) for k, v in ac_g.items()}
-                for k, v in ac_g.items():
-                    for i in v:
-                        ac_g[i].add(k)
-
-                ac_g = {k: list(v) for k, v in ac_g.items()}
-                return ac_g
-
-            def attracting_xy(x, y):
-                dx = np.subtract.outer(x, x)
-                dy = np.subtract.outer(y, y)
-                dxy_norm = np.sqrt(dx ** 2 + dy ** 2)
-
-                #                 fx=np.sum(np.nan_to_num( (dx/dxy_norm) / (dxy_norm+1e-3)**2 ),axis=0)
-                #                 fy=np.sum(np.nan_to_num( (dy/dxy_norm) / (dxy_norm+1e-3)**2 ),axis=0)
-                fx = np.sum(np.nan_to_num(dx / dxy_norm), axis=0)
-                fy = np.sum(np.nan_to_num(dy / dxy_norm), axis=0)
-
-                return fx, fy
-
-            def repelling_xy(x, y):
-                dx = np.subtract.outer(x, x)
-                dy = np.subtract.outer(y, y)
-                dxy_norm = np.sqrt(dx ** 2 + dy ** 2)
-
-                fx = -np.sum(np.nan_to_num((dx / dxy_norm) / (dxy_norm + 1) ** 2), axis=0)
-                fy = -np.sum(np.nan_to_num((dy / dxy_norm) / (dxy_norm + 1) ** 2), axis=0)
-                return fx, 5 * fy
-
-            y = np.asarray(s1.data['y'])
-            x = np.asarray(s1.data['x'])
-            fy = np.zeros(y.shape)
-            fx = np.zeros(x.shape)
-
-            fx, fy = attracting_xy(x, y)
-
-            adj_nodes = get_adjacent_nodes()
-            for k, v in adj_nodes.items():
-                sel_ind = v
-                _fx, _fy = repelling_xy(x[sel_ind], y[sel_ind])
-                fx[sel_ind] += _fx
-                fy[sel_ind] += _fy
-
-            #             x= (x + fx*step)
-            #             x= np.nan_to_num(x)
-            y = (y + fy * step)
-            y = np.nan_to_num(y)
-            edges_x, edges_y = self.get_edges(x, y)
-            s1.data.update(
-                x=x,
-                y=y,
-                edges_x=edges_x,
-                edges_y=edges_y,
-            )
-
-        placeroute_button.on_event(ButtonClick, placeroute_callback)
-
-        load_button = Button(label='Load Selected')
-        load_callback = CustomJS(args=dict(), code="""
-        var nb = Jupyter.notebook
-        nb.insert_cell_below()
-        var cell = nb.select_next().get_selected_cell()
-        cell.set_text("[n.load() for n in TaskViewer.selected_nodes]")
-        cell.execute()
-        """)
-        load_button.js_on_event(ButtonClick, load_callback)
 
         update_button = Button(label='Update')
 
-        def update_callback():
-#             print("updating every %d ms" % (self.update_period*1000))
+        def update_callback(event):
             complete = self.update_complete()
             s2.data = {k: [vi for i, vi in enumerate(v) if not complete[i]] for k, v in source_dict.items()}
             return
 
-        doc.add_periodic_callback(update_callback, self.update_period*1000)
+        update_button.on_event(ButtonClick, update_callback)
 
-        update_button.on_event(ButtonClick, lambda event: update_callback)
-
-        l = column(
-            children=[
-                plot,
-                row(
-                    load_button,
-                    run_button,
-                    remove_button,
-                    removeupstream_button,
-                    # update_button,
-                    #                     placeroute_button,
-                )
-            ],
-        )
+        if web_app:
+            l = column(
+                children=[
+                    plot,
+                    row(
+                        remove_button,
+                        removeupstream_button,
+                        update_button,
+                    )
+                ],
+                sizing_mode='stretch_both'
+            )
+        else:
+            l = column(
+                children=[
+                    plot,
+                    row(
+                        remove_button,
+                        removeupstream_button,
+                        update_button,
+                    )
+                ],
+            )
 
         doc.add_root(l)
 
     def show(self, url="http://127.0.0.1", jupyter_notebook_port=8888, bokeh_port=5006):
-#         from bokeh.io import output_notebook
-
-
-#         output_notebook()
         notebook_url = ":".join([url, str(jupyter_notebook_port)])
         return show_app(self.plot_task, curstate(), notebook_url=notebook_url, port=bokeh_port)
 

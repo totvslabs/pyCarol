@@ -18,8 +18,8 @@ class PyCarolTarget(luigi.Target):
     tenant_cache = None
     storage_cache = None
     def __init__(self, task, *args, **kwargs):
-        from ..carol import Carol
-        from ..storage import Storage
+        from pycarol.carol import Carol
+        from pycarol.storage import Storage
 
         if (PyCarolTarget.login_cache and PyCarolTarget.storage_cache) and (PyCarolTarget.tenant_cache == task.tenant):
             self.login = PyCarolTarget.login_cache
