@@ -345,7 +345,7 @@ class Staging:
                 d.sort_values('mdmCounterForEntity', inplace=True)
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
-                if return_metadata:
+                if not return_metadata:
                     d.drop(columns=['mdmId', 'mdmCounterForEntity','mdmLastUpdated'], inplace=True)
                 d.reset_index(inplace=True, drop=True)
             else:
@@ -354,7 +354,7 @@ class Staging:
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                      .drop_duplicates(subset='mdmId', keep='last') \
                      .reset_index(drop=True)
-                if return_metadata:
+                if not return_metadata:
                     d = d.drop(columns=['mdmId', 'mdmCounterForEntity','mdmLastUpdated'])
 
         return d
