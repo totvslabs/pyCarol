@@ -1,10 +1,5 @@
 import numpy as np
 import pandas as pd
-from bokeh.io.state import curstate
-from bokeh.io.notebook import show_app
-from bokeh.io import output_notebook
-
-output_notebook()
 
 class TaskViewer(object):
     nodes = []
@@ -251,6 +246,12 @@ class TaskViewer(object):
         doc.add_root(l)
 
     def show(self, url="http://127.0.0.1", jupyter_notebook_port=8888, bokeh_port=5006):
+        from bokeh.io.state import curstate
+        from bokeh.io.notebook import show_app
+        from bokeh.io import output_notebook
+
+        output_notebook()
+
         notebook_url = ":".join([url, str(jupyter_notebook_port)])
         return show_app(self.plot_task, curstate(), notebook_url=notebook_url, port=bokeh_port)
 

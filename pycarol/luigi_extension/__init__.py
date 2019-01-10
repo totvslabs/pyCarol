@@ -14,6 +14,7 @@ from .targets import (
     PytorchLocalTarget,
     PicklePyCarolTarget,
     PytorchPyCarolTarget,
+    KerasPyCarolTarget,
 )
 
 from .taskviewer import (
