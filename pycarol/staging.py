@@ -263,7 +263,7 @@ class Staging:
 
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',verbose=0,
                       merge_records=True, n_jobs=1, return_dask_graph=False, columns=None, max_hits=None,
-                      return_ids=False):
+                      return_metadata=False):
         """
 
         Fetch parquet from a staging table.
@@ -289,7 +289,7 @@ class Staging:
             List of columns to fetch.
         :param max_hits: `int`, default `None`
             Number of records to get. This only should be user for tests.
-        :param return_ids: `bool`, default `False`
+        :param return_metadata: `bool`, default `False`
             To return or not the fields ['mdmId', 'mdmCounterForEntity']
         :return:
         """
@@ -298,7 +298,7 @@ class Staging:
         if columns:
             old_columns = columns
             columns = [i.replace("-","_") for i in columns]
-            columns.extend(['mdmId', 'mdmCounterForEntity'])
+            columns.extend(['mdmId', 'mdmCounterForEntity','mdmLastUpdated'])
             old_columns = dict(zip([i.replace("-", "_") for i in columns], old_columns))
 
         if connector_name:
@@ -345,7 +345,8 @@ class Staging:
                 d.sort_values('mdmCounterForEntity', inplace=True)
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
-                d.drop(columns=['mdmId', 'mdmCounterForEntity'], inplace=True)
+                if return_metadata:
+                    d.drop(columns=['mdmId', 'mdmCounterForEntity','mdmLastUpdated'], inplace=True)
                 d.reset_index(inplace=True, drop=True)
             else:
                 if old_columns is not None:
@@ -353,7 +354,8 @@ class Staging:
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                      .drop_duplicates(subset='mdmId', keep='last') \
                      .reset_index(drop=True)
-                d = d.drop(columns=['mdmId', 'mdmCounterForEntity'])
+                if return_metadata:
+                    d = d.drop(columns=['mdmId', 'mdmCounterForEntity','mdmLastUpdated'])
 
         return d
 
