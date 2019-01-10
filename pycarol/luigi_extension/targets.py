@@ -17,6 +17,7 @@ class PyCarolTarget(luigi.Target):
     login_cache = None
     tenant_cache = None
     storage_cache = None
+    is_cloud_target = True
     def __init__(self, task, *args, **kwargs):
         from ..carol import Carol
         from ..storage import Storage
@@ -33,9 +34,18 @@ class PyCarolTarget(luigi.Target):
 
         namespace = task.get_task_namespace()
         file_id = task._file_id()
-        ext = '.' + self.FILE_EXT
-        path = os.path.join(namespace, file_id + ext)
-        self.path = os.path.join('pipeline', path)
+        self.path = os.path.join('pipeline', namespace, "{}.{}".format(file_id,self.FILE_EXT)
+        self.log_path = os.path.join('pipeline',namespace, "{}_log.txt".format(file_id)
+
+
+    def persistlog(self,filename):
+        self.storage.save( self.log_path, filename, format='file')
+
+    def loadlog(self):
+        local_path = self.storage.load(self.log_path, format='file')
+        with open(local_path,'r') as f:
+            text = f.read()
+        return text
 
 
 
@@ -100,6 +110,7 @@ class KerasPyCarolTarget(PyCarolTarget):
 class LocalTarget(luigi.LocalTarget):
     is_tmp=False
     FILE_EXT = 'ext'
+    is_cloud_target = False
     def __init__(self, task, *args, **kwargs):
 
         os.makedirs(task.TARGET_DIR, exist_ok=True)

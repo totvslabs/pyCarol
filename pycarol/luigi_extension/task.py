@@ -12,6 +12,7 @@ import pandas as pd
 class Task(luigi.Task):
     TARGET_DIR = './luigi_targets/'  # this class attribute can be redefined somewhere else
     TARGET = PickleLocalTarget
+    persist_stdout = False
     requires_list = []
     requires_dict = {}
     resources = {'cpu': 1}  # default resource to be overridden or complemented
@@ -23,25 +24,28 @@ class Task(luigi.Task):
         # returns the output default file identifier
         return luigi.task.task_id_str(self.get_task_family(), self.to_str_params(only_significant=True))
 
-    def dummy_target(self):
-        warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-                      PendingDeprecationWarning)
-        return DummyTarget
+    def _txt_path(self):
+        return "{}.txt".format(self._file_id())
 
-    def disk_target(self):
-        warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-                      PendingDeprecationWarning)
-        return PickleLocalTarget
+    # def dummy_target(self):
+    #     warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
+    #                   PendingDeprecationWarning)
+    #     return DummyTarget
 
-    def pytorch_target(self):
-        warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-                      PendingDeprecationWarning)
-        return PytorchLocalTarget
-
-    def keras_target(self):
-        warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-                      PendingDeprecationWarning)
-        return KerasLocalTarget
+    # def disk_target(self):
+    #     warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
+    #                   PendingDeprecationWarning)
+    #     return PickleLocalTarget
+    #
+    # def pytorch_target(self):
+    #     warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
+    #                   PendingDeprecationWarning)
+    #     return PytorchLocalTarget
+    #
+    # def keras_target(self):
+    #     warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
+    #                   PendingDeprecationWarning)
+    #     return KerasLocalTarget
 
 
     def requires(self):
@@ -79,18 +83,31 @@ class Task(luigi.Task):
         self.output().remove()
 
     def run(self):
+        from contextlib import redirect_stdout
         if isinstance(self.input(), list):
             function_inputs = [input_i.load() for input_i in self.input()]
         elif isinstance(self.input(), dict):
             function_inputs = {i: input_i.load() for i, input_i in self.input().items()}
-        function_output = self.easy_run(function_inputs)
+
+        if self.output().is_cloud_target and self.persist_stdout:
+            try:
+                with open(self._txt_path(),'w') as f:
+                    with redirect_stdout(f):
+                        function_output = self.easy_run(function_inputs)
+            finally:
+                self.output().persistlog(self._txt_path())
+        else:
+            function_output = self.easy_run(function_inputs)
+
         self.output().dump(function_output)
+
 
     def easy_run(self,inputs):
         return None
 
     #this method was changed from the original version to allow execution of a task
     #with extra parameters. the original one, raises an exception. now, we print that exception
+    #in this version we do not raise neither print it.
     @classmethod
     def get_param_values(cls, params, args, kwargs):
         """
@@ -126,7 +143,7 @@ class Task(luigi.Task):
                     '%s: parameter %s was already set as a positional parameter' % (exc_desc, param_name))
             if param_name not in params_dict:
                 # raise parameter.UnknownParameterException('%s: unknown parameter %s' % (exc_desc, param_name))
-                print('%s: unknown parameter %s' % (exc_desc, param_name))
+                # print('%s: unknown parameter %s' % (exc_desc, param_name))
                 continue
             result[param_name] = params_dict[param_name].normalize(arg)
 
