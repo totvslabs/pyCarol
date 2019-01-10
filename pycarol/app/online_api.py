@@ -1,11 +1,13 @@
 from importlib import import_module
-from flask import Flask, request
+from flask import Flask
+from flask import request as flask_request
 import numpy as np
 import os
 import json
 
 from .health_check_online import HealthCheckOnline
 from .online_request import OnlineRequest
+from werkzeug.local import Local, LocalProxy
 
 
 class OnlineApi():
@@ -28,7 +30,7 @@ class OnlineApi():
     def __init__(self, file_name=None, file_path='', domain=None, app_name=None, app_version=None, online_name=None):
         self.file_path = file_path
         self.imported_module = None
-        self.endpoints = []
+        self.endpoints = dict()
         self.logs = []
 
         if domain:
@@ -80,7 +82,7 @@ class OnlineApi():
                 for i in dir(self.imported_module):
                     if type(getattr(self.imported_module, i)).__name__ == 'Online':
                         online = getattr(self.imported_module, i)
-                        self.endpoints.extend(online.get_endpoints())
+                        self.endpoints.update(online.get_endpoints())
         except Exception as e:
             self._log_append(f'Problem when trying to load module. Module: {self.module_name}. Error: {str(e)}')
 
@@ -91,18 +93,19 @@ class OnlineApi():
     def get_api(self, debug=False):
         flask = Flask(__name__)
 
-        @flask.route('/', methods=['GET','POST'])
+        @flask.route('/', methods=['GET', 'POST'])
         def base():
             return 'Running! Use /api/(endpoint) to access the app api'
 
-        @flask.route(f'/api/<api_path>', methods=['GET','POST'])
+        @flask.route(f'/api/<api_path>', methods=['GET', 'POST'])
         def app(api_path):
             try:
                 api = self.endpoints[str(api_path)]
             except:
-                return 'Endpoint not found'
+                return f'Endpoint {api_path} not found'
 
-            r = api(OnlineRequest(values=request.values, json=request.json))
+            local.request = OnlineRequest(values=flask_request.values, json=flask_request.json)
+            r = api()
             if type(r) is np.ndarray:
                 r = r.tolist()
             return json.dumps(r)
@@ -126,3 +129,7 @@ class OnlineApi():
         flask = self.get_api(debug)
         flask.run()
         return flask
+
+
+local = Local()
+request = LocalProxy(local, 'request')
