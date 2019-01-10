@@ -262,7 +262,8 @@ class Staging:
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',verbose=0,
-                      merge_records=True, n_jobs=1, return_dask_graph=False, columns=None, max_hits=None):
+                      merge_records=True, n_jobs=1, return_dask_graph=False, columns=None, max_hits=None,
+                      return_ids=False):
         """
 
         Fetch parquet from a staging table.
@@ -288,6 +289,8 @@ class Staging:
             List of columns to fetch.
         :param max_hits: `int`, default `None`
             Number of records to get. This only should be user for tests.
+        :param return_ids: `bool`, default `False`
+            To return or not the fields ['mdmId', 'mdmCounterForEntity']
         :return:
         """
 
@@ -342,6 +345,7 @@ class Staging:
                 d.sort_values('mdmCounterForEntity', inplace=True)
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
+                d.drop(columns=['mdmId', 'mdmCounterForEntity'], inplace=True)
                 d.reset_index(inplace=True, drop=True)
             else:
                 if old_columns is not None:
@@ -349,6 +353,7 @@ class Staging:
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                      .drop_duplicates(subset='mdmId', keep='last') \
                      .reset_index(drop=True)
+                d = d.drop(columns=['mdmId', 'mdmCounterForEntity'])
 
         return d
 
