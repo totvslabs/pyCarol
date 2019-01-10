@@ -82,6 +82,9 @@ class Task(luigi.Task):
     def remove(self):
         self.output().remove()
 
+    def loadlog(self):
+        return self.output().loadlog()
+
     def run(self):
         from contextlib import redirect_stdout
         if isinstance(self.input(), list):
