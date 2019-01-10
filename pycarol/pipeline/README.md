@@ -1,7 +1,5 @@
 * Organize Parameters, Data Models, Fields and Validation Rules.
 
-# Architecture
-
 ## Data Model
 
 * Name: Data model name stored on Carol MDM.

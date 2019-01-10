@@ -21,6 +21,7 @@ from .field import Field
 
 
 class DataModel:
+    _carol_name = None
 
     @classmethod
     def get_name(cls):
@@ -30,7 +31,10 @@ class DataModel:
                 class DmName(DataModel):
                     ...
         """
-        return cls.__name__.lower()
+        if cls._carol_name is None:
+            return cls.__name__.lower()
+        else:
+            return cls._carol_name
 
     @classmethod
     def has_nested(cls):
@@ -181,7 +185,9 @@ class DataModel:
 
     @classmethod
     def create_validation_rules_from_fields(cls, carol=None, add_to_carol=False):
-        """ Since validation rules are exclusive to data models, we need a method to gather and create all
+        """ Gather validation rules from all fields
+
+        Since validation rules are exclusive to data models, we need a method to gather and create all to send to Carol
 
         :param carol: Carol object
         :param add_to_carol: Whether created rule should be added or not to carol
