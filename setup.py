@@ -13,5 +13,5 @@ setup(
     description='Carol Python API',
     packages=packages,
     maintainer='TOTVS Labs',
-    # install_requires= install_requires.splitlines()
+    install_requires= install_requires.splitlines()
 )
