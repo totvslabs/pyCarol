@@ -43,7 +43,12 @@ def _get_file_paths_staging(s3, tenant_id, connector_id,staging_name):
         List of paths of files to be imported.
     """
     bucket = s3.Bucket(__BUCKET_NAME__)
-    parq =list(bucket.objects.filter(Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/staging'))
+    parq_stag =list(bucket.objects.filter(Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/staging'))
+    parq_master = list(bucket.objects.filter(
+        Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/master_staging'))
+    parq_stag_rejected = list(bucket.objects.filter(
+        Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging'))
+    parq = parq_stag + parq_master + parq_stag_rejected
     return [i.key for i in parq if i.key.endswith('.parquet')]
 
 def _build_url_parquet_golden(tenant_id, dm_name):
@@ -51,6 +56,12 @@ def _build_url_parquet_golden(tenant_id, dm_name):
 
 def _build_url_parquet_staging(tenant_id, staging_name, connector_id):
     return f's3://{__BUCKET_NAME__}/carol_export/{tenant_id}/{connector_id}_{staging_name}/staging/'
+
+def _build_url_parquet_staging_master(tenant_id, staging_name, connector_id):
+    return f's3://{__BUCKET_NAME__}/carol_export/{tenant_id}/{connector_id}_{staging_name}/master_staging/'
+
+def _build_url_parquet_staging_master_rejected(tenant_id, staging_name, connector_id):
+    return f's3://{__BUCKET_NAME__}/carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging/'
 
 
 def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_records=False,
@@ -62,15 +73,22 @@ def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_reco
         columns +=__STAGING_FIELDS
         columns = list(set(columns))
 
-    #TODO: merge_records
     if golden:
         url = _build_url_parquet_golden(tenant_id=tenant_id,
                                         dm_name=dm_name)
     else:
-        url = _build_url_parquet_staging(tenant_id=tenant_id,
-                                         staging_name=staging_name, connector_id=connector_id)
+        url = []
+        url.append(_build_url_parquet_staging(tenant_id=tenant_id,
+                                         staging_name=staging_name,
+                                         connector_id=connector_id))
+        url.append(_build_url_parquet_staging_master(tenant_id=tenant_id,
+                                              staging_name=staging_name,
+                                              connector_id=connector_id))
+        url.append(_build_url_parquet_staging_master_rejected(tenant_id=tenant_id,
+                                                     staging_name=staging_name,
+                                                     connector_id=connector_id))
 
-    url = url + '*.parquet'
+    url = [i + '*.parquet' for i in url]
     d = dd.read_parquet(url, storage_options={"key": access_id,
                                               "secret": access_key,
                                               "token":aws_session_token},
