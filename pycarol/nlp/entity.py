@@ -6,7 +6,7 @@ class Entity:
         self.canonical_value = canonical_value
 
         self._json_data = {}
-        self._update_json()
+        self._update_json_data()
 
     @classmethod
     def from_json(cls, json_data):
@@ -21,11 +21,10 @@ class Entity:
             self.values.append(values)
         self._json_data['nlpValues'] = self.values
         
-    def _update_json(self):
+    def _update_json_data(self):
         self._json_data['nlpName'] = self.name
         self._json_data['nlpValues'] = self.values
         self._json_data['nlpCanonicalValue'] = self.canonical_value
-
         self._json_data.pop('mdmCreated',None)
         self._json_data.pop('mdmId',None)
         self._json_data.pop('mdmLastUpdated',None)

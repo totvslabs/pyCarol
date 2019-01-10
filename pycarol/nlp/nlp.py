@@ -207,8 +207,10 @@ class NLP:
         """            
         if isinstance(obj, Entity):
             url_filter = "v1/ai/skillEntity"
-        else:
+        elif isinstance(obj, Skill):
             url_filter = "v1/ai/skill"
+        else:
+            return "Can't parse input"
         obj._update_json_data()
         try:
             response = self.carol.call_api(url_filter, method = 'POST', data=obj._json_data)
