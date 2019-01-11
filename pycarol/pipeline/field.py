@@ -20,7 +20,10 @@ class Field:
         * custom_validation (data)
 
     """
-    _mandatory = False
+    _carol_name = None  # Field name at Carol. If None, will return Class's __name__
+
+    _mandatory = False  # If field is mandatory or not
+    _min_fill_perc = 0  # Minimum number of non null values
 
     class TYPE:
         STRING = "STRING"
@@ -41,7 +44,10 @@ class Field:
                 class FieldName(DataModel):
                     ...
         """
-        return cls.__name__.lower()
+        if cls._carol_name is None:
+            return cls.__name__.lower()
+        else:
+            return cls._carol_name
 
     @classmethod
     def get_fields(cls):
@@ -97,16 +103,6 @@ class Field:
 
         return field_class
 
-    @staticmethod
-    def filter_metadata(dm_dict):
-        """ Remove metadata from dict
-
-        :param dm_dict: data model dictionary
-        :return: Filtered data model dictionary
-        """
-        # TODO
-        pass
-
     @classmethod
     def to_carol(cls, add_metadata=False, force_create=False):
         """ Convert from Field class format to Carol dict
@@ -159,6 +155,11 @@ class Field:
                 if len(data) == 0:
                     logs.update({'non_null': False})
                     return False, logs
+
+                # Minimum Null Validation
+                if cls._min_fill_perc > 0:
+                    # TODO
+                    pass
 
                 # Type Validation
                 type_fun = getattr(type_rules_funcs, 'validate_' + cls.TYPE.lower())  # Get type validation function

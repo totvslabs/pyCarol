@@ -80,6 +80,10 @@ class ValidationRule:
         :return: Success (boolean), logs (dict)
         """
         msg = self.operation
+
+        # Remove non null data
+        # TODO
+
         if self.params is not None:
             msg += ' - Params: ' + str(self.params)
             success = self.func(data, *self.params)

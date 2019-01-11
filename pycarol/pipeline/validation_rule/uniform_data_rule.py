@@ -1,6 +1,7 @@
 import itertools
 import os
 import json
+import numpy as np
 
 from .validation_rule import ValidationRule
 
@@ -136,8 +137,18 @@ class MdmUniformType:
 
     def validate(self, data, ignore_errors = True):
         allowed_vals = self.get_all_values()
-        success = all(d in allowed_vals for d in data)
-        return success, {'success': success, 'msg': self.name + ' - ' + self.description}
+
+        # Ignore null data
+        data = filter(lambda v: v==v, data)
+
+        # Success Message
+        msg = self.name + ' - ' + self.description
+        valid = np.array([d in allowed_vals for d in data])
+        success = all(valid)
+        if not success:
+            invalid_data = data[~valid]
+            msg = 'Wrong data: ' + str(invalid_data[:min(100, len(invalid_data))])
+        return success, {'success': success, 'msg': msg}
 
 
 class ExternalServiceInterface:
