@@ -43,6 +43,8 @@ class PyCarolTarget(luigi.Target):
 
     def loadlog(self):
         local_path = self.storage.load(self.log_path, format='file')
+        if not local_path:
+            return "Log not found. log path: {}".format(self.log_path)
         with open(local_path,'r') as f:
             text = f.read()
         return text
@@ -120,6 +122,8 @@ class LocalTarget(luigi.LocalTarget):
         path = os.path.join(task.TARGET_DIR, namespace, file_id + ext)
         super().__init__(path=path, *args, **kwargs)
 
+    def loadlog(self):
+        return "task log not implemented for local targets"
 
 class PickleLocalTarget(LocalTarget):
     FILE_EXT = 'pkl'
