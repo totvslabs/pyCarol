@@ -35,7 +35,7 @@ class PyCarolTarget(luigi.Target):
         namespace = task.get_task_namespace()
         file_id = task._file_id()
         self.path = os.path.join('pipeline', namespace, "{}.{}".format(file_id,self.FILE_EXT))
-        self.log_path = os.path.join('pipeline',namespace, "{}_log.txt".format(file_id))
+        self.log_path = os.path.join('pipeline',namespace, "{}_log.pkl".format(file_id))
 
 
     def persistlog(self,string):
@@ -138,6 +138,9 @@ class LocalTarget(luigi.LocalTarget):
         super().__init__(path=path, *args, **kwargs)
 
     def loadlog(self):
+        return "task log not implemented for local targets"
+
+    def removelog(self):
         return "task log not implemented for local targets"
 
 class PickleLocalTarget(LocalTarget):
