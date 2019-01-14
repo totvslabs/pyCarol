@@ -7,7 +7,6 @@ packages = ['pycarol', 'pycarol.auth', 'pycarol.app',
 with open('requirements.txt', 'r') as req_file:
     install_requires = req_file.read()
 
-
 setup(
     name='pycarol',
     version='2.6',
