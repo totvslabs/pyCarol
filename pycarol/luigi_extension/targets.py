@@ -41,16 +41,28 @@ class PyCarolTarget(luigi.Target):
     def persistlog(self,string):
         self.storage.save( self.log_path, string,format='joblib')
 
+    def loadlog(self):
+        try:
+            text = self.storage.load(self.log_path, format='joblib')
+        except Exception:
+            return str(Exception)
+        if not text:
+            return "Log not found. log path: {}".format(self.log_path)
+        return text
+
+    def removelog(self):
+        self.storage.delete(self.log_path)
+
     # def persistlog(self,filename):
     #     self.storage.save( self.log_path, filename, format='file')
 
-    def loadlog(self):
-        local_path = self.storage.load(self.log_path, format='file')
-        if not local_path:
-            return "Log not found. log path: {}".format(self.log_path)
-        with open(local_path,'r') as f:
-            text = f.read()
-        return text
+    # def loadlog(self):
+    #     local_path = self.storage.load(self.log_path, format='file')
+    #     if not local_path:
+    #         return "Log not found. log path: {}".format(self.log_path)
+    #     with open(local_path,'r') as f:
+    #         text = f.read()
+    #     return text
 
 
 

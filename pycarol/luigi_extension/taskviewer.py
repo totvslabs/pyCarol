@@ -122,7 +122,8 @@ class TaskViewer(object):
 
         else:
             self.complete = [t.complete() for t in TaskViewer.nodes ]
-            self.tasklog = [t.loadlog() for t in TaskViewer.nodes]
+            self.tasklog = [t.loadlog()  for t in TaskViewer.nodes ]
+        self.tasklog = [log if isinstance(log,str) else "Log type is wrong." for log in self.tasklog]
         return self.complete
 
     def get_colormapper(self):

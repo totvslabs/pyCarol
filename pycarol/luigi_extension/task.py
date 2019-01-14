@@ -61,6 +61,7 @@ class Task(luigi.Task):
 
     def remove(self):
         self.output().remove()
+        self.output().removelog()
 
     def loadlog(self):
         return self.output().loadlog()
@@ -80,7 +81,7 @@ class Task(luigi.Task):
                     function_output = self._easy_run(function_inputs)
             finally:
                 # self.output().persistlog(self._txt_path())
-                self.output().persistlog(f)
+                self.output().persistlog(f.getvalue())
         else:
             function_output = self._easy_run(function_inputs)
 
