@@ -27,26 +27,6 @@ class Task(luigi.Task):
     def _txt_path(self):
         return "{}.txt".format(self._file_id())
 
-    # def dummy_target(self):
-    #     warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-    #                   PendingDeprecationWarning)
-    #     return DummyTarget
-
-    # def disk_target(self):
-    #     warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-    #                   PendingDeprecationWarning)
-    #     return PickleLocalTarget
-    #
-    # def pytorch_target(self):
-    #     warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-    #                   PendingDeprecationWarning)
-    #     return PytorchLocalTarget
-    #
-    # def keras_target(self):
-    #     warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-    #                   PendingDeprecationWarning)
-    #     return KerasLocalTarget
-
 
     def requires(self):
         if len(self.requires_list) > 0:
@@ -96,14 +76,17 @@ class Task(luigi.Task):
             try:
                 with open(self._txt_path(),'w') as f:
                     with redirect_stdout(f):
-                        function_output = self.easy_run(function_inputs)
+                        function_output = self._easy_run(function_inputs)
             finally:
                 self.output().persistlog(self._txt_path())
         else:
-            function_output = self.easy_run(function_inputs)
+            function_output = self._easy_run(function_inputs)
 
         self.output().dump(function_output)
 
+
+    def _easy_run(self,inputs):
+        return self.easy_run(inputs)
 
     def easy_run(self,inputs):
         return None
