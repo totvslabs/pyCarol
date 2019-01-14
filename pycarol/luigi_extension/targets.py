@@ -219,6 +219,9 @@ class PytorchLocalTarget(LocalTarget):
 
 class DummyTarget(LocalTarget):
 
+    def complete(self):
+        return all(r.complete() for r in flatten(self.requires()))
+
     def load(self):
         return None
 
