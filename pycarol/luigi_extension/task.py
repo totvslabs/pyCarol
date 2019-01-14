@@ -86,6 +86,7 @@ class Task(luigi.Task):
 
 
     def _easy_run(self,inputs):
+        # Override this method to implement standard pre/post-processing
         return self.easy_run(inputs)
 
     def easy_run(self,inputs):
