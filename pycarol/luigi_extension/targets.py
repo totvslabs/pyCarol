@@ -38,8 +38,11 @@ class PyCarolTarget(luigi.Target):
         self.log_path = os.path.join('pipeline',namespace, "{}_log.txt".format(file_id))
 
 
-    def persistlog(self,filename):
-        self.storage.save( self.log_path, filename, format='file')
+    def persistlog(self,string):
+        self.storage.save( self.log_path, string,format='joblib')
+
+    # def persistlog(self,filename):
+    #     self.storage.save( self.log_path, filename, format='file')
 
     def loadlog(self):
         local_path = self.storage.load(self.log_path, format='file')

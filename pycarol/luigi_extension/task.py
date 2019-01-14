@@ -74,11 +74,13 @@ class Task(luigi.Task):
 
         if self.output().is_cloud_target and self.persist_stdout:
             try:
-                with open(self._txt_path(),'w') as f:
-                    with redirect_stdout(f):
-                        function_output = self._easy_run(function_inputs)
+                import io
+                f = io.StringIO()
+                with redirect_stdout(f):
+                    function_output = self._easy_run(function_inputs)
             finally:
-                self.output().persistlog(self._txt_path())
+                # self.output().persistlog(self._txt_path())
+                self.output().persistlog(f)
         else:
             function_output = self._easy_run(function_inputs)
 
