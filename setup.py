@@ -9,7 +9,7 @@ with open('requirements.txt', 'r') as req_file:
 
 setup(
     name='pycarol',
-    version='2.6',
+    version='2.7',
     description='Carol Python API',
     packages=packages,
     maintainer='TOTVS Labs',
