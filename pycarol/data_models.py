@@ -182,7 +182,7 @@ class DataModel:
         self.snapshot_ = {resp['entityTemplateName']: resp}
         return resp
 
-    def export(self, dm_name=None, dm_id=None, sync_dm=True, full_export=False):
+    def export(self, dm_name=None, dm_id=None, sync_dm=True, full_export=False, delete_previous=False):
         """
 
         Export datamodel to s3
@@ -198,6 +198,8 @@ class DataModel:
             Sync the data model
         :param full_export: `bool`, default `True`
             Do a resync of the data model
+        :param delete_previous: `bool`, default `False`
+            Delete previous exported files.
         :return: None
         """
 
@@ -211,9 +213,39 @@ class DataModel:
         else:
             assert dm_id
 
-        query_params = {"status": status, "fullExport": full_export}
+        query_params = {"status": status, "fullExport": full_export,
+                        "deletePrevious":delete_previous}
+
         url = f'v1/entities/templates/{dm_id}/exporter'
         return self.carol.call_api(url, method='POST', params=query_params)
+
+    def export_all(self, sync_dm=True, full_export=False, delete_previous=False):
+        """
+
+        Export all datamodel to s3
+
+        This method will trigger or pause the export of the data in the datamodel to
+        s3
+
+        :param dm_name: `str`, default `None`
+            Datamodel Name
+        :param dm_id: `str`, default `None`
+            Datamodel id
+        :param sync_dm: `bool`, default `True`
+            Sync the data model
+        :param full_export: `bool`, default `True`
+            Do a resync of the data model
+        :param delete_previous: `bool`, default `False`
+            Delete previous exported files.
+        :return: None
+        """
+        self.get_all()
+
+        for i in self.template_dict.values():
+
+            dm_id= i['mdmId']
+            self.export(dm_id=dm_id, sync_dm=sync_dm, full_export=full_export,
+                            delete_previous=delete_previous)
 
     def delete(self, dm_id=None, dm_name=None, entity_space='WORKING'):
         # TODO: Check Possible entity_spaces

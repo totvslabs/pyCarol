@@ -10,7 +10,8 @@ from .filter import Filter, RANGE_FILTER, TYPE_FILTER
 import itertools
 import warnings
 import gzip, io
-
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Staging:
@@ -45,8 +46,41 @@ class Staging:
 
 
 
-    def send_data(self, staging_name, data=None, connector_id=None, step_size=100, print_stats=False,
-                  gzip=True,  auto_create_schema=False, crosswalk_auto_create=None, force=False, dm_to_delete=None):
+    def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100, print_stats=True,
+                  gzip=True,  auto_create_schema=False, crosswalk_auto_create=None, force=False, max_workers=None,
+                  dm_to_delete=None, async_send=False):
+
+        '''
+
+        :param staging_name:  `str`,
+            Staging name to send the data.
+        :param data: pandas data frame, json. default `None`
+            Data to be send to Carol
+        :param connector_name: `str`, default `None`
+            Connector name where the staging should be.
+        :param connector_id: `str`, default `None`
+            Connector Id where the staging should be.
+        :param step_size: `int`, default `100`
+            Number of records to be sent in each iteration. Max size for each batch is 10MB
+        :param print_stats: `bool`, default `True`
+            If print the status
+        :param gzip: `bool`, default `True`
+            If send each batch as a gzip file.
+        :param auto_create_schema: `bool`, default `False`
+            If to auto create the schema for the data being sent.
+        :param crosswalk_auto_create: `list`, default `None`
+            If `auto_create_schema=True`, one should send the crosswalk for the staging.
+        :param force: `bool`, default `False`
+            If `force=True` it will not check for repeated records according to crosswalk. If `False` it will check for
+            duplicates and raise an error if so.
+        :param max_workers: `int`, default `None`
+            To be used with `async_send=True`. Number of threads to use when sending.
+        :param dm_to_delete: `str`, default `None`
+            Name of the data model to be erased before send the data.
+        :param async_send: `bool`, default `False`
+            To use async to send the data. This is much faster than a sequential send.
+        :return: None
+        '''
 
         self.gzip = gzip
         extra_headers = {}
@@ -56,10 +90,13 @@ class Staging:
             extra_headers["Content-Encoding"] = "gzip"
             extra_headers['content-type'] = 'application/json'
 
-        if connector_id is None:
-            connector_id = self.carol.connector_id
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            if connector_id is None:
+                connector_id = self.carol.connector_id
 
-        schema = self.get_schema(staging_name,connector_id)
+        schema = self.get_schema(staging_name,connector_id=connector_id)
 
         is_df = False
         if isinstance(data, pd.DataFrame):
@@ -103,23 +140,44 @@ class Staging:
 
 
         url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
-        gen = self._stream_data(data, data_size, step_size, is_df)
         self.cont = 0
-        ite = True
-        data_json = gen.__next__()
-        while ite:
-            self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
-            if print_stats:
-                print('{}/{} sent'.format(self.cont, data_size), end='\r')
-            data_json = gen.__next__()
-            if data_json == []:
-                break
+        if async_send:
+            loop = asyncio.get_event_loop()
+            future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
+                                                                        url, extra_headers, content_type, max_workers))
+            loop.run_until_complete(future)
+
+        else:
+            for data_json in self._stream_data(data, data_size, step_size, is_df):
+                self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
+                if print_stats:
+                    print('{}/{} sent'.format(self.cont, data_size), end='\r')
+
+    async def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers,
+                                      content_type, max_workers):
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            session = self.carol._retry_session()
+            # Set any session parameters here before calling `send_a`
+            loop = asyncio.get_event_loop()
+            tasks = [
+                loop.run_in_executor(
+                    executor,
+                    self.send_a,
+                    *(session, url, data_json, extra_headers, content_type)
+                    # Allows us to pass in multiple arguments to `send_a`
+                )
+                for data_json in self._stream_data(data, data_size, step_size, is_df)
+            ]
+
+    def send_a(self,session, url, data_json, extra_headers,content_type):
+        self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type, session=session)
 
     def _stream_data(self, data, data_size, step_size, is_df):
         for i in range(0,data_size, step_size):
             if is_df:
                 data_to_send = data.iloc[i:i + step_size]
                 self.cont += len(data_to_send)
+                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
                 data_to_send = data_to_send.to_json(orient='records', date_format='iso', lines=False)
                 if self.gzip:
                     out = io.BytesIO()
@@ -131,6 +189,7 @@ class Staging:
             else:
                 data_to_send = data[i:i + step_size]
                 self.cont += len(data_to_send)
+                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
                 if self.gzip:
                     out = io.BytesIO()
                     with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
@@ -139,10 +198,12 @@ class Staging:
                 else:
                     yield data_to_send
 
-        yield []
+    def get_schema(self, staging_name, connector_name=None, connector_id=None):
 
-    def get_schema(self, staging_name, connector_id=None):
         query_string = None
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+
         if connector_id:
             query_string = {"connectorId": connector_id}
         try:
@@ -201,7 +262,8 @@ class Staging:
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',verbose=0,
-                      merge_records=True, n_jobs=1, return_dask_graph=False, columns=None):
+                      merge_records=True, n_jobs=1, return_dask_graph=False, columns=None, max_hits=None,
+                      return_metadata=False):
         """
 
         Fetch parquet from a staging table.
@@ -225,6 +287,10 @@ class Staging:
             If to return the dask graph or the dataframe.
         :param columns: `list`, default `None`
             List of columns to fetch.
+        :param max_hits: `int`, default `None`
+            Number of records to get. This only should be user for tests.
+        :param return_metadata: `bool`, default `False`
+            To return or not the fields ['mdmId', 'mdmCounterForEntity']
         :return:
         """
 
@@ -232,7 +298,7 @@ class Staging:
         if columns:
             old_columns = columns
             columns = [i.replace("-","_") for i in columns]
-            columns.extend(['mdmId', 'mdmCounterForEntity'])
+            columns.extend(['mdmId', 'mdmCounterForEntity','mdmLastUpdated'])
             old_columns = dict(zip([i.replace("-", "_") for i in columns], old_columns))
 
         if connector_name:
@@ -259,14 +325,15 @@ class Staging:
 
             d = _import_dask(tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, staging_name=staging_name,
                              access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
-                             merge_records=merge_records, golden=False,return_dask_graph=return_dask_graph,columns=columns)
+                             merge_records=merge_records, golden=False,return_dask_graph=return_dask_graph,columns=columns,
+                             max_hits=max_hits)
 
         elif backend=='pandas':
             s3 = carolina.s3
             d = _import_pandas(s3=s3,  tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
-                               staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns)
+                               staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns, max_hits=max_hits)
             if d is None:
-                warnings.warn("No data to fetch!", UserWarning)
+                warnings.warn(f"No data to fetch! {staging_name} has no data", UserWarning)
                 return None
         else:
             raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}' )
@@ -278,6 +345,8 @@ class Staging:
                 d.sort_values('mdmCounterForEntity', inplace=True)
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
+                if not return_metadata:
+                    d.drop(columns=['mdmId', 'mdmCounterForEntity','mdmLastUpdated'], inplace=True)
                 d.reset_index(inplace=True, drop=True)
             else:
                 if old_columns is not None:
@@ -285,11 +354,14 @@ class Staging:
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                      .drop_duplicates(subset='mdmId', keep='last') \
                      .reset_index(drop=True)
+                if not return_metadata:
+                    d = d.drop(columns=['mdmId', 'mdmCounterForEntity','mdmLastUpdated'])
 
         return d
 
 
-    def export(self,staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False):
+    def export(self,staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False,
+               delete_previous=False):
         """
 
         Export Staging to s3
@@ -307,7 +379,29 @@ class Staging:
             Connector id
         :param full_export: `bool`, default `True`
             Do a resync of the data model
+        :param delete_previous: `bool`, default `False`
+            Delete previous exported files.
         :return: None
+
+
+        Usage:
+        To trigger the export the first time:
+
+        >>>from pycarol.staging import Staging
+        >>>from pycarol.auth.PwdAuth import PwdAuth
+        >>>from pycarol.carol import Carol
+        >>>login = Carol()
+        >>>stag  = Staging(login)
+        >>>stag.export(staging, connector_name=connector_name,sync_staging=True)
+
+        To do a resync, that is, start the sync from the begining without delete old data
+        >>>stag.export(staging, connector_name=connector_name,sync_staging=True, full_export=True)
+
+        To delete the old data:
+        >>>stag.export(staging, connector_name=connector_name,sync_staging=True, full_export=True, delete_previous=True)
+
+        To Pause a sync:
+        >>>stag.export(staging, connector_name=connector_name,sync_staging=False)
         """
 
         if sync_staging:
@@ -320,13 +414,14 @@ class Staging:
         else:
             assert connector_id
 
-
-        query_params = {"status": status, "fullExport": full_export}
+        query_params = {"status": status, "fullExport": full_export,
+                        "deletePrevious":delete_previous}
         url = f'v2/staging/{connector_id}/{staging_name}/exporter'
         return self.carol.call_api(url, method='POST', params=query_params)
 
 
-    def export_all(self, connector_id=None, connector_name=None, sync_staging=True, full_export=False):
+    def export_all(self, connector_id=None, connector_name=None, sync_staging=True, full_export=False,
+                   delete_previous=False):
         """
 
         Export all Stagings from a connector to s3
@@ -342,7 +437,11 @@ class Staging:
             Connector id
         :param full_export: `bool`, default `True`
             Do a resync of the data model
+        :param delete_previous: `bool`, default `False`
+            Delete previous exported files.
         :return: None
+
+        Usage: See `Staging.export()`
         """
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
@@ -353,7 +452,7 @@ class Staging:
 
         for staging in conn_stats.get(connector_id):
             resp = self.export(staging_name=staging, connector_id=connector_id,
-                        sync_staging=sync_staging, full_export=full_export )
+                        sync_staging=sync_staging, full_export=full_export, delete_previous=delete_previous )
 
     def _get_staging_export_stats(self):
         """
