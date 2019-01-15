@@ -11,3 +11,5 @@ setup(
     maintainer='TOTVS Labs',
     install_requires= install_requires.splitlines()
 )
+
+
