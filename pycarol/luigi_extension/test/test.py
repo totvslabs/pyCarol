@@ -1,10 +1,13 @@
 import luigi
 import os
-from luigi_extension.targets import DummyTarget
+from ..targets import DummyTarget
 from collections import namedtuple
 from unittest.mock import patch, MagicMock, PropertyMock
 from contextlib import ExitStack
 import shutil
+import logging
+
+logger = logging.getLogger(__name__)
 
 """ 
 # Task Execution
@@ -12,24 +15,18 @@ import shutil
         - Execution success
         - Requires
         - Execution
-
 # Mocks
-
-
 # Special Words when defining Test Cases:
-
     * Test
     Every test case must start with the 'Test' keyword as default from python.unittest.
-
     * Flow
     If your test case involves Luigi Extension related tasks, use 'Flow' keyword. E.g. TestFlowMyTest. This way, pipeline 
     extension updates will be able to be checked.
 """
 
 
-def test_task_execution(task, parameters=None, worker_scheduler_factory=None, **env_params):
+def task_execution_debug(task, parameters=None, worker_scheduler_factory=None, **env_params):
     """ Execute a pipeline pipeline
-
     :param task:
     :param parameters: dict
     :return: instance of class TaskOutput:
@@ -53,6 +50,7 @@ def test_task_execution(task, parameters=None, worker_scheduler_factory=None, **
     # TODO Get only parameters that are used in task_instance. Similar to self.clone
     task_instance = task(**parameters)
     out['task'] = task_instance
+    print(f"Building task {task_instance}!")
     exec_out = luigi.interface._schedule_and_run([task_instance], worker_scheduler_factory,
                                                  override_defaults=env_params)
     out.update({'success': exec_out['success']})
@@ -84,7 +82,7 @@ def luigi_extension_test(cls):
 
     class TestNewClass(cls):
         def setUp(self):
-            patcher = patch('luigi_extension.Task.TARGET_DIR', new_callable=PropertyMock, return_value=new_target)
+            patcher = patch('pycarol.luigi_extension.Task.TARGET_DIR', new_callable=PropertyMock, return_value=new_target)
             self.addCleanup(patcher.stop)
             self.mock_target = patcher.start()
             if os.path.isdir(new_target):
@@ -96,7 +94,6 @@ def luigi_extension_test(cls):
 
 class mock_task:
     """ Define a task as executed and default return from a specific Task
-
     This mock will work for all Tasks. If the user wants to mock diferently with different parameters, must specify
     task_parameters.
     """
@@ -121,7 +118,7 @@ class mock_task:
                         # TODO handle cases of user having same task with different parameters
                         pass
                     else:
-                        out_target = DummyTarget(is_tmp=True)
+                        out_target = DummyTarget(task, is_tmp=True)
 
                         def new_load():
                             return task_output
@@ -139,10 +136,8 @@ class mock_task:
 
 class mock_task_wrapper:
     """ Define a task as executed and default return from a specific Task, but still executes task's requires
-
     This mock will work for all Tasks. If the user wants to mock diferently with different parameters, must specify
     task_parameters.
-
     -- Possible improvements:
     An easier way to define a task as completed or not, without using mocks, would be to get the task's output name
     and create that output using 'task_output' as a pickle.
@@ -179,4 +174,3 @@ class mock_task_wrapper:
                 exec_func(*args, **kwargs)
 
         return patched_func
-
