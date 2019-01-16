@@ -380,10 +380,13 @@ class DataModel:
             result = self.carol.call_api(url_filter, data=json_query, params=query_params)
             print(f"To go: {c+1}/{len(chunks)}")
 
+    #TODO: equal to Staging
     def send_a(self,session, url, data_json, extra_headers,content_type):
         self.carol.call_api(url, data=data_json, extra_headers=extra_headers,
                             content_type=content_type, session=session)
 
+
+    #TODO: the same that in staging.
     async def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers,
                                       content_type, max_workers):
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -444,6 +447,7 @@ class DataModel:
                 if print_stats:
                     print('{}/{} sent'.format(self.cont, data_size), end='\r')
 
+    #TODO: reused from staging. Should I put in utils/?
     def _stream_data(self, data, data_size, step_size, is_df):
         for i in range(0, data_size, step_size):
             if is_df:
