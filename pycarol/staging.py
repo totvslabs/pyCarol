@@ -170,7 +170,8 @@ class Staging:
             ]
 
     def send_a(self,session, url, data_json, extra_headers,content_type):
-        self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type, session=session)
+        self.carol.call_api(url, data=data_json, extra_headers=extra_headers,
+                            content_type=content_type, session=session)
 
     def _stream_data(self, data, data_size, step_size, is_df):
         for i in range(0,data_size, step_size):

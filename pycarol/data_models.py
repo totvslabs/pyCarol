@@ -403,9 +403,28 @@ class DataModel:
                 for data_json in self._stream_data(data, data_size, step_size, is_df)
             ]
 
-    def send_data(self, dm_name, data=None, step_size=100, gzip=False,
+    def send_data(self, data, dm_name=None, dm_id=None, step_size=100, gzip=False,
                   print_stats=True, max_workers=None, async_send=False):
 
+        """
+        :param data: pandas data frame, json.
+            Data to be send to Carol
+        :param dm_name:  `str`, default `None`
+            Data model name
+        :param dm_id:  `str`, default `None`
+            Data model id
+        :param step_size: `int`, default `100`
+            Number of records to be sent in each iteration. Max size for each batch is 10MB
+        :param print_stats: `bool`, default `True`
+            If print the status
+        :param gzip: `bool`, default `True`
+            If send each batch as a gzip file.
+        :param max_workers: `int`, default `None`
+            To be used with `async_send=True`. Number of threads to use when sending.
+        :param async_send: `bool`, default `False`
+            To use async to send the data. This is much faster than a sequential send.
+        :return: None
+        """
 
         self.gzip = gzip
         extra_headers = {}
@@ -431,7 +450,12 @@ class DataModel:
         if (not isinstance(data, list)) and (not is_df):
             data = [data]
             data_size = len(data)
-        dm_id = self.get_by_name(dm_name)['mdmId']
+
+        if dm_name:
+            dm_id = self.get_by_name(dm_name)['mdmId']
+        else:
+            assert dm_id
+
         url = f"v1/entities/templates/{dm_id}/goldenRecords"
 
         self.cont = 0
