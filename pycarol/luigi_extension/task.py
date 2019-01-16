@@ -20,6 +20,12 @@ class Task(luigi.Task):
     def buildme(self, local_scheduler=True, **kwargs):
         luigi.build([self, ], local_scheduler=local_scheduler, **kwargs)
 
+    def debug(self):
+        persist_stdout =self.persist_stdout
+        self.persist_stdout = False
+        self.run()
+        self.persist_stdout = persist_stdout
+
     def _file_id(self):
         # returns the output default file identifier
         return luigi.task.task_id_str(self.get_task_family(), self.to_str_params(only_significant=True))
