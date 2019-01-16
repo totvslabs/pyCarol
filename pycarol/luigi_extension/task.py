@@ -20,7 +20,7 @@ class Task(luigi.Task):
     def buildme(self, local_scheduler=True, **kwargs):
         luigi.build([self, ], local_scheduler=local_scheduler, **kwargs)
 
-    def debug(self):
+    def debug_task(self):
         persist_stdout =self.persist_stdout
         self.persist_stdout = False
         self.run()
