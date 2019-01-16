@@ -434,6 +434,11 @@ class DataModel:
             extra_headers["Content-Encoding"] = "gzip"
             extra_headers['content-type'] = 'application/json'
 
+        if dm_name:
+            dm_id = self.get_by_name(dm_name)['mdmId']
+        else:
+            assert dm_id
+
         is_df = False
         if isinstance(data, pd.DataFrame):
             is_df = True
@@ -451,10 +456,7 @@ class DataModel:
             data = [data]
             data_size = len(data)
 
-        if dm_name:
-            dm_id = self.get_by_name(dm_name)['mdmId']
-        else:
-            assert dm_id
+
 
         url = f"v1/entities/templates/{dm_id}/goldenRecords"
 
