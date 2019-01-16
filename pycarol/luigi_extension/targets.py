@@ -53,16 +53,7 @@ class PyCarolTarget(luigi.Target):
     def removelog(self):
         self.storage.delete(self.log_path)
 
-    # def persistlog(self,filename):
-    #     self.storage.save( self.log_path, filename, format='file')
 
-    # def loadlog(self):
-    #     local_path = self.storage.load(self.log_path, format='file')
-    #     if not local_path:
-    #         return "Log not found. log path: {}".format(self.log_path)
-    #     with open(local_path,'r') as f:
-    #         text = f.read()
-    #     return text
 
 
 
