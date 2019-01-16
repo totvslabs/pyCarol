@@ -12,6 +12,10 @@ from .utils.miscellaneous import ranges
 import time
 import copy
 import warnings
+import pandas as pd
+import gzip, io
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 
 class DataModel:
@@ -375,6 +379,96 @@ class DataModel:
 
             result = self.carol.call_api(url_filter, data=json_query, params=query_params)
             print(f"To go: {c+1}/{len(chunks)}")
+
+    def send_a(self,session, url, data_json, extra_headers,content_type):
+        self.carol.call_api(url, data=data_json, extra_headers=extra_headers,
+                            content_type=content_type, session=session)
+
+    async def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers,
+                                      content_type, max_workers):
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            session = self.carol._retry_session()
+            # Set any session parameters here before calling `send_a`
+            loop = asyncio.get_event_loop()
+            tasks = [
+                loop.run_in_executor(
+                    executor,
+                    self.send_a,
+                    *(session, url, data_json, extra_headers, content_type)
+                    # Allows us to pass in multiple arguments to `send_a`
+                )
+                for data_json in self._stream_data(data, data_size, step_size, is_df)
+            ]
+
+    def send_data(self, dm_name, data=None, step_size=100, gzip=False,
+                  print_stats=True, max_workers=None, async_send=False):
+
+
+        self.gzip = gzip
+        extra_headers = {}
+        content_type = 'application/json'
+        if self.gzip:
+            content_type=None
+            extra_headers["Content-Encoding"] = "gzip"
+            extra_headers['content-type'] = 'application/json'
+
+        is_df = False
+        if isinstance(data, pd.DataFrame):
+            is_df = True
+            data_size = data.shape[0]
+            _sample_json = data.iloc[0].to_json(date_format='iso')
+        elif isinstance(data, str):
+            data = json.loads(data)
+            data_size = len(data)
+            _sample_json = data[0]
+        else:
+            data_size = len(data)
+            _sample_json = data[0]
+
+        if (not isinstance(data, list)) and (not is_df):
+            data = [data]
+            data_size = len(data)
+        dm_id = self.get_by_name(dm_name)['mdmId']
+        url = f"v1/entities/templates/{dm_id}/goldenRecords"
+
+        self.cont = 0
+        if async_send:
+            loop = asyncio.get_event_loop()
+            future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
+                                                                        url, extra_headers, content_type, max_workers))
+            loop.run_until_complete(future)
+
+        else:
+            for data_json in self._stream_data(data, data_size, step_size, is_df):
+                self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
+                if print_stats:
+                    print('{}/{} sent'.format(self.cont, data_size), end='\r')
+
+    def _stream_data(self, data, data_size, step_size, is_df):
+        for i in range(0, data_size, step_size):
+            if is_df:
+                data_to_send = data.iloc[i:i + step_size]
+                self.cont += len(data_to_send)
+                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
+                data_to_send = data_to_send.to_json(orient='records', date_format='iso', lines=False)
+                if self.gzip:
+                    out = io.BytesIO()
+                    with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
+                        f.write(data_to_send.encode('utf-8'))
+                    yield out.getvalue()
+                else:
+                    yield json.loads(data_to_send)
+            else:
+                data_to_send = data[i:i + step_size]
+                self.cont += len(data_to_send)
+                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
+                if self.gzip:
+                    out = io.BytesIO()
+                    with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
+                        f.write(json.dumps(data_to_send).encode('utf-8'))
+                    yield out.getvalue()
+                else:
+                    yield data_to_send
 
 
 
