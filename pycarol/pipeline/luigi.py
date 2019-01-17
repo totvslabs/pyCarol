@@ -1,4 +1,4 @@
-from luigi_extension import Task, WrapperTask
+from ..luigi_extension import Task, WrapperTask
 import luigi
 from luigi import Parameter, DictParameter
 import logging
