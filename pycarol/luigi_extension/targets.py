@@ -17,6 +17,7 @@ class PyCarolTarget(luigi.Target):
     login_cache = None
     tenant_cache = None
     storage_cache = None
+    is_cloud_target = True
     def __init__(self, task, *args, **kwargs):
         from ..carol import Carol
         from ..storage import Storage
@@ -33,9 +34,26 @@ class PyCarolTarget(luigi.Target):
 
         namespace = task.get_task_namespace()
         file_id = task._file_id()
-        ext = '.' + self.FILE_EXT
-        path = os.path.join(namespace, file_id + ext)
-        self.path = os.path.join('pipeline', path)
+        self.path = os.path.join('pipeline', namespace, "{}.{}".format(file_id,self.FILE_EXT))
+        self.log_path = os.path.join('pipeline',namespace, "{}_log.pkl".format(file_id))
+
+
+    def persistlog(self,string):
+        self.storage.save( self.log_path, string,format='joblib')
+
+    def loadlog(self):
+        try:
+            text = self.storage.load(self.log_path, format='joblib')
+        except Exception:
+            return str(Exception)
+        if not text:
+            return "Log not found. log path: {}".format(self.log_path)
+        return text
+
+    def removelog(self):
+        self.storage.delete(self.log_path)
+
+
 
 
 
@@ -100,6 +118,7 @@ class KerasPyCarolTarget(PyCarolTarget):
 class LocalTarget(luigi.LocalTarget):
     is_tmp=False
     FILE_EXT = 'ext'
+    is_cloud_target = False
     def __init__(self, task, *args, **kwargs):
 
         os.makedirs(task.TARGET_DIR, exist_ok=True)
@@ -109,6 +128,11 @@ class LocalTarget(luigi.LocalTarget):
         path = os.path.join(task.TARGET_DIR, namespace, file_id + ext)
         super().__init__(path=path, *args, **kwargs)
 
+    def loadlog(self):
+        return "task log not implemented for local targets"
+
+    def removelog(self):
+        return "task log not implemented for local targets"
 
 class PickleLocalTarget(LocalTarget):
     FILE_EXT = 'pkl'
@@ -185,6 +209,9 @@ class PytorchLocalTarget(LocalTarget):
 
 
 class DummyTarget(LocalTarget):
+
+    def complete(self):
+        return all(r.complete() for r in flatten(self.requires()))
 
     def load(self):
         return None
