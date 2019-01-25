@@ -129,7 +129,7 @@ class TaskViewer(object):
     def get_colormapper(self):
         family = self.family
         factors = list(set(family))
-        nb_factors = len(factors)
+        nb_factors = np.clip(len(factors),3,10)
         from bokeh.palettes import Category10
         from bokeh.models.mappers import CategoricalColorMapper
         return CategoricalColorMapper(factors=factors, palette=Category10[nb_factors])
