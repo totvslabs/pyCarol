@@ -94,8 +94,8 @@ class TaskViewer(object):
         for i in self.range_nodes():
             task_names.append(TaskViewer.nodes[i].task_family)
             task_id.append(TaskViewer.nodes[i].task_id)
-        family = [t.split('.')[0] for t in task_names]
-        task_names = [t.split('.')[1] for t in task_names]
+        family = [t.split('.')[-2] if '.' in t else "empty_namespace" for t in task_names]
+        task_names = [t.split('.')[-1] for t in task_names]
         self.family = family
         self.update_complete()
         source_dict = dict(
