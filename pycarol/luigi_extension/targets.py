@@ -100,6 +100,7 @@ class KerasPyCarolTarget(PyCarolTarget):
 class LocalTarget(luigi.LocalTarget):
     is_tmp=False
     FILE_EXT = 'ext'
+
     def __init__(self, task, *args, **kwargs):
 
         os.makedirs(task.TARGET_DIR, exist_ok=True)
@@ -184,7 +185,13 @@ class PytorchLocalTarget(LocalTarget):
             print("file not found")
 
 
-class DummyTarget(LocalTarget):
+class DummyTarget:
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def exists(self):
+        return True
 
     def load(self):
         return None

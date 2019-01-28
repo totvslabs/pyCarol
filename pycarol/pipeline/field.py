@@ -25,6 +25,12 @@ class Field:
     _mandatory = False  # If field is mandatory or not
     _min_fill_perc = 0  # Minimum number of non null values
 
+    def set_foreign_key(self):
+        """ Set this field as a foreign key. Must return the field related to this key.
+        :return:
+        """
+        return None
+
     class TYPE:
         STRING = "STRING"
         NESTED = "NESTED"
@@ -218,6 +224,7 @@ class Field:
                     success = success and custom_val_success
                     logs.update({'custom_validation': {'success': custom_val_success,
                                                        'msg': custom_val_msg}})
+
 
         else:
             # Validate nested

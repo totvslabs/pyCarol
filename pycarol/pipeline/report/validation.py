@@ -27,13 +27,14 @@ Input Format:
     }
 """
 import luigi
-from luigi_extension.test import task_execution_debug
+from ...luigi_extension.test import task_execution_debug
 import missingno as msno
 import matplotlib.pyplot as plt
 
 from IPython import get_ipython
 from IPython.display import display, Markdown, Javascript
 import logging
+
 
 # TODO: Clickable buttons that execute the function
 SUCCESS_COLOR = "green"
@@ -105,6 +106,7 @@ def print_dm_validation(logs, data):
             if not val['success']:
                 color = ERROR_COLOR
                 text += add_tag('Wrong type.', color=ERROR_COLOR, tag='li')
+
         if 'validation' in log:
             val = log.pop('validation')
             if not val['success']:
@@ -131,8 +133,10 @@ def print_dm_validation(logs, data):
                 text += add_tag('<ul>')
                 text += add_tag(val['msg'], color=ERROR_COLOR, tag='li')
                 text += add_tag('</ul>')
+
         text += add_tag('</ul>')
         text = '' if text == '<ul></ul>' else text
+
         return text, color
 
     def print_field(log, data, calling_field_name=None, color=NULL_COLOR):
