@@ -330,11 +330,27 @@ class Staging:
 
         elif backend=='pandas':
             s3 = carolina.s3
-            d = _import_pandas(s3=s3,  tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
+            d = _import_pandas(s3=s3, tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
                                staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns, max_hits=max_hits)
             if d is None:
-                warnings.warn(f"No data to fetch! {staging_name} has no data", UserWarning)
-                return None
+                warnings.warn(f'No data to fetch! {staging_name} has no data', UserWarning)
+                cols_keys = list(self.get_schema(
+                    staging_name=staging_name,connector_name=connector_name
+                )['mdmStagingMapping']['properties'].keys())
+                cols_values = list(self.get_schema(
+                    staging_name=staging_name,connector_name=connector_name
+                )['mdmStagingMapping']['properties'].values())                
+                cols_keys.extend(['mdmId','mdmCounterForEntity','mdmLastUpdated'])
+                d = pd.DataFrame(columns=cols_keys)
+                for count,column in enumerate(cols_values):
+                    if list(column.values())==["date"]:
+                        d.iloc[:,count] = d.iloc[:,count].astype('object',copy=False)
+                    if list(column.values())==["string"]:
+                        d.iloc[:,count] = d.iloc[:,count].astype('object',copy=False)                         
+                    if list(column.values())==["double"]:
+                        d.iloc[:,count] = d.iloc[:,count].astype('float',copy=False)
+                    if list(column.values())==["long"]:
+                        d.iloc[:,count] = d.iloc[:,count].astype('int',copy=False)                      
         else:
             raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}' )
 
@@ -342,31 +358,22 @@ class Staging:
             if not return_dask_graph:
                 if old_columns is not None:
                     d.rename(columns=old_columns, inplace=True)
-                d.sort_values('mdmCounterForEntity', inplace=True)
-                d.reset_index(inplace=True, drop=True)
-                d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
+                if (len(d) > 0):
+                    d.sort_values('mdmCounterForEntity', inplace=True)
+                    d.reset_index(inplace=True, drop=True)
+                    d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
                 if not return_metadata:
-                    d.drop(columns=['mdmId', 'mdmCounterForEntity','mdmLastUpdated'], inplace=True)
+                    d.drop(columns=['mdmId','mdmCounterForEntity','mdmLastUpdated'], inplace=True)
                 d.reset_index(inplace=True, drop=True)
             else:
                 if old_columns is not None:
                     d.rename(columns=old_columns, inplace=True)
-                d = d.set_index('mdmCounterForEntity', sorted=True) \
-                     .drop_duplicates(subset='mdmId', keep='last') \
-                     .reset_index(drop=True)
+                if (len(d) > 0):
+                    d = d.set_index('mdmCounterForEntity', sorted=True) \
+                         .drop_duplicates(subset='mdmId', keep='last') \
+                         .reset_index(drop=True)
                 if not return_metadata:
-                    d = d.drop(columns=['mdmId', 'mdmCounterForEntity','mdmLastUpdated'])
-                    
-        if d==None:
-            try:
-                cols = stag.get_schema(
-                    staging_name=staging,connector_name=connector_name
-                )['mdmCrosswalkTemplate']['mdmCrossreference'][staging]
-            except:
-                cols = stag.get_schema(
-                    staging_name=staging,connector_name=connector_name
-                )['mdmCrosswalkTemplate']['mdmCrossreference'][staging.upper()]
-            d = pd.DataFrame(columns=cols)
+                    d = d.drop(columns=['mdmId','mdmCounterForEntity','mdmLastUpdated'])
 
         return d
 
