@@ -356,6 +356,17 @@ class Staging:
                      .reset_index(drop=True)
                 if not return_metadata:
                     d = d.drop(columns=['mdmId', 'mdmCounterForEntity','mdmLastUpdated'])
+                    
+        if d==None:
+            try:
+                cols = stag.get_schema(
+                    staging_name=staging,connector_name=connector_name
+                )['mdmCrosswalkTemplate']['mdmCrossreference'][staging]
+            except:
+                cols = stag.get_schema(
+                    staging_name=staging,connector_name=connector_name
+                )['mdmCrosswalkTemplate']['mdmCrossreference'][staging.upper()]
+            d = pd.DataFrame(columns=cols)
 
         return d
 
