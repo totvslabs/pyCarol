@@ -313,8 +313,12 @@ class Staging:
 
         #validate export
         stags = self._get_staging_export_stats()
-        if not stags.get(staging_name):
+        if (not stags.get(staging_name)):
             raise Exception(f'"{staging_name}" is not set to export data, \n use `dm = Staging(login).export(staging_name="{staging_name}",connector_id="{connector_id}", sync_staging=True) to activate')
+
+        if stags.get(staging_name)['mdmConnectorId']!=connector_id:
+            raise Exception(
+                f'"Wrong connector Id {connector_id}. The connector Id associeted to this staging is  {stags.get(staging_name)["mdmConnectorId"]}"')
 
         carolina = Carolina(self.carol)
         carolina._init_if_needed()
