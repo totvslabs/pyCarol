@@ -458,7 +458,7 @@ class DataModel:
 
 
 
-        url = f"v1/entities/templates/{dm_id}/goldenRecords"
+        url = f"v1/entities/templates/{dm_id}/goldenRecords?async=true"
 
         self.cont = 0
         if async_send:
