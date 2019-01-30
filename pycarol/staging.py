@@ -352,10 +352,8 @@ class Staging:
                 cols_keys = list(self.get_schema(
                     staging_name=staging_name,connector_name=connector_name
                 )['mdmStagingMapping']['properties'].keys())
-                cols_values = list(self.get_schema(
-                    staging_name=staging_name,connector_name=connector_name
-                )['mdmStagingMapping']['properties'].values())                
-                cols_keys.extend(['mdmId','mdmCounterForEntity','mdmLastUpdated'])
+                if return_metadata:
+                    cols_keys.extend(['mdmId','mdmCounterForEntity','mdmLastUpdated'])
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in self.get_schema(staging_name=staging_name,
                                                   connector_name=connector_name)['mdmStagingMapping']['properties'].items():
