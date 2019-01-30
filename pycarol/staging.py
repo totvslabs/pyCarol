@@ -357,7 +357,7 @@ class Staging:
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in self.get_schema(staging_name=staging_name,
                                                   connector_name=connector_name)['mdmStagingMapping']['properties'].items():
-                    d.loc[:, key] = d.loc[:, key].astype(_SCHEMA_TYPES_MAPPING.get(value['type']), copy=False)
+                    d.loc[:, key] = d.loc[:, key].astype(_SCHEMA_TYPES_MAPPING.get(value['type'],str), copy=False)
                 return d
         else:
             raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}' )
