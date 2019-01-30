@@ -14,6 +14,17 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 
+_SCHEMA_TYPES_MAPPING = {
+                        "geo_point":str,
+                        "long":int,
+                        "double": float,
+                        "nested": str,
+                        "string": str,
+                        "base64": str,
+                        "geo_point": str,
+                        "boolean":bool
+            }
+
 class Staging:
     def __init__(self, carol):
         self.carol = carol
@@ -313,8 +324,12 @@ class Staging:
 
         #validate export
         stags = self._get_staging_export_stats()
-        if not stags.get(staging_name):
+        if (not stags.get(staging_name)):
             raise Exception(f'"{staging_name}" is not set to export data, \n use `dm = Staging(login).export(staging_name="{staging_name}",connector_id="{connector_id}", sync_staging=True) to activate')
+
+        if stags.get(staging_name)['mdmConnectorId']!=connector_id:
+            raise Exception(
+                f'"Wrong connector Id {connector_id}. The connector Id associeted to this staging is  {stags.get(staging_name)["mdmConnectorId"]}"')
 
         carolina = Carolina(self.carol)
         carolina._init_if_needed()
@@ -330,11 +345,22 @@ class Staging:
 
         elif backend=='pandas':
             s3 = carolina.s3
-            d = _import_pandas(s3=s3,  tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
+            d = _import_pandas(s3=s3, tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
                                staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns, max_hits=max_hits)
+
+            #TODO: Do the same for dask backend
             if d is None:
-                warnings.warn(f"No data to fetch! {staging_name} has no data", UserWarning)
-                return None
+                warnings.warn(f'No data to fetch! {staging_name} has no data', UserWarning)
+                cols_keys = list(self.get_schema(
+                    staging_name=staging_name,connector_name=connector_name
+                )['mdmStagingMapping']['properties'].keys())
+                if return_metadata:
+                    cols_keys.extend(['mdmId','mdmCounterForEntity','mdmLastUpdated'])
+                d = pd.DataFrame(columns=cols_keys)
+                for key, value in self.get_schema(staging_name=staging_name,
+                                                  connector_name=connector_name)['mdmStagingMapping']['properties'].items():
+                    d.loc[:, key] = d.loc[:, key].astype(_SCHEMA_TYPES_MAPPING.get(value['type'],str), copy=False)
+                return d
         else:
             raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}' )
 
@@ -346,7 +372,7 @@ class Staging:
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
                 if not return_metadata:
-                    d.drop(columns=['mdmId', 'mdmCounterForEntity','mdmLastUpdated'], inplace=True)
+                    d.drop(columns=['mdmId','mdmCounterForEntity','mdmLastUpdated'], inplace=True)
                 d.reset_index(inplace=True, drop=True)
             else:
                 if old_columns is not None:
@@ -355,7 +381,7 @@ class Staging:
                      .drop_duplicates(subset='mdmId', keep='last') \
                      .reset_index(drop=True)
                 if not return_metadata:
-                    d = d.drop(columns=['mdmId', 'mdmCounterForEntity','mdmLastUpdated'])
+                    d = d.drop(columns=['mdmId','mdmCounterForEntity','mdmLastUpdated'])
 
         return d
 
