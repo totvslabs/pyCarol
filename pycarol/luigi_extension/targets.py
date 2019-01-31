@@ -91,7 +91,7 @@ class PyCarolTarget(luigi.Target):
                 # TODO: os.path doesn't make sense here as it's os-dependent
                 tmp_dir = os.path.dirname(slashless_path)
                 if tmp_dir:
-                    self.target.mkdir(tmp_dir, parents=True, raise_if_exists=False)
+                    self.target.mkdir(tmp_dir, parents=True)
 
             def __enter__(self):
                 return self._temp_path
