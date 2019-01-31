@@ -110,7 +110,8 @@ class PyCarolTempTarget(PyCarolTarget):
                 # TODO: os.path doesn't make sense here as it's os-dependent
                 tmp_dir = os.path.dirname(slashless_path)
                 if tmp_dir:
-                    self.target.mkdir(tmp_dir, parents=True)
+                    import os
+                    os.makedirs(tmp_dir, exist_ok=True)
 
             def __enter__(self):
                 return self._temp_path
@@ -127,21 +128,6 @@ class PyCarolTempTarget(PyCarolTarget):
         # I suppose one day schema-like paths, like
         # file:///path/blah.txt?params=etc can be parsed too
         return self.path[-1] if self.path[-1] in r'\/' else ''
-
-    @staticmethod
-    def mkdir(path, parents=True):
-
-        if parents:
-            try:
-                os.makedirs(path)
-            except OSError as err:
-                # somebody already created the path
-                if err.errno != errno.EEXIST:
-                    raise
-        else:
-            if not os.path.exists(os.path.dirname(path)):
-                raise KeyError
-            os.mkdir(path)
 
 
 class PicklePyCarolTarget(PyCarolTarget):
