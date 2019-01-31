@@ -57,6 +57,7 @@ class PyCarolTarget(luigi.Target):
 
 
 class PyCarolTempTarget(PyCarolTarget):
+    FILE_EXT = 'pkl'
 
     def load(self):
         return self.storage.load(self.path, format='file', cache=False)
