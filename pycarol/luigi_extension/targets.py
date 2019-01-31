@@ -2,8 +2,6 @@ import luigi
 import pandas as pd
 import os
 import joblib
-import random
-import errno
 ### Cloud Targets
 
 class PyCarolTarget(luigi.Target):
@@ -57,6 +55,7 @@ class PyCarolTarget(luigi.Target):
 
 
 class PyCarolTempTarget(PyCarolTarget):
+
     FILE_EXT = 'pkl'
 
     def load(self):
@@ -97,6 +96,8 @@ class PyCarolTempTarget(PyCarolTarget):
                         run_some_external_command(output_path=self.temp_output_path)
         """
         class _Manager(object):
+            import random
+            import errno
             target = self
 
             def __init__(self):
