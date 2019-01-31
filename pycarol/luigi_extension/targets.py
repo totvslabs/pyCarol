@@ -53,6 +53,23 @@ class PyCarolTarget(luigi.Target):
     def removelog(self):
         self.storage.delete(self.log_path)
 
+
+
+
+class PyCarolTempTarget(PyCarolTarget):
+
+    def load(self):
+        return self.storage.load(self.path, format='file', cache=False)
+
+    def dump(self, path):
+        self.storage.save(self.path, path, format='file', cache=False)
+
+    def remove(self):
+        self.storage.delete(self.path)
+
+    def exists(self):
+        return self.storage.exists(self.path)
+
     def temporary_path(self):
         """
         A context manager that enables a reasonably short, general and
@@ -99,7 +116,7 @@ class PyCarolTarget(luigi.Target):
             def __exit__(self, exc_type, exc_value, traceback):
                 if exc_type is None:
                     # There were no exceptions
-                    self.target.storage.save(self.target.path, self._temp_path, format='file', cache=False)
+                    self.target.dump(self._temp_path)
                 return False  # False means we don't suppress the exception
 
         return _Manager()
@@ -123,9 +140,6 @@ class PyCarolTarget(luigi.Target):
             if not os.path.exists(os.path.dirname(path)):
                 raise KeyError
             os.mkdir(path)
-
-
-
 
 
 class PicklePyCarolTarget(PyCarolTarget):
