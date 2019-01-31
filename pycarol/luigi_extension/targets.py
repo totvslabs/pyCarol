@@ -110,7 +110,6 @@ class PyCarolTempTarget(PyCarolTarget):
                 # TODO: os.path doesn't make sense here as it's os-dependent
                 tmp_dir = os.path.dirname(slashless_path)
                 if tmp_dir:
-                    import os
                     os.makedirs(tmp_dir, exist_ok=True)
 
             def __enter__(self):
