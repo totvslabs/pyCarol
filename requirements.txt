@@ -52,7 +52,7 @@ pyparsing==2.2.2
 pyperclip==1.7.0
 pysocks==1.6.8
 python-daemon==2.1.2
-python-dateutil==2.7.3
+python-dateutil==2.7.5
 pytz==2018.5
 pyyaml==3.13
 redis==2.10.6
