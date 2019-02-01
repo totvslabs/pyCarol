@@ -91,7 +91,7 @@ class EasyKubernetesTask(EasyDockerTask):
         A name for this job. This task will automatically append a UUID to the
         name before to submit to Kubernetes.
         """
-        return self.get_task_family().lower()
+        return self.get_task_family().lower().replace('.','-')
 
     @property
     def labels(self):
