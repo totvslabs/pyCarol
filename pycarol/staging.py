@@ -360,7 +360,9 @@ class Staging:
                 for key, value in self.get_schema(staging_name=staging_name,
                                                   connector_name=connector_name)['mdmStagingMapping']['properties'].items():
                     d.loc[:, key] = d.loc[:, key].astype(_SCHEMA_TYPES_MAPPING.get(value['type'],str), copy=False)
-
+                if columns:
+                    d = d[[x for x in columns if x not in ['mdmId','mdmCounterForEntity','mdmLastUpdated']]]              
+                return d
         else:
             raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}' )
 
@@ -368,20 +370,18 @@ class Staging:
             if not return_dask_graph:
                 if old_columns is not None:
                     d.rename(columns=old_columns, inplace=True)
-                if len(d) > 0:    
-                    d.sort_values('mdmCounterForEntity', inplace=True)
-                    d.reset_index(inplace=True, drop=True)
-                    d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
+                d.sort_values('mdmCounterForEntity', inplace=True)
+                d.reset_index(inplace=True, drop=True)
+                d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
                 if not return_metadata:
                     d.drop(columns=['mdmId','mdmCounterForEntity','mdmLastUpdated'], inplace=True)
                 d.reset_index(inplace=True, drop=True)
             else:
                 if old_columns is not None:
                     d.rename(columns=old_columns, inplace=True)
-                if len(d) > 0:    
-                    d = d.set_index('mdmCounterForEntity', sorted=True) \
-                         .drop_duplicates(subset='mdmId', keep='last') \
-                         .reset_index(drop=True)
+                d = d.set_index('mdmCounterForEntity', sorted=True) \
+                     .drop_duplicates(subset='mdmId', keep='last') \
+                     .reset_index(drop=True)
                 if not return_metadata:
                     d = d.drop(columns=['mdmId','mdmCounterForEntity','mdmLastUpdated'])
 
