@@ -94,8 +94,8 @@ class EasyKubernetesTask(EasyDockerTask):
         #Name cannot have '.', also have to be less de 63 characters
         #TODO: Is this the best way? this will be the name of the task+package it is in.
 
-        return self._file_id().lower()
-        #return '-'.join(self.get_task_family().lower().split('.')[-2:])
+        #return self._file_id().lower()
+        return '-'.join(self.get_task_family().lower().split('.')[-2:])
 
     @property
     def labels(self):
