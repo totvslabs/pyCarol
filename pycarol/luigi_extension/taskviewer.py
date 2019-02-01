@@ -94,8 +94,8 @@ class TaskViewer(object):
         for i in self.range_nodes():
             task_names.append(TaskViewer.nodes[i].task_family)
             task_id.append(TaskViewer.nodes[i].task_id)
-        family = [t.split('.')[0] for t in task_names]
-        task_names = [t.split('.')[1] for t in task_names]
+        family = [t.split('.')[-2] if '.' in t else "empty_namespace" for t in task_names]
+        task_names = [t.split('.')[-1] for t in task_names]
         self.family = family
         self.update_complete()
         source_dict = dict(
@@ -129,7 +129,7 @@ class TaskViewer(object):
     def get_colormapper(self):
         family = self.family
         factors = list(set(family))
-        nb_factors = len(factors)
+        nb_factors = np.clip(len(factors),3,10)
         from bokeh.palettes import Category10
         from bokeh.models.mappers import CategoricalColorMapper
         return CategoricalColorMapper(factors=factors, palette=Category10[nb_factors])
