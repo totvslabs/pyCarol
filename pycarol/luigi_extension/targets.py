@@ -96,11 +96,10 @@ class PyCarolTempTarget(PyCarolTarget):
                         run_some_external_command(output_path=self.temp_output_path)
         """
         class _Manager(object):
-            import random
-            import errno
             target = self
 
             def __init__(self):
+                import random
                 num = random.randrange(0, 1e10)
                 slashless_path = self.target.path.rstrip('/').rstrip("\\")
                 self._temp_path = '{}-luigi-tmp-{:010}{}'.format(
