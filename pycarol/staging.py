@@ -182,7 +182,8 @@ class Staging:
             ]
 
     def send_a(self,session, url, data_json, extra_headers,content_type):
-        self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type, session=session)
+        self.carol.call_api(url, data=data_json, extra_headers=extra_headers,
+                            content_type=content_type, session=session)
 
     def _stream_data(self, data, data_size, step_size, is_df):
         for i in range(0,data_size, step_size):
@@ -242,6 +243,10 @@ class Staging:
         else:
             print('Behavior for type %s not defined!' % type(fields_dict))
 
+
+        self.send_schema(schema=schema, staging_name=staging_name, connector_id=connector_id, overwrite=overwrite)
+
+    def send_schema(self,schema, staging_name, connector_id=None, overwrite=False):
         query_string = {"connectorId": connector_id}
         if connector_id is None:
             connector_id = self.carol.connector_id
@@ -255,7 +260,6 @@ class Staging:
 
         resp = self.carol.call_api('v2/staging/tables/{}/schema'.format(staging_name), data=schema, method=method,
                                    params=query_string)
-
 
     def _check_crosswalk_in_data(self, schema, _sample_json):
         crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
