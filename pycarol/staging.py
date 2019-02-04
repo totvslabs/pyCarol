@@ -21,7 +21,6 @@ _SCHEMA_TYPES_MAPPING = {
                         "nested": str,
                         "string": str,
                         "base64": str,
-                        "geo_point": str,
                         "boolean":bool
             }
 
