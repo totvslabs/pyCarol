@@ -6,7 +6,7 @@ from datetime import datetime
 from .connectors import Connectors
 from .carolina import Carolina
 from .utils.importers import _import_dask, _import_pandas
-from .filter import Filter, RANGE_FILTER, TYPE_FILTER
+from .filter import Filter, RANGE_FILTER, TYPE_FILTER, TYPE_FILTER
 import itertools
 import warnings
 import gzip, io
@@ -34,8 +34,9 @@ class Staging:
 
         now = datetime.now().isoformat(timespec='seconds')
 
-        json_query = Filter.Builder()\
-            .type(dm_name + "Golden")\
+        json_query = Filter.Builder() \
+            .should(TYPE_FILTER(value=dm_name + "Golden")) \
+            .should(TYPE_FILTER(value=dm_name + "Master")) \
             .must(RANGE_FILTER("mdmLastUpdated", [None, now]))\
             .build().to_json()
 
