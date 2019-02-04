@@ -6,7 +6,7 @@ from datetime import datetime
 from .connectors import Connectors
 from .carolina import Carolina
 from .utils.importers import _import_dask, _import_pandas
-from .filter import Filter, RANGE_FILTER, TYPE_FILTER, TYPE_FILTER
+from .filter import Filter, RANGE_FILTER, TYPE_FILTER
 import itertools
 import warnings
 import gzip, io
