@@ -191,10 +191,15 @@ def _import_pyarrow(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
                 if count >=max_hits:
                     df_list[i] = df_list[i].iloc[:max_hits-count_old]
                     break
-            df_temp = df_temp.drop_duplicates(
-                subset=columns,
-                keep='first',
-            )
+            if columns:
+                df_temp = df_temp.drop_duplicates(
+                    subset=columns,
+                    keep='first',
+                )
+            else:
+                df_temp = df_temp.drop_duplicates(
+                    keep='first',
+                )                
             df_list[ii] = pa.RecordBatch.from_pandas(df_temp)                    
             ii = ii + 1
         if not df_list:
