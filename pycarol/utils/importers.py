@@ -125,25 +125,7 @@ def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
             obj=s3.Object(__BUCKET_NAME__, file)
             buffer = io.BytesIO()
             obj.download_fileobj(buffer)
-            if columns:
-                df_list.append(
-                    pd.read_parquet(
-                        buffer,
-                        columns=columns,
-                    ).drop_duplicates(
-                        subset=columns,
-                        keep='first',
-                    )
-                )
-            else:
-                df_list.append(
-                    pd.read_parquet(
-                        buffer,
-                        columns=columns,
-                    ).drop_duplicates(
-                        keep='first',
-                    )
-                )                
+            df_list.append(pd.read_parquet(buffer,columns=columns))               
             if max_hits is not None:
                 count_old = count
                 count += len(df_list[i])
