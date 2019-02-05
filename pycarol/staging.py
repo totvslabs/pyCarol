@@ -321,7 +321,7 @@ class Staging:
         else:
             assert connector_id
 
-        assert backend=='dask' or backend=='pandas'
+        assert backend=='dask' or backend=='pandas' or backend=='pyarrow'
 
         if return_dask_graph:
             assert backend == 'dask'
@@ -363,6 +363,7 @@ class Staging:
             cols_keys = list(self.get_schema(
                 staging_name=staging_name,connector_name=connector_name
             )['mdmStagingMapping']['properties'].keys())
+            
             if return_metadata:
                 cols_keys.extend(['mdmId','mdmCounterForEntity','mdmLastUpdated'])
 
@@ -370,9 +371,11 @@ class Staging:
                 columns = [i for i in columns if i not in ['mdmId','mdmCounterForEntity','mdmLastUpdated']]
 
             d = pd.DataFrame(columns=cols_keys)
-            for key, value in self.get_schema(staging_name=staging_name,
-                                              connector_name=connector_name)['mdmStagingMapping']['properties'].items():
-            d.loc[:, key] = d.loc[:, key].astype(_SCHEMA_TYPES_MAPPING.get(value['type'], str), copy=False)
+            for key, value in self.get_schema(
+                staging_name=staging_name,
+                connector_name=connector_name
+            )['mdmStagingMapping']['properties'].items():
+                d.loc[:, key] = d.loc[:, key].astype(_SCHEMA_TYPES_MAPPING.get(value['type'], str), copy=False)
             if columns:
                 d = d[list(set(columns))]
             return d

@@ -91,10 +91,13 @@ def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_reco
                                                      connector_id=connector_id))
 
     url = [i + '*.parquet' for i in url]
-    d = dd.read_parquet(url, storage_options={"key": access_id,
-                                              "secret": access_key,
-                                              "token":aws_session_token},
-                        columns=columns)
+    try:
+        d = dd.read_parquet(url, storage_options={"key": access_id,
+                                                  "secret": access_key,
+                                                  "token":aws_session_token},
+                            columns=columns)
+    except:
+        return None
 
     if return_dask_graph:
         return d
