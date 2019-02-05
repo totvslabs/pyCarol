@@ -114,22 +114,32 @@ def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
         file_paths = _get_file_paths_staging(s3=s3, tenant_id=tenant_id, staging_name=staging_name,
                                              connector_id=connector_id)
     if n_jobs==1:
-        df_list = []
-        count = 0
-        for i,file in enumerate(tqdm(file_paths)):
+        obj=s3.Object(__BUCKET_NAME__, tqdm(file_paths)[0])
+        buffer = io.BytesIO()
+        obj.download_fileobj(buffer)
+        df = pd.read_parquet(buffer,columns=columns)
+        if max_hits is not None:
+            count_old = count
+            count += len(df)
+            if count >=max_hits:
+                df = df.iloc[:max_hits-count_old]
+                break
+            count = 0
+        for i,file in enumerate(tqdm(file_paths)[1:]):
             obj=s3.Object(__BUCKET_NAME__, file)
             buffer = io.BytesIO()
             obj.download_fileobj(buffer)
-            df_list.append(pd.read_parquet(buffer,columns=columns))
+            df_temp = pd.read_parquet(buffer,columns=columns)
             if max_hits is not None:
                 count_old = count
-                count += len(df_list[i])
+                count += len(df_temp)
                 if count >=max_hits:
-                    df_list[i] = df_list[i].iloc[:max_hits-count_old]
+                    df_temp = df_temp.iloc[:max_hits-count_old]
                     break
-        if not df_list:
+            df = df.append(df_temp)
+        if not df:
             return None
-        return pd.concat(df_list, ignore_index=True)
+        return df
 
     else:
         raise NotImplementedError('need to think how to pickle the objects')
