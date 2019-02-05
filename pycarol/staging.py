@@ -5,7 +5,7 @@ from .query import Query
 from datetime import datetime
 from .connectors import Connectors
 from .carolina import Carolina
-from .utils.importers import _import_dask, _import_pandas
+from .utils.importers import _import_dask, _import_pandas, _import_pyarrow
 from .filter import Filter, RANGE_FILTER, TYPE_FILTER
 import itertools
 import warnings
@@ -352,6 +352,11 @@ class Staging:
             d = _import_pandas(s3=s3, tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
                                staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns, max_hits=max_hits)
 
+        elif backend=='pyarrow':
+            s3 = carolina.s3
+            d = _import_pyarrow(s3=s3, tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
+                                staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns, max_hits=max_hits)            
+            
             #TODO: Do the same for dask backend
             if d is None:
                 warnings.warn(f'No data to fetch! {staging_name} has no data', UserWarning)
