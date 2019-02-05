@@ -1,10 +1,12 @@
+import io
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
+
+from tqdm import tqdm
 from dask import dataframe as dd
 from .. import __BUCKET_NAME__
-import io
 from joblib import Parallel, delayed
-from tqdm import tqdm
-
 
 __STAGING_FIELDS = ['mdmCounterForEntity','mdmId']
 __DM_FIELDS = ['mdmCounterForEntity','mdmId']
@@ -114,32 +116,22 @@ def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
         file_paths = _get_file_paths_staging(s3=s3, tenant_id=tenant_id, staging_name=staging_name,
                                              connector_id=connector_id)
     if n_jobs==1:
-        obj=s3.Object(__BUCKET_NAME__, tqdm(file_paths)[0])
-        buffer = io.BytesIO()
-        obj.download_fileobj(buffer)
-        df = pd.read_parquet(buffer,columns=columns)
-        if max_hits is not None:
-            count_old = count
-            count += len(df)
-            if count >=max_hits:
-                df = df.iloc[:max_hits-count_old]
-                break
-            count = 0
-        for i,file in enumerate(tqdm(file_paths)[1:]):
+        df_list = []
+        count = 0
+        for i,file in enumerate(tqdm(file_paths)):
             obj=s3.Object(__BUCKET_NAME__, file)
             buffer = io.BytesIO()
             obj.download_fileobj(buffer)
-            df_temp = pd.read_parquet(buffer,columns=columns)
+            df_list.append(pd.read_parquet(buffer,columns=columns))
             if max_hits is not None:
                 count_old = count
-                count += len(df_temp)
+                count += len(df_list[i])
                 if count >=max_hits:
-                    df_temp = df_temp.iloc[:max_hits-count_old]
+                    df_list[i] = df_list[i].iloc[:max_hits-count_old]
                     break
-            df = df.append(df_temp)
-        if not df:
+        if not df_list:
             return None
-        return df
+        return pd.concat(df_list, ignore_index=True)
 
     else:
         raise NotImplementedError('need to think how to pickle the objects')
@@ -152,6 +144,56 @@ def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
         df = pd.concat(list_to_compute, ignore_index=True)
         return df
 
+    
+def _import_pyarrow(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
+                    staging_name=None, n_jobs=1, verbose=0, golden=False, max_hits=None):
+
+    if columns:
+        columns = list(set(columns))
+        columns +=__DM_FIELDS
+        columns = list(set(columns))
+
+    if golden:
+        file_paths = _get_file_paths_golden(s3=s3, tenant_id=tenant_id, dm_name=dm_name)
+    else:
+        file_paths = _get_file_paths_staging(s3=s3, tenant_id=tenant_id, staging_name=staging_name,
+                                             connector_id=connector_id)
+    if n_jobs==1:
+        df_list = [None]*len(file_paths)
+        count = 0
+        ii = 0
+        for i,file in enumerate(tqdm(file_paths)):
+            obj=s3.Object(__BUCKET_NAME__, file)
+            buffer = io.BytesIO()
+            obj.download_fileobj(buffer)
+            df_temp = pd.read_parquet(buffer,columns=columns)
+            if max_hits is not None:
+                count_old = count
+                count += len(df_list[i])
+                if count >=max_hits:
+                    df_list[i] = df_list[i].iloc[:max_hits-count_old]
+                    break
+            df_temp = df_temp.drop_duplicates(
+                subset=columns,
+                keep='first',
+            )
+            df_list[ii] = pa.RecordBatch.from_pandas(df_temp)                    
+            ii = ii + 1
+        if not df_list:
+            return None
+        return pa.Table.from_batches(df_list).to_pandas()
+
+    else:
+        raise NotImplementedError('need to think how to pickle the objects')
+        list_to_compute = Parallel(n_jobs=n_jobs,
+                                   verbose=verbose)(delayed(_par_paquet)(
+                                                            s3,file
+                                                        )
+                                                    for file in file_paths)
+
+        df = pd.concat(list_to_compute, ignore_index=True)
+        return df
+    
 
 def _par_paquet(s3,file):
     s3.Object(__BUCKET_NAME__, file)
