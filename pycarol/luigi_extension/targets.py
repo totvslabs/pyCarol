@@ -59,6 +59,9 @@ class PyCarolFileTarget(PyCarolTarget):
     When loading this target, the file is copied from Carol to a local file. On easy_run we receive the local filepath.
     Important note: when loading the target, its local copy will not be automatically removed.
     """
+
+    FILE_EXT = 'file'
+
     def load(self):
         return self.storage.load(self.path, format='file', cache=False)
 
