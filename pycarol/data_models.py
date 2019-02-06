@@ -453,8 +453,7 @@ class DataModel:
         :return: None
         """
         
-        if delete_old_records is True:
-            self._delete(dm_name)        
+
 
         self.gzip = gzip
         extra_headers = {}
@@ -468,6 +467,11 @@ class DataModel:
             dm_id = self.get_by_name(dm_name)['mdmId']
         else:
             assert dm_id
+            dm_name = self._get(dm_id, by='id')['mdmName']
+
+
+        if delete_old_records:
+            self._delete(dm_name)
 
         is_df = False
         if isinstance(data, pd.DataFrame):
