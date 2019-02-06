@@ -15,8 +15,8 @@ import warnings
 import pandas as pd
 import gzip, io
 import asyncio
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
-
 
 class DataModel:
 
@@ -57,7 +57,32 @@ class DataModel:
         self.fields_dict.update({resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
 
+    #TODO: _delete function is common to staging and data_model. for this reason, could be allocated in an utils file
+    def _delete(self, dm_name):
 
+        now = datetime.now().isoformat(timespec='seconds')
+
+        json_query = Filter.Builder() \
+            .should(TYPE_FILTER(value=dm_name + "Golden")) \
+            .should(TYPE_FILTER(value=dm_name + "Master")) \
+            .must(RF("mdmLastUpdated", [None, now]))\
+            .build().to_json()
+
+        try:
+            Query(self.carol).delete(json_query)
+        except:
+            pass
+
+        json_query = Filter.Builder()\
+            .type(dm_name + "Rejected")\
+            .must(RF("mdmLastUpdated", [None, now]))\
+            .build().to_json()
+
+        try:
+            Query(self.carol, index_type='STAGING').delete(json_query)
+        except:
+            pass   
+    
     def fetch_parquet(self, dm_name, merge_records=True, backend='dask', n_jobs=1, return_dask_graph=False, columns=None):
         """
 
@@ -77,7 +102,7 @@ class DataModel:
         :return:
         """
 
-        assert backend=='dask' or backend=='pandas'
+        assert backend == 'dask' or backend == 'pandas'
 
         if return_dask_graph:
             assert backend == 'dask'
@@ -403,8 +428,8 @@ class DataModel:
                 for data_json in self._stream_data(data, data_size, step_size, is_df)
             ]
 
-    def send_data(self, data, dm_name=None, dm_id=None, step_size=100, gzip=False,
-                  print_stats=True, max_workers=None, async_send=False):
+    def send_data(self, data, dm_name=None, dm_id=None, step_size=100, gzip=False, delete_old_records=False,
+                  print_stats=True, max_workers=None,  async_send=False):
 
         """
         :param data: pandas data frame, json.
@@ -419,12 +444,16 @@ class DataModel:
             If print the status
         :param gzip: `bool`, default `True`
             If send each batch as a gzip file.
+        :param delete_old_records: `bool`, default `False`
+            Delete previous records in the data model.
         :param max_workers: `int`, default `None`
             To be used with `async_send=True`. Number of threads to use when sending.
         :param async_send: `bool`, default `False`
             To use async to send the data. This is much faster than a sequential send.
         :return: None
         """
+        
+
 
         self.gzip = gzip
         extra_headers = {}
@@ -438,6 +467,11 @@ class DataModel:
             dm_id = self.get_by_name(dm_name)['mdmId']
         else:
             assert dm_id
+            dm_name = self._get(dm_id, by='id')['mdmName']
+
+
+        if delete_old_records:
+            self._delete(dm_name)
 
         is_df = False
         if isinstance(data, pd.DataFrame):
