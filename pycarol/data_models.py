@@ -57,7 +57,7 @@ class DataModel:
         return resp
 
     #TODO: _delete function is common to staging and data_model. for this reason, could be allocated in an utils file
-     def _delete(self,dm_name):
+    def _delete(self, dm_name):
 
         now = datetime.now().isoformat(timespec='seconds')
 
