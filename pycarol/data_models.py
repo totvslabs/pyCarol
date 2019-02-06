@@ -15,6 +15,7 @@ import warnings
 import pandas as pd
 import gzip, io
 import asyncio
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 class DataModel:
@@ -64,7 +65,7 @@ class DataModel:
         json_query = Filter.Builder() \
             .should(TYPE_FILTER(value=dm_name + "Golden")) \
             .should(TYPE_FILTER(value=dm_name + "Master")) \
-            .must(RANGE_FILTER("mdmLastUpdated", [None, now]))\
+            .must(RF("mdmLastUpdated", [None, now]))\
             .build().to_json()
 
         try:
@@ -74,11 +75,11 @@ class DataModel:
 
         json_query = Filter.Builder()\
             .type(dm_name + "Rejected")\
-            .must(RANGE_FILTER("mdmLastUpdated", [None, now]))\
+            .must(RF("mdmLastUpdated", [None, now]))\
             .build().to_json()
 
         try:
-            Query(self.carol,index_type='STAGING').delete(json_query)
+            Query(self.carol, index_type='STAGING').delete(json_query)
         except:
             pass   
     
@@ -101,7 +102,7 @@ class DataModel:
         :return:
         """
 
-        assert backend=='dask' or backend=='pandas'
+        assert backend == 'dask' or backend == 'pandas'
 
         if return_dask_graph:
             assert backend == 'dask'
@@ -427,8 +428,8 @@ class DataModel:
                 for data_json in self._stream_data(data, data_size, step_size, is_df)
             ]
 
-    def send_data(self, data, dm_name=None, dm_id=None, step_size=100, gzip=False,
-                  print_stats=True, max_workers=None, dm_delete=False, async_send=False):
+    def send_data(self, data, dm_name=None, dm_id=None, step_size=100, gzip=False, delete_old_records=False,
+                  print_stats=True, max_workers=None,  async_send=False):
 
         """
         :param data: pandas data frame, json.
@@ -443,6 +444,8 @@ class DataModel:
             If print the status
         :param gzip: `bool`, default `True`
             If send each batch as a gzip file.
+        :param delete_old_records: `bool`, default `False`
+            Delete previous records in the data model.
         :param max_workers: `int`, default `None`
             To be used with `async_send=True`. Number of threads to use when sending.
         :param async_send: `bool`, default `False`
@@ -450,7 +453,7 @@ class DataModel:
         :return: None
         """
         
-        if dm_delete is True:
+        if delete_old_records is True:
             self._delete(dm_name)        
 
         self.gzip = gzip
