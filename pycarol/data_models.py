@@ -17,7 +17,6 @@ import gzip, io
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
-
 class DataModel:
 
     def __init__(self, carol):
@@ -57,7 +56,32 @@ class DataModel:
         self.fields_dict.update({resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
 
+    #TODO: _delete function is common to staging and data_model. for this reason, could be allocated in an utils file
+     def _delete(self,dm_name):
 
+        now = datetime.now().isoformat(timespec='seconds')
+
+        json_query = Filter.Builder() \
+            .should(TYPE_FILTER(value=dm_name + "Golden")) \
+            .should(TYPE_FILTER(value=dm_name + "Master")) \
+            .must(RANGE_FILTER("mdmLastUpdated", [None, now]))\
+            .build().to_json()
+
+        try:
+            Query(self.carol).delete(json_query)
+        except:
+            pass
+
+        json_query = Filter.Builder()\
+            .type(dm_name + "Rejected")\
+            .must(RANGE_FILTER("mdmLastUpdated", [None, now]))\
+            .build().to_json()
+
+        try:
+            Query(self.carol,index_type='STAGING').delete(json_query)
+        except:
+            pass   
+    
     def fetch_parquet(self, dm_name, merge_records=True, backend='dask', n_jobs=1, return_dask_graph=False, columns=None):
         """
 
@@ -404,7 +428,7 @@ class DataModel:
             ]
 
     def send_data(self, data, dm_name=None, dm_id=None, step_size=100, gzip=False,
-                  print_stats=True, max_workers=None, async_send=False):
+                  print_stats=True, max_workers=None, dm_delete=False, async_send=False):
 
         """
         :param data: pandas data frame, json.
@@ -425,6 +449,9 @@ class DataModel:
             To use async to send the data. This is much faster than a sequential send.
         :return: None
         """
+        
+        if dm_delete is True:
+            self._delete(dm_name)        
 
         self.gzip = gzip
         extra_headers = {}
