@@ -52,6 +52,25 @@ class PyCarolTarget(luigi.Target):
         self.storage.delete(self.log_path)
 
 
+class PyCarolFileTarget(PyCarolTarget):
+    """
+    This target operates with filepaths.
+    easy_run should return a filepath for a local temporary file. This file will be removed after been sent to Carol.
+    When loading this target, the file is copied from Carol to a local file. On easy_run we receive the local filepath.
+    Important note: when loading the target, its local copy will not be automatically removed.
+    """
+    def load(self):
+        return self.storage.load(self.path, format='file', cache=False)
+
+    def dump(self, tempfile_path):
+        self.storage.save(self.path, tempfile_path, format='file', cache=False)
+        os.remove(tempfile_path)
+
+    def remove(self):
+        self.storage.delete(self.path)
+
+    def exists(self):
+        return self.storage.exists(self.path)
 
 
 class PyCarolTempTarget(PyCarolTarget):
@@ -96,7 +115,6 @@ class PyCarolTempTarget(PyCarolTarget):
                         run_some_external_command(output_path=self.temp_output_path)
         """
         class _Manager(object):
-            target = self
 
             def __init__(self):
                 import random
