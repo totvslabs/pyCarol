@@ -278,7 +278,7 @@ class Staging:
 
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',verbose=0,
                       merge_records=True, n_jobs=1, return_dask_graph=False, columns=None, max_hits=None,
-                      return_metadata=False):
+                      return_metadata=False, callback=None):
         """
 
         Fetch parquet from a staging table.
@@ -350,7 +350,8 @@ class Staging:
         elif backend=='pandas':
             s3 = carolina.s3
             d = _import_pandas(s3=s3, tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
-                               staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns, max_hits=max_hits)
+                               staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns,
+                               max_hits=max_hits, callback=callback)
 
             #TODO: Do the same for dask backend
             if d is None:

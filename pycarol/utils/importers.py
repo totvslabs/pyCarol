@@ -101,7 +101,7 @@ def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_reco
 
 
 def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
-                   staging_name=None, n_jobs=1, verbose=0, golden=False, max_hits=None):
+                   staging_name=None, n_jobs=1, verbose=0, golden=False, max_hits=None, callback=None):
 
     if columns:
         columns = list(set(columns))
@@ -120,7 +120,16 @@ def _import_pandas(s3, tenant_id, dm_name=None,connector_id=None, columns=None,
             obj=s3.Object(__BUCKET_NAME__, file)
             buffer = io.BytesIO()
             obj.download_fileobj(buffer)
-            df_list.append(pd.read_parquet(buffer,columns=columns))
+
+            result = pd.read_parquet(buffer, columns=columns)
+            if callback:
+                assert callable(callback),\
+                    f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function.'
+                result = callback(result)
+
+
+
+            df_list.append(result)
             if max_hits is not None:
                 count_old = count
                 count += len(df_list[i])
