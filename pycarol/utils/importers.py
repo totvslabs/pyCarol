@@ -124,7 +124,7 @@ def _import_pandas(s3, tenant_id, dm_name=None, connector_id=None, columns=None,
             result = pd.read_parquet(buffer, columns=columns)
             if callback:
                 assert callable(callback), \
-                    f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function.'
+                    f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function/class.'
                 result = callback(result)
 
             df_list.append(result)
