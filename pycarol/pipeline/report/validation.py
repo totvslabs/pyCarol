@@ -108,7 +108,7 @@ def print_dm_validation(logs, data):
                 text += add_tag('Wrong type.', color=ERROR_COLOR, tag='li')
 
         if 'validation' in log:
-            val = log.pop('validation')
+            val = log.pop('validation')[0]
             if not val['success']:
                 color = ERROR_COLOR
                 text += add_tag('Error with validation rule.', color=ERROR_COLOR, tag='li')
@@ -175,8 +175,7 @@ def display_dm_report(val, dm_name, ingestion=True):
     print_m('### Validation:')
     print_dm_validation(val.load(), data=df[0:10])
     if ingestion:
-        ingestion_name, params = val.requires()[0].ingestion_params[0]
-        print_m(f'### Ingestion [ Mapping: {params["mapping"]} ]')
+        print_m(f'### Ingestion')
         print_m(f'#### Shape: {df.shape}')
         display(df.head())
         print_m('### Null data:')

@@ -1,8 +1,9 @@
 import xmltodict
 import os
 from ..uniform_data_rule import ExternalServiceInterface
+from ..uniform_data_rule import DATA_STORAGE as BASE_DATA_STORAGE
 
-DATA_STORAGE = os.path.join(os.path.dirname(__file__), 'data', 'iso')
+DATA_STORAGE = os.path.join(BASE_DATA_STORAGE, 'iso')
 
 
 class IsoSrvc(ExternalServiceInterface):

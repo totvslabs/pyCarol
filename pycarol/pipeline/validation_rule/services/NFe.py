@@ -1,9 +1,9 @@
 import pandas as pd
 import os
 from ..uniform_data_rule import ExternalServiceInterface
+from ..uniform_data_rule import DATA_STORAGE as BASE_DATA_STORAGE
 
-
-DATA_STORAGE = os.path.join(os.path.dirname(__file__), 'data', 'nfe')
+DATA_STORAGE = os.path.join(BASE_DATA_STORAGE, 'nfe')
 
 
 class NfeSrvc(ExternalServiceInterface):
