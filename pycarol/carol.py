@@ -13,11 +13,8 @@ from . import __CONNECTOR_PYCAROL__
 class Carol:
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False):
         """
-
         This class handle all Carol`s API calls
-
         It will handle all API calls, for a given authentication method.
-
         :param domain: `str`
             Teanant name
         :param app_name: `str`
@@ -121,7 +118,6 @@ class Carol:
     def _retry_session(retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524),
                        method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE'])):
         """
-
         :param retries: `int`, default `5`
             Number of retries for the API all
         :param session: Session objectn defaut `None`

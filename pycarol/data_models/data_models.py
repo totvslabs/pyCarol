@@ -2,13 +2,14 @@ import json
 import itertools
 from .data_models_fields import DataModelFields
 from .data_model_types import DataModelTypeIds
-from .utils.importers import _import_dask, _import_pandas
-from .verticals import Verticals
-from .carolina import Carolina
-from .query import Query
-from .filter import RANGE_FILTER as RF
-from .filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
-from .utils.miscellaneous import ranges
+
+from ..utils.importers import _import_dask, _import_pandas
+from ..verticals import Verticals
+from ..carolina import Carolina
+from ..query import Query
+from ..filter import RANGE_FILTER as RF
+from ..filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
+from ..utils.miscellaneous import ranges
 import time
 import copy
 import warnings
@@ -22,7 +23,6 @@ class DataModel:
 
     def __init__(self, carol):
         self.carol = carol
-
         self.fields_dict = {}
         self.entity_template_ = {}
 
@@ -762,7 +762,6 @@ class CreateDataModel(object):
         url = f"v1/entities/templates/{self.dm_id}/onboardField/{field_to_send['mdmId']}"
         resp = self.carol.call_api(path=url, method='POST', params=querystring)
 
-
     def _labels_and_desc(self, prop):
 
         if self.label_map is None:
@@ -838,7 +837,6 @@ class CreateDataModel(object):
         if publish:
             self._profile_title(profile_title, self.dm_id)
             self.publish_template(self.dm_id)
-
 
     # not done
     def _nested(self, mdmName, value, parentId=''):

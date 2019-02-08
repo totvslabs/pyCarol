@@ -1,0 +1,1 @@
+{"id": "purchase_statusId", "name": "purchase_status", "description": "Status of a purchase", "is_global": true, "values": {"custom": ["printed", "open", "cancelled", "delivered"]}, "formats": {}}
