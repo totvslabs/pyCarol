@@ -11,7 +11,10 @@ import pandas as pd
 
 class Task(luigi.Task):
     TARGET_DIR = './luigi_targets/'  # this class attribute can be redefined somewhere else
-    TARGET = PickleLocalTarget
+
+    TARGET = PickleLocalTarget  # DEPRECATED!
+    target_type = PickleLocalTarget
+
     persist_stdout = False
     requires_list = []
     requires_dict = {}
@@ -59,8 +62,11 @@ class Task(luigi.Task):
             return []
 
     def output(self):
-        # TODO change set_target() to self.TARGET when target methods get deprecated
-        return self.set_target()(self)
+        if self.TARGET != PickleLocalTarget:  # Check for deprecated use
+            warnings.warn('TARGET is being replaced with target_type.', DeprecationWarning)
+            return self.TARGET(self)
+
+        return self.target_type(self)
 
     def load(self):
         return self.output().load()
@@ -160,13 +166,6 @@ class Task(luigi.Task):
                 return x
         # Sort it by the correct order and make a list
         return [(param_name, list_to_tuple(result[param_name])) for param_name, param_obj in params]
-
-    def set_target(self):
-        """ Method used to define which target will be used by output
-        :return:
-        """
-        # TODO Remove this method when target methods get deprecated
-        return self.TARGET
 
     def get_execution_params(self):
         params = {}
