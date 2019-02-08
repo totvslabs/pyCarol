@@ -5,11 +5,11 @@ with open('requirements.txt', 'r') as req_file:
 
 setup(
     name='pycarol',
-    version='2.6',
+    version='2.7',
     description='Carol Python API',
     packages=find_packages(exclude=['docs', 'doc']),
     maintainer='TOTVS Labs',
-    install_requires= install_requires.splitlines()
+    install_requires=install_requires.splitlines()
 )
 
 

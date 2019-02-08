@@ -12,6 +12,7 @@ logger.setLevel(logging.INFO)
 class Task(luigi.Task):
     TARGET_DIR = './luigi_targets/'  # this class attribute can be redefined somewhere else
     TARGET = PickleLocalTarget
+    persist_stdout = False
     requires_list = []
     requires_dict = {}
     resources = {'cpu': 1}  # default resource to be overridden or complemented
@@ -19,29 +20,18 @@ class Task(luigi.Task):
     def buildme(self, local_scheduler=True, **kwargs):
         luigi.build([self, ], local_scheduler=local_scheduler, **kwargs)
 
+    def debug_task(self):
+        persist_stdout =self.persist_stdout
+        self.persist_stdout = False
+        self.run()
+        self.persist_stdout = persist_stdout
+
     def _file_id(self):
         # returns the output default file identifier
         return luigi.task.task_id_str(self.get_task_family(), self.to_str_params(only_significant=True))
 
-    def dummy_target(self):
-        warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-                      PendingDeprecationWarning)
-        return DummyTarget
-
-    def disk_target(self):
-        warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-                      PendingDeprecationWarning)
-        return PickleLocalTarget
-
-    def pytorch_target(self):
-        warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-                      PendingDeprecationWarning)
-        return PytorchLocalTarget
-
-    def keras_target(self):
-        warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-                      PendingDeprecationWarning)
-        return KerasLocalTarget
+    def _txt_path(self):
+        return "{}.txt".format(self._file_id())
 
 
     def requires(self):
@@ -77,20 +67,44 @@ class Task(luigi.Task):
 
     def remove(self):
         self.output().remove()
+        self.output().removelog()
+
+    def loadlog(self):
+        return self.output().loadlog()
 
     def run(self):
+        from contextlib import redirect_stdout
         if isinstance(self.input(), list):
             function_inputs = [input_i.load() for input_i in self.input()]
         elif isinstance(self.input(), dict):
             function_inputs = {i: input_i.load() for i, input_i in self.input().items()}
-        function_output = self.easy_run(function_inputs)
+
+        if self.output().is_cloud_target and self.persist_stdout:
+            try:
+                import io
+                f = io.StringIO()
+                with redirect_stdout(f):
+                    function_output = self._easy_run(function_inputs)
+            finally:
+                # self.output().persistlog(self._txt_path())
+                self.output().persistlog(f.getvalue())
+        else:
+            function_output = self._easy_run(function_inputs)
+        print("dumping task",self)
+
         self.output().dump(function_output)
+
+
+    def _easy_run(self,inputs):
+        # Override this method to implement standard pre/post-processing
+        return self.easy_run(inputs)
 
     def easy_run(self,inputs):
         return None
 
     #this method was changed from the original version to allow execution of a task
     #with extra parameters. the original one, raises an exception. now, we print that exception
+    #in this version we do not raise neither print it.
     @classmethod
     def get_param_values(cls, params, args, kwargs):
         """
@@ -128,6 +142,7 @@ class Task(luigi.Task):
                 # raise parameter.UnknownParameterException('%s: unknown parameter %s' % (exc_desc, param_name))
                 logger.warning('%s: unknown parameter %s' % (exc_desc, param_name))
                 continue
+
             param = params_dict[param_name]
             result[param_name] = param.normalize(arg)
 
