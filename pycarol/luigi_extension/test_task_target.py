@@ -13,7 +13,7 @@ class TestTarget(TestCase):
 
         self.assertWarns(DeprecationWarning, SampleTask().output)
         self.assertEqual(SampleTask().output().__class__, DummyTarget)
-        # TODO Test target content
+        # TODO Test target content - luigi execution
 
     def test_new_style_works(self):
         class SampleTask(Task):
@@ -24,4 +24,4 @@ class TestTarget(TestCase):
 
         self.assertEqual(SampleTask().output().__class__, DummyTarget)
         self.assertEqual(NoChangesTask().output().__class__, PickleLocalTarget)
-        # TODO Test target content
+        # TODO Test target content - luigi execution
