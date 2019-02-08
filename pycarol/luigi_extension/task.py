@@ -1,12 +1,12 @@
 import luigi
 from luigi import parameter, six
-from luigi.task import flatten
 import warnings
 from .targets import PickleLocalTarget, DummyTarget, PytorchLocalTarget, KerasLocalTarget
 import logging
-
+luigi.build([], workers=1, local_scheduler=True)
 logger = logging.getLogger('luigi-interface')
 logger.setLevel(logging.INFO)
+import pandas as pd
 
 
 class Task(luigi.Task):
@@ -140,11 +140,9 @@ class Task(luigi.Task):
                     '%s: parameter %s was already set as a positional parameter' % (exc_desc, param_name))
             if param_name not in params_dict:
                 # raise parameter.UnknownParameterException('%s: unknown parameter %s' % (exc_desc, param_name))
-                logger.warning('%s: unknown parameter %s' % (exc_desc, param_name))
+                # print('%s: unknown parameter %s' % (exc_desc, param_name))
                 continue
-
-            param = params_dict[param_name]
-            result[param_name] = param.normalize(arg)
+            result[param_name] = params_dict[param_name].normalize(arg)
 
         # Then use the defaults for anything not filled in
         for param_name, param_obj in params:
@@ -160,7 +158,6 @@ class Task(luigi.Task):
                 return tuple(x)
             else:
                 return x
-
         # Sort it by the correct order and make a list
         return [(param_name, list_to_tuple(result[param_name])) for param_name, param_obj in params]
 
@@ -178,20 +175,6 @@ class Task(luigi.Task):
             params.update({param_name: param_obj})
 
         return params
-
-
-class WrapperTask(Task):
-    """
-    Use for tasks that only wrap other tasks and that by definition are done if all their requirements exist.
-    """
-    def run(self):
-        pass
-
-    def complete(self):
-        return all(r.complete() for r in flatten(self.requires()))
-
-    def output(self):
-        return self.input()
 
 
 def set_attributes(task_to_inherit, task_that_inherits):

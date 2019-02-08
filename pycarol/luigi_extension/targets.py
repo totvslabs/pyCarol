@@ -2,10 +2,7 @@ import luigi
 import pandas as pd
 import os
 import joblib
-
-
 ### Cloud Targets
-
 
 class PyCarolTarget(luigi.Target):
     """
@@ -18,9 +15,7 @@ class PyCarolTarget(luigi.Target):
     login_cache = None
     tenant_cache = None
     storage_cache = None
-
     is_cloud_target = True
-
     def __init__(self, task, *args, **kwargs):
         from ..carol import Carol
         from ..storage import Storage
@@ -96,7 +91,6 @@ class PicklePyCarolTarget(PyCarolTarget):
     def exists(self):
         return self.storage.exists(self.path)
 
-
 class PytorchPyCarolTarget(PyCarolTarget):
     FILE_EXT = 'pth'
 
@@ -116,7 +110,6 @@ class PytorchPyCarolTarget(PyCarolTarget):
 
     def exists(self):
         return self.storage.exists(self.path)
-
 
 class KerasPyCarolTarget(PyCarolTarget):
     FILE_EXT = 'h5'
@@ -142,18 +135,16 @@ class KerasPyCarolTarget(PyCarolTarget):
 
 
 class LocalTarget(luigi.LocalTarget):
-    is_tmp = False
+    is_tmp=False
     FILE_EXT = 'ext'
-
     is_cloud_target = False
+    def __init__(self, task, *args, **kwargs):
 
-    def __init__(self, task, path=None, *args, **kwargs):
         os.makedirs(task.TARGET_DIR, exist_ok=True)
         namespace = task.get_task_namespace()
-        if path is None:
-            file_id = task._file_id()
-            ext = '.' + self.FILE_EXT
-            path = os.path.join(task.TARGET_DIR, namespace, file_id + ext)
+        file_id = task._file_id()
+        ext = '.' + self.FILE_EXT
+        path = os.path.join(task.TARGET_DIR, namespace, file_id + ext)
         super().__init__(path=path, *args, **kwargs)
 
     def loadlog(self):
@@ -161,7 +152,6 @@ class LocalTarget(luigi.LocalTarget):
 
     def removelog(self):
         return "task log not implemented for local targets"
-
 
 class PickleLocalTarget(LocalTarget):
     FILE_EXT = 'pkl'
@@ -176,7 +166,6 @@ class PickleLocalTarget(LocalTarget):
     def remove(self):
         try:
             os.remove(self.path)
-
         except(FileNotFoundError):
             print("file not found")
 
@@ -238,13 +227,7 @@ class PytorchLocalTarget(LocalTarget):
             print("file not found")
 
 
-class DummyTarget:
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def exists(self):
-        return True
+class DummyTarget(LocalTarget):
 
     def complete(self):
         return all(r.complete() for r in flatten(self.requires()))
@@ -287,10 +270,3 @@ class FeatherLocalTarget(LocalTarget):
 
     def remove(self):
         os.remove(self.path)
-
-
-class CustomLocalTarget(LocalTarget):
-    def __init__(self, task, *args, **kwargs):
-        super().__init__(task, *args, **kwargs)
-        self.dump = task.target_dump
-        self.load = task.target_load
