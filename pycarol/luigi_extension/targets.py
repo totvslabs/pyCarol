@@ -288,9 +288,3 @@ class FeatherLocalTarget(LocalTarget):
     def remove(self):
         os.remove(self.path)
 
-
-class CustomLocalTarget(LocalTarget):
-    def __init__(self, task, *args, **kwargs):
-        super().__init__(task, *args, **kwargs)
-        self.dump = task.target_dump
-        self.load = task.target_load
