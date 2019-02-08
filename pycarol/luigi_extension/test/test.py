@@ -1,6 +1,6 @@
 import luigi
 import os
-from ..targets import DummyTarget
+from ..targets import DummyTarget, PickleLocalTarget
 from collections import namedtuple
 from unittest.mock import patch, MagicMock, PropertyMock
 from contextlib import ExitStack
@@ -76,7 +76,7 @@ def task_execution_debug(task, parameters=None, worker_scheduler_factory=None, *
 
 
 def luigi_extension_test(cls):
-    """ Mock luigi_extension Task to have TARGET_DIR inside test directory
+    """ Mock luigi_extension Task to have TARGET_DIR inside test directory and erase target files before each test
     """
     new_target = 'luigi_targets/test/' + cls.__name__  # TODO Get local target name
 
@@ -96,6 +96,12 @@ class mock_task:
     """ Define a task as executed and default return from a specific Task
     This mock will work for all Tasks. If the user wants to mock diferently with different parameters, must specify
     task_parameters.
+
+    Dict Parameters:
+        mock_task
+        task_output or target_filename
+        limit_size:
+        target_path:
     """
 
     def __init__(self, *mock_tasks):
@@ -113,17 +119,40 @@ class mock_task:
                 args = [arg for arg in args if not isinstance(arg, MagicMock) and not isinstance(arg, PropertyMock)]
                 for dic in mock_tasks:
                     task = dic['mock_task']
-                    task_output = dic['task_output']
+                    if 'task_output' in dic:
+                        task_output = dic['task_output']
+                    elif 'target_filename' in dic:
+                        target_filename = dic['target_filename']
+                    else:
+                        raise ValueError('Mocked Task must have a predefined task_output or target_filename')
+
+                    if 'limit_size' in dic:
+                        task_output = task_output[0:dic['limit_size']]
+
                     if 'task_parameters' in dic:
                         # TODO handle cases of user having same task with different parameters
                         pass
                     else:
-                        out_target = DummyTarget(task, is_tmp=True)
+                        if 'task_output' in dic:
+                            out_target = DummyTarget(task, is_tmp=True)
 
-                        def new_load():
-                            return task_output
+                            def new_load():
+                                return task_output
 
-                        out_target.load = new_load
+                            out_target.load = new_load
+
+                        if 'target_filename' in dic:
+                            if 'target_class' in dic:
+                                TARGET = dic['target_class']
+                            else:
+                                TARGET = PickleLocalTarget
+                            out_target = TARGET(task, path=target_filename, is_tmp=True)
+                            out_target.remove = lambda: None  # Use this to avoid having the file removed
+
+                        if 'target_params' in dic:
+                            for param_name, param in dic['target_params'].items():
+                                setattr(out_target, param_name, param)
+
                         patches.append([
                             stack.enter_context(
                                 patch.object(task, 'output', return_value=out_target)),

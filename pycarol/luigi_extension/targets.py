@@ -3,8 +3,8 @@ import pandas as pd
 import os
 import joblib
 
-
 ### Cloud Targets
+
 
 class PyCarolTarget(luigi.Target):
     """
@@ -17,6 +17,7 @@ class PyCarolTarget(luigi.Target):
     login_cache = None
     tenant_cache = None
     storage_cache = None
+
     def __init__(self, task, *args, **kwargs):
         from ..carol import Carol
         from ..storage import Storage
@@ -54,6 +55,7 @@ class PicklePyCarolTarget(PyCarolTarget):
     def exists(self):
         return self.storage.exists(self.path)
 
+
 class PytorchPyCarolTarget(PyCarolTarget):
     FILE_EXT = 'pth'
 
@@ -73,6 +75,7 @@ class PytorchPyCarolTarget(PyCarolTarget):
 
     def exists(self):
         return self.storage.exists(self.path)
+
 
 class KerasPyCarolTarget(PyCarolTarget):
     FILE_EXT = 'h5'
@@ -98,16 +101,16 @@ class KerasPyCarolTarget(PyCarolTarget):
 
 
 class LocalTarget(luigi.LocalTarget):
-    is_tmp=False
+    is_tmp = False
     FILE_EXT = 'ext'
 
-    def __init__(self, task, *args, **kwargs):
-
+    def __init__(self, task, path=None, *args, **kwargs):
         os.makedirs(task.TARGET_DIR, exist_ok=True)
         namespace = task.get_task_namespace()
-        file_id = task._file_id()
-        ext = '.' + self.FILE_EXT
-        path = os.path.join(task.TARGET_DIR, namespace, file_id + ext)
+        if path is None:
+            file_id = task._file_id()
+            ext = '.' + self.FILE_EXT
+            path = os.path.join(task.TARGET_DIR, namespace, file_id + ext)
         super().__init__(path=path, *args, **kwargs)
 
 
@@ -124,6 +127,7 @@ class PickleLocalTarget(LocalTarget):
     def remove(self):
         try:
             os.remove(self.path)
+
         except(FileNotFoundError):
             print("file not found")
 
@@ -231,3 +235,10 @@ class FeatherLocalTarget(LocalTarget):
 
     def remove(self):
         os.remove(self.path)
+
+
+class CustomLocalTarget(LocalTarget):
+    def __init__(self, task, *args, **kwargs):
+        super().__init__(task, *args, **kwargs)
+        self.dump = task.target_dump
+        self.load = task.target_load

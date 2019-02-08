@@ -1,4 +1,4 @@
-* Organize Parameters, Data Models, Fields and Validation Rules.
+* Organize Parameters, Data Models, Fields and Validation Rules in a Carol App Pipeline.
 
 ## Data Model
 

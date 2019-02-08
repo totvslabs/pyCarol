@@ -1,6 +1,6 @@
 from ..luigi_extension import Task, WrapperTask
 import luigi
-from luigi import Parameter, DictParameter
+from luigi import Parameter
 import logging
 import json
 import os
@@ -15,7 +15,7 @@ class Parameter(Parameter):
     """ Extension of Parameter to include Carol information
     """
 
-    def __init__(self, default=None, carol=False, carol_name=None, **kwargs):
+    def __init__(self, default=None, carol=False, carol_name=None, accepted_params=None, **kwargs):
         super().__init__(default=default, **kwargs)
         self.carol_name = carol_name
         self.carol = carol
@@ -23,7 +23,7 @@ class Parameter(Parameter):
             self.default = None
 
 
-class DictParameter(DictParameter):
+class DictParameter(luigi.DictParameter):
     """ Extension of DictParameter to include Carol information
     """
 
@@ -44,8 +44,7 @@ class SettingsDefinition(luigi.Task):
 
     @classmethod
     def get_params(cls):
-        """
-        Returns all of the Parameters for this Task, including luigi_extension's new Parameter class.
+        """ Returns all Parameters for this Task, including luigi_extension's new Parameter class.
         """
         # We want to do this here and not at class instantiation, or else there is no room to extend classes dynamically
         params = []
