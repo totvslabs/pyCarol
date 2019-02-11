@@ -3,6 +3,7 @@ from luigi import parameter, six
 from luigi.task import flatten
 from .targets import PickleLocalTarget, DummyTarget, PytorchLocalTarget, KerasLocalTarget
 import logging
+import warnings
 luigi.build([], workers=1, local_scheduler=True)
 
 logger = logging.getLogger('luigi-interface')
