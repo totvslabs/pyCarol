@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 
+
 with open('requirements.txt', 'r') as req_file:
     install_requires = req_file.read()
 
