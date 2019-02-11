@@ -1,9 +1,9 @@
 import luigi
 from luigi import parameter, six
 from luigi.task import flatten
-import warnings
 from .targets import PickleLocalTarget, DummyTarget, PytorchLocalTarget, KerasLocalTarget
 import logging
+luigi.build([], workers=1, local_scheduler=True)
 
 logger = logging.getLogger('luigi-interface')
 logger.setLevel(logging.INFO)
@@ -140,11 +140,9 @@ class Task(luigi.Task):
                     '%s: parameter %s was already set as a positional parameter' % (exc_desc, param_name))
             if param_name not in params_dict:
                 # raise parameter.UnknownParameterException('%s: unknown parameter %s' % (exc_desc, param_name))
-                logger.warning('%s: unknown parameter %s' % (exc_desc, param_name))
                 continue
 
-            param = params_dict[param_name]
-            result[param_name] = param.normalize(arg)
+            result[param_name] = params_dict[param_name].normalize(arg)
 
         # Then use the defaults for anything not filled in
         for param_name, param_obj in params:
