@@ -6,6 +6,7 @@ import joblib
 
 ### Cloud Targets
 
+
 class PyCarolTarget(luigi.Target):
     """
     This is an abstract cloud target. Not to be called directly.
@@ -17,6 +18,9 @@ class PyCarolTarget(luigi.Target):
     login_cache = None
     tenant_cache = None
     storage_cache = None
+
+    is_cloud_target = True
+
     def __init__(self, task, *args, **kwargs):
         from ..carol import Carol
         from ..storage import Storage
@@ -33,10 +37,48 @@ class PyCarolTarget(luigi.Target):
 
         namespace = task.get_task_namespace()
         file_id = task._file_id()
-        ext = '.' + self.FILE_EXT
-        path = os.path.join(namespace, file_id + ext)
-        self.path = os.path.join('pipeline', path)
+        self.path = os.path.join('pipeline', namespace, "{}.{}".format(file_id,self.FILE_EXT))
+        self.log_path = os.path.join('pipeline',namespace, "{}_log.pkl".format(file_id))
 
+
+    def persistlog(self,string):
+        self.storage.save( self.log_path, string,format='joblib')
+
+    def loadlog(self):
+        try:
+            text = self.storage.load(self.log_path, format='joblib')
+        except Exception:
+            return str(Exception)
+        if not text:
+            return "Log not found. log path: {}".format(self.log_path)
+        return text
+
+    def removelog(self):
+        self.storage.delete(self.log_path)
+
+
+class PyCarolFileTarget(PyCarolTarget):
+    """
+    This target operates with filepaths.
+    easy_run should return a filepath for a local temporary file. This file will be removed after been sent to Carol.
+    When loading this target, the file is copied from Carol to a local file. On easy_run we receive the local filepath.
+    Important note: when loading the target, its local copy will not be automatically removed.
+    """
+
+    FILE_EXT = 'file'
+
+    def load(self):
+        return self.storage.load(self.path, format='file', cache=False)
+
+    def dump(self, tempfile_path):
+        self.storage.save(self.path, tempfile_path, format='file', cache=False)
+        os.remove(tempfile_path)
+
+    def remove(self):
+        self.storage.delete(self.path)
+
+    def exists(self):
+        return self.storage.exists(self.path)
 
 
 class PicklePyCarolTarget(PyCarolTarget):
@@ -53,6 +95,7 @@ class PicklePyCarolTarget(PyCarolTarget):
 
     def exists(self):
         return self.storage.exists(self.path)
+
 
 class PytorchPyCarolTarget(PyCarolTarget):
     FILE_EXT = 'pth'
@@ -73,6 +116,7 @@ class PytorchPyCarolTarget(PyCarolTarget):
 
     def exists(self):
         return self.storage.exists(self.path)
+
 
 class KerasPyCarolTarget(PyCarolTarget):
     FILE_EXT = 'h5'
@@ -98,16 +142,25 @@ class KerasPyCarolTarget(PyCarolTarget):
 
 
 class LocalTarget(luigi.LocalTarget):
-    is_tmp=False
+    is_tmp = False
     FILE_EXT = 'ext'
-    def __init__(self, task, *args, **kwargs):
 
+    is_cloud_target = False
+
+    def __init__(self, task, path=None, *args, **kwargs):
         os.makedirs(task.TARGET_DIR, exist_ok=True)
         namespace = task.get_task_namespace()
-        file_id = task._file_id()
-        ext = '.' + self.FILE_EXT
-        path = os.path.join(task.TARGET_DIR, namespace, file_id + ext)
+        if path is None:
+            file_id = task._file_id()
+            ext = '.' + self.FILE_EXT
+            path = os.path.join(task.TARGET_DIR, namespace, file_id + ext)
         super().__init__(path=path, *args, **kwargs)
+
+    def loadlog(self):
+        return "task log not implemented for local targets"
+
+    def removelog(self):
+        return "task log not implemented for local targets"
 
 
 class PickleLocalTarget(LocalTarget):
@@ -123,6 +176,7 @@ class PickleLocalTarget(LocalTarget):
     def remove(self):
         try:
             os.remove(self.path)
+
         except(FileNotFoundError):
             print("file not found")
 
@@ -184,7 +238,16 @@ class PytorchLocalTarget(LocalTarget):
             print("file not found")
 
 
-class DummyTarget(LocalTarget):
+class DummyTarget:
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def exists(self):
+        return True
+
+    def complete(self):
+        return all(r.complete() for r in flatten(self.requires()))
 
     def load(self):
         return None
@@ -224,3 +287,4 @@ class FeatherLocalTarget(LocalTarget):
 
     def remove(self):
         os.remove(self.path)
+

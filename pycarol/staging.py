@@ -14,6 +14,16 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 
+_SCHEMA_TYPES_MAPPING = {
+                        "geo_point":str,
+                        "long":int,
+                        "double": float,
+                        "nested": str,
+                        "string": str,
+                        "base64": str,
+                        "boolean":bool
+            }
+
 class Staging:
     def __init__(self, carol):
         self.carol = carol
@@ -23,8 +33,9 @@ class Staging:
 
         now = datetime.now().isoformat(timespec='seconds')
 
-        json_query = Filter.Builder()\
-            .type(dm_name + "Golden")\
+        json_query = Filter.Builder() \
+            .should(TYPE_FILTER(value=dm_name + "Golden")) \
+            .should(TYPE_FILTER(value=dm_name + "Master")) \
             .must(RANGE_FILTER("mdmLastUpdated", [None, now]))\
             .build().to_json()
 
@@ -170,7 +181,8 @@ class Staging:
             ]
 
     def send_a(self,session, url, data_json, extra_headers,content_type):
-        self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type, session=session)
+        self.carol.call_api(url, data=data_json, extra_headers=extra_headers,
+                            content_type=content_type, session=session)
 
     def _stream_data(self, data, data_size, step_size, is_df):
         for i in range(0,data_size, step_size):
@@ -230,6 +242,10 @@ class Staging:
         else:
             print('Behavior for type %s not defined!' % type(fields_dict))
 
+
+        self.send_schema(schema=schema, staging_name=staging_name, connector_id=connector_id, overwrite=overwrite)
+
+    def send_schema(self,schema, staging_name, connector_id=None, overwrite=False):
         query_string = {"connectorId": connector_id}
         if connector_id is None:
             connector_id = self.carol.connector_id
@@ -243,7 +259,6 @@ class Staging:
 
         resp = self.carol.call_api('v2/staging/tables/{}/schema'.format(staging_name), data=schema, method=method,
                                    params=query_string)
-
 
     def _check_crosswalk_in_data(self, schema, _sample_json):
         crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
@@ -263,7 +278,7 @@ class Staging:
 
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',verbose=0,
                       merge_records=True, n_jobs=1, return_dask_graph=False, columns=None, max_hits=None,
-                      return_metadata=False):
+                      return_metadata=False, callback=None):
         """
 
         Fetch parquet from a staging table.
@@ -313,8 +328,12 @@ class Staging:
 
         #validate export
         stags = self._get_staging_export_stats()
-        if not stags.get(staging_name):
+        if (not stags.get(staging_name)):
             raise Exception(f'"{staging_name}" is not set to export data, \n use `dm = Staging(login).export(staging_name="{staging_name}",connector_id="{connector_id}", sync_staging=True) to activate')
+
+        if stags.get(staging_name)['mdmConnectorId']!=connector_id:
+            raise Exception(
+                f'"Wrong connector Id {connector_id}. The connector Id associeted to this staging is  {stags.get(staging_name)["mdmConnectorId"]}"')
 
         carolina = Carolina(self.carol)
         carolina._init_if_needed()
@@ -330,11 +349,29 @@ class Staging:
 
         elif backend=='pandas':
             s3 = carolina.s3
-            d = _import_pandas(s3=s3,  tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
-                               staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns, max_hits=max_hits)
+            d = _import_pandas(s3=s3, tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
+                               staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns,
+                               max_hits=max_hits, callback=callback)
+
+            #TODO: Do the same for dask backend
             if d is None:
-                warnings.warn(f"No data to fetch! {staging_name} has no data", UserWarning)
-                return None
+                warnings.warn(f'No data to fetch! {staging_name} has no data', UserWarning)
+                cols_keys = list(self.get_schema(
+                    staging_name=staging_name,connector_name=connector_name
+                )['mdmStagingMapping']['properties'].keys())
+                if return_metadata:
+                    cols_keys.extend(['mdmId','mdmCounterForEntity','mdmLastUpdated'])
+
+                elif columns:
+                    columns = [i for i in columns if i not in ['mdmId','mdmCounterForEntity','mdmLastUpdated']]
+
+                d = pd.DataFrame(columns=cols_keys)
+                for key, value in self.get_schema(staging_name=staging_name,
+                                                  connector_name=connector_name)['mdmStagingMapping']['properties'].items():
+                    d.loc[:, key] = d.loc[:, key].astype(_SCHEMA_TYPES_MAPPING.get(value['type'], str), copy=False)
+                if columns:
+                    d = d[list(set(columns))]
+                return d
         else:
             raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}' )
 
@@ -346,7 +383,7 @@ class Staging:
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
                 if not return_metadata:
-                    d.drop(columns=['mdmId', 'mdmCounterForEntity','mdmLastUpdated'], inplace=True)
+                    d.drop(columns=['mdmId','mdmCounterForEntity','mdmLastUpdated'], inplace=True)
                 d.reset_index(inplace=True, drop=True)
             else:
                 if old_columns is not None:
@@ -355,7 +392,7 @@ class Staging:
                      .drop_duplicates(subset='mdmId', keep='last') \
                      .reset_index(drop=True)
                 if not return_metadata:
-                    d = d.drop(columns=['mdmId', 'mdmCounterForEntity','mdmLastUpdated'])
+                    d = d.drop(columns=['mdmId','mdmCounterForEntity','mdmLastUpdated'])
 
         return d
 

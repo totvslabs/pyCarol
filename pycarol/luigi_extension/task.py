@@ -1,17 +1,21 @@
 import luigi
 from luigi import parameter, six
-import warnings
+from luigi.task import flatten
 from .targets import PickleLocalTarget, DummyTarget, PytorchLocalTarget, KerasLocalTarget
 import logging
 luigi.build([], workers=1, local_scheduler=True)
+
 logger = logging.getLogger('luigi-interface')
 logger.setLevel(logging.INFO)
-import pandas as pd
 
 
 class Task(luigi.Task):
     TARGET_DIR = './luigi_targets/'  # this class attribute can be redefined somewhere else
-    TARGET = PickleLocalTarget
+
+    TARGET = PickleLocalTarget  # DEPRECATED!
+    target_type = PickleLocalTarget
+
+    persist_stdout = False
     requires_list = []
     requires_dict = {}
     resources = {'cpu': 1}  # default resource to be overridden or complemented
@@ -19,29 +23,18 @@ class Task(luigi.Task):
     def buildme(self, local_scheduler=True, **kwargs):
         luigi.build([self, ], local_scheduler=local_scheduler, **kwargs)
 
+    def debug_task(self):
+        persist_stdout =self.persist_stdout
+        self.persist_stdout = False
+        self.run()
+        self.persist_stdout = persist_stdout
+
     def _file_id(self):
         # returns the output default file identifier
         return luigi.task.task_id_str(self.get_task_family(), self.to_str_params(only_significant=True))
 
-    def dummy_target(self):
-        warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-                      PendingDeprecationWarning)
-        return DummyTarget
-
-    def disk_target(self):
-        warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-                      PendingDeprecationWarning)
-        return PickleLocalTarget
-
-    def pytorch_target(self):
-        warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-                      PendingDeprecationWarning)
-        return PytorchLocalTarget
-
-    def keras_target(self):
-        warnings.warn("Do not use set_target. Define TARGET to be equal to desired Target instead.",
-                      PendingDeprecationWarning)
-        return KerasLocalTarget
+    def _txt_path(self):
+        return "{}.txt".format(self._file_id())
 
 
     def requires(self):
@@ -69,28 +62,55 @@ class Task(luigi.Task):
             return []
 
     def output(self):
-        # TODO change set_target() to self.TARGET when target methods get deprecated
-        return self.set_target()(self)
+        if self.TARGET != PickleLocalTarget:  # Check for deprecated use
+            warnings.warn('TARGET is being replaced with target_type.', DeprecationWarning)
+            return self.TARGET(self)
+
+        return self.target_type(self)
 
     def load(self):
         return self.output().load()
 
     def remove(self):
         self.output().remove()
+        self.output().removelog()
+
+    def loadlog(self):
+        return self.output().loadlog()
 
     def run(self):
+        from contextlib import redirect_stdout
         if isinstance(self.input(), list):
             function_inputs = [input_i.load() for input_i in self.input()]
         elif isinstance(self.input(), dict):
             function_inputs = {i: input_i.load() for i, input_i in self.input().items()}
-        function_output = self.easy_run(function_inputs)
+
+        if self.output().is_cloud_target and self.persist_stdout:
+            try:
+                import io
+                f = io.StringIO()
+                with redirect_stdout(f):
+                    function_output = self._easy_run(function_inputs)
+            finally:
+                # self.output().persistlog(self._txt_path())
+                self.output().persistlog(f.getvalue())
+        else:
+            function_output = self._easy_run(function_inputs)
+        print("dumping task",self)
+
         self.output().dump(function_output)
+
+
+    def _easy_run(self,inputs):
+        # Override this method to implement standard pre/post-processing
+        return self.easy_run(inputs)
 
     def easy_run(self,inputs):
         return None
 
     #this method was changed from the original version to allow execution of a task
     #with extra parameters. the original one, raises an exception. now, we print that exception
+    #in this version we do not raise neither print it.
     @classmethod
     def get_param_values(cls, params, args, kwargs):
         """
@@ -126,8 +146,8 @@ class Task(luigi.Task):
                     '%s: parameter %s was already set as a positional parameter' % (exc_desc, param_name))
             if param_name not in params_dict:
                 # raise parameter.UnknownParameterException('%s: unknown parameter %s' % (exc_desc, param_name))
-                print('%s: unknown parameter %s' % (exc_desc, param_name))
                 continue
+
             result[param_name] = params_dict[param_name].normalize(arg)
 
         # Then use the defaults for anything not filled in
@@ -144,15 +164,9 @@ class Task(luigi.Task):
                 return tuple(x)
             else:
                 return x
+
         # Sort it by the correct order and make a list
         return [(param_name, list_to_tuple(result[param_name])) for param_name, param_obj in params]
-
-    def set_target(self):
-        """ Method used to define which target will be used by output
-        :return:
-        """
-        # TODO Remove this method when target methods get deprecated
-        return self.TARGET
 
     def get_execution_params(self):
         params = {}
@@ -161,6 +175,20 @@ class Task(luigi.Task):
             params.update({param_name: param_obj})
 
         return params
+
+
+class WrapperTask(Task):
+    """
+    Use for tasks that only wrap other tasks and that by definition are done if all their requirements exist.
+    """
+    def run(self):
+        pass
+
+    def complete(self):
+        return all(r.complete() for r in flatten(self.requires()))
+
+    def output(self):
+        return self.input()
 
 
 def set_attributes(task_to_inherit, task_that_inherits):

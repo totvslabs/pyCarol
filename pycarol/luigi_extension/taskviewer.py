@@ -94,8 +94,8 @@ class TaskViewer(object):
         for i in self.range_nodes():
             task_names.append(TaskViewer.nodes[i].task_family)
             task_id.append(TaskViewer.nodes[i].task_id)
-        family = [t.split('.')[0] for t in task_names]
-        task_names = [t.split('.')[1] for t in task_names]
+        family = [t.split('.')[-2] if '.' in t else "empty_namespace" for t in task_names]
+        task_names = [t.split('.')[-1] for t in task_names]
         self.family = family
         self.update_complete()
         source_dict = dict(
@@ -107,6 +107,7 @@ class TaskViewer(object):
             edges_x=edges_x,
             edges_y=edges_y,
             complete=self.complete,
+            tasklog=self.tasklog,
         )
         return source_dict
 
@@ -115,15 +116,20 @@ class TaskViewer(object):
         if self.parallel_update:
             with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
                 complete = executor.map(lambda x: x.complete(), TaskViewer.nodes)
+                tasklog = executor.map(lambda x: x.loadlog(), TaskViewer.nodes)
             self.complete = list(complete)
+            self.tasklog = list(tasklog)
+
         else:
             self.complete = [t.complete() for t in TaskViewer.nodes ]
+            self.tasklog = [t.loadlog()  for t in TaskViewer.nodes ]
+        self.tasklog = [log if isinstance(log,str) else "Log type is wrong." for log in self.tasklog]
         return self.complete
 
     def get_colormapper(self):
         family = self.family
         factors = list(set(family))
-        nb_factors = len(factors)
+        nb_factors = np.clip(len(factors),3,10)
         from bokeh.palettes import Category10
         from bokeh.models.mappers import CategoricalColorMapper
         return CategoricalColorMapper(factors=factors, palette=Category10[nb_factors])
@@ -133,7 +139,7 @@ class TaskViewer(object):
         print('start plot_task')
         doc.clear()
         from bokeh.models import Circle, Text, Button
-        from bokeh.models import ColumnDataSource, CDSView, BooleanFilter
+        from bokeh.models import ColumnDataSource, CDSView, BooleanFilter, HoverTool
         from bokeh.plotting import figure
         from bokeh.layouts import column, row, layout
         from bokeh.transform import transform
@@ -145,20 +151,20 @@ class TaskViewer(object):
             ('index', "$index"),
             ('task_id', '@task_id'),
         ]
-
+        hover = HoverTool(names=['alltasks'])
         plot = figure(
             title="Pipeline Debugger",
             x_range=(-1, max(source_dict['x']) + 1),
             y_range=(-1, max(source_dict['y']) + 1),
-            tools=['hover', 'wheel_zoom', 'pan', 'tap', 'box_select', 'reset'],
+            tools=[hover, 'wheel_zoom', 'pan', 'tap', 'box_select', 'reset'],
             toolbar_location='right',
             tooltips=TOOLTIPS,
             plot_width=900,
-            plot_height=800,
+            plot_height=500,
         )
 
         s1 = ColumnDataSource(data=source_dict)
-        #         s1_edges = ColumnDataSource(data=source_dict)
+        s1_edges = ColumnDataSource(data={k:v for k,v in source_dict.items() if 'edges' in k})
         complete = self.update_complete()
 #         print(complete)
         s2 = ColumnDataSource(data={k: [vi for i, vi in enumerate(v) if not complete[i]] for k, v in
@@ -166,17 +172,22 @@ class TaskViewer(object):
         done_tasks = CDSView(source=s1, filters=[BooleanFilter(complete)])
         notdone_tasks = CDSView(source=s1, filters=[BooleanFilter([not c for c in complete])])
 
-        plot.multi_line(xs='edges_x', ys='edges_y', source=s1, color='gray')
-        plot.circle('x', 'y', source=s1, size=20, color=transform('family', cm), legend='family')
+        ml = plot.multi_line(xs='edges_x', ys='edges_y', source=s1_edges, color='gray',line_alpha=0.3)
+        ml.nonselection_glyph = None
+        plot.circle('x', 'y', source=s1, size=20, name='alltasks', color=transform('family', cm), legend='family')
         plot.circle('x', 'y', source=s2, size=10, color='white')
         plot.text(x='x', y='y', text='task_names', source=s1, text_font_size='8pt')
 
         from bokeh.events import ButtonClick
         from bokeh.models import Button
-        from bokeh.models.callbacks import CustomJS
+        from bokeh.layouts import widgetbox
+        from bokeh.models.widgets import PreText
+        pre = PreText(text="")
 
         def select_callback(attr, old, new):
             TaskViewer.selected_nodes = [TaskViewer.nodes[i] for i in new]
+            pre.text = self.tasklog[new[0]]
+            print("selected {}".format(new))
 
         s1.selected.on_change('indices', select_callback)
 
@@ -221,15 +232,16 @@ class TaskViewer(object):
 
         if web_app:
             l = column(
-                children=[
+                [
                     plot,
                     row(
                         remove_button,
                         removeupstream_button,
                         update_button,
-                    )
+                    ),
+                    widgetbox(pre),
                 ],
-                sizing_mode='stretch_both'
+                sizing_mode='scale_width'
             )
         else:
             l = column(

@@ -1,0 +1,1 @@
+from .test_parameters import mock_carol_app, mock_carol_query

@@ -1,9 +1,8 @@
-from ..data_model_types import DataModelTypeIds
+from ..data_models.data_model_types import DataModelTypeIds
 from ..verticals import Verticals
-from ..data_models import CreateDataModel
+from ..data_models.data_models import CreateDataModel
 
 import random
-import json
 
 
 class DataModelGenerator(object):
