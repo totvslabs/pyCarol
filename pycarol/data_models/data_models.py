@@ -369,7 +369,7 @@ class DataModel:
 
         assert copy_or_move=='copy' or copy_or_move=='move', 'copy_or_move shoulb be "copy" or "move"'
         if query_filter:
-            assert isinstance(query_filter,Filter.Builder)
+            assert isinstance(query_filter, Filter.Builder)
 
         if copy_or_move=='copy':
             copy_or_move = False
