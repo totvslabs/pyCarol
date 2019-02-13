@@ -10,6 +10,7 @@ from ..query import Query
 from ..filter import RANGE_FILTER as RF
 from ..filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
 from ..utils.miscellaneous import ranges
+from ..utils.async_utils import exception_async_handler
 import time
 import copy
 import warnings
@@ -60,7 +61,7 @@ class DataModel:
     #TODO: _delete function is common to staging and data_model. for this reason, could be allocated in an utils file
     def _delete(self, dm_name):
 
-        now = datetime.now().isoformat(timespec='seconds')
+        now = datetime.utcnow().isoformat(timespec='seconds',)
 
         json_query = Filter.Builder() \
             .should(TYPE_FILTER(value=dm_name + "Golden")) \
@@ -399,7 +400,7 @@ class DataModel:
                     .must(RF(key=self.mdm_key, value=i)) \
                     .build().to_json()
 
-            query_params = {"recordType": record_type, "fuzzy": "false",
+            query_params = {"recordType": record_vtype, "fuzzy": "false",
                            "deleteRecords": copy_or_move}
 
             result = self.carol.call_api(url_filter, data=json_query, params=query_params)
@@ -497,6 +498,7 @@ class DataModel:
         self.cont = 0
         if async_send:
             loop = asyncio.get_event_loop()
+            #loop.set_exception_handler(exception_async_handler)
             future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
                                                                         url, extra_headers, content_type, max_workers))
             loop.run_until_complete(future)

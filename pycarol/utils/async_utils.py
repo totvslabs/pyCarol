@@ -1,4 +1,4 @@
-def custom_exception_handler(loop, context):
+def exception_async_handler(loop, context):
     # first, handle with default handler
     loop.default_exception_handler(context)
 
