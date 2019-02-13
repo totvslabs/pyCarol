@@ -28,10 +28,10 @@ class Staging:
     def __init__(self, carol):
         self.carol = carol
 
-
+    #TODO: the same then datamodel.
     def _delete(self,dm_name):
 
-        now = datetime.now().isoformat(timespec='seconds')
+        now = datetime.utcnow().isoformat(timespec='seconds')
 
         json_query = Filter.Builder() \
             .should(TYPE_FILTER(value=dm_name + "Golden")) \
