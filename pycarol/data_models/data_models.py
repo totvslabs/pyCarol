@@ -60,7 +60,7 @@ class DataModel:
     #TODO: _delete function is common to staging and data_model. for this reason, could be allocated in an utils file
     def _delete(self, dm_name):
 
-        now = datetime.now().isoformat(timespec='seconds')
+        now = datetime.utcnow().isoformat(timespec='seconds')
 
         json_query = Filter.Builder() \
             .should(TYPE_FILTER(value=dm_name + "Golden")) \
