@@ -220,6 +220,8 @@ class Carol:
 
                 response.encoding = 'utf-8'
                 self.response = response
+                if response.text == '':
+                    return {}
                 return json.loads(response.text)
 
             elif (response.reason == 'Unauthorized') and  isinstance(self.auth,PwdAuth):
