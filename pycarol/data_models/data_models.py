@@ -417,6 +417,7 @@ class DataModel:
                                       content_type, max_workers):
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             session = self.carol._retry_session()
+
             # Set any session parameters here before calling `send_a`
             loop = asyncio.get_event_loop()
             tasks = [
@@ -428,6 +429,8 @@ class DataModel:
                 )
                 for data_json in self._stream_data(data, data_size, step_size, is_df)
             ]
+
+            print('as')
 
     def send_data(self, data, dm_name=None, dm_id=None, step_size=100, gzip=False, delete_old_records=False,
                   print_stats=True, max_workers=None,  async_send=False):
@@ -498,10 +501,15 @@ class DataModel:
         self.cont = 0
         if async_send:
             loop = asyncio.get_event_loop()
-            #loop.set_exception_handler(exception_async_handler)
+
             future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
                                                                         url, extra_headers, content_type, max_workers))
+
+
+
             loop.run_until_complete(future)
+
+            print('s')
 
         else:
             for data_json in self._stream_data(data, data_size, step_size, is_df):

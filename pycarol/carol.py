@@ -220,9 +220,9 @@ class Carol:
 
                 response.encoding = 'utf-8'
                 self.response = response
-                if response.text=='':
-                    print('Empty Response')
-                    return ''
+                #if response.text=='':
+                #    print('Empty Response')
+                #    return ''
                 return json.loads(response.text)
 
             elif (response.reason == 'Unauthorized') and  isinstance(self.auth,PwdAuth):
