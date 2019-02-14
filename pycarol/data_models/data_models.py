@@ -21,6 +21,7 @@ from ..filter import RANGE_FILTER as RF
 from ..filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
 from ..utils.miscellaneous import ranges
 from ..utils import async_helpers
+from ..utils.miscellaneous import stream_data
 
 
 class DataModel:
@@ -381,29 +382,6 @@ class DataModel:
             result = self.carol.call_api(url_filter, data=json_query, params=query_params)
             print(f"To go: {c + 1}/{len(chunks)}")
 
-
-
-    # TODO: the same that in staging.
-    async def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers,
-                                      content_type, max_workers):
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            session = self.carol._retry_session()
-            # Set any session parameters here before calling `send_a`
-            loop = asyncio.get_event_loop()
-            tasks = [
-                loop.run_in_executor(
-                    executor,
-                    async_helpers.send_a,
-                    *(self.carol, session, url, data_json, extra_headers, content_type)
-                    # Allows us to pass in multiple arguments to `send_a`
-                )
-                for data_json, _ in async_helpers.stream_data(data=data, data_size=data_size,
-                                                              step_size=step_size, is_df=is_df,
-                                                              compress_gzip=self.gzip)
-            ]
-            for _ in await asyncio.gather(*tasks):
-                pass
-
     def send_data(self, data, dm_name=None, dm_id=None, step_size=100, gzip=False, delete_old_records=False,
                   print_stats=True, max_workers=None, async_send=False):
 
@@ -465,24 +443,29 @@ class DataModel:
 
         url = f"v1/entities/templates/{dm_id}/goldenRecords?async=true"
 
-        self.cont = 0
         if async_send:
             loop = asyncio.get_event_loop()
-            future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
-                                                                        url, extra_headers, content_type, max_workers))
+            future = asyncio.ensure_future(async_helpers.send_data_asynchronous(carol=self.carol,
+                                                                                data=data, data_size=data_size,
+                                                                                step_size=step_size, is_df=is_df,
+                                                                                url=url,
+                                                                                extra_headers=extra_headers,
+                                                                                content_type=content_type,
+                                                                                max_workers=max_workers,
+                                                                                compress_gzip=self.gzip))
             loop.run_until_complete(future)
 
         else:
-            for data_json, cont in async_helpers.stream_data(data=data, data_size=data_size,
-                                                             step_size=step_size, is_df=is_df,
-                                                             compress_gzip=self.gzip):
+            for data_json, cont in stream_data(data=data, data_size=data_size,
+                                               step_size=step_size, is_df=is_df,
+                                               compress_gzip=self.gzip):
 
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
                 if print_stats:
                     print('{}/{} sent'.format(cont, data_size), end='\r')
 
-
-    def create_mapping(self, staging_name, connector_id=None, connector_name=None, dm_name=None, dm_id=None, publish=False):
+    def create_mapping(self, staging_name, connector_id=None, connector_name=None, dm_name=None, dm_id=None,
+                       publish=False):
 
         """
 
