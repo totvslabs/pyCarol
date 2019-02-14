@@ -397,7 +397,9 @@ class DataModel:
                     *(self.carol, session, url, data_json, extra_headers, content_type)
                     # Allows us to pass in multiple arguments to `send_a`
                 )
-                for data_json in self._stream_data(data, data_size, step_size, is_df)
+                for data_json, _ in async_helpers.stream_data(data=data, data_size=data_size,
+                                                              step_size=step_size, is_df=is_df,
+                                                              compress_gzip=self.gzip)
             ]
             for _ in await asyncio.gather(*tasks):
                 pass
@@ -471,37 +473,14 @@ class DataModel:
             loop.run_until_complete(future)
 
         else:
-            for data_json in self._stream_data(data, data_size, step_size, is_df):
+            for data_json, cont in async_helpers.stream_data(data=data, data_size=data_size,
+                                                             step_size=step_size, is_df=is_df,
+                                                             compress_gzip=self.gzip):
+
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
                 if print_stats:
-                    print('{}/{} sent'.format(self.cont, data_size), end='\r')
+                    print('{}/{} sent'.format(cont, data_size), end='\r')
 
-    # TODO: reused from staging. Should I put in utils/?
-    def _stream_data(self, data, data_size, step_size, is_df):
-        for i in range(0, data_size, step_size):
-            if is_df:
-                data_to_send = data.iloc[i:i + step_size]
-                self.cont += len(data_to_send)
-                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
-                data_to_send = data_to_send.to_json(orient='records', date_format='iso', lines=False)
-                if self.gzip:
-                    out = io.BytesIO()
-                    with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
-                        f.write(data_to_send.encode('utf-8'))
-                    yield out.getvalue()
-                else:
-                    yield json.loads(data_to_send)
-            else:
-                data_to_send = data[i:i + step_size]
-                self.cont += len(data_to_send)
-                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
-                if self.gzip:
-                    out = io.BytesIO()
-                    with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
-                        f.write(json.dumps(data_to_send).encode('utf-8'))
-                    yield out.getvalue()
-                else:
-                    yield data_to_send
 
     def create_mapping(self, staging_name, connector_id=None, connector_name=None, dm_name=None, dm_id=None, publish=False):
 
