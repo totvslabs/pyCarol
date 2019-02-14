@@ -20,6 +20,7 @@ from ..connectors import Connectors
 from ..filter import RANGE_FILTER as RF
 from ..filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
 from ..utils.miscellaneous import ranges
+from ..utils import async_helpers
 
 
 class DataModel:
@@ -380,10 +381,7 @@ class DataModel:
             result = self.carol.call_api(url_filter, data=json_query, params=query_params)
             print(f"To go: {c + 1}/{len(chunks)}")
 
-    # TODO: equal to Staging
-    def send_a(self, session, url, data_json, extra_headers, content_type):
-        self.carol.call_api(url, data=data_json, extra_headers=extra_headers,
-                            content_type=content_type, session=session)
+
 
     # TODO: the same that in staging.
     async def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers,
@@ -395,8 +393,8 @@ class DataModel:
             tasks = [
                 loop.run_in_executor(
                     executor,
-                    self.send_a,
-                    *(session, url, data_json, extra_headers, content_type)
+                    async_helpers.send_a,
+                    *(self.carol, session, url, data_json, extra_headers, content_type)
                     # Allows us to pass in multiple arguments to `send_a`
                 )
                 for data_json in self._stream_data(data, data_size, step_size, is_df)
