@@ -2,9 +2,7 @@ import pandas as pd
 import json
 import itertools
 import warnings
-import gzip, io
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 
 from .query import Query, delete_golden
 from .schema_generator import carolSchemaGenerator
@@ -12,6 +10,9 @@ from .connectors import Connectors
 from .carolina import Carolina
 from .utils.importers import _import_dask, _import_pandas
 from .filter import Filter, TYPE_FILTER
+from .utils import async_helpers
+from .utils.miscellaneous import stream_data
+
 
 _SCHEMA_TYPES_MAPPING = {
     "geo_point": str,
@@ -124,67 +125,26 @@ class Staging:
         self.cont = 0
         if async_send:
             loop = asyncio.get_event_loop()
-
-            future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
-                                                                        url, extra_headers, content_type, max_workers))
+            future = asyncio.ensure_future(async_helpers.send_data_asynchronous(carol=self.carol,
+                                                                                data=data, data_size=data_size,
+                                                                                step_size=step_size, is_df=is_df,
+                                                                                url=url,
+                                                                                extra_headers=extra_headers,
+                                                                                content_type=content_type,
+                                                                                max_workers=max_workers,
+                                                                                compress_gzip=self.gzip))
             loop.run_until_complete(future)
 
 
         else:
-            for data_json in self._stream_data(data, data_size, step_size, is_df):
+            for data_json, cont in stream_data(data=data, data_size=data_size,
+                                               step_size=step_size, is_df=is_df,
+                                               compress_gzip=self.gzip):
+
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
                 if print_stats:
-                    print('{}/{} sent'.format(self.cont, data_size), end='\r')
+                    print('{}/{} sent'.format(cont, data_size), end='\r')
 
-    async def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers,
-                                      content_type, max_workers):
-        # based on https://hackernoon.com/how-to-run-asynchronous-web-requests-in-parallel-with-python-3-5-without-aiohttp-264dc0f8546
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            session = self.carol._retry_session()
-            # Set any session parameters here before calling `send_a`
-            loop = asyncio.get_event_loop()
-
-            tasks = [
-                loop.run_in_executor(
-                    executor,
-                    self.send_a,
-                    *(session, url, data_json, extra_headers, content_type)
-                    # Allows us to pass in multiple arguments to `send_a`
-                )
-                for data_json in self._stream_data(data, data_size, step_size, is_df)
-            ]
-            for _ in await asyncio.gather(*tasks):
-                pass
-
-    def send_a(self, session, url, data_json, extra_headers, content_type):
-        self.carol.call_api(url, data=data_json, extra_headers=extra_headers,
-                            content_type=content_type, session=session)
-
-    def _stream_data(self, data, data_size, step_size, is_df):
-        for i in range(0, data_size, step_size):
-            if is_df:
-                data_to_send = data.iloc[i:i + step_size]
-                self.cont += len(data_to_send)
-                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
-                data_to_send = data_to_send.to_json(orient='records', date_format='iso', lines=False)
-                if self.gzip:
-                    out = io.BytesIO()
-                    with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
-                        f.write(data_to_send.encode('utf-8'))
-                    yield out.getvalue()
-                else:
-                    yield json.loads(data_to_send)
-            else:
-                data_to_send = data[i:i + step_size]
-                self.cont += len(data_to_send)
-                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
-                if self.gzip:
-                    out = io.BytesIO()
-                    with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
-                        f.write(json.dumps(data_to_send).encode('utf-8'))
-                    yield out.getvalue()
-                else:
-                    yield data_to_send
 
     def get_schema(self, staging_name, connector_name=None, connector_id=None):
 

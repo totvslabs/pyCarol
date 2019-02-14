@@ -5,12 +5,25 @@ from .miscellaneous import stream_data
 
 
 def send_a(carol, session, url, data_json, extra_headers, content_type):
+    """
+    Helper funcion to be used when sendind data async.
+
+
+    :param carol:
+    :param session:
+    :param url:
+    :param data_json:
+    :param extra_headers:
+    :param content_type:
+    :return:
+    """
     carol.call_api(url, data=data_json, extra_headers=extra_headers,
                    content_type=content_type, session=session)
 
 
 async def send_data_asynchronous(carol, data, data_size, step_size, is_df, url, extra_headers,
                                  content_type, max_workers, compress_gzip):
+    # based on https://hackernoon.com/how-to-run-asynchronous-web-requests-in-parallel-with-python-3-5-without-aiohttp-264dc0f8546
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         session = carol._retry_session()
         # Set any session parameters here before calling `send_a`

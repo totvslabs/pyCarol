@@ -5,9 +5,7 @@ import time
 import copy
 import warnings
 import pandas as pd
-import gzip, io
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 
 from .data_models_fields import DataModelFields
 from .data_model_types import DataModelTypeIds
