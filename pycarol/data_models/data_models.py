@@ -532,6 +532,25 @@ class DataModel:
 
     def dm_mapping(self, staging_name, connector_id=None, connector_name=None, dm_name=None, dm_id=None, publish=False):
 
+        """
+
+        This method will create the link between tha staging and a data model. If Publish=True it will publish how it is.
+
+        :param staging_name:  `str`
+            Name of the staging to be mapped.
+        :param connector_id:  `str`, `str`, default `None`
+            Staging's connector ID
+        :param connector_name:  `str`, default `None`
+            Staging's connector name
+        :param dm_name: `int`, default `100`
+            Data Model name
+        :param dm_id: `bool`, default `True`
+            Data model ID
+        :param publish: `bool`, default `True`
+            If publish after create mapping.
+        :return: None
+        """
+
         if connector_name:
             _con = Connectors(self.carol)
             connector_id = _con.get_by_name(connector_name)['mdmId']
