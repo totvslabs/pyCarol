@@ -530,7 +530,7 @@ class DataModel:
                 else:
                     yield data_to_send
 
-    def dm_mapping(self, staging_name, connector_id=None, connector_name=None, dm_name=None, dm_id=None, publish=False):
+    def create_mapping(self, staging_name, connector_id=None, connector_name=None, dm_name=None, dm_id=None, publish=False):
 
         """
 
