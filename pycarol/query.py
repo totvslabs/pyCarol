@@ -5,9 +5,66 @@ import dask
 import pandas as pd
 from .connectors import Connectors
 from .named_query import NamedQuery
-from .filter import Filter, MAXIMUM, MINIMUM
+from .filter import Filter, MAXIMUM, MINIMUM, TYPE_FILTER
 from .filter import RANGE_FILTER as RF
 from .utils.miscellaneous import ranges
+
+
+
+def delete_golden(carol, dm_name, now=None):
+    """
+
+    Delete Golden records.
+
+    It Will delete all golden records of a given data model based on lastUpdate.
+
+    :param carol: `pycarol.carol.Carol`
+        Carol instance
+    :param dm_name: `str`
+        Data model name
+    :param now: `str`
+        Delete records where last update is less the `now`. Any date time ISO format is accepted.
+
+    Usage:
+    To delete:
+
+    >>>from pycarol.utils.miscellaneous import delete_golden
+    >>>from pycarol.auth.PwdAuth import PwdAuth
+    >>>from pycarol.carol import Carol
+    >>>login = Carol()
+    >>>delete_golden(login, dm_name=my_dm)
+
+    To delate based on a date.
+    >>>delete_golden(login, dm_name=my_dm, now='2018-11-16')
+    """
+
+    if now is None:
+        now = datetime.utcnow().isoformat(timespec='seconds')
+
+    json_query = Filter.Builder() \
+        .should(TYPE_FILTER(value=dm_name + "Golden")) \
+        .should(TYPE_FILTER(value=dm_name + "Master")) \
+        .must(RF("mdmLastUpdated", [None, now])) \
+        .build().to_json()
+
+    try:
+        Query(carol).delete(json_query)
+    except:
+        # if it it too many records, one would have a timeout but the records will be deleted anyway
+        pass
+
+    json_query = Filter.Builder() \
+        .type(dm_name + "Rejected") \
+        .must(RF("mdmLastUpdated", [None, now])) \
+        .build().to_json()
+
+    try:
+        Query(carol, index_type='STAGING').delete(json_query)
+    except:
+        #if it it too many records, one would have a timeout but the records will be deleted anyway
+        pass
+
+
 
 class Query:
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=100, sort_order='ASC', sort_by=None,
