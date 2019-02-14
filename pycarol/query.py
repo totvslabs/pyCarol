@@ -3,6 +3,7 @@ import itertools
 from joblib import Parallel, delayed
 import dask
 import pandas as pd
+from datetime import datetime
 from .connectors import Connectors
 from .named_query import NamedQuery
 from .filter import Filter, MAXIMUM, MINIMUM, TYPE_FILTER
