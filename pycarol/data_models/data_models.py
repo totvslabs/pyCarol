@@ -444,8 +444,8 @@ class DataModel:
         if async_send:
             loop = asyncio.get_event_loop()
             future = asyncio.ensure_future(async_helpers.send_data_asynchronous(carol=self.carol,
-                                                                                data=data, data_size=data_size,
-                                                                                step_size=step_size, is_df=is_df,
+                                                                                data=data,
+                                                                                step_size=step_size,
                                                                                 url=url,
                                                                                 extra_headers=extra_headers,
                                                                                 content_type=content_type,
@@ -454,8 +454,8 @@ class DataModel:
             loop.run_until_complete(future)
 
         else:
-            for data_json, cont in stream_data(data=data, data_size=data_size,
-                                               step_size=step_size, is_df=is_df,
+            for data_json, cont in stream_data(data=data,
+                                               step_size=step_size,
                                                compress_gzip=self.gzip):
 
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)

@@ -1,5 +1,6 @@
 import json
 import gzip, io
+import pandas as pd
 
 def ranges(min_v, max_v, nb):
     if min_v == max_v:
@@ -13,7 +14,26 @@ def ranges(min_v, max_v, nb):
     return step
 
 # TODO: reused from staging. Should I put in utils/?
-def stream_data(data, data_size, step_size, is_df, compress_gzip):
+def stream_data(data, step_size, compress_gzip):
+    """
+
+    :param data:  `pandas.DataFrame` or `list of dict`,
+        Data to be sliced.
+    :param step_size: 'int'
+        Number of records per slice.
+    :param compress_gzip: 'bool'
+        If to compress the data to send
+    :return: Generator, cont
+        Return a slice of `data` and the count of records until that moment.
+    """
+
+    if isinstance(data, pd.DataFrame):
+        is_df = True
+    else:
+        is_df = False
+        assert isinstance(data, list)
+
+    data_size = len(data)
     cont = 0
     for i in range(0, data_size, step_size):
         if is_df:
