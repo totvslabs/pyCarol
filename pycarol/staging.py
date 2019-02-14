@@ -1,17 +1,20 @@
-from .schema_generator import carolSchemaGenerator
 import pandas as pd
 import json
-from .query import Query
-from datetime import datetime
-from .connectors import Connectors
-from .carolina import Carolina
-from .utils.importers import _import_dask, _import_pandas
-from .filter import Filter, RANGE_FILTER, TYPE_FILTER
 import itertools
 import warnings
 import gzip, io
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+
+
+from .query import Query
+from .schema_generator import carolSchemaGenerator
+from .connectors import Connectors
+from .carolina import Carolina
+from .utils.importers import _import_dask, _import_pandas
+from .filter import Filter, TYPE_FILTER
+from .utils.miscellaneous import delete_golden
+
 
 
 _SCHEMA_TYPES_MAPPING = {
@@ -28,41 +31,12 @@ class Staging:
     def __init__(self, carol):
         self.carol = carol
 
-    #TODO: the same then datamodel.
-    def _delete(self,dm_name):
-
-        now = datetime.utcnow().isoformat(timespec='seconds')
-
-        json_query = Filter.Builder() \
-            .should(TYPE_FILTER(value=dm_name + "Golden")) \
-            .should(TYPE_FILTER(value=dm_name + "Master")) \
-            .must(RANGE_FILTER("mdmLastUpdated", [None, now]))\
-            .build().to_json()
-
-
-        try:
-            Query(self.carol).delete(json_query)
-        except:
-            pass
-
-        json_query = Filter.Builder()\
-            .type(dm_name + "Rejected")\
-            .must(RANGE_FILTER("mdmLastUpdated", [None, now]))\
-            .build().to_json()
-
-        try:
-            Query(self.carol,index_type='STAGING').delete(json_query)
-        except:
-            pass
-
 
 
     def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100, print_stats=True,
                   gzip=True,  auto_create_schema=False, crosswalk_auto_create=None, force=False, max_workers=None,
                   dm_to_delete=None, async_send=False):
-
         '''
-
         :param staging_name:  `str`,
             Staging name to send the data.
         :param data: pandas data frame, json. default `None`
@@ -93,6 +67,7 @@ class Staging:
         :return: None
         '''
 
+
         self.gzip = gzip
         extra_headers = {}
         content_type = 'application/json'
@@ -107,7 +82,7 @@ class Staging:
             if connector_id is None:
                 connector_id = self.carol.connector_id
 
-        schema = self.get_schema(staging_name,connector_id=connector_id)
+        schema = self.get_schema(staging_name, connector_id=connector_id)
 
         is_df = False
         if isinstance(data, pd.DataFrame):
@@ -128,7 +103,8 @@ class Staging:
 
         if (not schema) and (auto_create_schema):
             assert crosswalk_auto_create, "You should provide a crosswalk"
-            self.create_schema(_sample_json, staging_name, connector_id=connector_id, crosswalk_list=crosswalk_auto_create)
+            self.create_schema(_sample_json, staging_name, connector_id=connector_id,
+                               crosswalk_list=crosswalk_auto_create)
             _crosswalk = crosswalk_auto_create
             print('provided crosswalk ',_crosswalk)
         elif auto_create_schema:
@@ -147,7 +123,7 @@ class Staging:
                 "crosswalk is not unique on dataframe. set force=True to send it anyway."
 
         if dm_to_delete is not None:
-            self._delete(dm_to_delete)
+            delete_golden(self.carol, dm_to_delete)
 
 
         url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
@@ -158,7 +134,7 @@ class Staging:
             future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
                                                                         url, extra_headers, content_type, max_workers))
             loop.run_until_complete(future)
-            loop.close()
+
 
         else:
             for data_json in self._stream_data(data, data_size, step_size, is_df):
@@ -462,7 +438,6 @@ class Staging:
         url = f'v2/staging/{connector_id}/{staging_name}/exporter'
         return self.carol.call_api(url, method='POST', params=query_params)
 
-
     def export_all(self, connector_id=None, connector_name=None, sync_staging=True, full_export=False,
                    delete_previous=False):
         """
@@ -494,8 +469,8 @@ class Staging:
         conn_stats = Connectors(self.carol).stats(connector_id=connector_id)
 
         for staging in conn_stats.get(connector_id):
-            resp = self.export(staging_name=staging, connector_id=connector_id,
-                        sync_staging=sync_staging, full_export=full_export, delete_previous=delete_previous )
+            self.export(staging_name=staging, connector_id=connector_id,
+                        sync_staging=sync_staging, full_export=full_export, delete_previous=delete_previous)
 
     def _get_staging_export_stats(self):
         """
