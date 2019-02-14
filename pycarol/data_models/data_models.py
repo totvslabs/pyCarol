@@ -5,10 +5,7 @@ import time
 import copy
 import warnings
 import pandas as pd
-import gzip, io
 import asyncio
-from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor
 
 from .data_models_fields import DataModelFields
 from .data_model_types import DataModelTypeIds
@@ -16,11 +13,13 @@ from .data_model_types import DataModelTypeIds
 from ..utils.importers import _import_dask, _import_pandas
 from ..verticals import Verticals
 from ..carolina import Carolina
-from ..query import Query
+from ..query import Query, delete_golden
 from ..connectors import Connectors
 from ..filter import RANGE_FILTER as RF
 from ..filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
 from ..utils.miscellaneous import ranges
+from ..utils import async_helpers
+from ..utils.miscellaneous import stream_data
 
 
 class DataModel:
@@ -60,32 +59,6 @@ class DataModel:
         self.entity_template_ = {resp['mdmName']: resp}
         self.fields_dict.update({resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
-
-    # TODO: _delete function is common to staging and data_model. for this reason, could be allocated in an utils file
-    def _delete(self, dm_name):
-
-        now = datetime.utcnow().isoformat(timespec='seconds')
-
-        json_query = Filter.Builder() \
-            .should(TYPE_FILTER(value=dm_name + "Golden")) \
-            .should(TYPE_FILTER(value=dm_name + "Master")) \
-            .must(RF("mdmLastUpdated", [None, now])) \
-            .build().to_json()
-
-        try:
-            Query(self.carol).delete(json_query)
-        except:
-            pass
-
-        json_query = Filter.Builder() \
-            .type(dm_name + "Rejected") \
-            .must(RF("mdmLastUpdated", [None, now])) \
-            .build().to_json()
-
-        try:
-            Query(self.carol, index_type='STAGING').delete(json_query)
-        except:
-            pass
 
     def fetch_parquet(self, dm_name, merge_records=True, backend='dask', n_jobs=1, return_dask_graph=False,
                       columns=None):
@@ -407,28 +380,6 @@ class DataModel:
             result = self.carol.call_api(url_filter, data=json_query, params=query_params)
             print(f"To go: {c + 1}/{len(chunks)}")
 
-    # TODO: equal to Staging
-    def send_a(self, session, url, data_json, extra_headers, content_type):
-        self.carol.call_api(url, data=data_json, extra_headers=extra_headers,
-                            content_type=content_type, session=session)
-
-    # TODO: the same that in staging.
-    async def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers,
-                                      content_type, max_workers):
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            session = self.carol._retry_session()
-            # Set any session parameters here before calling `send_a`
-            loop = asyncio.get_event_loop()
-            tasks = [
-                loop.run_in_executor(
-                    executor,
-                    self.send_a,
-                    *(session, url, data_json, extra_headers, content_type)
-                    # Allows us to pass in multiple arguments to `send_a`
-                )
-                for data_json in self._stream_data(data, data_size, step_size, is_df)
-            ]
-
     def send_data(self, data, dm_name=None, dm_id=None, step_size=100, gzip=False, delete_old_records=False,
                   print_stats=True, max_workers=None, async_send=False):
 
@@ -469,7 +420,7 @@ class DataModel:
             dm_name = self._get(dm_id, by='id')['mdmName']
 
         if delete_old_records:
-            self._delete(dm_name)
+            delete_golden(self.carol, dm_name)
 
         is_df = False
         if isinstance(data, pd.DataFrame):
@@ -490,47 +441,29 @@ class DataModel:
 
         url = f"v1/entities/templates/{dm_id}/goldenRecords?async=true"
 
-        self.cont = 0
         if async_send:
             loop = asyncio.get_event_loop()
-            future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
-                                                                        url, extra_headers, content_type, max_workers))
+            future = asyncio.ensure_future(async_helpers.send_data_asynchronous(carol=self.carol,
+                                                                                data=data,
+                                                                                step_size=step_size,
+                                                                                url=url,
+                                                                                extra_headers=extra_headers,
+                                                                                content_type=content_type,
+                                                                                max_workers=max_workers,
+                                                                                compress_gzip=self.gzip))
             loop.run_until_complete(future)
 
         else:
-            for data_json in self._stream_data(data, data_size, step_size, is_df):
+            for data_json, cont in stream_data(data=data,
+                                               step_size=step_size,
+                                               compress_gzip=self.gzip):
+
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
                 if print_stats:
-                    print('{}/{} sent'.format(self.cont, data_size), end='\r')
+                    print('{}/{} sent'.format(cont, data_size), end='\r')
 
-    # TODO: reused from staging. Should I put in utils/?
-    def _stream_data(self, data, data_size, step_size, is_df):
-        for i in range(0, data_size, step_size):
-            if is_df:
-                data_to_send = data.iloc[i:i + step_size]
-                self.cont += len(data_to_send)
-                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
-                data_to_send = data_to_send.to_json(orient='records', date_format='iso', lines=False)
-                if self.gzip:
-                    out = io.BytesIO()
-                    with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
-                        f.write(data_to_send.encode('utf-8'))
-                    yield out.getvalue()
-                else:
-                    yield json.loads(data_to_send)
-            else:
-                data_to_send = data[i:i + step_size]
-                self.cont += len(data_to_send)
-                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
-                if self.gzip:
-                    out = io.BytesIO()
-                    with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
-                        f.write(json.dumps(data_to_send).encode('utf-8'))
-                    yield out.getvalue()
-                else:
-                    yield data_to_send
-
-    def create_mapping(self, staging_name, connector_id=None, connector_name=None, dm_name=None, dm_id=None, publish=False):
+    def create_mapping(self, staging_name, connector_id=None, connector_name=None, dm_name=None, dm_id=None,
+                       publish=False):
 
         """
 
