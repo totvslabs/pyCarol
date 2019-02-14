@@ -7,7 +7,6 @@ import warnings
 import pandas as pd
 import gzip, io
 import asyncio
-from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 from .data_models_fields import DataModelFields
@@ -16,7 +15,7 @@ from .data_model_types import DataModelTypeIds
 from ..utils.importers import _import_dask, _import_pandas
 from ..verticals import Verticals
 from ..carolina import Carolina
-from ..query import Query
+from ..query import Query, delete_golden
 from ..connectors import Connectors
 from ..filter import RANGE_FILTER as RF
 from ..filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
@@ -60,32 +59,6 @@ class DataModel:
         self.entity_template_ = {resp['mdmName']: resp}
         self.fields_dict.update({resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
-
-    # TODO: _delete function is common to staging and data_model. for this reason, could be allocated in an utils file
-    def _delete(self, dm_name):
-
-        now = datetime.utcnow().isoformat(timespec='seconds')
-
-        json_query = Filter.Builder() \
-            .should(TYPE_FILTER(value=dm_name + "Golden")) \
-            .should(TYPE_FILTER(value=dm_name + "Master")) \
-            .must(RF("mdmLastUpdated", [None, now])) \
-            .build().to_json()
-
-        try:
-            Query(self.carol).delete(json_query)
-        except:
-            pass
-
-        json_query = Filter.Builder() \
-            .type(dm_name + "Rejected") \
-            .must(RF("mdmLastUpdated", [None, now])) \
-            .build().to_json()
-
-        try:
-            Query(self.carol, index_type='STAGING').delete(json_query)
-        except:
-            pass
 
     def fetch_parquet(self, dm_name, merge_records=True, backend='dask', n_jobs=1, return_dask_graph=False,
                       columns=None):
@@ -428,6 +401,8 @@ class DataModel:
                 )
                 for data_json in self._stream_data(data, data_size, step_size, is_df)
             ]
+            for _ in await asyncio.gather(*tasks):
+                pass
 
     def send_data(self, data, dm_name=None, dm_id=None, step_size=100, gzip=False, delete_old_records=False,
                   print_stats=True, max_workers=None, async_send=False):
@@ -469,7 +444,7 @@ class DataModel:
             dm_name = self._get(dm_id, by='id')['mdmName']
 
         if delete_old_records:
-            self._delete(dm_name)
+            delete_golden(self.carol, dm_name)
 
         is_df = False
         if isinstance(data, pd.DataFrame):
