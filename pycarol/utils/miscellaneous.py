@@ -1,7 +1,4 @@
 from datetime import datetime
-from ..query import Query
-from ..filter import TYPE_FILTER, RANGE_FILTER, Filter
-
 
 def ranges(min_v, max_v, nb):
     if min_v == max_v:
@@ -41,6 +38,9 @@ def delete_golden(carol, dm_name, now=None):
     To delate based on a date.
     >>>delete_golden(login, dm_name=my_dm, now='2018-11-16')
     """
+
+    from ..query import Query
+    from ..filter import TYPE_FILTER, RANGE_FILTER, Filter
 
     if now is None:
         now = datetime.utcnow().isoformat(timespec='seconds')
