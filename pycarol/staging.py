@@ -154,9 +154,11 @@ class Staging:
         self.cont = 0
         if async_send:
             loop = asyncio.get_event_loop()
+
             future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
                                                                         url, extra_headers, content_type, max_workers))
             loop.run_until_complete(future)
+            loop.close()
 
         else:
             for data_json in self._stream_data(data, data_size, step_size, is_df):
@@ -166,10 +168,12 @@ class Staging:
 
     async def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers,
                                       content_type, max_workers):
+        # based on https://hackernoon.com/how-to-run-asynchronous-web-requests-in-parallel-with-python-3-5-without-aiohttp-264dc0f8546
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             session = self.carol._retry_session()
             # Set any session parameters here before calling `send_a`
             loop = asyncio.get_event_loop()
+
             tasks = [
                 loop.run_in_executor(
                     executor,
@@ -179,6 +183,8 @@ class Staging:
                 )
                 for data_json in self._stream_data(data, data_size, step_size, is_df)
             ]
+            for _ in await asyncio.gather(*tasks):
+                pass
 
     def send_a(self,session, url, data_json, extra_headers,content_type):
         self.carol.call_api(url, data=data_json, extra_headers=extra_headers,
