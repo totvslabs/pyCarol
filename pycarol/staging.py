@@ -263,12 +263,12 @@ class Staging:
 
         # validate export
         stags = self._get_staging_export_stats()
-        if (not stags.get(staging_name)):
+        if (not stags.get(connector_id+'_'+staging_name)):
             raise Exception(f'"{staging_name}" is not set to export data, \n '
                             f'use `dm = Staging(login).export(staging_name="{staging_name}",'
                             f'connector_id="{connector_id}", sync_staging=True) to activate')
 
-        if stags.get(staging_name)['mdmConnectorId'] != connector_id:
+        if stags.get(connector_id+'_'+staging_name)['mdmConnectorId'] != connector_id:
             raise Exception(
                 f'"Wrong connector Id {connector_id}. The connector Id associeted to this staging is  '
                 f'{stags.get(staging_name)["mdmConnectorId"]}"')
@@ -447,4 +447,4 @@ class Staging:
                            if elem.get('hits', None)]
         staging_results = list(itertools.chain(*staging_results))
         if staging_results is not None:
-            return {i['mdmStagingType']: i for i in staging_results}
+            return {f"{i['mdmConnectorId']}_{i['mdmStagingType']}": i for i in staging_results}
