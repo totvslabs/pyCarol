@@ -299,7 +299,7 @@ class DataModel:
         dm = {i['mdmId']: i['mdmName'] for i in dm}
 
         if dm_results is not None:
-            return {dm[i['mdmEntityTemplateId']]: i for i in dm_results}
+            return {dm.get(i['mdmEntityTemplateId'], i['mdmEntityTemplateId']+'_NOT_FOUND' ): i for i in dm_results}
 
         return dm_results
 
