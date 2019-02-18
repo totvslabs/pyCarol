@@ -29,7 +29,7 @@ def delete_golden(carol, dm_name, now=None):
     Usage:
     To delete:
 
-    >>>from pycarol.utils.miscellaneous import delete_golden
+    >>>from pycarol.query import delete_golden
     >>>from pycarol.auth.PwdAuth import PwdAuth
     >>>from pycarol.carol import Carol
     >>>login = Carol()
