@@ -31,7 +31,7 @@ class Staging:
 
     def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100,
                   print_stats=True,
-                  gzip=True, auto_create_schema=False, crosswalk_auto_create=None, force=False, max_workers=None,
+                  gzip=True, auto_create_schema=False, crosswalk_auto_create=None, flexible_schema=False, force=False, max_workers=None,
                   dm_to_delete=None, async_send=False):
         '''
         :param staging_name:  `str`,
@@ -52,6 +52,8 @@ class Staging:
             If to auto create the schema for the data being sent.
         :param crosswalk_auto_create: `list`, default `None`
             If `auto_create_schema=True`, one should send the crosswalk for the staging.
+        :param flexible_schema: `bool`, default `False`
+            If `auto_create_schema=True`, to use a flexible schema.
         :param force: `bool`, default `False`
             If `force=True` it will not check for repeated records according to crosswalk. If `False` it will check for
             duplicates and raise an error if so.
@@ -100,13 +102,13 @@ class Staging:
         if (not schema) and (auto_create_schema):
             assert crosswalk_auto_create, "You should provide a crosswalk"
             self.create_schema(_sample_json, staging_name, connector_id=connector_id,
-                               crosswalk_list=crosswalk_auto_create)
+                               crosswalk_list=crosswalk_auto_create, mdm_flexible=flexible_schema)
             _crosswalk = crosswalk_auto_create
             print('provided crosswalk ', _crosswalk)
         elif auto_create_schema:
             assert crosswalk_auto_create, "You should provide a crosswalk"
             self.create_schema(_sample_json, staging_name, connector_id=connector_id,
-                               crosswalk_list=crosswalk_auto_create, overwrite=True)
+                               crosswalk_list=crosswalk_auto_create, overwrite=True, mdm_flexible=flexible_schema)
             _crosswalk = crosswalk_auto_create
             print('provided crosswalk ', _crosswalk)
         else:
@@ -162,6 +164,15 @@ class Staging:
 
     def create_schema(self, fields_dict, staging_name, connector_id=None, mdm_flexible='false',
                       crosswalk_name=None, crosswalk_list=None, overwrite=False):
+
+
+        if isinstance(mdm_flexible,bool): #for compability
+            # TODO: review `mdm_flexible` as type string. Probably it would work if we use bool.
+            if mdm_flexible:
+                mdm_flexible = 'true'
+            else:
+                mdm_flexible = 'false'
+
         assert fields_dict is not None
 
         if isinstance(fields_dict, list):
