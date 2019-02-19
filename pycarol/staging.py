@@ -112,6 +112,10 @@ class Staging:
             _crosswalk = crosswalk_auto_create
             print('provided crosswalk ', _crosswalk)
         else:
+            if schema is None:
+                raise Exception(f"No schema found for `staging_name={staging_name}`. \n"
+                                f"Use `auto_create_schema=True`"
+                                f" to create schema automaticly ")
             _crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
             _crosswalk = list(_crosswalk)[0]
             print('fetched crosswalk ', _crosswalk)
@@ -160,7 +164,6 @@ class Staging:
             return self.carol.call_api(f'v2/staging/tables/{staging_name}/schema', method='GET',
                                        params=query_string)
         except Exception:
-            warnings.warn(f"Schema {staging_name} not found", UserWarning)
             return None
 
     def create_schema(self, fields_dict, staging_name, connector_id=None, mdm_flexible='false',
