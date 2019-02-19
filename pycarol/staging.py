@@ -160,6 +160,7 @@ class Staging:
             return self.carol.call_api(f'v2/staging/tables/{staging_name}/schema', method='GET',
                                        params=query_string)
         except Exception:
+            warnings.warn(f"Schema {staging_name} not found", UserWarning)
             return None
 
     def create_schema(self, fields_dict, staging_name, connector_id=None, mdm_flexible='false',
