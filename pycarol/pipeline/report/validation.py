@@ -202,7 +202,7 @@ def generate_report(pipeline_task, domain=None, dms=None, mute_luigi=True):
     print('Running luigi validation pipeline...')
     if mute_luigi:
         luigi.interface.setup_interface_logging.has_run = True
-    params = dict(task='dm_validation')
+    params = dict(operation='dm_validation')
     if domain is not None:
         params.update({'domain': domain})
     if dms is not None:

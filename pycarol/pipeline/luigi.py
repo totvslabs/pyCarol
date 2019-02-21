@@ -11,7 +11,7 @@ from ..carol import Carol
 logger = logging.getLogger(__name__)
 
 
-class Parameter(Parameter):
+class Parameter(luigi.Parameter):
     """ Extension of Parameter to include Carol information
     """
 
