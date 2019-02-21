@@ -1,68 +1,39 @@
-from .schema_generator import carolSchemaGenerator
 import pandas as pd
 import json
-from .query import Query
-from datetime import datetime
+import itertools
+import warnings
+import asyncio
+
+from .query import Query, delete_golden
+from .schema_generator import carolSchemaGenerator
 from .connectors import Connectors
 from .carolina import Carolina
 from .utils.importers import _import_dask, _import_pandas
-from .filter import Filter, RANGE_FILTER, TYPE_FILTER
-import itertools
-import warnings
-import gzip, io
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
+from .filter import Filter, TYPE_FILTER
+from .utils import async_helpers
+from .utils.miscellaneous import stream_data
 
 
 _SCHEMA_TYPES_MAPPING = {
-                        "geo_point":str,
-                        "long":int,
-                        "double": float,
-                        "nested": str,
-                        "string": str,
-                        "base64": str,
-                        "boolean":bool
-            }
+    "geo_point": str,
+    "long": int,
+    "double": float,
+    "nested": str,
+    "string": str,
+    "base64": str,
+    "boolean": bool
+}
+
 
 class Staging:
     def __init__(self, carol):
         self.carol = carol
 
-
-    def _delete(self,dm_name):
-
-        now = datetime.now().isoformat(timespec='seconds')
-
-        json_query = Filter.Builder() \
-            .should(TYPE_FILTER(value=dm_name + "Golden")) \
-            .should(TYPE_FILTER(value=dm_name + "Master")) \
-            .must(RANGE_FILTER("mdmLastUpdated", [None, now]))\
-            .build().to_json()
-
-
-        try:
-            Query(self.carol).delete(json_query)
-        except:
-            pass
-
-        json_query = Filter.Builder()\
-            .type(dm_name + "Rejected")\
-            .must(RANGE_FILTER("mdmLastUpdated", [None, now]))\
-            .build().to_json()
-
-        try:
-            Query(self.carol,index_type='STAGING').delete(json_query)
-        except:
-            pass
-
-
-
-    def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100, print_stats=True,
-                  gzip=True,  auto_create_schema=False, crosswalk_auto_create=None, force=False, max_workers=None,
+    def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100,
+                  print_stats=True,
+                  gzip=True, auto_create_schema=False, crosswalk_auto_create=None, flexible_schema=False, force=False, max_workers=None,
                   dm_to_delete=None, async_send=False):
-
         '''
-
         :param staging_name:  `str`,
             Staging name to send the data.
         :param data: pandas data frame, json. default `None`
@@ -81,6 +52,8 @@ class Staging:
             If to auto create the schema for the data being sent.
         :param crosswalk_auto_create: `list`, default `None`
             If `auto_create_schema=True`, one should send the crosswalk for the staging.
+        :param flexible_schema: `bool`, default `False`
+            If `auto_create_schema=True`, to use a flexible schema.
         :param force: `bool`, default `False`
             If `force=True` it will not check for repeated records according to crosswalk. If `False` it will check for
             duplicates and raise an error if so.
@@ -97,7 +70,7 @@ class Staging:
         extra_headers = {}
         content_type = 'application/json'
         if self.gzip:
-            content_type=None
+            content_type = None
             extra_headers["Content-Encoding"] = "gzip"
             extra_headers['content-type'] = 'application/json'
 
@@ -107,7 +80,7 @@ class Staging:
             if connector_id is None:
                 connector_id = self.carol.connector_id
 
-        schema = self.get_schema(staging_name,connector_id=connector_id)
+        schema = self.get_schema(staging_name, connector_id=connector_id)
 
         is_df = False
         if isinstance(data, pd.DataFrame):
@@ -128,87 +101,56 @@ class Staging:
 
         if (not schema) and (auto_create_schema):
             assert crosswalk_auto_create, "You should provide a crosswalk"
-            self.create_schema(_sample_json, staging_name, connector_id=connector_id, crosswalk_list=crosswalk_auto_create)
+            self.create_schema(_sample_json, staging_name, connector_id=connector_id,
+                               crosswalk_list=crosswalk_auto_create, mdm_flexible=flexible_schema)
             _crosswalk = crosswalk_auto_create
-            print('provided crosswalk ',_crosswalk)
+            print('provided crosswalk ', _crosswalk)
         elif auto_create_schema:
             assert crosswalk_auto_create, "You should provide a crosswalk"
             self.create_schema(_sample_json, staging_name, connector_id=connector_id,
-                               crosswalk_list=crosswalk_auto_create, overwrite=True)
+                               crosswalk_list=crosswalk_auto_create, overwrite=True, mdm_flexible=flexible_schema)
             _crosswalk = crosswalk_auto_create
-            print('provided crosswalk ',_crosswalk)
+            print('provided crosswalk ', _crosswalk)
         else:
+            if schema is None:
+                raise Exception(f"No schema found for `staging_name={staging_name}`. \n"
+                                f"Use `auto_create_schema=True`"
+                                f" to create schema automaticly ")
             _crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
             _crosswalk = list(_crosswalk)[0]
-            print('fetched crosswalk ',_crosswalk)
+            print('fetched crosswalk ', _crosswalk)
 
         if is_df and not force:
             assert data.duplicated(subset=_crosswalk).sum() == 0, \
                 "crosswalk is not unique on dataframe. set force=True to send it anyway."
 
         if dm_to_delete is not None:
-            self._delete(dm_to_delete)
-
+            delete_golden(self.carol, dm_to_delete)
 
         url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
         self.cont = 0
         if async_send:
             loop = asyncio.get_event_loop()
-            future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
-                                                                        url, extra_headers, content_type, max_workers))
+            future = asyncio.ensure_future(async_helpers.send_data_asynchronous(carol=self.carol,
+                                                                                data=data,
+                                                                                step_size=step_size,
+                                                                                url=url,
+                                                                                extra_headers=extra_headers,
+                                                                                content_type=content_type,
+                                                                                max_workers=max_workers,
+                                                                                compress_gzip=self.gzip))
             loop.run_until_complete(future)
 
+
         else:
-            for data_json in self._stream_data(data, data_size, step_size, is_df):
+            for data_json, cont in stream_data(data=data,
+                                               step_size=step_size,
+                                               compress_gzip=self.gzip):
+
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
                 if print_stats:
-                    print('{}/{} sent'.format(self.cont, data_size), end='\r')
+                    print('{}/{} sent'.format(cont, data_size), end='\r')
 
-    async def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers,
-                                      content_type, max_workers):
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            session = self.carol._retry_session()
-            # Set any session parameters here before calling `send_a`
-            loop = asyncio.get_event_loop()
-            tasks = [
-                loop.run_in_executor(
-                    executor,
-                    self.send_a,
-                    *(session, url, data_json, extra_headers, content_type)
-                    # Allows us to pass in multiple arguments to `send_a`
-                )
-                for data_json in self._stream_data(data, data_size, step_size, is_df)
-            ]
-
-    def send_a(self,session, url, data_json, extra_headers,content_type):
-        self.carol.call_api(url, data=data_json, extra_headers=extra_headers,
-                            content_type=content_type, session=session)
-
-    def _stream_data(self, data, data_size, step_size, is_df):
-        for i in range(0,data_size, step_size):
-            if is_df:
-                data_to_send = data.iloc[i:i + step_size]
-                self.cont += len(data_to_send)
-                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
-                data_to_send = data_to_send.to_json(orient='records', date_format='iso', lines=False)
-                if self.gzip:
-                    out = io.BytesIO()
-                    with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
-                        f.write(data_to_send.encode('utf-8'))
-                    yield out.getvalue()
-                else:
-                    yield json.loads(data_to_send)
-            else:
-                data_to_send = data[i:i + step_size]
-                self.cont += len(data_to_send)
-                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
-                if self.gzip:
-                    out = io.BytesIO()
-                    with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
-                        f.write(json.dumps(data_to_send).encode('utf-8'))
-                    yield out.getvalue()
-                else:
-                    yield data_to_send
 
     def get_schema(self, staging_name, connector_name=None, connector_id=None):
 
@@ -219,13 +161,22 @@ class Staging:
         if connector_id:
             query_string = {"connectorId": connector_id}
         try:
-            return self.carol.call_api(f'v2/staging/tables/{staging_name}/schema',  method='GET',
+            return self.carol.call_api(f'v2/staging/tables/{staging_name}/schema', method='GET',
                                        params=query_string)
         except Exception:
             return None
 
     def create_schema(self, fields_dict, staging_name, connector_id=None, mdm_flexible='false',
-                     crosswalk_name=None, crosswalk_list=None, overwrite=False):
+                      crosswalk_name=None, crosswalk_list=None, overwrite=False):
+
+
+        if isinstance(mdm_flexible,bool): #for compability
+            # TODO: review `mdm_flexible` as type string. Probably it would work if we use bool.
+            if mdm_flexible:
+                mdm_flexible = 'true'
+            else:
+                mdm_flexible = 'false'
+
         assert fields_dict is not None
 
         if isinstance(fields_dict, list):
@@ -234,7 +185,7 @@ class Staging:
         if isinstance(fields_dict, dict):
             schema = carolSchemaGenerator(fields_dict)
             schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible,
-                                    crosswalkname=crosswalk_name,crosswalkList=crosswalk_list)
+                                    crosswalkname=crosswalk_name, crosswalkList=crosswalk_list)
         elif isinstance(fields_dict, str):
             schema = carolSchemaGenerator.from_json(fields_dict)
             schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible,
@@ -242,16 +193,15 @@ class Staging:
         else:
             print('Behavior for type %s not defined!' % type(fields_dict))
 
-
         self.send_schema(schema=schema, staging_name=staging_name, connector_id=connector_id, overwrite=overwrite)
 
-    def send_schema(self,schema, staging_name, connector_id=None, overwrite=False):
+    def send_schema(self, schema, staging_name, connector_id=None, overwrite=False):
         query_string = {"connectorId": connector_id}
         if connector_id is None:
             connector_id = self.carol.connector_id
             query_string = {"connectorId": connector_id}
 
-        has_schema = self.get_schema(staging_name,connector_id=connector_id) is not None
+        has_schema = self.get_schema(staging_name, connector_id=connector_id) is not None
         if has_schema and overwrite:
             method = 'PUT'
         else:
@@ -276,7 +226,7 @@ class Staging:
         """
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
-    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',verbose=0,
+    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask', verbose=0,
                       merge_records=True, n_jobs=1, return_dask_graph=False, columns=None, max_hits=None,
                       return_metadata=False, callback=None):
         """
@@ -312,8 +262,8 @@ class Staging:
         old_columns = None
         if columns:
             old_columns = columns
-            columns = [i.replace("-","_") for i in columns]
-            columns.extend(['mdmId', 'mdmCounterForEntity','mdmLastUpdated'])
+            columns = [i.replace("-", "_") for i in columns]
+            columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
             old_columns = dict(zip([i.replace("-", "_") for i in columns], old_columns))
 
         if connector_name:
@@ -321,59 +271,63 @@ class Staging:
         else:
             assert connector_id
 
-        assert backend=='dask' or backend=='pandas'
+        assert backend == 'dask' or backend == 'pandas'
 
         if return_dask_graph:
             assert backend == 'dask'
 
-        #validate export
+        # validate export
         stags = self._get_staging_export_stats()
-        if (not stags.get(staging_name)):
-            raise Exception(f'"{staging_name}" is not set to export data, \n use `dm = Staging(login).export(staging_name="{staging_name}",connector_id="{connector_id}", sync_staging=True) to activate')
+        if (not stags.get(connector_id+'_'+staging_name)):
+            raise Exception(f'"{staging_name}" is not set to export data, \n '
+                            f'use `dm = Staging(login).export(staging_name="{staging_name}",'
+                            f'connector_id="{connector_id}", sync_staging=True) to activate')
 
-        if stags.get(staging_name)['mdmConnectorId']!=connector_id:
+        if stags.get(connector_id+'_'+staging_name)['mdmConnectorId'] != connector_id:
             raise Exception(
-                f'"Wrong connector Id {connector_id}. The connector Id associeted to this staging is  {stags.get(staging_name)["mdmConnectorId"]}"')
+                f'"Wrong connector Id {connector_id}. The connector Id associeted to this staging is  '
+                f'{stags.get(staging_name)["mdmConnectorId"]}"')
 
         carolina = Carolina(self.carol)
         carolina._init_if_needed()
-        if backend=='dask':
+        if backend == 'dask':
             access_id = carolina.ai_access_key_id
             access_key = carolina.ai_secret_key
             aws_session_token = carolina.ai_access_token
 
             d = _import_dask(tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, staging_name=staging_name,
                              access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
-                             merge_records=merge_records, golden=False,return_dask_graph=return_dask_graph,columns=columns,
-                             max_hits=max_hits)
+                             merge_records=merge_records, golden=False, return_dask_graph=return_dask_graph,
+                             columns=columns, max_hits=max_hits)
 
-        elif backend=='pandas':
+        elif backend == 'pandas':
             s3 = carolina.s3
             d = _import_pandas(s3=s3, tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
                                staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns,
                                max_hits=max_hits, callback=callback)
 
-            #TODO: Do the same for dask backend
+            # TODO: Do the same for dask backend
             if d is None:
                 warnings.warn(f'No data to fetch! {staging_name} has no data', UserWarning)
                 cols_keys = list(self.get_schema(
-                    staging_name=staging_name,connector_name=connector_name
+                    staging_name=staging_name, connector_name=connector_name
                 )['mdmStagingMapping']['properties'].keys())
                 if return_metadata:
-                    cols_keys.extend(['mdmId','mdmCounterForEntity','mdmLastUpdated'])
+                    cols_keys.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
 
                 elif columns:
-                    columns = [i for i in columns if i not in ['mdmId','mdmCounterForEntity','mdmLastUpdated']]
+                    columns = [i for i in columns if i not in ['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated']]
 
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in self.get_schema(staging_name=staging_name,
-                                                  connector_name=connector_name)['mdmStagingMapping']['properties'].items():
+                                                  connector_name=connector_name)['mdmStagingMapping'][
+                    'properties'].items():
                     d.loc[:, key] = d.loc[:, key].astype(_SCHEMA_TYPES_MAPPING.get(value['type'], str), copy=False)
                 if columns:
                     d = d[list(set(columns))]
                 return d
         else:
-            raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}' )
+            raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}')
 
         if merge_records:
             if not return_dask_graph:
@@ -383,21 +337,20 @@ class Staging:
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
                 if not return_metadata:
-                    d.drop(columns=['mdmId','mdmCounterForEntity','mdmLastUpdated'], inplace=True)
+                    d.drop(columns=['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'], inplace=True)
                 d.reset_index(inplace=True, drop=True)
             else:
                 if old_columns is not None:
                     d.rename(columns=old_columns, inplace=True)
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
-                     .drop_duplicates(subset='mdmId', keep='last') \
-                     .reset_index(drop=True)
+                    .drop_duplicates(subset='mdmId', keep='last') \
+                    .reset_index(drop=True)
                 if not return_metadata:
-                    d = d.drop(columns=['mdmId','mdmCounterForEntity','mdmLastUpdated'])
+                    d = d.drop(columns=['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
 
         return d
 
-
-    def export(self,staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False,
+    def export(self, staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False,
                delete_previous=False):
         """
 
@@ -452,10 +405,9 @@ class Staging:
             assert connector_id
 
         query_params = {"status": status, "fullExport": full_export,
-                        "deletePrevious":delete_previous}
+                        "deletePrevious": delete_previous}
         url = f'v2/staging/{connector_id}/{staging_name}/exporter'
         return self.carol.call_api(url, method='POST', params=query_params)
-
 
     def export_all(self, connector_id=None, connector_name=None, sync_staging=True, full_export=False,
                    delete_previous=False):
@@ -488,8 +440,8 @@ class Staging:
         conn_stats = Connectors(self.carol).stats(connector_id=connector_id)
 
         for staging in conn_stats.get(connector_id):
-            resp = self.export(staging_name=staging, connector_id=connector_id,
-                        sync_staging=sync_staging, full_export=full_export, delete_previous=delete_previous )
+            self.export(staging_name=staging, connector_id=connector_id,
+                        sync_staging=sync_staging, full_export=full_export, delete_previous=delete_previous)
 
     def _get_staging_export_stats(self):
         """
@@ -510,4 +462,4 @@ class Staging:
                            if elem.get('hits', None)]
         staging_results = list(itertools.chain(*staging_results))
         if staging_results is not None:
-            return {i['mdmStagingType']: i for i in staging_results}
+            return {f"{i['mdmConnectorId']}_{i['mdmStagingType']}": i for i in staging_results}

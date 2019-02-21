@@ -1,23 +1,26 @@
 import json
 import itertools
+
+import time
+import copy
+import warnings
+import pandas as pd
+import asyncio
+
 from .data_models_fields import DataModelFields
 from .data_model_types import DataModelTypeIds
 
 from ..utils.importers import _import_dask, _import_pandas
 from ..verticals import Verticals
 from ..carolina import Carolina
-from ..query import Query
+from ..query import Query, delete_golden
+from ..connectors import Connectors
 from ..filter import RANGE_FILTER as RF
 from ..filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
 from ..utils.miscellaneous import ranges
-import time
-import copy
-import warnings
-import pandas as pd
-import gzip, io
-import asyncio
-from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor
+from ..utils import async_helpers
+from ..utils.miscellaneous import stream_data
+
 
 class DataModel:
 
@@ -51,39 +54,14 @@ class DataModel:
         else:
             raise print('Type incorrect, it should be "id" or "name"')
 
-        #TODO: Add 'Not Found' and `is in Deleted state`
+        # TODO: Add 'Not Found' and `is in Deleted state`
         resp = self.carol.call_api(url, method='GET')
         self.entity_template_ = {resp['mdmName']: resp}
         self.fields_dict.update({resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
 
-    #TODO: _delete function is common to staging and data_model. for this reason, could be allocated in an utils file
-    def _delete(self, dm_name):
-
-        now = datetime.now().isoformat(timespec='seconds')
-
-        json_query = Filter.Builder() \
-            .should(TYPE_FILTER(value=dm_name + "Golden")) \
-            .should(TYPE_FILTER(value=dm_name + "Master")) \
-            .must(RF("mdmLastUpdated", [None, now]))\
-            .build().to_json()
-
-        try:
-            Query(self.carol).delete(json_query)
-        except:
-            pass
-
-        json_query = Filter.Builder()\
-            .type(dm_name + "Rejected")\
-            .must(RF("mdmLastUpdated", [None, now]))\
-            .build().to_json()
-
-        try:
-            Query(self.carol, index_type='STAGING').delete(json_query)
-        except:
-            pass   
-    
-    def fetch_parquet(self, dm_name, merge_records=True, backend='dask', n_jobs=1, return_dask_graph=False, columns=None):
+    def fetch_parquet(self, dm_name, merge_records=True, backend='dask', n_jobs=1, return_dask_graph=False,
+                      columns=None):
         """
 
         :param dm_name: `str`
@@ -107,24 +85,26 @@ class DataModel:
         if return_dask_graph:
             assert backend == 'dask'
 
-        #validate export
+        # validate export
         dms = self._get_dm_export_stats()
         if not dms.get(dm_name):
-            raise Exception(f'"{dm_name}" is not set to export data, \n use `dm = DataModel(login).export(dm_name="{dm_name}", sync_dm=True) to activate')
+            raise Exception(
+                f'"{dm_name}" is not set to export data, \n use `dm = DataModel(login).export(dm_name="{dm_name}", sync_dm=True) to activate')
 
         carolina = Carolina(self.carol)
         carolina._init_if_needed()
 
-        if backend=='dask':
+        if backend == 'dask':
             access_id = carolina.ai_access_key_id
             access_key = carolina.ai_secret_key
             aws_session_token = carolina.ai_access_token
-            d =_import_dask(dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
-                            access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
-                            merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph, columns=columns)
+            d = _import_dask(dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
+                             access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
+                             merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph,
+                             columns=columns)
 
 
-        elif backend=='pandas':
+        elif backend == 'pandas':
             s3 = carolina.s3
             d = _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
                                n_jobs=n_jobs, golden=True, columns=columns)
@@ -132,7 +112,7 @@ class DataModel:
                 warnings.warn("No data to fetch!", UserWarning)
                 return None
         else:
-            raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}' )
+            raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}')
 
         if merge_records:
             if not return_dask_graph:
@@ -146,7 +126,6 @@ class DataModel:
                     .reset_index(drop=True)
 
         return d
-
 
     def get_all(self, offset=0, page_size=-1, sort_order='ASC',
                 sort_by=None, print_status=False,
@@ -243,7 +222,7 @@ class DataModel:
             assert dm_id
 
         query_params = {"status": status, "fullExport": full_export,
-                        "deletePrevious":delete_previous}
+                        "deletePrevious": delete_previous}
 
         url = f'v1/entities/templates/{dm_id}/exporter'
         return self.carol.call_api(url, method='POST', params=query_params)
@@ -271,10 +250,9 @@ class DataModel:
         self.get_all()
 
         for i in self.template_dict.values():
-
-            dm_id= i['mdmId']
+            dm_id = i['mdmId']
             self.export(dm_id=dm_id, sync_dm=sync_dm, full_export=full_export,
-                            delete_previous=delete_previous)
+                        delete_previous=delete_previous)
 
     def delete(self, dm_id=None, dm_name=None, entity_space='WORKING'):
         # TODO: Check Possible entity_spaces
@@ -297,7 +275,6 @@ class DataModel:
             else:
                 f[field['mdmName']] = self._get_name_type_DMS(field['mdmFields'])
         return f
-
 
     def _get_dm_export_stats(self):
         """
@@ -322,7 +299,7 @@ class DataModel:
         dm = {i['mdmId']: i['mdmName'] for i in dm}
 
         if dm_results is not None:
-            return {dm[i['mdmEntityTemplateId']]: i for i in dm_results}
+            return {dm.get(i['mdmEntityTemplateId'], i['mdmEntityTemplateId']+'_NOT_FOUND' ): i for i in dm_results}
 
         return dm_results
 
@@ -330,14 +307,14 @@ class DataModel:
 
         if query_filter is not None:
             j = query_filter.type(self.datamodel_name) \
-                .aggregation_list([MINIMUM(name='MINIMUM',params= self.mdm_key), MAXIMUM(name='MAXIMUM',
-                                                                                         params=self.mdm_key)])\
+                .aggregation_list([MINIMUM(name='MINIMUM', params=self.mdm_key), MAXIMUM(name='MAXIMUM',
+                                                                                         params=self.mdm_key)]) \
                 .build().to_json()
         else:
-            j = Filter.Builder()\
+            j = Filter.Builder() \
                 .type(self.datamodel_name) \
-                .aggregation_list([MINIMUM(name='MINIMUM',params= self.mdm_key), MAXIMUM(name='MAXIMUM',
-                                                                                         params=self.mdm_key)])\
+                .aggregation_list([MINIMUM(name='MINIMUM', params=self.mdm_key), MAXIMUM(name='MAXIMUM',
+                                                                                         params=self.mdm_key)]) \
                 .build().to_json()
 
         query = Query(self.carol, index_type=self.index_type, only_hits=False, get_aggs=True, save_results=False,
@@ -367,11 +344,11 @@ class DataModel:
         :return: None
         """
 
-        assert copy_or_move=='copy' or copy_or_move=='move', 'copy_or_move shoulb be "copy" or "move"'
+        assert copy_or_move == 'copy' or copy_or_move == 'move', 'copy_or_move shoulb be "copy" or "move"'
         if query_filter:
-            assert isinstance(query_filter,Filter.Builder)
+            assert isinstance(query_filter, Filter.Builder)
 
-        if copy_or_move=='copy':
+        if copy_or_move == 'copy':
             copy_or_move = False
         else:
             copy_or_move = True
@@ -379,18 +356,16 @@ class DataModel:
         self.mdm_id = self.get_by_name(datamodel_name)['mdmId']
 
         self.index_type = 'MASTER'
-        self.datamodel_name = datamodel_name+'Golden'
+        self.datamodel_name = datamodel_name + 'Golden'
         self.mdm_key = 'mdmCounterForEntity'
         min_v, max_v = self._get_min_max(query_filter=query_filter)
 
         chunks = ranges(min_v, max_v, n_of_tasks)
         print(f"Number of chunks: {len(chunks)}")
 
-
         url_filter = f"v1/entities/templates/{self.mdm_id}/reprocess"
 
-
-        for c,i in enumerate(chunks):
+        for c, i in enumerate(chunks):
             if query_filter is not None:
                 query_filter_to_use = copy.deepcopy(query_filter)
                 json_query = query_filter_to_use.must(RF(key=self.mdm_key, value=i)).build().to_json()
@@ -400,36 +375,13 @@ class DataModel:
                     .build().to_json()
 
             query_params = {"recordType": record_type, "fuzzy": "false",
-                           "deleteRecords": copy_or_move}
+                            "deleteRecords": copy_or_move}
 
             result = self.carol.call_api(url_filter, data=json_query, params=query_params)
-            print(f"To go: {c+1}/{len(chunks)}")
-
-    #TODO: equal to Staging
-    def send_a(self,session, url, data_json, extra_headers,content_type):
-        self.carol.call_api(url, data=data_json, extra_headers=extra_headers,
-                            content_type=content_type, session=session)
-
-
-    #TODO: the same that in staging.
-    async def _send_data_asynchronous(self, data, data_size, step_size, is_df, url, extra_headers,
-                                      content_type, max_workers):
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            session = self.carol._retry_session()
-            # Set any session parameters here before calling `send_a`
-            loop = asyncio.get_event_loop()
-            tasks = [
-                loop.run_in_executor(
-                    executor,
-                    self.send_a,
-                    *(session, url, data_json, extra_headers, content_type)
-                    # Allows us to pass in multiple arguments to `send_a`
-                )
-                for data_json in self._stream_data(data, data_size, step_size, is_df)
-            ]
+            print(f"To go: {c + 1}/{len(chunks)}")
 
     def send_data(self, data, dm_name=None, dm_id=None, step_size=100, gzip=False, delete_old_records=False,
-                  print_stats=True, max_workers=None,  async_send=False):
+                  print_stats=True, max_workers=None, async_send=False):
 
         """
         :param data: pandas data frame, json.
@@ -452,14 +404,12 @@ class DataModel:
             To use async to send the data. This is much faster than a sequential send.
         :return: None
         """
-        
-
 
         self.gzip = gzip
         extra_headers = {}
         content_type = 'application/json'
         if self.gzip:
-            content_type=None
+            content_type = None
             extra_headers["Content-Encoding"] = "gzip"
             extra_headers['content-type'] = 'application/json'
 
@@ -469,9 +419,8 @@ class DataModel:
             assert dm_id
             dm_name = self._get(dm_id, by='id')['mdmName']
 
-
         if delete_old_records:
-            self._delete(dm_name)
+            delete_golden(self.carol, dm_name)
 
         is_df = False
         if isinstance(data, pd.DataFrame):
@@ -490,50 +439,79 @@ class DataModel:
             data = [data]
             data_size = len(data)
 
-
-
         url = f"v1/entities/templates/{dm_id}/goldenRecords?async=true"
 
-        self.cont = 0
         if async_send:
             loop = asyncio.get_event_loop()
-            future = asyncio.ensure_future(self._send_data_asynchronous(data, data_size, step_size, is_df,
-                                                                        url, extra_headers, content_type, max_workers))
+            future = asyncio.ensure_future(async_helpers.send_data_asynchronous(carol=self.carol,
+                                                                                data=data,
+                                                                                step_size=step_size,
+                                                                                url=url,
+                                                                                extra_headers=extra_headers,
+                                                                                content_type=content_type,
+                                                                                max_workers=max_workers,
+                                                                                compress_gzip=self.gzip))
             loop.run_until_complete(future)
 
         else:
-            for data_json in self._stream_data(data, data_size, step_size, is_df):
+            for data_json, cont in stream_data(data=data,
+                                               step_size=step_size,
+                                               compress_gzip=self.gzip):
+
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
                 if print_stats:
-                    print('{}/{} sent'.format(self.cont, data_size), end='\r')
+                    print('{}/{} sent'.format(cont, data_size), end='\r')
 
-    #TODO: reused from staging. Should I put in utils/?
-    def _stream_data(self, data, data_size, step_size, is_df):
-        for i in range(0, data_size, step_size):
-            if is_df:
-                data_to_send = data.iloc[i:i + step_size]
-                self.cont += len(data_to_send)
-                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
-                data_to_send = data_to_send.to_json(orient='records', date_format='iso', lines=False)
-                if self.gzip:
-                    out = io.BytesIO()
-                    with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
-                        f.write(data_to_send.encode('utf-8'))
-                    yield out.getvalue()
-                else:
-                    yield json.loads(data_to_send)
-            else:
-                data_to_send = data[i:i + step_size]
-                self.cont += len(data_to_send)
-                print('Sending {}/{}'.format(self.cont, data_size), end='\r')
-                if self.gzip:
-                    out = io.BytesIO()
-                    with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
-                        f.write(json.dumps(data_to_send).encode('utf-8'))
-                    yield out.getvalue()
-                else:
-                    yield data_to_send
+    def create_mapping(self, staging_name, connector_id=None, connector_name=None, dm_name=None, dm_id=None,
+                       publish=False):
 
+        """
+
+        This method will create the link between tha staging and a data model. If Publish=True it will publish how it is.
+
+        :param staging_name:  `str`
+            Name of the staging to be mapped.
+        :param connector_id:  `str`, `str`, default `None`
+            Staging's connector ID
+        :param connector_name:  `str`, default `None`
+            Staging's connector name
+        :param dm_name: `int`, default `100`
+            Data Model name
+        :param dm_id: `bool`, default `True`
+            Data model ID
+        :param publish: `bool`, default `True`
+            If publish after create mapping.
+        :return: None
+        """
+
+        if connector_name:
+            _con = Connectors(self.carol)
+            connector_id = _con.get_by_name(connector_name)['mdmId']
+        else:
+            assert connector_id
+            _con = Connectors(self.carol)
+            connector_name = _con.get_by_id(connector_id)['mdmName']
+
+        if dm_name:
+            dm_id = self.get_by_name(dm_name)['mdmId']
+        else:
+            assert dm_id
+            dm_name = self.get_by_id(dm_id)['mdmName']
+
+        url = f"v1/connectors/{connector_id}/entityMappings"
+
+        payload = {"mdmMasterEntityId": dm_id,
+                   "mdmMasterEntityName": dm_name,
+                   "mdmConnectorId": connector_id,
+                   "mdmStagingType": staging_name
+                   }
+        resp = self.carol.call_api(url, data=payload)
+        if publish:
+            url = f"v1/connectors/{connector_id}/entityMappings/{resp['mdmId']}/publish"
+
+            self.carol.call_api(url, method='POST')
+
+        return resp
 
 
 class entIntType(object):
@@ -707,12 +685,11 @@ class CreateDataModel(object):
                    "mdmEntityTemplateTypeIds": [self.entity_template_type_ids],
                    "mdmTransactionDataModel": self.transaction_data_model, "mdmProfileTitleFields": []}
 
-
         while True:
             url_filter = "v1/entities/templates"
             resp = self.carol.call_api(url_filter, data=payload, method='POST', errors='ignore')
             # error handler for token
-            if ('already exists' in resp.get('errorMessage',[])) and (overwrite):
+            if ('already exists' in resp.get('errorMessage', [])) and (overwrite):
                 del_DM = DataModel(self.carol)
                 del_DM.get_by_name(self.dm_name)
                 dm_id = del_DM.entity_template_.get(self.dm_name).get('mdmId', None)
@@ -827,7 +804,8 @@ class CreateDataModel(object):
                 if not entity_type.ent_type == 'nested':
 
                     current_label, current_description = self._labels_and_desc(prop)
-                    self.fields.create(mdm_name=prop, mdm_mpping_data_type=entity_type.ent_type, mdm_field_type='PRIMITIVE',
+                    self.fields.create(mdm_name=prop, mdm_mpping_data_type=entity_type.ent_type,
+                                       mdm_field_type='PRIMITIVE',
                                        mdm_label=current_label, mdm_description=current_description)
                     self.all_possible_fields = self.fields.fields_dict
                     self.add_field(prop, parent_field_id="")
