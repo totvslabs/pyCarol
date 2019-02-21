@@ -11,7 +11,7 @@ from ..carol import Carol
 logger = logging.getLogger(__name__)
 
 
-class Parameter(Parameter):
+class Parameter(luigi.Parameter):
     """ Extension of Parameter to include Carol information
     """
 
@@ -40,6 +40,7 @@ class SettingsDefinition(luigi.Task):
     """
     app_name = os.environ.get('CAROLAPPNAME')
     app_carol = None
+    app_config = None
     app = None
 
     @classmethod
@@ -101,6 +102,11 @@ class SettingsDefinition(luigi.Task):
                         logger.debug(f'{k}: {v}')
                 except KeyError as e:
                     logger.warning(f"Could not set up variable from Carol. Key = {str(e)}")
+            else:
+                if cls.app_config is not None:
+                    if k in cls.app_config:
+                        v = cls.app_config[k]
+                        logger.debug(f'{k}: {v}')
             cls.app.update({k: v})
 
         # TODO warn if parameters defined in class are not set in cls.app

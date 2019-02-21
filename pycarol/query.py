@@ -470,7 +470,7 @@ class ParQuery:
             self.fields_to_get = fields
             self.fields=None
             self.only_hits=False
-            self.mdmKey = 'mdmCreated'
+            self.mdmKey = 'mdmCounterForEntity'
         elif get_staging_from_golden:
             self.index_type = 'MASTER'
             self.datamodel_name = f"{datamodel_name}Master"
@@ -478,6 +478,7 @@ class ParQuery:
 
             self.only_hits=False
             self.mdmKey = 'mdmStagingRecord.mdmCreated'
+            self.mdmKey = 'mdmCounterForEntity'
         else:
             self.index_type = 'MASTER'
             self.datamodel_name = f"{datamodel_name}Golden"
