@@ -1,3 +1,4 @@
+import missingno as msno
 
 
 class Visualization:
@@ -29,3 +30,6 @@ class Visualization:
 
     def __init__(self, task=None):
         self._task = task
+
+    def null_data(self, data=None, *args, **kwargs):
+        msno.matrix(df=data, *args, **kwargs)
