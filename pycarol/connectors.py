@@ -1,7 +1,6 @@
 import json
 from collections import defaultdict
 
-
 class Connectors:
     def __init__(self, carol):
         self.carol = carol
@@ -40,7 +39,6 @@ class Connectors:
         else:
             raise Exception(resp)
 
-
     def get_by_name(self, name):
         """
         Get connector information using the connector name
@@ -49,7 +47,18 @@ class Connectors:
         :return: None
         :rtype: None
         """
-        resp = self.carol.call_api('v1/connectors/name/{}'.format(name))
+        resp = self.carol.call_api(f'v1/connectors/name/{name}')
+        return resp
+
+    def get_by_id(self, id):
+        """
+        Get connector information using the connector id
+        :param id:
+        :type id: str
+        :return: None
+        :rtype: None
+        """
+        resp = self.carol.call_api(f'v1/connectors/{id}')
         return resp
 
     def delete_by_name(self, name, force_deletion=True):
@@ -59,13 +68,13 @@ class Connectors:
     def delete_by_id(self, mdm_id, force_deletion=True):
         self.carol.call_api('v1/connectors/{}?forceDeletion={}'.format(mdm_id, force_deletion), method='DELETE')
 
-    def get_all(self, offset=0, page_size=-1, sort_order='ASC', sort_by=None, include_connectors = False,
+    def get_all(self, offset=0, page_size=-1, sort_order='ASC', sort_by=None, include_connectors=False,
                 include_mappings=False, include_consumption=False, print_status=True, save_results=False,
                 filename='connectors.json'):
 
         params = {"offset": offset, "pageSize": str(page_size), "sortOrder": sort_order,
-                           "includeMappings": include_mappings, "includeConsumption": include_consumption,
-                           "includeConnectors": include_connectors}
+                  "includeMappings": include_mappings, "includeConsumption": include_consumption,
+                  "includeConnectors": include_connectors}
 
         if sort_by is not None:
             params['sortBy'] = sort_by
@@ -87,7 +96,7 @@ class Connectors:
             connectors.extend(conn)
             params['offset'] = count
             if print_status:
-                print('{}/{}'.format(count, total_hits), end ='\r')
+                print('{}/{}'.format(count, total_hits), end='\r')
             if save_results:
                 file.write(json.dumps(conn, ensure_ascii=False))
                 file.write('\n')
@@ -102,7 +111,6 @@ class Connectors:
             connector_id = self.get_by_name(connector_name)['mdmId']
         else:
             assert connector_id
-
 
         response = self.carol.call_api('v1/connectors/{}/stats'.format(connector_id))
 
@@ -128,6 +136,6 @@ class Connectors:
             if conn is None:
                 raise ValueError('There is no staging named {}'.format(staging_name))
 
-            elif len(conn)>1:
+            elif len(conn) > 1:
                 print('More than one connector with the staging {}'.format(staging_name))
                 return conn
