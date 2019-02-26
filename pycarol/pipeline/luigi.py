@@ -1,6 +1,6 @@
 from ..luigi_extension import Task, WrapperTask
 import luigi
-from luigi import Parameter
+from luigi import Parameter, BoolParameter
 import logging
 import json
 import os
@@ -196,6 +196,7 @@ class Ingestion(WrapperTask):
     domain = Parameter()
     dm_name = Parameter()
 
+    has_nested = BoolParameter(default=True)
     ingestion_params = DictParameter()
     filter = DictParameter()
 
