@@ -240,8 +240,8 @@ class PytorchLocalTarget(LocalTarget):
 
 class DummyTarget:
 
-    def __init__(self, *args, **kwargs):
-        pass
+    def __init__(self, fixed_output=None, *args, **kwargs):
+        self.fixed_output = fixed_output
 
     def exists(self):
         return True
@@ -250,7 +250,7 @@ class DummyTarget:
         return all(r.complete() for r in flatten(self.requires()))
 
     def load(self):
-        return None
+        return self.fixed_output
 
     def dump(self, model):
         pass
