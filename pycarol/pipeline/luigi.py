@@ -7,6 +7,7 @@ import os
 from ..apps import Apps
 from ..staging import Staging
 from ..carol import Carol
+from . import mapping
 
 logger = logging.getLogger(__name__)
 
@@ -177,22 +178,57 @@ class StagingIngestion(Task):
                                   backend='pandas', return_dask_graph=self.return_dask_graph,
                                   columns=list(self.cols), merge_records=True)
 
-# Create tasks from Data Models information automatically
-
 
 class Ingestion(WrapperTask):
-    """ Generic task for ingestion
+    """ Generic task for ingestion: handles diversity of ingestion options.
 
-        This task will get from exec_config.get_ingestion_task which task should be executed.
+        The same ingestion can be made in very different ways. One could ingest data from Carol MDM, another data
+        source or even implement a complete mapping module to define all necessary operations to ingest the data. This
+        task handles the whole process of defining which module and Task to execute, so your pipeline is agnostic to the
+        ingestion task, which will be selected based on the ingestion parameters.
 
-        ingestion_params: dict with all necessary information for the ingestion. Must have at least one field named
-        'mapping'. Each mapping will have specific requirements that must be placed on this parameter.
-        Refer to the specific mapping documentation for more details.
+        How does it works?
+
+            The first thing it will do is to search for the mapping module. After that, it will select the task to load
+            based on the data model name.
+
+        Parameters:
+            - ingestion_params: dict with all necessary information for the ingestion. Must have field named
+                'mapping' to define which module to load. Each mapping will have specific requirements that must be
+                placed on this parameter. Refer to the specific mapping documentation for details about additional
+                parameters.
+            - dm_name: name of the data model Ingestion Task to be loaded
+            - filter (Optional): dict with filters to pass for the ingestion.
+            - mappings_module (optional): string with relative location for the mappings module. Default =
+                app.datamodel.mappings
 
         E.g.
-        {'mapping':'carol_golden'} will execute mapping from Carol MDM Golden Records
 
+        ingestion_params = {'mapping':'mdm'} will execute ingestion from Carol MDM Golden Records.
+        ingestion_params = {'mapping':'protheus'} will execute ingestion from a module named protheus inside mappings
+                           module.
+
+        How to create a new module?
+
+            To create a new module, place it inside the mappings_module and make sure that on the __init__.py file there
+            is a function named get_mapping_task(dm_name) that returns the Task class for the ingestion of the specified
+            data model (dm_name).
+
+            E.g of a __init__.py file inside the new created module:
+
+                from .entity import EntityStaging
+                from .purchase import PurchaseStaging
+                from .item import ItemStaging
+                from .product import ProductStaging
+
+                def get_mapping_task(dm_name):
+                    return {'entity': EntityStaging,
+                            'purchase': PurchaseStaging,
+                            'product': ProductStaging,
+                            'item': ItemStaging
+                            }[dm_name]
     """
+    mappings_module = Parameter(default='app.datamodel.mappings')
     domain = Parameter()
     dm_name = Parameter()
 
@@ -201,10 +237,9 @@ class Ingestion(WrapperTask):
     filter = DictParameter()
 
     def requires(self):
-        from app import exec_config
         if self.ingestion_params is None:
             raise ValueError(f'Did not receive information for Ingestion. Received: {self.ingestion_params}')
         if 'mapping' not in self.ingestion_params:
             raise ValueError('Could not find mapping information for Ingestion task.')
-        return self.clone(exec_config.get_ingestion_task(self.ingestion_params['mapping'], dm_name=self.dm_name),
+        return self.clone(mapping.get_ingestion_task(self.ingestion_params['mapping'], dm_name=self.dm_name),
                           **self.ingestion_params)
