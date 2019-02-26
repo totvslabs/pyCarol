@@ -22,6 +22,10 @@ from .taskviewer import (
     TaskViewer,
 )
 
+from .visualization import (
+    Visualization
+)
+
 # from .dockertask import (
 #     EasyDockerTask
 # )

@@ -1,9 +1,11 @@
 import luigi
 from luigi import parameter, six
 from luigi.task import flatten
+from .visualization import Visualization
 from .targets import PickleLocalTarget, DummyTarget, PytorchLocalTarget, KerasLocalTarget
 import logging
 import warnings
+
 luigi.build([], workers=1, local_scheduler=True)
 
 logger = logging.getLogger('luigi-interface')
@@ -15,11 +17,16 @@ class Task(luigi.Task):
 
     TARGET = PickleLocalTarget  # DEPRECATED!
     target_type = PickleLocalTarget
+    visualization_class = Visualization
 
     persist_stdout = False
     requires_list = []
     requires_dict = {}
     resources = {'cpu': 1}  # default resource to be overridden or complemented
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.visualize = self.visualization_class(task=self)
 
     def buildme(self, local_scheduler=True, **kwargs):
         luigi.build([self, ], local_scheduler=local_scheduler, **kwargs)
@@ -36,7 +43,6 @@ class Task(luigi.Task):
 
     def _txt_path(self):
         return "{}.txt".format(self._file_id())
-
 
     def requires(self):
         if len(self.requires_list) > 0:

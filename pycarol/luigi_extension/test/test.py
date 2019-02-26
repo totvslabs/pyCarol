@@ -134,12 +134,7 @@ class mock_task:
                         pass
                     else:
                         if 'task_output' in dic:
-                            out_target = DummyTarget(task, is_tmp=True)
-
-                            def new_load():
-                                return task_output
-
-                            out_target.load = new_load
+                            out_target = DummyTarget(fixed_output=task_output)
 
                         if 'target_filename' in dic:
                             if 'target_class' in dic:
