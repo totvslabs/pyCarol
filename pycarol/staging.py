@@ -463,3 +463,28 @@ class Staging:
         staging_results = list(itertools.chain(*staging_results))
         if staging_results is not None:
             return {f"{i['mdmConnectorId']}_{i['mdmStagingType']}": i for i in staging_results}
+
+
+
+    def _sync_counters(self, staging_name, connector_id=None, connector_name=None, incremental=False):
+        """
+
+        :param staging_name:
+        :param connector_id:
+        :param connector_name:
+        :param incremental:
+        :return:
+        """
+
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            assert connector_id
+
+        query_params = {"incremental": incremental}
+        url = f'v2/staging/{connector_id}/{staging_name}/syncCounters'
+        return self.carol.call_api(url, method='POST', params=query_params, errors='ignore')
+
+
+
+
