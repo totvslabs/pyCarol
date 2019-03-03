@@ -360,7 +360,7 @@ class Staging:
         s3.
 
         :param staging_name: `str`, default `None`
-            Datamodel Name
+            Staging Name
         :param sync_staging: `bool`, default `True`
             Sync the data model
         :param connector_name: `str`
@@ -469,11 +469,16 @@ class Staging:
     def _sync_counters(self, staging_name, connector_id=None, connector_name=None, incremental=False):
         """
 
-        :param staging_name:
-        :param connector_id:
-        :param connector_name:
-        :param incremental:
-        :return:
+        :param staging_name: `str`
+            Staging Name
+        :param connector_name: `str`, default `None`
+            Connector name
+        :param connector_id: `str`, default `None`
+            Connector id
+        :param incremental: `bool`, default `False`
+            If `True`, it will reset all `mdmCountForEntity`, if `False`, it will only increment the missing values.
+
+        :return: None
         """
 
         if connector_name:
