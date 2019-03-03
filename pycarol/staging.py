@@ -360,7 +360,7 @@ class Staging:
         s3.
 
         :param staging_name: `str`, default `None`
-            Datamodel Name
+            Staging Name
         :param sync_staging: `bool`, default `True`
             Sync the data model
         :param connector_name: `str`
@@ -463,3 +463,33 @@ class Staging:
         staging_results = list(itertools.chain(*staging_results))
         if staging_results is not None:
             return {f"{i['mdmConnectorId']}_{i['mdmStagingType']}": i for i in staging_results}
+
+
+
+    def _sync_counters(self, staging_name, connector_id=None, connector_name=None, incremental=False):
+        """
+
+        :param staging_name: `str`
+            Staging Name
+        :param connector_name: `str`, default `None`
+            Connector name
+        :param connector_id: `str`, default `None`
+            Connector id
+        :param incremental: `bool`, default `False`
+            If `True`, it will reset all `mdmCountForEntity`, if `False`, it will only increment the missing values.
+
+        :return: None
+        """
+
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            assert connector_id
+
+        query_params = {"incremental": incremental}
+        url = f'v2/staging/{connector_id}/{staging_name}/syncCounters'
+        return self.carol.call_api(url, method='POST', params=query_params, errors='ignore')
+
+
+
+
