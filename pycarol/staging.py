@@ -486,7 +486,7 @@ class Staging:
         else:
             assert connector_id
 
-        query_params = {"incremental": incremental}
+        query_params = {"incrementAll": incremental}
         url = f'v2/staging/{connector_id}/{staging_name}/syncCounters'
         return self.carol.call_api(url, method='POST', params=query_params, errors='ignore')
 
