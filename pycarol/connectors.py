@@ -114,10 +114,8 @@ class Connectors:
 
         response = self.carol.call_api('v1/connectors/{}/stats'.format(connector_id))
 
-        self.stats_response = response
-
-        conn_stats = response['aggs']
-        return {key: list(value['stagingEntityStats'].keys()) for key, value in conn_stats.items()}
+        self._conn_stats = response['aggs']
+        return {key: list(value['stagingEntityStats'].keys()) for key, value in self._conn_stats.items()}
 
     def staging_to_connectors_map(self):
         d = defaultdict(list)
