@@ -350,10 +350,11 @@ class Query:
         if self.save_results:
             file.close()
 
-    def check_total_hits(self, json_query, index_type= "MASTER"):
+    def check_total_hits(self, json_query, index_type="MASTER"):
         """
         Check the total hits for a given query
         :param json_query: Json object with the query to use
+        :param index_type: Index type to query.
         :return: number of records for this query
         """
 
