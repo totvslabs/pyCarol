@@ -11,7 +11,7 @@ cloudpickle==0.5.6
 cryptography-vectors==2.3.1
 cryptography==2.3.1
 cytoolz==0.9.0.1
-dask==0.19.2
+dask==0.19.3
 distributed==1.23.2
 docutils==0.14
 flask==1.0.2
