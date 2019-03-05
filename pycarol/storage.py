@@ -7,21 +7,19 @@ from multiprocessing import Process
 from pycarol.carol_cloner import Cloner
 from pycarol.utils.singleton import KeySingleton
 from pycarol.carolina import Carolina
-import botocore
 from . import __BUCKET_NAME__, __TEMP_STORAGE__
 
 class Storage(metaclass=KeySingleton):
     def __init__(self, carol):
         self.carol = carol
-        self.s3 = None
-        self.bucket = None
+        self.storage = None
 
     def _init_if_needed(self):
-        if self.s3 is not None:
+        if self.storage is not None:
             return
 
-        self.s3 = Carolina(self.carol).get_s3()
-        self.bucket = self.s3.Bucket(__BUCKET_NAME__)
+        self.storage = Carolina(self.carol).get_storage()
+        self.bucket = self.storage.bucket(__BUCKET_NAME__)
         if not os.path.exists(__TEMP_STORAGE__):
             os.makedirs(__TEMP_STORAGE__)
 
@@ -33,8 +31,8 @@ class Storage(metaclass=KeySingleton):
 
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
         self._init_if_needed()
-        s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
-        local_file_name = os.path.join(__TEMP_STORAGE__,s3_file_name.replace("/", "-"))
+        remote_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
+        local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
 
         if parquet:
             if not isinstance(obj, pd.DataFrame):
@@ -48,7 +46,7 @@ class Storage(metaclass=KeySingleton):
                 with BytesIO() as buffer:
                     joblib.dump(obj, buffer)
                     buffer.seek(0)
-                    self.bucket.upload_fileobj(buffer, s3_file_name)
+                    self.bucket.upload_fileobj(buffer, remote_file_name)
                 return
             else:
                 joblib.dump(obj, local_file_name)
@@ -60,17 +58,14 @@ class Storage(metaclass=KeySingleton):
         else:
             raise ValueError("Supported formats are pickle, joblib or file")
 
-        self.bucket.upload_file(local_file_name, s3_file_name)
+        blob = self.bucket.blob(remote_file_name)
+        blob.upload_from_filename(filename=local_file_name)
         os.utime(local_file_name, None)
 
     def load(self, name, format='pickle', parquet=False, cache=True):
         self._init_if_needed()
-        s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
-        local_file_name = os.path.join(__TEMP_STORAGE__,s3_file_name.replace("/", "-"))
-
-        obj = self.bucket.Object(s3_file_name)
-        if obj is None:
-            return None
+        remote_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
+        local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
 
         has_cache = cache and os.path.isfile(local_file_name)
 
@@ -79,23 +74,25 @@ class Storage(metaclass=KeySingleton):
         else:
             localts = 0
 
-        try:
-            s3ts = calendar.timegm(obj.last_modified.timetuple())
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] == "404":
-                return None
+        s3ts = 0
+        #try:
+        #    s3ts = calendar.timegm(obj.last_modified.timetuple())
+        #except botocore.exceptions.ClientError as e:
+        #    if e.response['Error']['Code'] == "404":
+        #        return None
 
         if not cache and format == 'joblib':
             import joblib
             from io import BytesIO
             with BytesIO() as data:
-                self.bucket.download_fileobj(s3_file_name, data)
+                self.bucket.download_fileobj(remote_file_name, data)
                 data.seek(0)
                 return joblib.load(data)
 
         # Local cache is outdated
         if localts < s3ts:
-            self.bucket.download_file(s3_file_name, local_file_name)
+            blob = self.bucket.blob(remote_file_name)
+            blob.download_to_file(local_file_name)
 
         if os.path.isfile(local_file_name):
             if parquet:
@@ -115,9 +112,9 @@ class Storage(metaclass=KeySingleton):
 
     def exists(self, name):
         self._init_if_needed()
-        s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
+        remote_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
 
-        obj = self.bucket.Object(s3_file_name)
+        obj = self.bucket.Object(remote_file_name)
         if obj is None:
             return False
 
@@ -131,12 +128,12 @@ class Storage(metaclass=KeySingleton):
 
     def delete(self, name):
         self._init_if_needed()
-        s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
-        obj = self.bucket.Object(s3_file_name)
+        remote_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
+        obj = self.bucket.Object(remote_file_name)
         if obj is not None:
             obj.delete()
 
-        local_file_name = os.path.join(__TEMP_STORAGE__,s3_file_name.replace("/", "-"))
+        local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
         if os.path.isfile(local_file_name):
             os.remove(local_file_name)
 
