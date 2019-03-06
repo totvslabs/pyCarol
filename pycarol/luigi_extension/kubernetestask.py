@@ -95,7 +95,8 @@ class EasyKubernetesTask(EasyDockerTask):
         #TODO: Is this the best way? this will be the name of the task+package it is in.
 
         #return self._file_id().lower()
-        return '-'.join(self.get_task_family().lower().split('.')[-2:])
+        return '-'.join(self._file_id().lower().split('.')[-2:])
+        #return '-'.join(self.get_task_family().lower().split('.')[-2:])
 
     @property
     def labels(self):
