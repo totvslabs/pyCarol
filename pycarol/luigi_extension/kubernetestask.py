@@ -95,7 +95,8 @@ class EasyKubernetesTask(EasyDockerTask):
         #TODO: Is this the best way? this will be the name of the task+package it is in.
 
         #return self._file_id().lower()
-        return '-'.join(luigi.task.task_id_str(self.__class__.__name__, self.to_str_params(only_significant=True)))
+        return '-'.join(luigi.task.task_id_str(self.__class__.__name__,
+                                               self.to_str_params(only_significant=True)).lower().split('.'))
         #return '-'.join(self.get_task_family().lower().split('.')[-2:])
 
     @property
