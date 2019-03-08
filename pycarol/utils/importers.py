@@ -123,7 +123,9 @@ def _import_pandas(s3, tenant_id, dm_name=None, connector_id=None, columns=None,
             obj.download_fileobj(buffer)
 
             result = pd.read_parquet(buffer, columns=columns)
-            result.rename(columns=mapping_columns, inplace=True) #fix columns names (we replace `-` for `_` due to parquet limitations.
+
+            if mapping_columns is not None:
+                result.rename(columns=mapping_columns, inplace=True) #fix columns names (we replace `-` for `_` due to parquet limitations.
             if callback:
                 assert callable(callback), \
                     f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function/class.'
