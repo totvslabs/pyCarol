@@ -127,7 +127,7 @@ class Storage(metaclass=KeySingleton):
         """
 
         self._init_if_needed()
-        prefix = f"storage/{self.carol.tenant['mdmId']}"
+        prefix = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/"
         files = list(self.bucket.objects.filter(Prefix=prefix))
         files = [i.key.split(prefix)[1] for i in files]
 
