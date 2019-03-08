@@ -71,12 +71,14 @@ class Apps:
         :param check_all_spaces:
         :return:
         '''
-        assert app_name or app_id
+        assert app_name or app_id or self.carol.app_name
 
         if app_id is not None:
             self.get_by_id(app_id, entity_space)
-        else:
+        elif app_name is not None:
             self.get_by_name(app_name, entity_space)
+        else:
+            self.get_by_name(self.carol.app_name, entity_space)
 
         query_string = {"entitySpace": entity_space, "checkAllSpaces": check_all_spaces}
 
