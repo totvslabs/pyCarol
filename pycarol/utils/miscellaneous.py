@@ -1,6 +1,42 @@
 import json
 import gzip, io
 import pandas as pd
+from collections import defaultdict
+
+_FILE_MARKER = '<files>'
+
+
+def _attach_path(branch, trunk):
+    '''
+    Insert a branch of directories on its trunk.
+    '''
+    parts = branch.split('/', 1)
+    if len(parts) == 1:  # branch is a file
+        trunk[_FILE_MARKER].append(parts[0])
+    else:
+        node, others = parts
+        if node not in trunk:
+            trunk[node] = defaultdict(dict, ((_FILE_MARKER, []),))
+        _attach_path(others, trunk[node])
+
+def prettify_path(d, indent=0):
+    '''
+    Print the file tree structure with proper indentation.
+
+    :param: d: `dict`
+        list of path to prettify
+    :param : indent: `int`, defaut `0`
+        Ident to use.
+    '''
+    for key, value in d.items():
+        if key == _FILE_MARKER:
+            if value:
+                print('  ' * indent + str(value))
+        else:
+            print('  ' * indent + str(key))
+            if isinstance(value, dict):
+                prettify_path(value, indent+1)
+
 
 def ranges(min_v, max_v, nb):
     if min_v == max_v:
@@ -12,6 +48,7 @@ def ranges(min_v, max_v, nb):
     step = [[step[i], step[i + 1] - 1] for i in range(len(step) - 1)]
     step.append([max_v, None])
     return step
+
 
 # TODO: reused from staging. Should I put in utils/?
 def stream_data(data, step_size, compress_gzip):
