@@ -66,8 +66,8 @@ def _build_url_parquet_staging_master_rejected(tenant_id, staging_name, connecto
     return f's3://{__BUCKET_NAME__}/carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging/'
 
 
-def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_records=False,
-                 dm_name=None, golden=False, return_dask_graph=False,
+def _import_dask(tenant_id, access_id, access_key, aws_session_token,
+                 dm_name=None, golden=False, return_dask_graph=False, mapping_columns=None,
                  connector_id=None, staging_name=None, columns=None, max_hits=None):
     if columns:
         columns = list(set(columns))
@@ -95,13 +95,14 @@ def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_reco
                                               "token": aws_session_token},
                         columns=columns)
 
+    d= d.rename(columns=mapping_columns)
     if return_dask_graph:
         return d
     else:
         return d.compute()
 
 
-def _import_pandas(s3, tenant_id, dm_name=None, connector_id=None, columns=None,
+def _import_pandas(s3, tenant_id, dm_name=None, connector_id=None, columns=None, mapping_columns=None,
                    staging_name=None, n_jobs=1, verbose=0, golden=False, max_hits=None, callback=None):
     if columns:
         columns = list(set(columns))
@@ -122,6 +123,9 @@ def _import_pandas(s3, tenant_id, dm_name=None, connector_id=None, columns=None,
             obj.download_fileobj(buffer)
 
             result = pd.read_parquet(buffer, columns=columns)
+
+            if mapping_columns is not None:
+                result.rename(columns=mapping_columns, inplace=True) #fix columns names (we replace `-` for `_` due to parquet limitations.
             if callback:
                 assert callable(callback), \
                     f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function/class.'

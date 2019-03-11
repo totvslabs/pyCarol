@@ -9,6 +9,7 @@ from ..staging import Staging
 from ..carol import Carol
 from . import mapping
 
+luigi.auto_namespace(scope=__name__)
 logger = logging.getLogger(__name__)
 
 

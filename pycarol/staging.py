@@ -259,22 +259,27 @@ class Staging:
         :return:
         """
 
-        old_columns = None
-        if columns:
-            old_columns = columns
-            columns = [i.replace("-", "_") for i in columns]
-            columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
-            old_columns = dict(zip([i.replace("-", "_") for i in columns], old_columns))
+        assert backend == 'dask' or backend == 'pandas'
+        if return_dask_graph:
+            assert backend == 'dask'
 
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
         else:
             assert connector_id
 
-        assert backend == 'dask' or backend == 'pandas'
+        if columns:
+            mapping_columns = columns
+            columns = [i.replace("-", "_") for i in columns]
+            columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
+            mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
+        else:
+            mapping_columns = list(self.get_schema(staging_name=staging_name,
+                                                   connector_id=connector_id)['mdmStagingMapping']['properties'].keys())
+            columns = [i.replace("-", "_") for i in mapping_columns]
+            columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
+            mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
 
-        if return_dask_graph:
-            assert backend == 'dask'
 
         # validate export
         stags = self._get_staging_export_stats()
@@ -297,21 +302,23 @@ class Staging:
 
             d = _import_dask(tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, staging_name=staging_name,
                              access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
-                             merge_records=merge_records, golden=False, return_dask_graph=return_dask_graph,
+                             golden=False, return_dask_graph=return_dask_graph,mapping_columns=mapping_columns,
                              columns=columns, max_hits=max_hits)
 
         elif backend == 'pandas':
             s3 = carolina.s3
             d = _import_pandas(s3=s3, tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
                                staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns,
-                               max_hits=max_hits, callback=callback)
+                               max_hits=max_hits, callback=callback, mapping_columns=mapping_columns)
 
             # TODO: Do the same for dask backend
             if d is None:
                 warnings.warn(f'No data to fetch! {staging_name} has no data', UserWarning)
                 cols_keys = list(self.get_schema(
-                    staging_name=staging_name, connector_name=connector_name
+                    staging_name=staging_name, connector_id=connector_id
                 )['mdmStagingMapping']['properties'].keys())
+                cols_keys = [i.replace("-", "_") for i in cols_keys]
+
                 if return_metadata:
                     cols_keys.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
 
@@ -320,33 +327,32 @@ class Staging:
 
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in self.get_schema(staging_name=staging_name,
-                                                  connector_name=connector_name)['mdmStagingMapping'][
+                                                  connector_id=connector_id)['mdmStagingMapping'][
                     'properties'].items():
+                    key=key.replace("-", "_")
                     d.loc[:, key] = d.loc[:, key].astype(_SCHEMA_TYPES_MAPPING.get(value['type'], str), copy=False)
                 if columns:
+                    columns = list(set(columns))
                     d = d[list(set(columns))]
-                return d
+                return d.rename(columns=mapping_columns)
         else:
-            raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}')
+            raise ValueError(f'backend should be either "dask" or "pandas" you entered {backend}')
 
         if merge_records:
             if not return_dask_graph:
-                if old_columns is not None:
-                    d.rename(columns=old_columns, inplace=True)
                 d.sort_values('mdmCounterForEntity', inplace=True)
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
-                if not return_metadata:
-                    d.drop(columns=['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'], inplace=True)
+
                 d.reset_index(inplace=True, drop=True)
             else:
-                if old_columns is not None:
-                    d.rename(columns=old_columns, inplace=True)
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                     .drop_duplicates(subset='mdmId', keep='last') \
                     .reset_index(drop=True)
-                if not return_metadata:
-                    d = d.drop(columns=['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
+
+        if not return_metadata:
+            to_drop = set(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated']).intersection(set(d.columns))
+            d = d.drop(labels=to_drop, axis=1)
 
         return d
 
@@ -360,7 +366,7 @@ class Staging:
         s3.
 
         :param staging_name: `str`, default `None`
-            Datamodel Name
+            Staging Name
         :param sync_staging: `bool`, default `True`
             Sync the data model
         :param connector_name: `str`
@@ -463,3 +469,33 @@ class Staging:
         staging_results = list(itertools.chain(*staging_results))
         if staging_results is not None:
             return {f"{i['mdmConnectorId']}_{i['mdmStagingType']}": i for i in staging_results}
+
+
+
+    def _sync_counters(self, staging_name, connector_id=None, connector_name=None, incremental=False):
+        """
+
+        :param staging_name: `str`
+            Staging Name
+        :param connector_name: `str`, default `None`
+            Connector name
+        :param connector_id: `str`, default `None`
+            Connector id
+        :param incremental: `bool`, default `False`
+            If `True`, it will reset all `mdmCountForEntity`, if `False`, it will only increment the missing values.
+
+        :return: None
+        """
+
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            assert connector_id
+
+        query_params = {"incrementAll": incremental}
+        url = f'v2/staging/{connector_id}/{staging_name}/syncCounters'
+        return self.carol.call_api(url, method='POST', params=query_params, errors='ignore')
+
+
+
+

@@ -120,7 +120,7 @@ class Carol:
         """
         :param retries: `int`, default `5`
             Number of retries for the API all
-        :param session: Session objectn defaut `None`
+        :param session: Session object defaut `None`
             It allows you to persist certain parameters across requests.
         :param backoff_factor: `float`, default `0.5`
             Backoff factor to apply between attempts. It will
