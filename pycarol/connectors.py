@@ -106,14 +106,18 @@ class Connectors:
             file.close()
         return connectors
 
-    def stats(self, connector_id=None, connector_name=None):
+    def stats(self, connector_id=None, connector_name=None, all=False):
 
-        if connector_name:
-            connector_id = self.get_by_name(connector_name)['mdmId']
+        if all:
+
+            response = self.carol.call_api('v1/connectors/stats/all')
         else:
-            assert connector_id
+            if connector_name:
+                connector_id = self.get_by_name(connector_name)['mdmId']
+            else:
+                assert connector_id
 
-        response = self.carol.call_api('v1/connectors/{}/stats'.format(connector_id))
+            response = self.carol.call_api('v1/connectors/{}/stats'.format(connector_id))
 
         self._conn_stats = response['aggs']
         return {key: list(value['stagingEntityStats'].keys()) for key, value in self._conn_stats.items()}
