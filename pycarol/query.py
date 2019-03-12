@@ -433,17 +433,17 @@ class ParQuery:
 
         assert self.backend=='dask' or self.backend == 'joblib'
 
-    def _get_min_max(self, custom_filter=None):
+    def _get_min_max(self, datamodel_name, mdm_key , index_type, custom_filter=None):
 
         if custom_filter is not None:
             j = custom_filter
         else:
             j = Filter.Builder()\
-                .type(self.datamodel_name)\
-                .aggregation_list([MINIMUM(name='MINIMUM',params= self.mdmKey), MAXIMUM(name='MAXIMUM', params=self.mdmKey)])\
+                .type(datamodel_name)\
+                .aggregation_list([MINIMUM(name='MINIMUM',params= mdm_key), MAXIMUM(name='MAXIMUM', params=mdm_key)])\
                 .build().to_json()
 
-        query = Query(self.carol, index_type=self.index_type, only_hits=False, get_aggs=True, save_results=False,
+        query = Query(self.carol, index_type=index_type, only_hits=False, get_aggs=True, save_results=False,
                       print_status=True, page_size=1,).query(j).go()
 
 
@@ -454,6 +454,31 @@ class ParQuery:
         max_v = query.results[0]['aggs']['MAXIMUM']['value']
         print(f"Total Hits to download: {query.total_hits}")
         return min_v, max_v, sample
+
+
+    def _get_staging_from_golden_rejected(self):
+
+
+        j = Filter.Builder() \
+            .type(self.datamodel_name_rejected) \
+            .must(TERM_FILTER(key='mdmStagingEntityName.raw',
+                              value=self.filter_stag)) \
+            .aggregation_list(
+            [MINIMUM(name='MINIMUM', params=self.mdmKey), MAXIMUM(name='MAXIMUM', params=self.mdmKey)]) \
+            .build().to_json()
+
+        min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name_rejected, mdm_key=self.mdmKey,
+                                                 index_type='STAGING', custom_filter=j)
+        if (min_v is None) and (max_v is None):
+            return []
+        self.chunks = ranges(min_v, max_v, self.slices)
+        print(f"Number of chunks: {len(self.chunks)}")
+        self.fields_to_get = [self.fields + '.' + i for i in sample.get(self.fields).keys() for j in fields if j + '_' in i]
+
+        self.custom_filter = Filter.Builder() \
+                            .type(self.datamodel_name) \
+                            .must(TERM_FILTER(key='mdmStagingEntityName.raw',
+                                              value=self.filter_stag))
 
 
     def _get_staging_from_golden(self, datamodel_name=None, staging_name=None, fields=None,
@@ -514,6 +539,7 @@ class ParQuery:
 
         self.index_type = 'MASTER'
         self.datamodel_name = f"{datamodel_name}Master"
+        self.datamodel_name_rejected = f"{datamodel_name}Rejected"
         self.fields = 'mdmStagingRecord'
         self.filter_stag = f"{connector_id}_{staging_name}"
         self.only_hits = False
@@ -526,10 +552,25 @@ class ParQuery:
             [MINIMUM(name='MINIMUM', params=self.mdmKey), MAXIMUM(name='MAXIMUM', params=self.mdmKey)]) \
             .build().to_json()
 
-        min_v, max_v, sample = self._get_min_max(custom_filter=j)
+        min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name, mdm_key=self.mdmKey,
+                                                 index_type=self.index_type, custom_filter=j)
         if (min_v is None) and (max_v is None):
             return []
         self.chunks = ranges(min_v, max_v, self.slices)
+
+
+        #rejected
+
+
+
+
+
+
+
+
+
+
+
         print(f"Number of chunks: {len(self.chunks)}")
         self.fields_to_get = [self.fields + '.' + i for i in sample.get(self.fields).keys() for j in fields if j + '_' in i]
 
@@ -549,9 +590,6 @@ class ParQuery:
         if self.return_df:
             return pd.concat(list_to_compute, ignore_index=True, sort=True)
         list_to_compute = list(itertools.chain(*list_to_compute))
-
-
-
 
 
         return list_to_compute
@@ -596,7 +634,8 @@ class ParQuery:
             self.only_hits=True
             self.mdmKey = 'mdmCounterForEntity'
 
-        min_v, max_v, sample = self._get_min_max()
+        min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name, mdm_key=self.mdmKey,
+                                                 index_type=self.index_type)
         if (min_v is None) and (max_v is None):
             return []
         self.chunks = ranges(min_v, max_v, slices)
