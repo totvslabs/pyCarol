@@ -456,7 +456,6 @@ class ParQuery:
         print(f"Total Hits for rejected to download: {query.total_hits}")
 
         if multiplier is not None:
-            assert isinstance(multiplier, int)
             min_v = int(min_v*multiplier)
             max_v = int(max_v*multiplier)
         return min_v, max_v, sample
