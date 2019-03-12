@@ -12,7 +12,6 @@ from .utils.miscellaneous import ranges
 import copy
 
 
-
 def delete_golden(carol, dm_name, now=None):
     """
 
@@ -63,9 +62,8 @@ def delete_golden(carol, dm_name, now=None):
     try:
         Query(carol, index_type='STAGING').delete(json_query)
     except:
-        #if it it too many records, one would have a timeout but the records will be deleted anyway
+        # if it it too many records, one would have a timeout but the records will be deleted anyway
         pass
-
 
 
 class Query:
@@ -426,26 +424,25 @@ class ParQuery:
         :param n_jobs:
         """
         self.carol = carol
-        self.return_df=return_df
+        self.return_df = return_df
         self.backend = backend
-        self.verbose=verbose
-        self.n_jobs=n_jobs
+        self.verbose = verbose
+        self.n_jobs = n_jobs
 
-        assert self.backend=='dask' or self.backend == 'joblib'
+        assert self.backend == 'dask' or self.backend == 'joblib'
 
-    def _get_min_max(self, datamodel_name, mdm_key , index_type, custom_filter=None):
+    def _get_min_max(self, datamodel_name, mdm_key, index_type, custom_filter=None):
 
         if custom_filter is not None:
             j = custom_filter
         else:
-            j = Filter.Builder()\
-                .type(datamodel_name)\
-                .aggregation_list([MINIMUM(name='MINIMUM',params= mdm_key), MAXIMUM(name='MAXIMUM', params=mdm_key)])\
+            j = Filter.Builder() \
+                .type(datamodel_name) \
+                .aggregation_list([MINIMUM(name='MINIMUM', params=mdm_key), MAXIMUM(name='MAXIMUM', params=mdm_key)]) \
                 .build().to_json()
 
         query = Query(self.carol, index_type=index_type, only_hits=False, get_aggs=True, save_results=False,
-                      print_status=True, page_size=1,).query(j).go()
-
+                      print_status=True, page_size=1, ).query(j).go()
 
         if query.results[0].get('aggs') is None:
             return None, None, None
@@ -455,34 +452,33 @@ class ParQuery:
         print(f"Total Hits to download: {query.total_hits}")
         return min_v, max_v, sample
 
-
     def _get_staging_from_golden_rejected(self):
-
 
         j = Filter.Builder() \
             .type(self.datamodel_name_rejected) \
             .must(TERM_FILTER(key='mdmStagingEntityName.raw',
                               value=self.filter_stag)) \
             .aggregation_list(
-            [MINIMUM(name='MINIMUM', params=self.mdmKey), MAXIMUM(name='MAXIMUM', params=self.mdmKey)]) \
+            [MINIMUM(name='MINIMUM', params=self.mdm_key), MAXIMUM(name='MAXIMUM', params=self.mdm_key)]) \
             .build().to_json()
 
-        min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name_rejected, mdm_key=self.mdmKey,
+        min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name_rejected, mdm_key=self.mdm_key,
                                                  index_type='STAGING', custom_filter=j)
         if (min_v is None) and (max_v is None):
             return []
         self.chunks = ranges(min_v, max_v, self.slices)
         print(f"Number of chunks: {len(self.chunks)}")
-        self.fields_to_get = [self.fields + '.' + i for i in sample.get(self.fields).keys() for j in fields if j + '_' in i]
+        self.fields_to_get = [self.fields + '.' + i
+                              for i in sample.get(self.fields).keys()
+                              for j in fields if j + '_' in i]
 
         self.custom_filter = Filter.Builder() \
-                            .type(self.datamodel_name) \
-                            .must(TERM_FILTER(key='mdmStagingEntityName.raw',
-                                              value=self.filter_stag))
-
+            .type(self.datamodel_name) \
+            .must(TERM_FILTER(key='mdmStagingEntityName.raw',
+                              value=self.filter_stag))
 
     def _get_staging_from_golden(self, datamodel_name=None, staging_name=None, fields=None,
-                                          connector_id=None, connector_name=None):
+                                 connector_id=None, connector_name=None):
         cc = Connectors(self.carol)
         st = cc.get_dm_mappings(all_connectors=True)
 
@@ -521,7 +517,7 @@ class ParQuery:
                     f'There are more than one staging mapped for the data model {datamodel_name}\n Use "staging_name" for disambiguation ')
             elif len(entity) < 1:
                 raise KeyError(f'No mapping fo data model {datamodel_name}')
-
+            entity = entity[0]
             connector_id = entity['mdmConnectorId']
             staging_name = entity['mdmStagingType']
         else:
@@ -543,47 +539,43 @@ class ParQuery:
         self.fields = 'mdmStagingRecord'
         self.filter_stag = f"{connector_id}_{staging_name}"
         self.only_hits = False
-        self.mdmKey = 'mdmCounterForEntity'
+        self.mdm_key = 'mdmCounterForEntity'
         j = Filter.Builder() \
             .type(self.datamodel_name) \
             .must(TERM_FILTER(key='mdmStagingEntityName.raw',
                               value=self.filter_stag)) \
             .aggregation_list(
-            [MINIMUM(name='MINIMUM', params=self.mdmKey), MAXIMUM(name='MAXIMUM', params=self.mdmKey)]) \
+            [MINIMUM(name='MINIMUM', params=self.mdm_key), MAXIMUM(name='MAXIMUM', params=self.mdm_key)]) \
             .build().to_json()
 
-        min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name, mdm_key=self.mdmKey,
+        min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name, mdm_key=self.mdm_key,
                                                  index_type=self.index_type, custom_filter=j)
         if (min_v is None) and (max_v is None):
             return []
-        self.chunks = ranges(min_v, max_v, self.slices)
+        chunks = ranges(min_v, max_v, self.slices)
 
+        # rejected
 
-        #rejected
-
-
-
-
-
-
-
-
-
-
-
-        print(f"Number of chunks: {len(self.chunks)}")
-        self.fields_to_get = [self.fields + '.' + i for i in sample.get(self.fields).keys() for j in fields if j + '_' in i]
+        print(f"Number of chunks: {len(chunks)}")
+        self.fields_to_get = [self.fields + '.' + i for i in sample.get(self.fields).keys() for j in fields if
+                              j + '_' in i]
 
         self.custom_filter = Filter.Builder() \
-                            .type(self.datamodel_name) \
-                            .must(TERM_FILTER(key='mdmStagingEntityName.raw',
-                                              value=self.filter_stag))
+            .type(self.datamodel_name) \
+            .must(TERM_FILTER(key='mdmStagingEntityName.raw',
+                              value=self.filter_stag))
 
-
-        if self.backend=='dask':
-            list_to_compute = self._dask_backend()
-        elif self.backend=='joblib':
-            list_to_compute = self._joblib_backend()
+        if self.backend == 'dask':
+            list_to_compute = _dask_backend(carol=self.carol, chunks=chunks, datamodel_name=self.datamodel_name,
+                                            page_size=self.page_size, index_type=self.index_type, fields=self.fields,
+                                            only_hits=self.only_hits, mdm_key=self.mdm_key, return_df=self.return_df,
+                                            fields_to_get=self.fields_to_get, custom_filter=self.custom_filter)
+        elif self.backend == 'joblib':
+            list_to_compute = _joblib_backend(carol=self.carol, chunks=chunks, datamodel_name=self.datamodel_name,
+                                              page_size=self.page_size, index_type=self.index_type, fields=self.fields,
+                                              only_hits=self.only_hits, mdm_key=self.mdm_key, return_df=self.return_df,
+                                              fields_to_get=self.fields_to_get, custom_filter=self.custom_filter,
+                                              n_jobs=self.n_jobs, verbose=self.verbose)
         else:
             raise KeyError
 
@@ -591,14 +583,11 @@ class ParQuery:
             return pd.concat(list_to_compute, ignore_index=True, sort=True)
         list_to_compute = list(itertools.chain(*list_to_compute))
 
-
         return list_to_compute
 
-
-
-
-    def go(self, datamodel_name=None, slices=1000, page_size=1000, staging_name=None, connector_id=None, connector_name=None,
-               get_staging_from_golden=False, fields=None ):
+    def go(self, datamodel_name=None, slices=1000, page_size=1000, staging_name=None, connector_id=None,
+           connector_name=None,
+           get_staging_from_golden=False, fields=None):
         assert slices < 9999, '10k is the largest slice possible'
         self.slices = slices
         self.page_size = page_size
@@ -608,10 +597,10 @@ class ParQuery:
 
         if get_staging_from_golden:
             list_to_compute = self._get_staging_from_golden(datamodel_name=datamodel_name, staging_name=staging_name,
-                                          connector_id=connector_id,  connector_name=connector_name, fields=fields)
+                                                            connector_id=connector_id, connector_name=connector_name,
+                                                            fields=fields)
 
             return list_to_compute
-
 
         if datamodel_name is None:
             assert connector_id or connector_name
@@ -623,29 +612,35 @@ class ParQuery:
             self.index_type = 'STAGING'
             self.datamodel_name = f"{connector_id}_{staging_name}"
             self.fields_to_get = fields
-            self.fields=None
-            self.only_hits=False
-            self.mdmKey = 'mdmCounterForEntity'
+            self.fields = None
+            self.only_hits = False
+            self.mdm_key = 'mdmCounterForEntity'
         else:
             self.index_type = 'MASTER'
             self.datamodel_name = f"{datamodel_name}Golden"
             self.fields = 'mdmGoldenFieldAndValues'
-            self.fields_to_get = [self.fields+'.'+i if self.fields not in i else i for i in fields]
-            self.only_hits=True
-            self.mdmKey = 'mdmCounterForEntity'
+            self.fields_to_get = [self.fields + '.' + i if self.fields not in i else i for i in fields]
+            self.only_hits = True
+            self.mdm_key = 'mdmCounterForEntity'
 
-        min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name, mdm_key=self.mdmKey,
+        min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name, mdm_key=self.mdm_key,
                                                  index_type=self.index_type)
         if (min_v is None) and (max_v is None):
             return []
-        self.chunks = ranges(min_v, max_v, slices)
-        print(f"Number of chunks: {len(self.chunks)}")
+        chunks = ranges(min_v, max_v, self.slices)
+        print(f"Number of chunks: {len(chunks)}")
 
-
-        if self.backend=='dask':
-            list_to_compute = self._dask_backend()
-        elif self.backend=='joblib':
-            list_to_compute = self._joblib_backend()
+        if self.backend == 'dask':
+            list_to_compute = _dask_backend(carol=self.carol, chunks=chunks, datamodel_name=self.datamodel_name,
+                                            page_size=self.page_size, index_type=self.index_type, fields=self.fields,
+                                            only_hits=self.only_hits, mdm_key=self.mdm_key, return_df=self.return_df,
+                                            fields_to_get=self.fields_to_get, custom_filter=self.custom_filter)
+        elif self.backend == 'joblib':
+            list_to_compute = _joblib_backend(carol=self.carol, chunks=chunks, datamodel_name=self.datamodel_name,
+                                              page_size=self.page_size, index_type=self.index_type, fields=self.fields,
+                                              only_hits=self.only_hits, mdm_key=self.mdm_key, return_df=self.return_df,
+                                              fields_to_get=self.fields_to_get, custom_filter=self.custom_filter,
+                                              n_jobs=self.n_jobs, verbose=self.verbose)
         else:
             raise KeyError
 
@@ -655,59 +650,58 @@ class ParQuery:
         return list_to_compute
 
 
-    def _dask_backend(self):
+def _dask_backend(carol, chunks, datamodel_name, page_size, index_type, fields,
+                  only_hits, mdm_key, return_df, fields_to_get, custom_filter):
+    list_to_compute = []
+    for RANGE_FILTER in chunks:
+        y = dask.delayed(_par_query)(
+            datamodel_name=datamodel_name,
+            RANGE_FILTER=RANGE_FILTER,
+            page_size=page_size,
+            login=carol,
+            index_type=index_type,
+            fields=fields,
+            only_hits=only_hits,
+            mdm_key=mdm_key,
+            return_df=return_df,
+            fields_to_get=fields_to_get,
+            custom_filter=custom_filter,
+        )
+        list_to_compute.append(y)
 
-        list_to_compute = []
-        for RANGE_FILTER in self.chunks:
-            y = dask.delayed(_par_query)(
-                datamodel_name=self.datamodel_name,
-                RANGE_FILTER=RANGE_FILTER,
-                page_size=self.page_size,
-                login=self.carol,
-                index_type=self.index_type,
-                fields=self.fields,
-                only_hits=self.only_hits,
-                mdmKey=self.mdmKey,
-                return_df=self.return_df,
-                fields_to_get=self.fields_to_get,
-                custom_filter=self.custom_filter,
-            )
-            list_to_compute.append(y)
-
-        return dask.compute(*list_to_compute)
-
-    def _joblib_backend(self):
-
-        list_to_compute = Parallel(n_jobs=self.n_jobs,
-                                   verbose=self.verbose)(delayed(_par_query)(
-                                                        datamodel_name=self.datamodel_name,
-                                                        RANGE_FILTER=RANGE_FILTER,
-                                                        page_size=self.page_size,
-                                                        login=self.carol,
-                                                        index_type=self.index_type,
-                                                        fields=self.fields,
-                                                        only_hits=self.only_hits,
-                                                        mdmKey=self.mdmKey,
-                                                        return_df=self.return_df,
-                                                        fields_to_get=self.fields_to_get,
-                                                        custom_filter=self.custom_filter,
-                                                                             )
-                                                    for RANGE_FILTER in self.chunks)
-        return list_to_compute
+    return dask.compute(*list_to_compute)
 
 
-def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None, index_type='MASTER',fields=None, mdmKey=None,
+def _joblib_backend(carol, chunks, datamodel_name, page_size, index_type, fields,
+                    only_hits, mdm_key, return_df, fields_to_get, custom_filter, n_jobs, verbose, ):
+    list_to_compute = Parallel(n_jobs=n_jobs,
+                               verbose=verbose)(delayed(_par_query)(
+        datamodel_name=datamodel_name,
+        RANGE_FILTER=RANGE_FILTER,
+        page_size=page_size,
+        login=carol,
+        index_type=index_type,
+        fields=fields,
+        only_hits=only_hits,
+        mdm_key=mdm_key,
+        return_df=return_df,
+        fields_to_get=fields_to_get,
+        custom_filter=custom_filter,
+    )
+                                                for RANGE_FILTER in chunks)
+    return list_to_compute
+
+
+def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None, index_type='MASTER', fields=None, mdm_key=None,
                only_hits=True, return_df=True, fields_to_get=None, custom_filter=None):
-
-
     if custom_filter is not None:
         json_query = copy.deepcopy(custom_filter)
-        json_query = json_query.must(RF(key=mdmKey, value=RANGE_FILTER)).build().to_json()
+        json_query = json_query.must(RF(key=mdm_key, value=RANGE_FILTER)).build().to_json()
 
     else:
-        json_query = Filter.Builder()\
-            .type(datamodel_name)\
-            .must(RF(key=mdmKey, value=RANGE_FILTER))\
+        json_query = Filter.Builder() \
+            .type(datamodel_name) \
+            .must(RF(key=mdm_key, value=RANGE_FILTER)) \
             .build().to_json()
 
     query = Query(login, page_size=page_size, save_results=False, print_status=False, index_type=index_type,
@@ -726,4 +720,3 @@ def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None, index_t
         return pd.DataFrame(query)
 
     return query
-
