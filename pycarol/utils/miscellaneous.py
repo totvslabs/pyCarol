@@ -47,6 +47,7 @@ def ranges(min_v, max_v, nb):
         step.append(max_v)
     step = [[step[i], step[i + 1] - 1] for i in range(len(step) - 1)]
     step.append([max_v, None])
+    step = [[None, min_v-1]] + step
     return step
 
 
