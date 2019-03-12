@@ -457,8 +457,8 @@ class ParQuery:
 
         if multiplier is not None:
             assert isinstance(multiplier, int)
-            min_v *= multiplier
-            max_v *= multiplier
+            min_v = int(min_v*multiplier)
+            max_v = int(max_v*multiplier)
         return min_v, max_v, sample
 
     def _get_staging_from_golden_rejected(self,datamodel_name, connector_id, staging_name, fields):
