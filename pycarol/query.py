@@ -9,6 +9,7 @@ from .named_query import NamedQuery
 from .filter import Filter, MAXIMUM, MINIMUM, TYPE_FILTER, TERM_FILTER
 from .filter import RANGE_FILTER as RF
 from .utils.miscellaneous import ranges
+import copy
 
 
 
@@ -532,6 +533,29 @@ class ParQuery:
         print(f"Number of chunks: {len(self.chunks)}")
         self.fields_to_get = [self.fields + '.' + i for i in sample.get(self.fields).keys() for j in fields if j + '_' in i]
 
+        self.custom_filter = Filter.Builder() \
+                            .type(self.datamodel_name) \
+                            .must(TERM_FILTER(key='mdmStagingEntityName.raw',
+                                              value=self.filter_stag))
+
+
+        if self.backend=='dask':
+            list_to_compute = self._dask_backend()
+        elif self.backend=='joblib':
+            list_to_compute = self._joblib_backend()
+        else:
+            raise KeyError
+
+        if self.return_df:
+            return pd.concat(list_to_compute, ignore_index=True, sort=True)
+        list_to_compute = list(itertools.chain(*list_to_compute))
+
+
+
+
+
+        return list_to_compute
+
 
 
 
@@ -542,10 +566,13 @@ class ParQuery:
         self.page_size = page_size
         if fields is None:
             fields = []
+        self.custom_filter = None
 
         if get_staging_from_golden:
-            self._get_staging_from_golden(datamodel_name=datamodel_name, staging_name=staging_name,
+            list_to_compute = self._get_staging_from_golden(datamodel_name=datamodel_name, staging_name=staging_name,
                                           connector_id=connector_id,  connector_name=connector_name, fields=fields)
+
+            return list_to_compute
 
 
         if datamodel_name is None:
@@ -604,6 +631,7 @@ class ParQuery:
                 mdmKey=self.mdmKey,
                 return_df=self.return_df,
                 fields_to_get=self.fields_to_get,
+                custom_filter=self.custom_filter,
             )
             list_to_compute.append(y)
 
@@ -623,6 +651,7 @@ class ParQuery:
                                                         mdmKey=self.mdmKey,
                                                         return_df=self.return_df,
                                                         fields_to_get=self.fields_to_get,
+                                                        custom_filter=self.custom_filter,
                                                                              )
                                                     for RANGE_FILTER in self.chunks)
         return list_to_compute
@@ -630,10 +659,17 @@ class ParQuery:
 
 def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None, index_type='MASTER',fields=None, mdmKey=None,
                only_hits=True, return_df=True, fields_to_get=None, custom_filter=None):
-    json_query = Filter.Builder()\
-        .type(datamodel_name)\
-        .must(RF(key=mdmKey, value=RANGE_FILTER))\
-        .build().to_json()
+
+
+    if custom_filter is not None:
+        json_query = copy.deepcopy(custom_filter)
+        json_query = json_query.must(RF(key=mdmKey, value=RANGE_FILTER)).build().to_json()
+
+    else:
+        json_query = Filter.Builder()\
+            .type(datamodel_name)\
+            .must(RF(key=mdmKey, value=RANGE_FILTER))\
+            .build().to_json()
 
     query = Query(login, page_size=page_size, save_results=False, print_status=False, index_type=index_type,
                   only_hits=only_hits,
@@ -645,7 +681,7 @@ def _par_query(datamodel_name, RANGE_FILTER, page_size=1000, login=None, index_t
         query = list(itertools.chain(*query))
         if fields:
             query = [elem.get(fields, elem) for elem in query if
-                     elem.get(fields,None)]
+                     elem.get(fields, None)]
 
     if return_df:
         return pd.DataFrame(query)
