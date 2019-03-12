@@ -456,8 +456,8 @@ class ParQuery:
         print(f"Total Hits for rejected to download: {query.total_hits}")
 
         if multiplier is not None:
-            min_v = int(min_v*multiplier)
-            max_v = int(max_v*multiplier)
+            min_v = int(min_v*multiplier) - 10
+            max_v = int(max_v*multiplier) + 10
         return min_v, max_v, sample
 
     def _get_staging_from_golden_rejected(self,datamodel_name, connector_id, staging_name, fields):
