@@ -423,15 +423,19 @@ class ParQuery:
         :param verbose:
         :param n_jobs:
         """
+
+        self._stag_mdm_key_range = None
+        self._multiplier = None
         self.carol = carol
         self.return_df = return_df
         self.backend = backend
         self.verbose = verbose
         self.n_jobs = n_jobs
 
+
         assert self.backend == 'dask' or self.backend == 'joblib'
 
-    def _get_min_max(self, datamodel_name, mdm_key, index_type, custom_filter=None):
+    def _get_min_max(self, datamodel_name, mdm_key, index_type, custom_filter=None, multiplier=None ):
 
         if custom_filter is not None:
             j = custom_filter
@@ -450,6 +454,11 @@ class ParQuery:
         min_v = query.results[0]['aggs']['MINIMUM']['value']
         max_v = query.results[0]['aggs']['MAXIMUM']['value']
         print(f"Total Hits for rejected to download: {query.total_hits}")
+
+        if multiplier is not None:
+            assert isinstance(multiplier, int)
+            min_v *= multiplier
+            max_v *= multiplier
         return min_v, max_v, sample
 
     def _get_staging_from_golden_rejected(self,datamodel_name, connector_id, staging_name, fields):
@@ -661,11 +670,13 @@ class ParQuery:
         self.fields = None
         only_hits = False
         mdm_key = 'mdmCounterForEntity'
+        if self._stag_mdm_key_range is not None:
+            mdm_key = self._stag_mdm_key_range
 
 
 
         min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name, mdm_key=mdm_key,
-                                                 index_type=index_type)
+                                                 index_type=index_type, multiplier=self._multiplier )
         if (min_v is None) and (max_v is None):
             return []
         chunks = ranges(min_v, max_v, self.slices)
@@ -714,7 +725,7 @@ class ParQuery:
             assert staging_name
 
             return self._get_staging(connector_id=connector_id, connector_name=connector_name, staging_name=staging_name,
-                              fields=None)
+                              fields=fields)
         else:
 
             return self._get_golden(datamodel_name=datamodel_name, fields=fields)
