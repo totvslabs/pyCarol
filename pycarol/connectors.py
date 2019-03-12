@@ -94,6 +94,9 @@ class Connectors:
                 set_param = False
             conn = conn['hits']
 
+            if not conn:
+                break
+
             connectors.extend(conn)
             params['offset'] = count
             if print_status:
@@ -219,6 +222,8 @@ class Connectors:
 
             count += resp['count']
             query = resp['hits']
+            if not query:
+                break
 
             self.resp.extend(query)
             payload['offset'] = count
