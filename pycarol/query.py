@@ -544,8 +544,8 @@ class ParQuery:
             .type(self.datamodel_name) \
             .must(TERM_FILTER(key='mdmStagingEntityName.raw',
                               value=self.filter_stag)) \
-            .aggregation_list(
-            [MINIMUM(name='MINIMUM', params=self.mdm_key), MAXIMUM(name='MAXIMUM', params=self.mdm_key)]) \
+            .aggregation_list([MINIMUM(name='MINIMUM', params=self.mdm_key),
+                               MAXIMUM(name='MAXIMUM', params=self.mdm_key)]) \
             .build().to_json()
 
         min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name, mdm_key=self.mdm_key,
@@ -585,6 +585,83 @@ class ParQuery:
 
         return list_to_compute
 
+
+    def _get_golden(self, datamodel_name=None, fields=None):
+
+        index_type = 'MASTER'
+        self.datamodel_name = f"{datamodel_name}Golden"
+        self.fields = 'mdmGoldenFieldAndValues'
+        self.fields_to_get = [self.fields + '.' + i if self.fields not in i else i for i in fields]
+        only_hits = True
+        mdm_key = 'mdmCounterForEntity'
+
+        min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name, mdm_key=mdm_key,
+                                                 index_type=index_type)
+        if (min_v is None) and (max_v is None):
+            return []
+        chunks = ranges(min_v, max_v, self.slices)
+        print(f"Number of chunks: {len(chunks)}")
+
+        if self.backend == 'dask':
+            list_to_compute = _dask_backend(carol=self.carol, chunks=chunks, datamodel_name=self.datamodel_name,
+                                            page_size=self.page_size, index_type=index_type, fields=self.fields,
+                                            only_hits=only_hits, mdm_key=mdm_key, return_df=self.return_df,
+                                            fields_to_get=self.fields_to_get, custom_filter=self.custom_filter)
+        elif self.backend == 'joblib':
+            list_to_compute = _joblib_backend(carol=self.carol, chunks=chunks, datamodel_name=self.datamodel_name,
+                                              page_size=self.page_size, index_type=index_type, fields=self.fields,
+                                              only_hits=only_hits, mdm_key=mdm_key, return_df=self.return_df,
+                                              fields_to_get=self.fields_to_get, custom_filter=self.custom_filter,
+                                              n_jobs=self.n_jobs, verbose=self.verbose)
+
+        if self.return_df:
+            return pd.concat(list_to_compute, ignore_index=True, sort=True)
+        list_to_compute = list(itertools.chain(*list_to_compute))
+        return list_to_compute
+
+
+    def _get_staging(self, connector_id=None, connector_name=None, staging_name=None, fields=None):
+
+        if not connector_id:
+            connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
+
+        index_type = 'STAGING'
+        self.datamodel_name = f"{connector_id}_{staging_name}"
+        self.fields_to_get = fields
+        self.fields = None
+        only_hits = False
+        mdm_key = 'mdmCounterForEntity'
+
+
+
+        min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name, mdm_key=mdm_key,
+                                                 index_type=index_type)
+        if (min_v is None) and (max_v is None):
+            return []
+        chunks = ranges(min_v, max_v, self.slices)
+        print(f"Number of chunks: {len(chunks)}")
+
+        if self.backend == 'dask':
+            list_to_compute = _dask_backend(carol=self.carol, chunks=chunks, datamodel_name=self.datamodel_name,
+                                            page_size=self.page_size, index_type=index_type, fields=self.fields,
+                                            only_hits=only_hits, mdm_key=mdm_key, return_df=self.return_df,
+                                            fields_to_get=self.fields_to_get, custom_filter=self.custom_filter)
+        elif self.backend == 'joblib':
+            list_to_compute = _joblib_backend(carol=self.carol, chunks=chunks, datamodel_name=self.datamodel_name,
+                                              page_size=self.page_size, index_type=index_type, fields=self.fields,
+                                              only_hits=only_hits, mdm_key=mdm_key, return_df=self.return_df,
+                                              fields_to_get=self.fields_to_get, custom_filter=self.custom_filter,
+                                              n_jobs=self.n_jobs, verbose=self.verbose)
+        else:
+            raise KeyError
+
+        if self.return_df:
+            return pd.concat(list_to_compute, ignore_index=True, sort=True)
+        list_to_compute = list(itertools.chain(*list_to_compute))
+        return list_to_compute
+
+
+
     def go(self, datamodel_name=None, slices=1000, page_size=1000, staging_name=None, connector_id=None,
            connector_name=None,
            get_staging_from_golden=False, fields=None):
@@ -606,48 +683,11 @@ class ParQuery:
             assert connector_id or connector_name
             assert staging_name
 
-            if not connector_id:
-                connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
-
-            self.index_type = 'STAGING'
-            self.datamodel_name = f"{connector_id}_{staging_name}"
-            self.fields_to_get = fields
-            self.fields = None
-            self.only_hits = False
-            self.mdm_key = 'mdmCounterForEntity'
+            return self._get_staging(connector_id=connector_id, connector_name=connector_name, staging_name=staging_name,
+                              fields=None)
         else:
-            self.index_type = 'MASTER'
-            self.datamodel_name = f"{datamodel_name}Golden"
-            self.fields = 'mdmGoldenFieldAndValues'
-            self.fields_to_get = [self.fields + '.' + i if self.fields not in i else i for i in fields]
-            self.only_hits = True
-            self.mdm_key = 'mdmCounterForEntity'
 
-        min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name, mdm_key=self.mdm_key,
-                                                 index_type=self.index_type)
-        if (min_v is None) and (max_v is None):
-            return []
-        chunks = ranges(min_v, max_v, self.slices)
-        print(f"Number of chunks: {len(chunks)}")
-
-        if self.backend == 'dask':
-            list_to_compute = _dask_backend(carol=self.carol, chunks=chunks, datamodel_name=self.datamodel_name,
-                                            page_size=self.page_size, index_type=self.index_type, fields=self.fields,
-                                            only_hits=self.only_hits, mdm_key=self.mdm_key, return_df=self.return_df,
-                                            fields_to_get=self.fields_to_get, custom_filter=self.custom_filter)
-        elif self.backend == 'joblib':
-            list_to_compute = _joblib_backend(carol=self.carol, chunks=chunks, datamodel_name=self.datamodel_name,
-                                              page_size=self.page_size, index_type=self.index_type, fields=self.fields,
-                                              only_hits=self.only_hits, mdm_key=self.mdm_key, return_df=self.return_df,
-                                              fields_to_get=self.fields_to_get, custom_filter=self.custom_filter,
-                                              n_jobs=self.n_jobs, verbose=self.verbose)
-        else:
-            raise KeyError
-
-        if self.return_df:
-            return pd.concat(list_to_compute, ignore_index=True, sort=True)
-        list_to_compute = list(itertools.chain(*list_to_compute))
-        return list_to_compute
+            return self._get_golden(datamodel_name=datamodel_name, fields=fields)
 
 
 def _dask_backend(carol, chunks, datamodel_name, page_size, index_type, fields,
