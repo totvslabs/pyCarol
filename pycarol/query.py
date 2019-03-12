@@ -449,7 +449,7 @@ class ParQuery:
         sample = query.results[0].get('hits')[0]
         min_v = query.results[0]['aggs']['MINIMUM']['value']
         max_v = query.results[0]['aggs']['MAXIMUM']['value']
-        print(f"Total Hits to download: {query.total_hits}")
+        print(f"Total Hits for rejected to download: {query.total_hits}")
         return min_v, max_v, sample
 
     def _get_staging_from_golden_rejected(self,datamodel_name, connector_id, staging_name, fields):
@@ -459,7 +459,7 @@ class ParQuery:
         self.fields = 'mdmStagingRecord'
         self.filter_stag = f"{connector_id}_{staging_name}"
         only_hits = False
-        mdm_key = 'mdmCounterForEntity'
+        mdm_key = 'mdmStagingRecord.mdmCounterForEntity'
         j = Filter.Builder() \
             .type(self.datamodel_name) \
             .must(TERM_FILTER(key='mdmStagingEntityName.raw',
@@ -579,9 +579,8 @@ class ParQuery:
             return []
         chunks = ranges(min_v, max_v, self.slices)
 
-        # rejected
-
         print(f"Number of chunks: {len(chunks)}")
+        print("Getting staging from Golden")
         self.fields_to_get = [self.fields + '.' + i for i in sample.get(self.fields).keys() for j in fields if
                               j + '_' in i]
 
@@ -604,14 +603,17 @@ class ParQuery:
         else:
             raise KeyError
 
-        list_to_compute_rejected = self._get_staging_from_golden_rejected()
+        list_to_compute_rejected = self._get_staging_from_golden_rejected(datamodel_name=datamodel_name,
+                                                                          connector_id=connector_id,
+                                                                          staging_name=staging_name,
+                                                                          fields=fields)
 
 
 
 
         if self.return_df:
-            return pd.concat(list_to_compute, ignore_index=True, sort=True)
-        list_to_compute = list(itertools.chain(*list_to_compute))
+            return pd.concat([list_to_compute, list_to_compute_rejected], ignore_index=True, sort=True)
+        list_to_compute = list(itertools.chain(*[list_to_compute, list_to_compute_rejected]))
 
         return list_to_compute
 
