@@ -94,6 +94,9 @@ class Connectors:
                 set_param = False
             conn = conn['hits']
 
+            if not conn:
+                break
+
             connectors.extend(conn)
             params['offset'] = count
             if print_status:
@@ -106,14 +109,17 @@ class Connectors:
             file.close()
         return connectors
 
-    def stats(self, connector_id=None, connector_name=None):
+    def stats(self, connector_id=None, connector_name=None, all_connectors=False):
 
-        if connector_name:
-            connector_id = self.get_by_name(connector_name)['mdmId']
+        if all_connectors:
+            response = self.carol.call_api('v1/connectors/stats/all')
         else:
-            assert connector_id
+            if connector_name:
+                connector_id = self.get_by_name(connector_name)['mdmId']
+            else:
+                assert connector_id
 
-        response = self.carol.call_api('v1/connectors/{}/stats'.format(connector_id))
+            response = self.carol.call_api('v1/connectors/{}/stats'.format(connector_id))
 
         self._conn_stats = response['aggs']
         return {key: list(value['stagingEntityStats'].keys()) for key, value in self._conn_stats.items()}
@@ -143,7 +149,7 @@ class Connectors:
 
     def get_dm_mappings(self, connector_id=None, connector_name=None, staging_name=None,
                         dm_id=None, dm_name=None, reverse_mapping=False, offset=0, page_size=1000, sort_by=None,
-                        sort_order='ASC'):
+                        sort_order='ASC', all_connectors=False):
         """
         Get data models mappings information.
 
@@ -167,29 +173,41 @@ class Connectors:
             Sort response by
         :param sort_order: `str`, default `ASC`
             Sort Order. Possible values "ASC" and "DESC"
+        :param all_connectors: `bool`, default `False`
+            It will return all the mapping for all connectors/stagings
         :return:
         """
 
-        if connector_name:
-            connector_id = self.get_by_name(connector_name)['mdmId']
+        if all_connectors:
+            payload = {
+                "offset": offset,
+                "sortBy": sort_by,
+                "pageSize": page_size,
+                "sortOrder": sort_order
+            }
+            url = "v1/connectors/mappings/all"
+
         else:
-            assert connector_id
+            if connector_name:
+                connector_id = self.get_by_name(connector_name)['mdmId']
+            else:
+                assert connector_id
 
-        if dm_name is not None:
-            url_dm = f"v1/entities/templates/name/{dm_name}"
-            dm_id = self.carol.call_api(url_dm, method='GET')['mdmId']
+            if dm_name is not None:
+                url_dm = f"v1/entities/templates/name/{dm_name}"
+                dm_id = self.carol.call_api(url_dm, method='GET')['mdmId']
 
-        payload = {
-            "reverseMapping": reverse_mapping,
-            "entityId": dm_id,
-            "stagingType": staging_name,
-            "offset": offset,
-            "sortBy": sort_by,
-            "pageSize": page_size,
-            "sortOrder": sort_order
-        }
+            payload = {
+                "reverseMapping": reverse_mapping,
+                "entityId": dm_id,
+                "stagingType": staging_name,
+                "offset": offset,
+                "sortBy": sort_by,
+                "pageSize": page_size,
+                "sortOrder": sort_order
+            }
 
-        url = f"v1/connectors/{connector_id}/entityMappings"
+            url = f"v1/connectors/{connector_id}/entityMappings"
         set_param = True
         to_get = float('inf')
         count = 0
@@ -204,6 +222,8 @@ class Connectors:
 
             count += resp['count']
             query = resp['hits']
+            if not query:
+                break
 
             self.resp.extend(query)
             payload['offset'] = count
