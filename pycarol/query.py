@@ -453,7 +453,7 @@ class ParQuery:
         sample = query.results[0].get('hits')[0]
         min_v = query.results[0]['aggs']['MINIMUM']['value']
         max_v = query.results[0]['aggs']['MAXIMUM']['value']
-        print(f"Total Hits for rejected to download: {query.total_hits}")
+        print(f"Total Hits to download: {query.total_hits}")
 
         if multiplier is not None:
             min_v = int(min_v*multiplier) - 10
@@ -484,7 +484,7 @@ class ParQuery:
 
         # rejected
 
-        print(f"Number of chunks: {len(chunks)}")
+        print(f"Number of chunks for rejected: {len(chunks)}")
         self.fields_to_get = [self.fields + '.' + i for i in sample.get(self.fields).keys() for j in fields if
                               j + '_' in i]
 
@@ -588,7 +588,7 @@ class ParQuery:
         chunks = ranges(min_v, max_v, self.slices)
 
         print(f"Number of chunks: {len(chunks)}")
-        print("Getting staging from Golden")
+        print("Getting staging from Golden, after will get from rejected too. ")
         self.fields_to_get = [self.fields + '.' + i for i in sample.get(self.fields).keys() for j in fields if
                               j + '_' in i]
 
@@ -615,7 +615,7 @@ class ParQuery:
                                                                           connector_id=connector_id,
                                                                           staging_name=staging_name,
                                                                           fields=fields)
-
+        print("Getting staging from rejected")
         list_to_compute.extend(list_to_compute_rejected)
         if self.return_df:
             return pd.concat(list_to_compute, ignore_index=True, sort=True)
