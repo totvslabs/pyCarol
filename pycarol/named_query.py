@@ -4,28 +4,29 @@ import re
 
 class NamedQuery:
 
-    def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=50, sort_order='ASC', sort_by=None,
-                 scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
+    def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=1000, sort_order='ASC', sort_by=None,
+                 index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
                  save_results=False, filename=None, print_status=True,
                  ):
 
-
         self.named_query_data = []
         self.named_query_dict = {}
-        
+
         self.carol = carol
         self.max_hits = max_hits
         self.offset = offset
         self.page_size = page_size
         self.sort_order = sort_order
         self.sort_by = sort_by
-        self.scrollable = scrollable
         self.index_type = index_type
         self.only_hits = only_hits
         self.fields = fields
         self.get_aggs = get_aggs
 
         self.save_results = save_results
+
+        if self.save_results:
+            assert filename, "`save_results=True`, you should specify the filename"
         self.filename = filename
         self.print_status = print_status
 
@@ -40,8 +41,8 @@ class NamedQuery:
 
     def _build_query_params(self):
         self.query_params = {"offset": self.offset, "pageSize": self.page_size, "sortOrder": self.sort_order,
-                                "indexType": self.index_type}
-        
+                             "indexType": self.index_type}
+
         if self.sort_by is not None:
             self.query_params["sortBy"] = self.sort_by
 
@@ -67,7 +68,7 @@ class NamedQuery:
         url_filter = "v2/named_queries"
         while count < to_get:
 
-            result =   self.carol.call_api(url_filter, params=self.query_params)
+            result = self.carol.call_api(url_filter, params=self.query_params)
 
             if set_param:
                 self.total_hits = result["totalHits"]
@@ -78,7 +79,6 @@ class NamedQuery:
                 else:
                     to_get = result["totalHits"]
                 set_param = False
-
 
             count += result['count']
             downloaded += result['count']
@@ -105,10 +105,8 @@ class NamedQuery:
         if self.save_results:
             file = open(self.filename, 'w', encoding='utf8')
 
-
         url_filter = "v2/named_queries/name/{}".format(named_query)
         result = self.carol.call_api(url_filter)
-
 
         self.named_query_dict.update({result['mdmQueryName']: result})
 
@@ -123,17 +121,16 @@ class NamedQuery:
 
     def create_named_query(self, named_query, overwrite=True):
 
-
-        if isinstance(named_query,dict):
-            named_query=[named_query]
+        if isinstance(named_query, dict):
+            named_query = [named_query]
         else:
-            assert isinstance(named_query,list)
+            assert isinstance(named_query, list)
 
         url_filter = 'v2/named_queries'
         count = 0
-        rType = "POST"
+        _requet_type = "POST"
         for query in named_query:
-            count+=1
+            count += 1
             query.pop('mdmId', None)
             query.pop('mdmTenantId', None)
 
@@ -141,14 +138,15 @@ class NamedQuery:
                 old_query = self.by_name(query['mdmQueryName'])
             except Exception as e:
                 if 'Not found' in e.args[0]:
-                    result = self.carol.call_api(path=url_filter,method=rType, data=query)
+                    result = self.carol.call_api(path=url_filter, method=_requet_type, data=query)
             else:
                 if overwrite:
-                    rType = "PUT"
-                    mdmId = self.named_query_dict[old_query['mdmQueryName']]['mdmId']
-                    url_filter = 'v2/named_queries/{}'.format(mdmId)
-                    result = self.carol.call_api(path=url_filter, method=rType, data=query)
+                    _requet_type = "PUT"
+                    mdm_id = self.named_query_dict[old_query['mdmQueryName']]['mdmId']
+                    url_filter = 'v2/named_queries/{}'.format(mdm_id)
+                    result = self.carol.call_api(path=url_filter, method=_requet_type, data=query)
                 else:
-                    print(f"{old_query['mdmQueryName']} will not be copied, use overwrite")
+                    print(f"{old_query['mdmQueryName']} "
+                          f"already exists and will not be copied, use `overwrite=True` to overwrite")
 
             print('{}/{} named queries copied'.format(count, len(named_query)), end='\r')
