@@ -25,7 +25,7 @@ class StorageGCPCS:
 
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
         self._init_if_needed()
-        remote_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
+        remote_file_name = f"carolapps/{self.carol.app_name}/files/{name}"
         local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
 
         if parquet:
@@ -59,7 +59,7 @@ class StorageGCPCS:
 
     def load(self, name, format='pickle', parquet=False, cache=True):
         self._init_if_needed()
-        remote_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
+        remote_file_name = f"carolapps/{self.carol.app_name}/files/{name}"
         local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
 
         has_cache = cache and os.path.isfile(local_file_name)
@@ -107,7 +107,7 @@ class StorageGCPCS:
 
     def exists(self, name):
         self._init_if_needed()
-        remote_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
+        remote_file_name = f"carolapps/{self.carol.app_name}/files/{name}"
 
         obj = self.bucket.Object(remote_file_name)
         if obj is None:
@@ -123,7 +123,7 @@ class StorageGCPCS:
 
     def delete(self, name):
         self._init_if_needed()
-        remote_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
+        remote_file_name = f"carolapps/{self.carol.app_name}/files/{name}"
         obj = self.bucket.Object(remote_file_name)
         if obj is not None:
             obj.delete()
