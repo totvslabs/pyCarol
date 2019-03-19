@@ -9,7 +9,7 @@ class Carolina:
         if self.client:
             return
 
-        token = self.carol.call_api('v1/carolina/storage/token')
+        token = self.carol.call_api('v1/storage/storage/token')
 
         self.engine = token['engine']
 
