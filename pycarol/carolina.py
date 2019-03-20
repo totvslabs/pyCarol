@@ -4,6 +4,7 @@ class Carolina:
         self.client = None
         self.engine = None
         self.bucketName = None
+        self.token = None
 
     def init_if_needed(self):
         if self.client:
@@ -23,11 +24,13 @@ class Carolina:
         from google.cloud import storage
 
         self.bucketName = token['bucketName']
+        self.token = token['token']
         gcp_credentials = service_account.Credentials.from_service_account_info(token['token'])
         self.client = storage.Client(credentials=gcp_credentials, project=token['token']['project_id'])
 
     def _init_aws(self, token):
         import boto3
+        self.token = token
         ai_access_key_id = token['aiAccessKeyId']
         ai_secret_key = token['aiSecretKey']
         ai_access_token = token['aiAccessToken']

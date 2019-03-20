@@ -3,7 +3,6 @@ import pickle
 import calendar
 import gzip
 import pandas as pd
-from pycarol.utils.singleton import KeySingleton
 from . import __TEMP_STORAGE__
 
 
@@ -131,3 +130,18 @@ class StorageGCPCS:
         local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
         if os.path.isfile(local_file_name):
             os.remove(local_file_name)
+
+    def build_url_parquet_golden(self, dm_name):
+        return f'gcs://{self.carolina.bucketName}/export/datamodel/{dm_name}'
+
+    def build_url_parquet_staging(self, staging_name, connector_id):
+        return f'gcs://{self.carolina.bucketName}/export/staging/{connector_id}_{staging_name}'
+
+    def build_url_parquet_staging_master(self, staging_name, connector_id):
+        return f'gcs://{self.carolina.bucketName}/export/master_staging/{connector_id}_{staging_name}'
+
+    def build_url_parquet_staging_master_rejected(self, tenant_id, staging_name, connector_id):
+        return f'gcs://{self.carolina.bucketName}/export/rejected_staging/{connector_id}_{staging_name}'
+
+    def get_dask_options(self):
+        return {'token': self.carolina.token}

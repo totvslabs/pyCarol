@@ -132,3 +132,21 @@ class StorageAWSS3:
         local_file_name = os.path.join(__TEMP_STORAGE__,s3_file_name.replace("/", "-"))
         if os.path.isfile(local_file_name):
             os.remove(local_file_name)
+
+    def build_url_parquet_golden(self, dm_name):
+        return f's3://{self.carolina.bucketName}/carol_export/{tenant_id}/{dm_name}/golden/*.parquet'
+
+    def build_url_parquet_staging(self, staging_name, connector_id):
+        return f's3://{self.carolina.bucketName}/carol_export/{tenant_id}/{connector_id}_{staging_name}/staging/*.parquet'
+
+    def build_url_parquet_staging_master(self, staging_name, connector_id):
+        return f's3://{self.carolina.bucketName}/carol_export/{tenant_id}/{connector_id}_{staging_name}/master_staging/*.parquet'
+
+    def build_url_parquet_staging_master_rejected(self, staging_name, connector_id):
+        self.carol.tenant['mdmId']
+        return f's3://{self.carolina.bucketName}/carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging/*.parquet'
+
+    def get_dask_options(self):
+        return {"key": self.carolina.token['aiAccessKeyId'],
+         "secret": self.carolina.token['aiSecretKey'],
+         "token": self.carolina.token['aiAccessToken']}

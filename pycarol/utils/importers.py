@@ -50,23 +50,7 @@ def _get_file_paths_staging(s3, tenant_id, connector_id, staging_name):
     return [i.key for i in parq if i.key.endswith('.parquet')]
 
 
-def _build_url_parquet_golden(tenant_id, dm_name):
-    return f's3://{__BUCKET_NAME__}/carol_export/{tenant_id}/{dm_name}/golden/'
-
-
-def _build_url_parquet_staging(tenant_id, staging_name, connector_id):
-    return f's3://{__BUCKET_NAME__}/carol_export/{tenant_id}/{connector_id}_{staging_name}/staging/'
-
-
-def _build_url_parquet_staging_master(tenant_id, staging_name, connector_id):
-    return f's3://{__BUCKET_NAME__}/carol_export/{tenant_id}/{connector_id}_{staging_name}/master_staging/'
-
-
-def _build_url_parquet_staging_master_rejected(tenant_id, staging_name, connector_id):
-    return f's3://{__BUCKET_NAME__}/carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging/'
-
-
-def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_records=False,
+def _import_dask(storage, merge_records=False,
                  dm_name=None, golden=False, return_dask_graph=False,
                  connector_id=None, staging_name=None, columns=None, max_hits=None):
     if columns:
@@ -75,25 +59,16 @@ def _import_dask(tenant_id, access_id, access_key, aws_session_token, merge_reco
         columns = list(set(columns))
 
     if golden:
-        url = _build_url_parquet_golden(tenant_id=tenant_id,
-                                        dm_name=dm_name)
+        url = [storage.build_url_parquet_golden(dm_name=dm_name)]
     else:
-        url = []
-        url.append(_build_url_parquet_staging(tenant_id=tenant_id,
-                                              staging_name=staging_name,
-                                              connector_id=connector_id))
-        url.append(_build_url_parquet_staging_master(tenant_id=tenant_id,
-                                                     staging_name=staging_name,
-                                                     connector_id=connector_id))
-        url.append(_build_url_parquet_staging_master_rejected(tenant_id=tenant_id,
-                                                              staging_name=staging_name,
-                                                              connector_id=connector_id))
+        url = [storage.build_url_parquet_staging(staging_name=staging_name,
+                                                 connector_id=connector_id),
+               storage.build_url_parquet_staging_master(staging_name=staging_name,
+                                                        connector_id=connector_id),
+               storage.build_url_parquet_staging_master_rejected(staging_name=staging_name,
+                                                                 connector_id=connector_id)]
 
-    url = [i + '*.parquet' for i in url]
-    d = dd.read_parquet(url, storage_options={"key": access_id,
-                                              "secret": access_key,
-                                              "token": aws_session_token},
-                        columns=columns)
+    d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns)
 
     if return_dask_graph:
         return d

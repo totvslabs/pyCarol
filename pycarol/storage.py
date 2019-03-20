@@ -9,19 +9,19 @@ from pycarol.storage_awss3 import StorageAWSS3
 class Storage(metaclass=KeySingleton):
     def __init__(self, carol):
         self.carol = carol
-        self.storage = None
+        self.backend = None
 
     def _init_if_needed(self):
-        if self.storage is not None:
+        if self.backend is not None:
             return
 
         carolina = Carolina(self.carol)
         carolina.init_if_needed()
         print(carolina.engine)
         if carolina.engine == 'GCP-CS':
-            self.storage = StorageGCPCS(self.carol, carolina)
+            self.backend = StorageGCPCS(self.carol, carolina)
         elif carolina.engine == 'AWS-S3':
-            self.storage = StorageAWSS3(self.carol, carolina)
+            self.backend = StorageAWSS3(self.carol, carolina)
 
     def save_async(self, name, obj):
         p = Process(target=_save_async, args=(Cloner(self.carol), name, obj))
@@ -31,20 +31,40 @@ class Storage(metaclass=KeySingleton):
 
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
         self._init_if_needed()
-        self.storage.save(name, obj, format, parquet, cache)
+        self.backend.save(name, obj, format, parquet, cache)
 
     def load(self, name, format='pickle', parquet=False, cache=True):
         self._init_if_needed()
-        return self.storage.load(name, format, parquet, cache)
+        return self.backend.load(name, format, parquet, cache)
 
     def exists(self, name):
         self._init_if_needed()
-        return self.storage.exists(name)
+        return self.backend.exists(name)
 
     def delete(self, name):
         self._init_if_needed()
-        self.storage.delete(name)
+        self.backend.delete(name)
+
+    def build_url_parquet_golden(self, dm_name):
+        self._init_if_needed()
+        return self.backend.build_url_parquet_golden(dm_name)
+
+    def build_url_parquet_staging(self, staging_name, connector_id):
+        self._init_if_needed()
+        return self.backend.build_url_parquet_staging(staging_name, connector_id)
+
+    def build_url_parquet_staging_master(self, staging_name, connector_id):
+        self._init_if_needed()
+        return self.backend.build_url_parquet_staging_master(staging_name, connector_id)
+
+    def build_url_parquet_staging_master_rejected(self, staging_name, connector_id):
+        self._init_if_needed()
+        return self.backend.build_url_parquet_staging_master_rejected(self, staging_name, connector_id)
+
+    def get_dask_options(self):
+        self._init_if_needed()
+        return self.backend.get_dask_options()
 
 
 def _save_async(cloner, name, obj):
-    return Storage(cloner.build()).storage.save(name, obj)
+    return Storage(cloner.build()).backend.save(name, obj)
