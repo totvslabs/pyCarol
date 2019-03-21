@@ -71,18 +71,17 @@ class StorageGCPCS:
         else:
             localts = 0
 
-        s3ts = 0
-        #try:
-        #    s3ts = calendar.timegm(obj.last_modified.timetuple())
-        #except botocore.exceptions.ClientError as e:
-        #    if e.response['Error']['Code'] == "404":
-        #        return None
+        blob = self.bucket.blob(remote_file_name)
+        if not blob.exists():
+            return None
+
+        blob.reload()
+        remote_ts = blob.updated.timestamp()
 
         if not cache and format == 'raw':
             import joblib
             from io import BytesIO
             buffer = BytesIO()
-            blob = self.bucket.blob(remote_file_name)
             blob.download_to_file(buffer)
             return buffer
 
@@ -90,14 +89,12 @@ class StorageGCPCS:
             import joblib
             from io import BytesIO
             with BytesIO() as buffer:
-                blob = self.bucket.blob(remote_file_name)
                 blob.download_to_file(buffer)
                 return joblib.load(buffer)
 
         # Local cache is outdated
-        if localts < s3ts:
-            blob = self.bucket.blob(remote_file_name)
-            blob.download_to_file(local_file_name)
+        if localts < remote_ts:
+            blob.download_to_filename(local_file_name)
 
         if os.path.isfile(local_file_name):
             if parquet:
@@ -119,24 +116,15 @@ class StorageGCPCS:
         self._init_if_needed()
         remote_file_name = f"carolapps/{self.carol.app_name}/files/{name}"
 
-        obj = self.bucket.Object(remote_file_name)
-        if obj is None:
-            return False
-
-        try:
-            calendar.timegm(obj.last_modified.timetuple())
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] == "404":
-                return False
-
-        return True
+        blob = self.bucket.blob(remote_file_name)
+        return blob.exists()
 
     def delete(self, name):
         self._init_if_needed()
         remote_file_name = f"carolapps/{self.carol.app_name}/files/{name}"
-        obj = self.bucket.Object(remote_file_name)
-        if obj is not None:
-            obj.delete()
+
+        blob = self.bucket.blob(remote_file_name)
+        blob.delete()
 
         local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
         if os.path.isfile(local_file_name):
