@@ -1,10 +1,16 @@
+from string import Formatter
+
 class Carolina:
     def __init__(self, carol):
         self.carol = carol
         self.client = None
         self.engine = None
-        self.bucketName = None
         self.token = None
+        self.cds_app_storage_path = None
+        self.cds_golden_path = None
+        self.cds_staging_path = None
+        self.cds_staging_master_path = None
+        self.cds_staging_rejected_path = None
 
     def init_if_needed(self):
         if self.client:
@@ -13,6 +19,12 @@ class Carolina:
         token = self.carol.call_api('v1/storage/storage/token')
 
         self.engine = token['engine']
+
+        self.cds_app_storage_path = token['cdsAppStoragePath']
+        self.cds_golden_path = token['cdsGoldenPath']
+        self.cds_staging_path = token['cdsStagingPath']
+        self.cds_staging_master_path = token['cdsStagingMasterPath']
+        self.cds_staging_rejected_path = token['cdsStagingRejectedPath']
 
         if self.engine == 'GCP-CS':
             self._init_gcp(token)
@@ -23,7 +35,6 @@ class Carolina:
         from google.oauth2 import service_account
         from google.cloud import storage
 
-        self.bucketName = token['bucketName']
         self.token = token['token']
         gcp_credentials = service_account.Credentials.from_service_account_info(token['token'])
         self.client = storage.Client(credentials=gcp_credentials, project=token['token']['project_id'])
@@ -35,7 +46,6 @@ class Carolina:
         ai_secret_key = token['aiSecretKey']
         ai_access_token = token['aiAccessToken']
         ai_token_expiration_date = token['aiTokenExpirationDate']
-        self.bucketName = token['s3Bucket']
 
         boto3.setup_default_session(aws_access_key_id=ai_access_key_id, aws_secret_access_key=ai_secret_key,
                                     aws_session_token=ai_access_token)
@@ -44,3 +54,31 @@ class Carolina:
     def get_client(self):
         self.init_if_needed()
         return self.client
+
+    def get_bucket_name(self, space):
+        if space == 'golden':
+            template = self.cds_golden_path['bucket']
+        elif space == 'staging':
+            template = self.cds_staging_path['bucket']
+        elif space == 'staging_master':
+            template = self.cds_staging_master_path['bucket']
+        elif space == 'staging_rejected':
+            template = self.cds_staging_rejected_path['bucket']
+
+        name = Formatter().vformat(template, None, {'tenant_id': self.carol.tenant['mdmId']})
+        return name
+
+    def get_path(self, space, vars):
+        vars['tenant_id'] = self.carol.tenant['mdmId']
+
+        if space == 'golden':
+            template = self.cds_golden_path['path']
+        elif space == 'staging':
+            template = self.cds_staging_path['path']
+        elif space == 'staging_master':
+            template = self.cds_staging_master_path['path']
+        elif space == 'staging_rejected':
+            template = self.cds_staging_rejected_path['path']
+
+        name = Formatter().vformat(template, None, vars)
+        return name

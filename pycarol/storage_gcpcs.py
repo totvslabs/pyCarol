@@ -11,21 +11,23 @@ class StorageGCPCS:
         self.carol = carol
         self.carolina = carolina
         self.client = None
-        self.bucket = None
+        self.bucket_app_storage = None
 
     def _init_if_needed(self):
         if self.client is not None:
             return
 
         self.client = self.carolina.get_client()
-        self.bucket = self.client.bucket(self.carolina.bucketName)
+        self.bucket_app_storage = self.client.bucket(self.carolina.cds_app_storage_path['bucket'])
         if not os.path.exists(__TEMP_STORAGE__):
             os.makedirs(__TEMP_STORAGE__)
 
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
         self._init_if_needed()
-        remote_file_name = f"carolapps/{self.carol.app_name}/files/{name}"
+        remote_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
         local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
+
+        bucket = self.bucket_app_storage
 
         if parquet:
             if not isinstance(obj, pd.DataFrame):
@@ -39,7 +41,7 @@ class StorageGCPCS:
                 with BytesIO() as buffer:
                     joblib.dump(obj, buffer)
                     buffer.seek(0)
-                    self.bucket.upload_fileobj(buffer, remote_file_name)
+                    bucket.upload_fileobj(buffer, remote_file_name)
                 return
             else:
                 joblib.dump(obj, local_file_name)
@@ -51,17 +53,20 @@ class StorageGCPCS:
         else:
             raise ValueError("Supported formats are pickle, joblib or file")
 
-        blob = self.bucket.blob(remote_file_name)
+        blob = bucket.blob(remote_file_name)
 
         blob.upload_from_filename(filename=local_file_name)
         os.utime(local_file_name, None)
 
-    def load(self, name, format='pickle', parquet=False, cache=True, absolute_path=False):
+    def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage'):
         self._init_if_needed()
-        if not absolute_path:
-            remote_file_name = f"carolapps/{self.carol.app_name}/files/{name}"
+        if storage_space == 'app_storage':
+            remote_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
+            bucket = self.bucket_app_storage
         else:
             remote_file_name = name
+            bucket = self.client.bucket(self.carolina.get_bucket_name(storage_space))
+
         local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
 
         has_cache = cache and os.path.isfile(local_file_name)
@@ -71,7 +76,7 @@ class StorageGCPCS:
         else:
             localts = 0
 
-        blob = self.bucket.blob(remote_file_name)
+        blob = bucket.blob(remote_file_name)
         if not blob.exists():
             return None
 
@@ -114,16 +119,17 @@ class StorageGCPCS:
 
     def exists(self, name):
         self._init_if_needed()
-        remote_file_name = f"carolapps/{self.carol.app_name}/files/{name}"
+        remote_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
+        print(remote_file_name)
 
-        blob = self.bucket.blob(remote_file_name)
+        blob = self.bucket_app_storage.blob(remote_file_name)
         return blob.exists()
 
     def delete(self, name):
         self._init_if_needed()
-        remote_file_name = f"carolapps/{self.carol.app_name}/files/{name}"
+        remote_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
 
-        blob = self.bucket.blob(remote_file_name)
+        blob = self.bucket_app_storage.blob(remote_file_name)
         blob.delete()
 
         local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
@@ -131,24 +137,30 @@ class StorageGCPCS:
             os.remove(local_file_name)
 
     def build_url_parquet_golden(self, dm_name):
-        return f'gcs://{self.carolina.bucketName}/export/datamodel/{dm_name}'
+        path = self.carolina.get_path("golden", {'dm_name': dm_name})
+        return f'gcs://{self.carolina.get_bucket_name("golden")}/{path}'
 
     def build_url_parquet_staging(self, staging_name, connector_id):
-        return f'gcs://{self.carolina.bucketName}/export/staging/{connector_id}_{staging_name}'
+        path = self.carolina.get_path("staging", {'connector_id': connector_id, 'staging_type': staging_name})
+        return f'gcs://{self.carolina.get_bucket_name("staging")}/{path}'
 
     def build_url_parquet_staging_master(self, staging_name, connector_id):
-        return f'gcs://{self.carolina.bucketName}/export/master_staging/{connector_id}_{staging_name}'
+        path = self.carolina.get_path("staging_master", {'connector_id': connector_id, 'staging_type': staging_name})
+        return f'gcs://{self.carolina.get_bucket_name("staging_master")}/{path}'
 
-    def build_url_parquet_staging_master_rejected(self, tenant_id, staging_name, connector_id):
-        return f'gcs://{self.carolina.bucketName}/export/rejected_staging/{connector_id}_{staging_name}'
+    def build_url_parquet_staging_rejected(self, staging_name, connector_id):
+        path = self.carolina.get_path("staging_rejected", {'connector_id': connector_id, 'staging_type': staging_name})
+        return f'gcs://{self.carolina.get_bucket_name("staging_rejected")}/{path}'
 
     def get_dask_options(self):
         return {'token': self.carolina.token}
 
     def get_golden_file_paths(self, dm_name):
         self._init_if_needed()
-        blobs = self.bucket.list_blobs(prefix=f'export/datamodel/{dm_name}', delimiter=None)
-        return [i.name for i in blobs if i.name.endswith('.parquet')]
+        bucket = self.client.bucket(self.carolina.get_bucket_name('golden'))
+        path = self.carolina.get_path('golden', {'dm_name': dm_name})
+        blobs = bucket.list_blobs(prefix=path, delimiter=None)
+        return [{'storage_space': 'golden', 'name': i.name} for i in blobs if i.name.endswith('.parquet')]
 
     def get_staging_file_paths(self, staging_name, connector_id):
         self._init_if_needed()
@@ -156,8 +168,12 @@ class StorageGCPCS:
             self.bucket.objects.filter(Prefix=f'export/staging/{connector_id}_{staging_name}'))
         blobs_master = list(self.bucket.objects.filter(
             Prefix=f'export/master_staging/{connector_id}_{staging_name}'))
-        blobs_stag_rejected = list(self.bucket.objects.filter(
+        blobs_rejected = list(self.bucket.objects.filter(
             Prefix=f'export/rejected_staging/{connector_id}_{staging_name}'))
-        blobs = blobs_stag + blobs_master + blobs_stag_rejected
 
-        return [i.name for i in blobs if i.name.endswith('.parquet')]
+        bs = [{'storage_space': 'staging', 'name': i.name} for i in blobs_stag if i.name.endswith('.parquet')]
+        bm = [{'storage_space': 'staging_master', 'name': i.name} for i in blobs_master if i.name.endswith('.parquet')]
+        br = [{'storage_space': 'staging_rejected', 'name': i.name} for i in blobs_rejected if i.name.endswith('.parquet')]
+
+        ball = bs + bm + br
+        return ball

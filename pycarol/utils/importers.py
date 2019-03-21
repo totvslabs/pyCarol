@@ -24,8 +24,8 @@ def _import_dask(storage, merge_records=False,
                                                  connector_id=connector_id),
                storage.build_url_parquet_staging_master(staging_name=staging_name,
                                                         connector_id=connector_id),
-               storage.build_url_parquet_staging_master_rejected(staging_name=staging_name,
-                                                                 connector_id=connector_id)]
+               storage.build_url_parquet_staging_rejected(staging_name=staging_name,
+                                                          connector_id=connector_id)]
 
     d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns)
 
@@ -46,11 +46,13 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None,
         file_paths = storage.get_golden_file_paths(dm_name=dm_name)
     else:
         file_paths = storage.get_staging_file_paths(staging_name=staging_name, connector_id=connector_id)
+
+    print(file_paths)
     if n_jobs == 1:
         df_list = []
         count = 0
         for i, file in enumerate(tqdm(file_paths)):
-            buffer = storage.load(file, format='raw', cache=False, absolute_path=True)
+            buffer = storage.load(file['name'], format='raw', cache=False, storage_space=file['storage_space'])
             result = pd.read_parquet(buffer, columns=columns)
             if callback:
                 assert callable(callback), \

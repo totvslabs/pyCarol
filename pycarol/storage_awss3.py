@@ -155,7 +155,7 @@ class StorageAWSS3:
         tenant_id = self.carol.tenant['mdmId']
         return f's3://{self.carolina.bucketName}/carol_export/{tenant_id}/{connector_id}_{staging_name}/master_staging/*.parquet'
 
-    def build_url_parquet_staging_master_rejected(self, staging_name, connector_id):
+    def build_url_parquet_staging_rejected(self, staging_name, connector_id):
         tenant_id = self.carol.tenant['mdmId']
         return f's3://{self.carolina.bucketName}/carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging/*.parquet'
 

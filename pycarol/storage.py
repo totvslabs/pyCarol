@@ -32,9 +32,9 @@ class Storage(metaclass=KeySingleton):
         self._init_if_needed()
         self.backend.save(name, obj, format, parquet, cache)
 
-    def load(self, name, format='pickle', parquet=False, cache=True, absolute_path=False):
+    def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage'):
         self._init_if_needed()
-        return self.backend.load(name, format, parquet, cache, absolute_path)
+        return self.backend.load(name, format, parquet, cache, storage_space)
 
     def exists(self, name):
         self._init_if_needed()
@@ -58,7 +58,7 @@ class Storage(metaclass=KeySingleton):
 
     def build_url_parquet_staging_master_rejected(self, staging_name, connector_id):
         self._init_if_needed()
-        return self.backend.build_url_parquet_staging_master_rejected(self, staging_name, connector_id)
+        return self.backend.build_url_parquet_staging_rejected(self, staging_name, connector_id)
 
     def get_dask_options(self):
         self._init_if_needed()
