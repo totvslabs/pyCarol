@@ -20,13 +20,20 @@ def _import_dask(storage, merge_records=False,
     if golden:
         url = [storage.build_url_parquet_golden(dm_name=dm_name)]
     else:
-        url = [storage.build_url_parquet_staging(staging_name=staging_name,
-                                                 connector_id=connector_id),
-               storage.build_url_parquet_staging_master(staging_name=staging_name,
-                                                        connector_id=connector_id),
-               storage.build_url_parquet_staging_rejected(staging_name=staging_name,
-                                                          connector_id=connector_id)]
+        url = []
+        url1 = storage.build_url_parquet_staging(staging_name=staging_name, connector_id=connector_id)
+        if url1 is not None:
+            url.append(url1)
 
+        url2 = storage.build_url_parquet_staging_master(staging_name=staging_name, connector_id=connector_id)
+        if url2 is not None:
+            url.append(url2)
+
+        url3 = storage.build_url_parquet_staging_rejected(staging_name=staging_name, connector_id=connector_id)
+        if url3 is not None:
+            url.append(url3)
+
+    print(f'url: {url}')
     d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns)
 
     if return_dask_graph:

@@ -7,7 +7,7 @@ import asyncio
 from .query import Query, delete_golden
 from .schema_generator import carolSchemaGenerator
 from .connectors import Connectors
-from .carolina import Carolina
+from .storage import Storage
 from .utils.importers import _import_dask, _import_pandas
 from .filter import Filter, TYPE_FILTER
 from .utils import async_helpers
@@ -101,8 +101,10 @@ class Staging:
 
         if (not schema) and (auto_create_schema):
             assert crosswalk_auto_create, "You should provide a crosswalk"
+            print('creating schema...')
             self.create_schema(_sample_json, staging_name, connector_id=connector_id,
                                crosswalk_list=crosswalk_auto_create, mdm_flexible=flexible_schema)
+            print('created schema...')
             _crosswalk = crosswalk_auto_create
             print('provided crosswalk ', _crosswalk)
         elif auto_create_schema:
@@ -141,7 +143,6 @@ class Staging:
                                                                                 compress_gzip=self.gzip))
             loop.run_until_complete(future)
 
-
         else:
             for data_json, cont in stream_data(data=data,
                                                step_size=step_size,
@@ -150,7 +151,6 @@ class Staging:
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
                 if print_stats:
                     print('{}/{} sent'.format(cont, data_size), end='\r')
-
 
     def get_schema(self, staging_name, connector_name=None, connector_id=None):
 
@@ -169,8 +169,7 @@ class Staging:
     def create_schema(self, fields_dict, staging_name, connector_id=None, mdm_flexible='false',
                       crosswalk_name=None, crosswalk_list=None, overwrite=False):
 
-
-        if isinstance(mdm_flexible,bool): #for compability
+        if isinstance(mdm_flexible, bool): #for compability
             # TODO: review `mdm_flexible` as type string. Probably it would work if we use bool.
             if mdm_flexible:
                 mdm_flexible = 'true'
@@ -182,6 +181,7 @@ class Staging:
         if isinstance(fields_dict, list):
             fields_dict = fields_dict[0]
 
+        print('calling schema generator...')
         if isinstance(fields_dict, dict):
             schema = carolSchemaGenerator(fields_dict)
             schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible,
@@ -193,6 +193,7 @@ class Staging:
         else:
             print('Behavior for type %s not defined!' % type(fields_dict))
 
+        print('done.. sending..')
         self.send_schema(schema=schema, staging_name=staging_name, connector_id=connector_id, overwrite=overwrite)
 
     def send_schema(self, schema, staging_name, connector_id=None, overwrite=False):
@@ -288,21 +289,14 @@ class Staging:
                 f'"Wrong connector Id {connector_id}. The connector Id associeted to this staging is  '
                 f'{stags.get(staging_name)["mdmConnectorId"]}"')
 
-        carolina = Carolina(self.carol)
-        carolina._init_if_needed()
+        storage = Storage(self.carol)
         if backend == 'dask':
-            access_id = carolina.ai_access_key_id
-            access_key = carolina.ai_secret_key
-            aws_session_token = carolina.ai_access_token
-
-            d = _import_dask(tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, staging_name=staging_name,
-                             access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
+            d = _import_dask(storage=storage, connector_id=connector_id, staging_name=staging_name,
                              merge_records=merge_records, golden=False, return_dask_graph=return_dask_graph,
                              columns=columns, max_hits=max_hits)
 
         elif backend == 'pandas':
-            s3 = carolina.s3
-            d = _import_pandas(s3=s3, tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
+            d = _import_pandas(storage=storage, connector_id=connector_id, verbose=verbose,
                                staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns,
                                max_hits=max_hits, callback=callback)
 

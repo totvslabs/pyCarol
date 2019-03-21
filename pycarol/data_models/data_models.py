@@ -92,7 +92,6 @@ class DataModel:
                 f'"{dm_name}" is not set to export data, \n use `dm = DataModel(login).export(dm_name="{dm_name}", sync_dm=True) to activate')
 
         storage = Storage(self.carol)
-
         if backend == 'dask':
             d = _import_dask(storage=storage, dm_name=dm_name,
                              merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph,

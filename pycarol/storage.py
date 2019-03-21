@@ -56,9 +56,9 @@ class Storage(metaclass=KeySingleton):
         self._init_if_needed()
         return self.backend.build_url_parquet_staging_master(staging_name, connector_id)
 
-    def build_url_parquet_staging_master_rejected(self, staging_name, connector_id):
+    def build_url_parquet_staging_rejected(self, staging_name, connector_id):
         self._init_if_needed()
-        return self.backend.build_url_parquet_staging_rejected(self, staging_name, connector_id)
+        return self.backend.build_url_parquet_staging_rejected(staging_name, connector_id)
 
     def get_dask_options(self):
         self._init_if_needed()

@@ -141,16 +141,34 @@ class StorageGCPCS:
         return f'gcs://{self.carolina.get_bucket_name("golden")}/{path}'
 
     def build_url_parquet_staging(self, staging_name, connector_id):
+        self._init_if_needed()
         path = self.carolina.get_path("staging", {'connector_id': connector_id, 'staging_type': staging_name})
-        return f'gcs://{self.carolina.get_bucket_name("staging")}/{path}'
+        bucket_name = self.carolina.get_bucket_name("staging")
+        bucket = self.client.bucket(bucket_name)
+        blobs = list(bucket.list_blobs(prefix=path))
+        if len(blobs) == 0:
+            return None
+        return f'gcs://{bucket_name}/{path}'
 
     def build_url_parquet_staging_master(self, staging_name, connector_id):
+        self._init_if_needed()
         path = self.carolina.get_path("staging_master", {'connector_id': connector_id, 'staging_type': staging_name})
-        return f'gcs://{self.carolina.get_bucket_name("staging_master")}/{path}'
+        bucket_name = self.carolina.get_bucket_name("staging_master")
+        bucket = self.client.bucket(bucket_name)
+        blobs = list(bucket.list_blobs(prefix=path))
+        if len(blobs) == 0:
+            return None
+        return f'gcs://{bucket_name}/{path}'
 
     def build_url_parquet_staging_rejected(self, staging_name, connector_id):
+        self._init_if_needed()
         path = self.carolina.get_path("staging_rejected", {'connector_id': connector_id, 'staging_type': staging_name})
-        return f'gcs://{self.carolina.get_bucket_name("staging_rejected")}/{path}'
+        bucket_name = self.carolina.get_bucket_name("staging_rejected")
+        bucket = self.client.bucket(bucket_name)
+        blobs = list(bucket.list_blobs(prefix=path))
+        if len(blobs) == 0:
+            return None
+        return f'gcs://{bucket_name}/{path}'
 
     def get_dask_options(self):
         return {'token': self.carolina.token}
@@ -164,14 +182,20 @@ class StorageGCPCS:
 
     def get_staging_file_paths(self, staging_name, connector_id):
         self._init_if_needed()
-        blobs_stag = list(
-            self.bucket.objects.filter(Prefix=f'export/staging/{connector_id}_{staging_name}'))
-        blobs_master = list(self.bucket.objects.filter(
-            Prefix=f'export/master_staging/{connector_id}_{staging_name}'))
-        blobs_rejected = list(self.bucket.objects.filter(
-            Prefix=f'export/rejected_staging/{connector_id}_{staging_name}'))
 
-        bs = [{'storage_space': 'staging', 'name': i.name} for i in blobs_stag if i.name.endswith('.parquet')]
+        bucket_staging = self.client.bucket(self.carolina.get_bucket_name('staging'))
+        path_staging = self.carolina.get_path("staging", {'connector_id': connector_id, 'staging_type': staging_name})
+        blobs_staging = list(bucket_staging.list_blobs(prefix=path_staging))
+
+        bucket_master = self.client.bucket(self.carolina.get_bucket_name('staging_master'))
+        path_master = self.carolina.get_path("staging_master", {'connector_id': connector_id, 'staging_type': staging_name})
+        blobs_master = list(bucket_master.list_blobs(prefix=path_master))
+
+        bucket_rejected = self.client.bucket(self.carolina.get_bucket_name('staging_rejected'))
+        path_rejected = self.carolina.get_path("staging_rejected", {'connector_id': connector_id, 'staging_type': staging_name})
+        blobs_rejected = list(bucket_rejected.list_blobs(prefix=path_rejected))
+
+        bs = [{'storage_space': 'staging', 'name': i.name} for i in blobs_staging if i.name.endswith('.parquet')]
         bm = [{'storage_space': 'staging_master', 'name': i.name} for i in blobs_master if i.name.endswith('.parquet')]
         br = [{'storage_space': 'staging_rejected', 'name': i.name} for i in blobs_rejected if i.name.endswith('.parquet')]
 

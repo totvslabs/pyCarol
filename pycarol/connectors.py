@@ -1,6 +1,7 @@
 import json
 from collections import defaultdict
 
+
 class Connectors:
     def __init__(self, carol):
         self.carol = carol
