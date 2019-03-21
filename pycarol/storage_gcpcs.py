@@ -56,9 +56,12 @@ class StorageGCPCS:
         blob.upload_from_filename(filename=local_file_name)
         os.utime(local_file_name, None)
 
-    def load(self, name, format='pickle', parquet=False, cache=True):
+    def load(self, name, format='pickle', parquet=False, cache=True, absolute_path=False):
         self._init_if_needed()
-        remote_file_name = f"carolapps/{self.carol.app_name}/files/{name}"
+        if not absolute_path:
+            remote_file_name = f"carolapps/{self.carol.app_name}/files/{name}"
+        else:
+            remote_file_name = name
         local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
 
         has_cache = cache and os.path.isfile(local_file_name)
@@ -75,13 +78,21 @@ class StorageGCPCS:
         #    if e.response['Error']['Code'] == "404":
         #        return None
 
-        if not cache and format == 'joblib':
+        if not cache and format == 'raw':
             import joblib
             from io import BytesIO
-            with BytesIO() as data:
-                self.bucket.download_fileobj(remote_file_name, data)
-                data.seek(0)
-                return joblib.load(data)
+            buffer = BytesIO()
+            blob = self.bucket.blob(remote_file_name)
+            blob.download_to_file(buffer)
+            return buffer
+
+        elif not cache and format == 'joblib':
+            import joblib
+            from io import BytesIO
+            with BytesIO() as buffer:
+                blob = self.bucket.blob(remote_file_name)
+                blob.download_to_file(buffer)
+                return joblib.load(buffer)
 
         # Local cache is outdated
         if localts < s3ts:
@@ -145,3 +156,20 @@ class StorageGCPCS:
 
     def get_dask_options(self):
         return {'token': self.carolina.token}
+
+    def get_golden_file_paths(self, dm_name):
+        self._init_if_needed()
+        blobs = self.bucket.list_blobs(prefix=f'export/datamodel/{dm_name}', delimiter=None)
+        return [i.name for i in blobs if i.name.endswith('.parquet')]
+
+    def get_staging_file_paths(self, staging_name, connector_id):
+        self._init_if_needed()
+        blobs_stag = list(
+            self.bucket.objects.filter(Prefix=f'export/staging/{connector_id}_{staging_name}'))
+        blobs_master = list(self.bucket.objects.filter(
+            Prefix=f'export/master_staging/{connector_id}_{staging_name}'))
+        blobs_stag_rejected = list(self.bucket.objects.filter(
+            Prefix=f'export/rejected_staging/{connector_id}_{staging_name}'))
+        blobs = blobs_stag + blobs_master + blobs_stag_rejected
+
+        return [i.name for i in blobs if i.name.endswith('.parquet')]

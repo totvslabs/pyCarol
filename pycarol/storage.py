@@ -17,7 +17,6 @@ class Storage(metaclass=KeySingleton):
 
         carolina = Carolina(self.carol)
         carolina.init_if_needed()
-        print(carolina.engine)
         if carolina.engine == 'GCP-CS':
             self.backend = StorageGCPCS(self.carol, carolina)
         elif carolina.engine == 'AWS-S3':
@@ -33,9 +32,9 @@ class Storage(metaclass=KeySingleton):
         self._init_if_needed()
         self.backend.save(name, obj, format, parquet, cache)
 
-    def load(self, name, format='pickle', parquet=False, cache=True):
+    def load(self, name, format='pickle', parquet=False, cache=True, absolute_path=False):
         self._init_if_needed()
-        return self.backend.load(name, format, parquet, cache)
+        return self.backend.load(name, format, parquet, cache, absolute_path)
 
     def exists(self, name):
         self._init_if_needed()
@@ -64,6 +63,14 @@ class Storage(metaclass=KeySingleton):
     def get_dask_options(self):
         self._init_if_needed()
         return self.backend.get_dask_options()
+
+    def get_golden_file_paths(self, dm_name):
+        self._init_if_needed()
+        return self.backend.get_golden_file_paths(dm_name)
+
+    def get_staging_file_paths(self, staging_name, connector_id):
+        self._init_if_needed()
+        return self.backend.get_staging_file_paths(staging_name, connector_id)
 
 
 def _save_async(cloner, name, obj):

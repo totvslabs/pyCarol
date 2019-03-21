@@ -56,9 +56,12 @@ class StorageAWSS3:
         self.bucket.upload_file(local_file_name, s3_file_name)
         os.utime(local_file_name, None)
 
-    def load(self, name, format='pickle', parquet=False, cache=True):
+    def load(self, name, format='pickle', parquet=False, cache=True, absolute_path=False):
         self._init_if_needed()
-        s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
+        if not absolute_path:
+            s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
+        else:
+            s3_file_name = name
         local_file_name = os.path.join(__TEMP_STORAGE__,s3_file_name.replace("/", "-"))
 
         obj = self.bucket.Object(s3_file_name)
@@ -78,7 +81,14 @@ class StorageAWSS3:
             if e.response['Error']['Code'] == "404":
                 return None
 
-        if not cache and format == 'joblib':
+        if not cache and format == 'raw':
+            import joblib
+            from io import BytesIO
+            buffer = BytesIO()
+            self.bucket.download_fileobj(s3_file_name, buffer)
+            return buffer
+
+        elif not cache and format == 'joblib':
             import joblib
             from io import BytesIO
             with BytesIO() as data:
@@ -134,19 +144,40 @@ class StorageAWSS3:
             os.remove(local_file_name)
 
     def build_url_parquet_golden(self, dm_name):
+        tenant_id = self.carol.tenant['mdmId']
         return f's3://{self.carolina.bucketName}/carol_export/{tenant_id}/{dm_name}/golden/*.parquet'
 
     def build_url_parquet_staging(self, staging_name, connector_id):
+        tenant_id = self.carol.tenant['mdmId']
         return f's3://{self.carolina.bucketName}/carol_export/{tenant_id}/{connector_id}_{staging_name}/staging/*.parquet'
 
     def build_url_parquet_staging_master(self, staging_name, connector_id):
+        tenant_id = self.carol.tenant['mdmId']
         return f's3://{self.carolina.bucketName}/carol_export/{tenant_id}/{connector_id}_{staging_name}/master_staging/*.parquet'
 
     def build_url_parquet_staging_master_rejected(self, staging_name, connector_id):
-        self.carol.tenant['mdmId']
+        tenant_id = self.carol.tenant['mdmId']
         return f's3://{self.carolina.bucketName}/carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging/*.parquet'
 
     def get_dask_options(self):
         return {"key": self.carolina.token['aiAccessKeyId'],
-         "secret": self.carolina.token['aiSecretKey'],
-         "token": self.carolina.token['aiAccessToken']}
+                "secret": self.carolina.token['aiSecretKey'],
+                "token": self.carolina.token['aiAccessToken']}
+
+    def get_golden_file_paths(self, dm_name):
+        self._init_if_needed()
+        tenant_id = self.carol.tenant['mdmId']
+        parq = list(self.bucket.objects.filter(Prefix=f'carol_export/{tenant_id}/{dm_name}/golden'))
+        return [i.key for i in parq if i.key.endswith('.parquet')]
+
+    def get_staging_file_paths(self, staging_name, connector_id):
+        self._init_if_needed()
+        tenant_id = self.carol.tenant['mdmId']
+        parq_stag = list(
+            self.bucket.objects.filter(Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/staging'))
+        parq_master = list(self.bucket.objects.filter(
+            Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/master_staging'))
+        parq_stag_rejected = list(self.bucket.objects.filter(
+            Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging'))
+        parq = parq_stag + parq_master + parq_stag_rejected
+        return [i.key for i in parq if i.key.endswith('.parquet')]
