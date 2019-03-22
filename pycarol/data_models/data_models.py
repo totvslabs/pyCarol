@@ -580,21 +580,28 @@ class CreateDataModel(object):
 
     def from_snapshot(self, snapshot, publish=False, overwrite=False):
 
+        _count=0
+
         while True:
             url = 'v1/entities/templates/snapshot'
-            resp = self.carol.call_api(url=url, method='POST', data=snapshot)
+            resp = self.carol.call_api(path=url, method='POST', data=snapshot, errors='ignore')
 
-            if not resp.ok:
-                if ('Record already exists' in self.lastResponse.json()['errorMessage']) and (overwrite):
-                    del_DM = DataModel(self.carol)
-                    del_DM.get_by_name(snapshot['entityTemplateName'])
-                    dm_id = del_DM.entity_template_.get(snapshot['entityTemplateName']).get('mdmId', None)
-                    if dm_id is None:  # if None
-                        continue
-                    entity_space = del_DM.entity_template_.get(snapshot['entityTemplateName'])['mdmEntitySpace']
-                    del_DM.delete(dm_id=dm_id, entity_space=entity_space)
-                    time.sleep(0.5)  # waint for deletion
+
+            if ('already exists' in resp.get('errorMessage','asdf')) and (overwrite):
+                del_DM = DataModel(self.carol)
+                del_DM.get_by_name(snapshot['entityTemplateName'])
+                dm_id = del_DM.entity_template_.get(snapshot['entityTemplateName']).get('mdmId', None)
+                if dm_id is None:  # if None
                     continue
+                entity_space = del_DM.entity_template_.get(snapshot['entityTemplateName'])['mdmEntitySpace']
+                del_DM.delete(dm_id=dm_id, entity_space=entity_space)
+                time.sleep(0.5)  # waint for deletion
+                _count+=1
+                if _count>5:
+                    print(f"Something wrong coping {snapshot['entityTemplateName']}")
+                    print(f"Data model was not copied: {resp}")
+                    return
+                continue
 
             break
         print('Data Model {} created'.format(snapshot['entityTemplateName']))
