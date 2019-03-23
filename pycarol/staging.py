@@ -195,7 +195,13 @@ class Staging:
 
         self.send_schema(schema=schema, staging_name=staging_name, connector_id=connector_id, overwrite=overwrite)
 
-    def send_schema(self, schema, staging_name, connector_id=None, overwrite=False):
+    def send_schema(self, schema, staging_name=None, connector_id=None, overwrite=False):
+
+
+        if staging_name is None:
+            staging_name= schema.get('mdmStagingType')
+            assert staging_name is not None, f"staging_name should be given or defined in the schema."
+
         query_string = {"connectorId": connector_id}
         if connector_id is None:
             connector_id = self.carol.connector_id

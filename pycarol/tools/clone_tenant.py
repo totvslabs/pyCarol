@@ -1,5 +1,7 @@
 from ..data_models.data_models import DataModel, CreateDataModel
 from ..named_query import NamedQuery
+from ..connectors import Connectors
+from ..staging import Staging
 from collections import defaultdict
 
 
@@ -70,7 +72,7 @@ class CloneTenant(object):
         return self
 
 
-    def copyAllConnectors(self, copy_mapping=True, overwrite=False):
+    def copy_connecto2r(self, copy_mapping=True, overwrite=False):
 
         conn = appl.connectorsCarol(self.carol_from)
         conn.getAll(includeMappings=True)
@@ -134,22 +136,21 @@ class CloneTenant(object):
                 else:
                     self.stag_mapp_to_use[connectorName].append({"schema": aux_schema})
 
-    def copyConnectors(self, conectors_map, map_type='name',
-                       change_name_dict=None, copy_mapping=True, overwrite=False):
+    def copy_connectors(self, conectors_map, map_type='name', overwrite_connector=False, add_to_connector=True,
+                       change_name_dict=None, copy_mapping=True, overwrite_schema=False):
 
-        if map_type == 'connectorId':
+        if map_type == 'connector_id':
             map_type = 'mdmId'
         elif map_type == 'name':
             map_type = 'mdmName'
         else:
-            raise ('values should be connectorId or name')
+            raise ('values should be connector_id or name')
 
         conn_id = {}
-        conn = appl.connectorsCarol(self.carol_from)
-        conn.getAll(includeMappings=True)
-        conn_to_create = conn.connectors
+        conn = Connectors(self.carol_from)
+        conn_to_create = conn.get_all(include_mappings=True)
 
-        stag = stg.stagingSchema(self.carol_from)
+        stag = Staging(self.carol_from)
         self.stag_mapp_to_use = defaultdict(list)
 
         for connector, staging in conectors_map.items():
@@ -166,40 +167,47 @@ class CloneTenant(object):
                 raise ValueError('{} does not exist in the tenant'.format(connector))
 
             current_connector = connector['mdmId']
-            conn.connectorStats(current_connector)
+            conn.stats(connector_id=current_connector)
 
             if change_name_dict is not None:
-                connectorName = change_name_dict.get(connector.get('mdmName', None)).get('mdmName')
-                connectorLabel = change_name_dict.get(connector.get('mdmName', None)).get('mdmLabel')
-                if connectorLabel is None:
-                    connectorLabel = connectorName
+                connector_name = change_name_dict.get(connector.get('mdmName', None)).get('name')
+                connector_label = change_name_dict.get(connector.get('mdmName', None)).get('label')
+                if connector_label is None:
+                    connector_label = connector_name
             else:
-                connectorName = connector.get('mdmName', None)
-                connectorLabel = connector.get('mdmLabel', None)
-                if connectorLabel:
-                    connectorLabel = connectorLabel['en-US']
+                connector_name = connector.get('mdmName', None)
+                connector_label = connector.get('mdmLabel', None)
+                if connector_label:
+                    connector_label = connector_label['en-US']
                 else:
-                    connectorLabel = None
-            groupName = connector.get('mdmGroupName', None)
+                    connector_label = None
+            group_name = connector.get('mdmGroupName', None)
 
-            conn_to = appl.connectorsCarol(self.carol_to)
-            conn_to.createConnector(connectorName, connectorLabel, groupName, overwrite=overwrite)
-            conn_id.update({connectorName: conn_to.connectorId})
-            self.carol_to.newToken(connectorId=conn_to.connectorId)
+            conn_to = Connectors(self.carol_to)
+
+            if add_to_connector:
+                _con_id = conn_to.get_by_name(connector_name, errors='ignore').get('mdmId')
+                if _con_id is None:
+                    _con_id = conn_to.create(name=connector_name, label=connector_label,
+                                             group_name=group_name, overwrite=overwrite_connector)
+            else:
+                _con_id = conn_to.create(name=connector_name, label=connector_label,
+                                         group_name=group_name, overwrite=overwrite_connector)
+
+            conn_id.update({connector_name: _con_id})
 
             for schema_name in staging:
-                stag.getSchema(schema_name, connector.get('mdmId'))
 
-                aux_schema = stag.schema
+                aux_schema = stag.get_schema(staging_name=schema_name,connector_id=connector.get('mdmId'))
                 aux_schema.pop('mdmTenantId')
-                # aux_schema.pop('mdmStagingApplicationId')
+
                 aux_schema.pop('mdmId')
                 aux_schema.pop('mdmCreated')
                 aux_schema.pop('mdmLastUpdated')
 
-                stg_to = stg.stagingSchema(self.carol_to)
-                stg_to.sendSchema(fields_dict=aux_schema, connectorId=conn_id.get(connectorName),
-                                  overwrite=overwrite)
+                stg_to = Staging(self.carol_to)
+                stg_to.send_schema(schema=aux_schema, connector_id=conn_id.get(connector_name),
+                                     overwrite=overwrite_schema)
 
                 if copy_mapping:
                     mapping_fields = connector.get('mdmEntityMappings', None).get(schema_name)
@@ -214,9 +222,9 @@ class CloneTenant(object):
                         mappings_to_get.getSnapshot(connectorId, entityMappingsId, entitySpace)
                         _, aux_map = mappings_to_get.snap.popitem()
                         mapping_to = etm.entityMapping(self.carol_to)
-                        mapping_to.createFromSnapshot(aux_map, conn_id.get(connectorName), overwrite=overwrite)
-                        self.stag_mapp_to_use[connectorName].append({"schema": aux_schema, "mapping": aux_map})
+                        mapping_to.createFromSnapshot(aux_map, conn_id.get(connector_name), overwrite=overwrite)
+                        self.stag_mapp_to_use[connector_name].append({"schema": aux_schema, "mapping": aux_map})
                     else:
-                        self.stag_mapp_to_use[connectorName].append({"schema": aux_schema})
+                        self.stag_mapp_to_use[connector_name].append({"schema": aux_schema})
                 else:
-                    self.stag_mapp_to_use[connectorName].append({"schema": aux_schema})
+                    self.stag_mapp_to_use[connector_name].append({"schema": aux_schema})
