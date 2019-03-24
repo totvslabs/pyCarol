@@ -467,7 +467,7 @@ class DataModel:
 
         """
 
-        This method will create the link between tha staging and a data model. If Publish=True it will publish how it is.
+        This method will create the link between the staging and a data model. If Publish=True it will publish how it is.
 
         :param staging_name:  `str`
             Name of the staging to be mapped.
