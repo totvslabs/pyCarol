@@ -505,7 +505,7 @@ class Staging:
         response = self.carol.call_api(url, method='GET', params=querystring, )
 
         mapping_name = response.get('entityMappingName')
-        return {mapping_name: self.response.json()}
+        return {mapping_name: response}
 
     def delete_mapping(self, staging_name=None, connector_id=None, connector_name=None, mapping_id=None,
                        entity_space='PRODUCTION'):

@@ -71,7 +71,6 @@ class CloneTenant(object):
 
         return self
 
-
     def copy_connecto2r(self, copy_mapping=True, overwrite=False):
 
         conn = appl.connectorsCarol(self.carol_from)
@@ -137,7 +136,7 @@ class CloneTenant(object):
                     self.stag_mapp_to_use[connectorName].append({"schema": aux_schema})
 
     def copy_connectors(self, conectors_map, map_type='name', overwrite_connector=False, add_to_connector=True,
-                       change_name_dict=None, copy_mapping=True, overwrite_schema=False):
+                        change_name_dict=None, copy_mapping=True, overwrite_schema=False):
 
         if map_type == 'connector_id':
             map_type = 'mdmId'
@@ -198,7 +197,7 @@ class CloneTenant(object):
 
             for schema_name in staging:
 
-                aux_schema = stag.get_schema(staging_name=schema_name,connector_id=connector.get('mdmId'))
+                aux_schema = stag.get_schema(staging_name=schema_name, connector_id=connector.get('mdmId'))
                 aux_schema.pop('mdmTenantId')
 
                 aux_schema.pop('mdmId')
@@ -207,22 +206,27 @@ class CloneTenant(object):
 
                 stg_to = Staging(self.carol_to)
                 stg_to.send_schema(schema=aux_schema, connector_id=conn_id.get(connector_name),
-                                     overwrite=overwrite_schema)
+                                   overwrite=overwrite_schema)
 
+
+                #TODO Apping should be copied after copied all stagings.
+                # Need t0 find how to copy ETLs.
                 if copy_mapping:
+
                     mapping_fields = connector.get('mdmEntityMappings', None).get(schema_name)
                     if mapping_fields is not None:
                         mapping_fields.pop('mdmTenantId')
-                        entityMappingsId = mapping_fields.pop('mdmId')
-                        entitySpace = mapping_fields.get('mdmEntitySpace')
+                        mapping_id = mapping_fields.pop('mdmId')
+                        entity_space = mapping_fields.get('mdmEntitySpace')
                         mapping_fields.pop('mdmCreated')
                         mapping_fields.pop('mdmLastUpdated')
-                        connectorId = mapping_fields.pop('mdmConnectorId')
-                        mappings_to_get = etm.entityMapping(self.carol_from)
-                        mappings_to_get.getSnapshot(connectorId, entityMappingsId, entitySpace)
-                        _, aux_map = mappings_to_get.snap.popitem()
-                        mapping_to = etm.entityMapping(self.carol_to)
-                        mapping_to.createFromSnapshot(aux_map, conn_id.get(connector_name), overwrite=overwrite)
+                        connector_id = mapping_fields.pop('mdmConnectorId')
+
+                        mappings_to_get = stag.get_mapping_snapshot(connector_id=connector_id,mapping_id=mapping_id,
+                                                                    entity_space=entity_space)
+                        _, aux_map = mappings_to_get.popitem()
+                        stg_to.mapping_from_snapshot(mapping_snapshot=aux_map, connector_id=conn_id.get(connector_name),
+                                                     overwrite=overwrite_schema)
                         self.stag_mapp_to_use[connector_name].append({"schema": aux_schema, "mapping": aux_map})
                     else:
                         self.stag_mapp_to_use[connector_name].append({"schema": aux_schema})
