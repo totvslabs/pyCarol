@@ -40,7 +40,7 @@ class Connectors:
         else:
             raise Exception(resp)
 
-    def get_by_name(self, name):
+    def get_by_name(self, name, errors='raise'):
         """
         Get connector information using the connector name
         :param name:
@@ -48,10 +48,10 @@ class Connectors:
         :return: None
         :rtype: None
         """
-        resp = self.carol.call_api(f'v1/connectors/name/{name}')
+        resp = self.carol.call_api(f'v1/connectors/name/{name}', errors=errors)
         return resp
 
-    def get_by_id(self, id):
+    def get_by_id(self, id, errors='raise'):
         """
         Get connector information using the connector id
         :param id:
@@ -59,7 +59,7 @@ class Connectors:
         :return: None
         :rtype: None
         """
-        resp = self.carol.call_api(f'v1/connectors/{id}')
+        resp = self.carol.call_api(f'v1/connectors/{id}', errors=errors)
         return resp
 
     def delete_by_name(self, name, force_deletion=True):
