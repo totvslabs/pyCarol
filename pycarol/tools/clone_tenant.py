@@ -71,69 +71,6 @@ class CloneTenant(object):
 
         return self
 
-    def copy_connecto2r(self, copy_mapping=True, overwrite=False):
-
-        conn = appl.connectorsCarol(self.carol_from)
-        conn.getAll(includeMappings=True)
-        conn_to_create = conn.connectors
-
-        conn_id = {}
-
-        stag = stg.stagingSchema(self.carol_from)
-        self.stag_mapp_to_use = defaultdict(list)
-
-        for connector in conn_to_create:
-
-            current_connector = connector['mdmId']
-            conn.connectorStats(current_connector)
-            conn_stats = conn.connectorsStats_
-
-            connectorName = connector.get('mdmName', None)
-            connectorLabel = connector.get('mdmLabel', None)
-            if connectorLabel:
-                connectorLabel = connectorLabel['en-US']
-            else:
-                connectorLabel = None
-            groupName = connector.get('mdmGroupName', None)
-
-            conn_to = appl.connectorsCarol(self.carol_to)
-            conn_to.createConnector(connectorName, connectorLabel, groupName, overwrite=overwrite)
-            conn_id.update({connectorName: conn_to.connectorId})
-            self.carol_to.newToken(connectorId=conn_to.connectorId)
-
-            for schema_name in conn_stats.get(current_connector):
-                stag.getSchema(schema_name, connector.get('mdmId'))
-
-                aux_schema = stag.schema
-                aux_schema.pop('mdmTenantId')
-                # aux_schema.pop('mdmStagingApplicationId')
-                aux_schema.pop('mdmId')
-                aux_schema.pop('mdmCreated')
-                aux_schema.pop('mdmLastUpdated')
-
-                stg_to = stg.stagingSchema(self.carol_to)
-                stg_to.sendSchema(fields_dict=aux_schema, connectorId=conn_id.get(connectorName),
-                                  overwrite=overwrite)
-
-                if copy_mapping:
-                    mapping_fields = connector.get('mdmEntityMappings', None).get(schema_name)
-                    if mapping_fields is not None:
-                        mapping_fields.pop('mdmTenantId')
-                        entityMappingsId = mapping_fields.pop('mdmId')
-                        entitySpace = mapping_fields.get('mdmEntitySpace')
-                        mapping_fields.pop('mdmCreated')
-                        mapping_fields.pop('mdmLastUpdated')
-                        connectorId = mapping_fields.pop('mdmConnectorId')
-                        mappings_to_get = etm.entityMapping(self.carol_from)
-                        mappings_to_get.getSnapshot(connectorId, entityMappingsId, entitySpace)
-                        _, aux_map = mappings_to_get.snap.popitem()
-                        mapping_to = etm.entityMapping(self.carol_to)
-                        mapping_to.createFromSnapshot(aux_map, conn_id.get(connectorName), overwrite=overwrite)
-                        self.stag_mapp_to_use[connectorName].append({"schema": aux_schema, "mapping": aux_map})
-                    else:
-                        self.stag_mapp_to_use[connectorName].append({"schema": aux_schema})
-                else:
-                    self.stag_mapp_to_use[connectorName].append({"schema": aux_schema})
 
     def copy_connectors(self, conectors_map, map_type='name', overwrite_connector=False, add_to_connector=True,
                         change_name_dict=None, copy_mapping=True, overwrite_schema=False):
@@ -209,7 +146,7 @@ class CloneTenant(object):
                                    overwrite=overwrite_schema)
 
 
-                #TODO Apping should be copied after copied all stagings.
+                #TODO mappings should be copied after copied all stagings.
                 # Need t0 find how to copy ETLs.
                 if copy_mapping:
 
