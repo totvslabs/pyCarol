@@ -14,12 +14,13 @@ from .utils import async_helpers
 from .utils.miscellaneous import stream_data
 
 _SCHEMA_TYPES_MAPPING = {
-    "geo_point": str,
+    "geopoint": str,
     "long": int,
     "double": float,
     "nested": str,
     "string": str,
     "base64": str,
+    "date": str,
     "boolean": bool
 }
 
