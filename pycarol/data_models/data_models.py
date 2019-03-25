@@ -135,7 +135,7 @@ class DataModel:
                     columns = [i for i in columns if i not in ['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated']]
 
                 d = pd.DataFrame(columns=cols_keys)
-                for key, value in _field_types:
+                for key, value in _field_types.items():
                     d.loc[:, key] = d.loc[:, key].astype(_DATA_MODEL_TYPES_MAPPING.get(value.lower(), str), copy=False)
                 if columns:
                     columns = list(set(columns))
