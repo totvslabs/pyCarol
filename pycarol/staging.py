@@ -346,7 +346,6 @@ class Staging:
                 d.sort_values('mdmCounterForEntity', inplace=True)
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
-
                 d.reset_index(inplace=True, drop=True)
             else:
                 d = d.set_index('mdmCounterForEntity', sorted=True) \

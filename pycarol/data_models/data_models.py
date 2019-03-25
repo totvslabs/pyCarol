@@ -96,6 +96,9 @@ class DataModel:
         :return:
         """
 
+        if isinstance(columns, str):
+            columns = [columns]
+
         assert backend == 'dask' or backend == 'pandas'
 
         if return_dask_graph:
@@ -105,7 +108,11 @@ class DataModel:
         dms = self._get_dm_export_stats()
         if not dms.get(dm_name):
             raise Exception(
-                f'"{dm_name}" is not set to export data, \n use `dm = DataModel(login).export(dm_name="{dm_name}", sync_dm=True) to activate')
+                f'"{dm_name}" is not set to export data, \n'
+                f'use `dm = DataModel(login).export(dm_name="{dm_name}", sync_dm=True) to activate')
+
+        if columns:
+            columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
 
         carolina = Carolina(self.carol)
         carolina._init_if_needed()
@@ -155,6 +162,10 @@ class DataModel:
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                     .drop_duplicates(subset='mdmId', keep='last') \
                     .reset_index(drop=True)
+
+        if not return_metadata:
+            to_drop = set(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated']).intersection(set(d.columns))
+            d = d.drop(labels=to_drop, axis=1)
 
         return d
 
