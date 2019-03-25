@@ -126,7 +126,7 @@ class DataModel:
                                n_jobs=n_jobs, golden=True, columns=columns)
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
-                _field_types = self._get_name_type_DMS(self.get_by_name(dm_name)['mdmFields'])
+                _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
                 cols_keys = list(_field_types)
                 if return_metadata:
                     cols_keys.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
