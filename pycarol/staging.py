@@ -14,12 +14,13 @@ from .utils import async_helpers
 from .utils.miscellaneous import stream_data
 
 _SCHEMA_TYPES_MAPPING = {
-    "geo_point": str,
+    "geopoint": str,
     "long": int,
     "double": float,
     "nested": str,
     "string": str,
     "base64": str,
+    "date": str,
     "boolean": bool
 }
 
@@ -345,7 +346,6 @@ class Staging:
                 d.sort_values('mdmCounterForEntity', inplace=True)
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
-
                 d.reset_index(inplace=True, drop=True)
             else:
                 d = d.set_index('mdmCounterForEntity', sorted=True) \

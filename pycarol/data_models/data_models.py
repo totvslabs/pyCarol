@@ -22,6 +22,20 @@ from ..utils import async_helpers
 from ..utils.miscellaneous import stream_data
 
 
+_DATA_MODEL_TYPES_MAPPING = {
+  "boolean": bool,
+  "date": str, # TODO should it be pd.datetime?
+  "long": int,
+  "double": float,
+  "nested": str,
+  "string": str,
+  "binary": str,
+  "enum": str,
+  "object": str,
+  "geopoint": str
+}
+
+
 class DataModel:
 
     def __init__(self, carol):
@@ -60,8 +74,8 @@ class DataModel:
         self.fields_dict.update({resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
 
-    def fetch_parquet(self, dm_name, merge_records=True, backend='dask', n_jobs=1, return_dask_graph=False,
-                      columns=None):
+    def fetch_parquet(self, dm_name, merge_records=True, backend='pandas', n_jobs=1, return_dask_graph=False,
+                      columns=None, return_metadata=False):
         """
 
         :param dm_name: `str`
@@ -77,8 +91,13 @@ class DataModel:
             If to return the dask graph or the dataframe.
         :param columns: `list`, default `None`
             List of columns to fetch.
+        :param return_metadata: `bool`, default `False`
+            To return or not the fields ['mdmId', 'mdmCounterForEntity']
         :return:
         """
+
+        if isinstance(columns, str):
+            columns = [columns]
 
         assert backend == 'dask' or backend == 'pandas'
 
@@ -89,7 +108,11 @@ class DataModel:
         dms = self._get_dm_export_stats()
         if not dms.get(dm_name):
             raise Exception(
-                f'"{dm_name}" is not set to export data, \n use `dm = DataModel(login).export(dm_name="{dm_name}", sync_dm=True) to activate')
+                f'"{dm_name}" is not set to export data, \n'
+                f'use `dm = DataModel(login).export(dm_name="{dm_name}", sync_dm=True) to activate')
+
+        if columns:
+            columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
 
         carolina = Carolina(self.carol)
         carolina._init_if_needed()
@@ -110,9 +133,24 @@ class DataModel:
                                n_jobs=n_jobs, golden=True, columns=columns)
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
-                return None
+                _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
+                cols_keys = list(_field_types)
+                if return_metadata:
+                    cols_keys.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
+
+                elif columns:
+                    columns = [i for i in columns if i not in ['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated']]
+
+                d = pd.DataFrame(columns=cols_keys)
+                for key, value in _field_types.items():
+                    d.loc[:, key] = d.loc[:, key].astype(_DATA_MODEL_TYPES_MAPPING.get(value.lower(), str), copy=False)
+                if columns:
+                    columns = list(set(columns))
+                    d = d[list(set(columns))]
+                return d
+
         else:
-            raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}')
+            raise ValueError(f'backend should be either "dask" or "pandas" you entered {backend}')
 
         if merge_records:
             if not return_dask_graph:
@@ -124,6 +162,10 @@ class DataModel:
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                     .drop_duplicates(subset='mdmId', keep='last') \
                     .reset_index(drop=True)
+
+        if not return_metadata:
+            to_drop = set(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated']).intersection(set(d.columns))
+            d = d.drop(labels=to_drop, axis=1)
 
         return d
 
@@ -267,13 +309,13 @@ class DataModel:
 
         return self.carol.call_api(url, method='DELETE', params=querystring)
 
-    def _get_name_type_DMS(self, fields):
+    def _get_name_type_DMs(self, fields):
         f = {}
         for field in fields:
             if field.get('mdmMappingDataType', None) not in ['NESTED', 'OBJECT']:
                 f.update({field['mdmName']: field['mdmMappingDataType']})
             else:
-                f[field['mdmName']] = self._get_name_type_DMS(field['mdmFields'])
+                f[field['mdmName']] = self._get_name_type_DMs(field['mdmFields'])
         return f
 
     def _get_dm_export_stats(self):
