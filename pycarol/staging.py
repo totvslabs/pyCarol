@@ -198,7 +198,11 @@ class Staging:
         else:
             return schema
 
-    def send_schema(self, schema, staging_name=None, connector_id=None, overwrite=False):
+    def send_schema(self, schema, staging_name=None, connector_id=None, connector_name=None,
+                    overwrite=False):
+
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
 
         if staging_name is None:
             staging_name = schema.get('mdmStagingType')
