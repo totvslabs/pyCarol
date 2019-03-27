@@ -2,8 +2,25 @@ import json
 import gzip, io
 import pandas as pd
 from collections import defaultdict
+import numpy as np
 
 _FILE_MARKER = '<files>'
+
+
+class NumpyEncoder(json.JSONEncoder):
+    """ Special json encoder for numpy types """
+
+    def default(self, obj):
+        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
+                            np.int16, np.int32, np.int64, np.uint8,
+                            np.uint16, np.uint32, np.uint64)):
+            return int(obj)
+        elif isinstance(obj, (np.float_, np.float16, np.float32,
+                              np.float64)):
+            return float(obj)
+        elif isinstance(obj, (np.ndarray,)):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
 
 
 def _attach_path(branch, trunk):
@@ -93,7 +110,7 @@ def stream_data(data, step_size, compress_gzip):
             if compress_gzip:
                 out = io.BytesIO()
                 with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
-                    f.write(json.dumps(data_to_send).encode('utf-8'))
+                    f.write(json.dumps(data_to_send,  cls=NumpyEncoder).encode('utf-8'))
                 yield out.getvalue(), cont
             else:
                 yield data_to_send, cont
