@@ -167,8 +167,13 @@ class Staging:
         except Exception:
             return None
 
-    def create_schema(self, fields_dict, staging_name, connector_id=None, mdm_flexible='false',
+    def create_schema(self, fields_dict, staging_name, connector_id=None, connector_name=None, mdm_flexible='false',
                       crosswalk_name=None, crosswalk_list=None, overwrite=False, auto_send=True):
+
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            assert connector_id, f'connector_id or connector name should be set.'
 
         if isinstance(mdm_flexible, bool):  # for compability
             # TODO: review `mdm_flexible` as type string. Probably it would work if we use bool.
