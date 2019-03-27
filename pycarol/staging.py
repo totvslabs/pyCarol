@@ -25,6 +25,7 @@ _SCHEMA_TYPES_MAPPING = {
 }
 
 
+
 class Staging:
     def __init__(self, carol):
         self.carol = carol
@@ -167,7 +168,7 @@ class Staging:
             return None
 
     def create_schema(self, fields_dict, staging_name, connector_id=None, mdm_flexible='false',
-                      crosswalk_name=None, crosswalk_list=None, overwrite=False):
+                      crosswalk_name=None, crosswalk_list=None, overwrite=False, auto_send=True):
 
         if isinstance(mdm_flexible, bool):  # for compability
             # TODO: review `mdm_flexible` as type string. Probably it would work if we use bool.
@@ -192,7 +193,10 @@ class Staging:
         else:
             print('Behavior for type %s not defined!' % type(fields_dict))
 
-        self.send_schema(schema=schema, staging_name=staging_name, connector_id=connector_id, overwrite=overwrite)
+        if auto_send:
+            self.send_schema(schema=schema, staging_name=staging_name, connector_id=connector_id, overwrite=overwrite)
+        else:
+            return schema
 
     def send_schema(self, schema, staging_name=None, connector_id=None, overwrite=False):
 
