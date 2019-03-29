@@ -34,7 +34,9 @@ class Staging:
                   print_stats=True,
                   gzip=True, auto_create_schema=False, crosswalk_auto_create=None, flexible_schema=False, force=False,
                   max_workers=None,
-                  dm_to_delete=None, async_send=False):
+                  dm_to_delete=None,
+                  async_send=False,
+                  carol_data_storage=False):
         '''
         :param staging_name:  `str`,
             Staging name to send the data.
@@ -65,6 +67,8 @@ class Staging:
             Name of the data model to be erased before send the data.
         :param async_send: `bool`, default `False`
             To use async to send the data. This is much faster than a sequential send.
+        :param carol_data_storage: `bool`, default `False`
+            To use Carol Data Storage flow.
         :return: None
         '''
 
@@ -129,7 +133,8 @@ class Staging:
         if dm_to_delete is not None:
             delete_golden(self.carol, dm_to_delete)
 
-        url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
+        url = f'v2/staging/tables/{staging_name}?carolDataStorage={carol_data_storage}&returnData=false&connectorId={connector_id}'
+        
         self.cont = 0
         if async_send:
             loop = asyncio.get_event_loop()
@@ -167,8 +172,13 @@ class Staging:
         except Exception:
             return None
 
-    def create_schema(self, fields_dict, staging_name, connector_id=None, mdm_flexible='false',
+    def create_schema(self, fields_dict, staging_name, connector_id=None, connector_name=None, mdm_flexible='false',
                       crosswalk_name=None, crosswalk_list=None, overwrite=False, auto_send=True):
+
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            assert connector_id, f'connector_id or connector name should be set.'
 
         if isinstance(mdm_flexible, bool):  # for compability
             # TODO: review `mdm_flexible` as type string. Probably it would work if we use bool.
