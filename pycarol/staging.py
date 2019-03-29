@@ -34,7 +34,9 @@ class Staging:
                   print_stats=True,
                   gzip=True, auto_create_schema=False, crosswalk_auto_create=None, flexible_schema=False, force=False,
                   max_workers=None,
-                  dm_to_delete=None, async_send=False):
+                  dm_to_delete=None,
+                  async_send=False,
+                  carol_data_storage=False):
         '''
         :param staging_name:  `str`,
             Staging name to send the data.
@@ -65,6 +67,8 @@ class Staging:
             Name of the data model to be erased before send the data.
         :param async_send: `bool`, default `False`
             To use async to send the data. This is much faster than a sequential send.
+        :param carol_data_storage: `bool`, default `False`
+            To use Carol Data Storage flow.
         :return: None
         '''
 
@@ -129,7 +133,8 @@ class Staging:
         if dm_to_delete is not None:
             delete_golden(self.carol, dm_to_delete)
 
-        url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
+        url = f'v2/staging/tables/{staging_name}?carolDataStorage={carol_data_storage}&returnData=false&connectorId={connector_id}'
+        
         self.cont = 0
         if async_send:
             loop = asyncio.get_event_loop()
