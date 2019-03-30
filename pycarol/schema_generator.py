@@ -74,8 +74,8 @@ class carolSchemaGenerator(object):
         obj = cls(base_object)
         return obj
 
-    def to_dict(self, mdmStagingType='stagingName', mdmFlexible='false', crosswalkname=None,
-                crosswalkList=None):
+    def to_dict(self, mdmStagingType='stagingName', mdmFlexible=False, crosswalkname=None,
+                crosswalkList=None, export_data=False):
 
         crosswalkname = mdmStagingType  #TODO. We can have more than 1 crosswalk, and one HAS to be named as the mdmStagingType
                                         # this is to enforce we use the same name
@@ -102,6 +102,7 @@ class carolSchemaGenerator(object):
         schema_dict.update(mdmCrosswalkTemplate)
         schema_dict.update({"mdmStagingMapping": {"properties": {}}})
         schema_dict.update({"mdmFlexible": mdmFlexible})
+        schema_dict.update({"mdmExportData": export_data})
 
         for prop, value in base_object.items():
             schema_dict["mdmStagingMapping"]["properties"].update({prop: _dictConstructor(base_object=value)})
@@ -109,12 +110,14 @@ class carolSchemaGenerator(object):
         self.schema_dict = schema_dict
         return schema_dict
 
-    def to_json(self, mdmStagingType='stagingName', mdmFlexible='false', crosswalkname=None,
-                crosswalkList=None):
+    def to_json(self, mdmStagingType='stagingName', mdmFlexible=False, crosswalkname=None,
+                crosswalkList=None, export_data=False):
         if self.schema_dict is not None:
             json_schema = json.dumps(self.schema_dict)
         else:
-            json_schema = json.dumps(self.to_dict(mdmStagingType, mdmFlexible, crosswalkname, crosswalkList))
+            json_schema = json.dumps(self.to_dict(mdmStagingType=mdmStagingType, mdmFlexible=mdmFlexible,
+                                                  crosswalkname=crosswalkname,
+                                                  crosswalkList=crosswalkList, export_data=export_data))
         return json_schema
 
 
