@@ -178,12 +178,6 @@ class Staging:
         else:
             assert connector_id, f'connector_id or connector name should be set.'
 
-        if isinstance(mdm_flexible, bool):  # for compability
-            # TODO: review `mdm_flexible` as type string. Probably it would work if we use bool.
-            if mdm_flexible:
-                mdm_flexible = 'true'
-            else:
-                mdm_flexible = 'false'
 
         assert fields_dict is not None
 
