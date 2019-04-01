@@ -1,5 +1,6 @@
 import json
 import numpy as np
+from datetime import datetime
 
 class IntType(object):
     json_type = "integer"
@@ -31,6 +32,9 @@ class ObjectType(object):
     properties = {}
 
 
+class DateType(object):
+    json_type = "date"
+
 class Type(object):
     @classmethod
     def get_schema_type_for(cls, t):
@@ -49,6 +53,7 @@ class Type(object):
             np.int64: IntType,
             np.int32: IntType,
             np.int: IntType,
+            datetime: DateType,
         }
 
         schema_type = SCHEMA_TYPES.get(t)
