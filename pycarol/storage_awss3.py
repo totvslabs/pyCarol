@@ -20,14 +20,14 @@ class StorageAWSS3:
             return
 
         self.client = self.carolina.get_client()
-        self.bucket = self.client.Bucket(self.carolina.bucketName)
+        self.bucket = self.client.Bucket(self.carolina.cds_app_storage_path['bucket'])
         if not os.path.exists(__TEMP_STORAGE__):
             os.makedirs(__TEMP_STORAGE__)
 
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
         self._init_if_needed()
-        s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
-        local_file_name = os.path.join(__TEMP_STORAGE__,s3_file_name.replace("/", "-"))
+        s3_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
+        local_file_name = os.path.join(__TEMP_STORAGE__, s3_file_name.replace("/", "-"))
 
         if parquet:
             if not isinstance(obj, pd.DataFrame):
@@ -56,10 +56,10 @@ class StorageAWSS3:
         self.bucket.upload_file(local_file_name, s3_file_name)
         os.utime(local_file_name, None)
 
-    def load(self, name, format='pickle', parquet=False, cache=True, absolute_path=False):
+    def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage'):
         self._init_if_needed()
-        if not absolute_path:
-            s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
+        if storage_space == 'app_storage':
+            s3_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
         else:
             s3_file_name = name
         local_file_name = os.path.join(__TEMP_STORAGE__,s3_file_name.replace("/", "-"))
@@ -118,7 +118,7 @@ class StorageAWSS3:
 
     def exists(self, name):
         self._init_if_needed()
-        s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
+        s3_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
 
         obj = self.bucket.Object(s3_file_name)
         if obj is None:
@@ -134,7 +134,7 @@ class StorageAWSS3:
 
     def delete(self, name):
         self._init_if_needed()
-        s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
+        s3_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
         obj = self.bucket.Object(s3_file_name)
         if obj is not None:
             obj.delete()
@@ -145,19 +145,19 @@ class StorageAWSS3:
 
     def build_url_parquet_golden(self, dm_name):
         tenant_id = self.carol.tenant['mdmId']
-        return f's3://{self.carolina.bucketName}/carol_export/{tenant_id}/{dm_name}/golden/*.parquet'
+        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/carol_export/{tenant_id}/{dm_name}/golden'
 
     def build_url_parquet_staging(self, staging_name, connector_id):
         tenant_id = self.carol.tenant['mdmId']
-        return f's3://{self.carolina.bucketName}/carol_export/{tenant_id}/{connector_id}_{staging_name}/staging/*.parquet'
+        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/carol_export/{tenant_id}/{connector_id}_{staging_name}/staging'
 
     def build_url_parquet_staging_master(self, staging_name, connector_id):
         tenant_id = self.carol.tenant['mdmId']
-        return f's3://{self.carolina.bucketName}/carol_export/{tenant_id}/{connector_id}_{staging_name}/master_staging/*.parquet'
+        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/carol_export/{tenant_id}/{connector_id}_{staging_name}/master_staging'
 
     def build_url_parquet_staging_rejected(self, staging_name, connector_id):
         tenant_id = self.carol.tenant['mdmId']
-        return f's3://{self.carolina.bucketName}/carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging/*.parquet'
+        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging'
 
     def get_dask_options(self):
         return {"key": self.carolina.token['aiAccessKeyId'],
@@ -168,7 +168,7 @@ class StorageAWSS3:
         self._init_if_needed()
         tenant_id = self.carol.tenant['mdmId']
         parq = list(self.bucket.objects.filter(Prefix=f'carol_export/{tenant_id}/{dm_name}/golden'))
-        return [i.key for i in parq if i.key.endswith('.parquet')]
+        return [{'storage_space': 'golden', 'name': i.key} for i in parq if i.key.endswith('.parquet')]
 
     def get_staging_file_paths(self, staging_name, connector_id):
         self._init_if_needed()
@@ -179,5 +179,9 @@ class StorageAWSS3:
             Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/master_staging'))
         parq_stag_rejected = list(self.bucket.objects.filter(
             Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging'))
-        parq = parq_stag + parq_master + parq_stag_rejected
-        return [i.key for i in parq if i.key.endswith('.parquet')]
+
+        bs = [{'storage_space': 'staging', 'name': i.key} for i in parq_stag if i.name.endswith('.parquet')]
+        bm = [{'storage_space': 'staging_master', 'name': i.key} for i in parq_master if i.name.endswith('.parquet')]
+        br = [{'storage_space': 'staging_rejected', 'name': i.key} for i in parq_stag_rejected if i.name.endswith('.parquet')]
+
+        return bs + bm + br

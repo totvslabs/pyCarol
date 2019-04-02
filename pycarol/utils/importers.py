@@ -33,7 +33,6 @@ def _import_dask(storage, merge_records=False,
         if url3 is not None:
             url.append(url3)
 
-    print(f'url: {url}')
     d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns)
 
     if return_dask_graph:
@@ -54,7 +53,6 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None,
     else:
         file_paths = storage.get_staging_file_paths(staging_name=staging_name, connector_id=connector_id)
 
-    print(file_paths)
     if n_jobs == 1:
         df_list = []
         count = 0
