@@ -180,8 +180,8 @@ class StorageAWSS3:
         parq_stag_rejected = list(self.bucket.objects.filter(
             Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging'))
 
-        bs = [{'storage_space': 'staging', 'name': i.key} for i in parq_stag if i.name.endswith('.parquet')]
-        bm = [{'storage_space': 'staging_master', 'name': i.key} for i in parq_master if i.name.endswith('.parquet')]
-        br = [{'storage_space': 'staging_rejected', 'name': i.key} for i in parq_stag_rejected if i.name.endswith('.parquet')]
+        bs = [{'storage_space': 'staging', 'name': i.key} for i in parq_stag if i.key.endswith('.parquet')]
+        bm = [{'storage_space': 'staging_master', 'name': i.key} for i in parq_master if i.key.endswith('.parquet')]
+        br = [{'storage_space': 'staging_rejected', 'name': i.key} for i in parq_stag_rejected if i.key.endswith('.parquet')]
 
         return bs + bm + br
