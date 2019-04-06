@@ -23,12 +23,12 @@ class BooleanType(object):
 
 
 class ArrayType(object):
-    json_type = "nested"
+    json_type = "object"
     items = []
 
 
 class ObjectType(object):
-    json_type = "nested"
+    json_type = "object"
     properties = {}
 
 
@@ -39,6 +39,7 @@ class Type(object):
     @classmethod
     def get_schema_type_for(cls, t):
         """docstring for get_schema_type_for"""
+
         SCHEMA_TYPES = {
             type(None): NullType,
             str: StringType,
@@ -142,14 +143,17 @@ def _dictConstructor(base_object):
             schema_dict["properties"][prop] = _dictConstructor(base_object=value)
 
     elif schema_type == ArrayType and len(base_object) > 0:
-        first_item_type = type(base_object[0])
+        first_item = base_object[0]
+        first_item_type = type(first_item)
         same_type = all((type(item) == first_item_type for item in base_object))
-        schema_dict["properties"] = {}
+
         if same_type:
-            for i in base_object:
-                for prop, value in i.items():
-                    schema_dict["properties"][prop] = _dictConstructor(base_object=value)
-            #schema_dict['items'] = _dictConstructor(base_object=base_object[0])
+
+            first_item_schema_type = Type.get_schema_type_for(first_item_type)
+            schema_dict["type"] = first_item_schema_type.json_type
+
+            if first_item_schema_type == ObjectType:
+                schema_dict.update(_dictConstructor(base_object=first_item))
 
         else:
             schema_dict["properties"] = {}
