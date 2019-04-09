@@ -31,10 +31,8 @@ class Staging:
         self.carol = carol
 
     def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100,
-                  print_stats=True,
-                  gzip=True, auto_create_schema=False, crosswalk_auto_create=None, flexible_schema=False, force=False,
-                  max_workers=None,
-                  dm_to_delete=None,
+                  print_stats=True, gzip=True, auto_create_schema=False, crosswalk_auto_create=None,
+                  flexible_schema=False, force=False,  max_workers=None,  dm_to_delete=None,
                   async_send=False,
                   carol_data_storage=False):
         '''
@@ -107,13 +105,13 @@ class Staging:
 
         if (not schema) and auto_create_schema:
             assert crosswalk_auto_create, "You should provide a crosswalk"
-            self.create_schema(_sample_json, staging_name, connector_id=connector_id,
+            self.create_schema(_sample_json, staging_name, connector_id=connector_id, export_data=carol_data_storage,
                                crosswalk_list=crosswalk_auto_create, mdm_flexible=flexible_schema)
             _crosswalk = crosswalk_auto_create
             print('provided crosswalk ', _crosswalk)
         elif auto_create_schema:
             assert crosswalk_auto_create, "You should provide a crosswalk"
-            self.create_schema(_sample_json, staging_name, connector_id=connector_id,
+            self.create_schema(_sample_json, staging_name, connector_id=connector_id, export_data=carol_data_storage,
                                crosswalk_list=crosswalk_auto_create, overwrite=True, mdm_flexible=flexible_schema)
             _crosswalk = crosswalk_auto_create
             print('provided crosswalk ', _crosswalk)
@@ -128,7 +126,7 @@ class Staging:
 
         if is_df and not force:
             assert data.duplicated(subset=_crosswalk).sum() == 0, \
-                "crosswalk is not unique on dataframe. set force=True to send it anyway."
+                "crosswalk is not unique on data frame. set force=True to send it anyway."
 
         if dm_to_delete is not None:
             delete_golden(self.carol, dm_to_delete)
@@ -172,20 +170,14 @@ class Staging:
         except Exception:
             return None
 
-    def create_schema(self, fields_dict, staging_name, connector_id=None, connector_name=None, mdm_flexible='false',
-                      crosswalk_name=None, crosswalk_list=None, overwrite=False, auto_send=True):
+    def create_schema(self, fields_dict, staging_name, connector_id=None, connector_name=None, mdm_flexible=False,
+                      crosswalk_name=None, crosswalk_list=None, overwrite=False, auto_send=True, export_data=False):
 
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
         else:
             assert connector_id, f'connector_id or connector name should be set.'
 
-        if isinstance(mdm_flexible, bool):  # for compability
-            # TODO: review `mdm_flexible` as type string. Probably it would work if we use bool.
-            if mdm_flexible:
-                mdm_flexible = 'true'
-            else:
-                mdm_flexible = 'false'
 
         assert fields_dict is not None
 
@@ -194,11 +186,11 @@ class Staging:
 
         if isinstance(fields_dict, dict):
             schema = carolSchemaGenerator(fields_dict)
-            schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible,
+            schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible, export_data=export_data,
                                     crosswalkname=crosswalk_name, crosswalkList=crosswalk_list)
         elif isinstance(fields_dict, str):
             schema = carolSchemaGenerator.from_json(fields_dict)
-            schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible,
+            schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible, export_data=export_data,
                                     crosswalkname=crosswalk_name, crosswalkList=crosswalk_list)
         else:
             print('Behavior for type %s not defined!' % type(fields_dict))
