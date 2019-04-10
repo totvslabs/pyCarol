@@ -238,7 +238,7 @@ class inherit_dict(object):
     def __call__(self, task_that_inherits):
         task_that_inherits.requires_dict = self.requires_dict
 
-        for key, task_to_inherit in task_that_inherits.requires_dict.items():
+        for _, task_to_inherit in task_that_inherits.requires_dict.items():
             # Get all parameter objects from the underlying task
             task_that_inherits = set_attributes(task_to_inherit, task_that_inherits)
         return task_that_inherits
