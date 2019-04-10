@@ -1,5 +1,6 @@
 asn1crypto==0.24.0
 astroid==2.2.5
+autopep8==1.4.3
 bokeh==1.1.0
 boto3==1.9.16
 botocore==1.12.16
@@ -15,6 +16,8 @@ cycler==0.10.0
 cytoolz==0.9.0.1
 dask==0.19.3
 distributed==1.23.2
+docker==3.7.2
+docker-pycreds==0.4.0
 docutils==0.14
 Flask==1.0.2
 google-api-core==1.4.1
@@ -56,6 +59,7 @@ psutil==5.4.7
 pyarrow==0.11.1
 pyasn1==0.4.4
 pyasn1-modules==0.2.2
+pycodestyle==2.5.0
 pycparser==2.19
 pykube==0.15.0
 pylint==2.3.1
