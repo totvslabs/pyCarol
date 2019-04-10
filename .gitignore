@@ -119,3 +119,5 @@ tests/teste_pack.ipynb
 tests/testes.ipynb
 tests/testes_pack.py
 app_config.json
+.vscode/
+
