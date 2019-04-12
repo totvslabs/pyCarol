@@ -6,7 +6,7 @@ with open('requirements.txt', 'r') as req_file:
 
 setup(
     name='pycarol',
-    version='2.11',
+    version='2.12',
     description='Carol Python API',
     packages=find_packages(exclude=['docs', 'doc']),
     maintainer='TOTVS Labs',
