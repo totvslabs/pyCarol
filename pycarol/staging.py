@@ -170,16 +170,21 @@ class Staging:
         except Exception:
             return None
 
-    def create_schema(self, fields_dict, staging_name, connector_id=None, connector_name=None, mdm_flexible=False,
-                      crosswalk_name=None, crosswalk_list=None, overwrite=False, auto_send=True, export_data=False):
+    def create_schema(self, fields_dict=None, staging_name=None, connector_id=None, connector_name=None,
+                      mdm_flexible=False,  crosswalk_name=None, crosswalk_list=None, overwrite=False, auto_send=True,
+                      export_data=False, df=None):
+
+        assert staging_name is not None, 'staging_name must be set.'
+        assert fields_dict is not None or df is not None, 'fields_dict or df must be set'
 
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
         else:
             assert connector_id, f'connector_id or connector name should be set.'
 
-
-        assert fields_dict is not None
+        if df is not None:
+            if isinstance(df, pd.DataFrame):
+                fields_dict = df.iloc[0].to_dict()
 
         if isinstance(fields_dict, list):
             fields_dict = fields_dict[0]
