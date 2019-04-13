@@ -53,7 +53,7 @@ class Staging:
         :param auto_create_schema: `bool`, default `False`
             If to auto create the schema for the data being sent.
         :param crosswalk_auto_create: `list`, default `None`
-            If `auto_create_schema=True`, one should send the crosswalk for the staging.
+            If `auto_create_schema=True`, crosswalk list of fields.
         :param flexible_schema: `bool`, default `False`
             If `auto_create_schema=True`, to use a flexible schema.
         :param force: `bool`, default `False`
@@ -170,30 +170,69 @@ class Staging:
         except Exception:
             return None
 
-    def create_schema(self, fields_dict, staging_name, connector_id=None, connector_name=None, mdm_flexible=False,
-                      crosswalk_name=None, crosswalk_list=None, overwrite=False, auto_send=True, export_data=False):
+    def create_schema(self, fields_dict=None, staging_name=None, connector_id=None, connector_name=None,
+                      mdm_flexible=False,  crosswalk_name=None, crosswalk_list=None, overwrite=False, auto_send=True,
+                      export_data=False, data=None):
+        """
+
+        :param fields_dict: `json`, `list of dicts`, `pandas.DataFrame`, default `None`
+            Data to create schema from. `fields_dict` will be removed in the future. Use `data`
+        :param staging_name:  `str`,
+            Staging name to send the data.
+        :param connector_name: `str`, default `None`
+            Connector name where the staging should be.
+        :param connector_id: `str`, default `None`
+            Connector Id where the staging should be.
+        :param mdm_flexible: `bool`, default `False`
+            If flexible schema.
+        :param crosswalk_name: `None`, default `staging_name`
+            Crosswalk name in the Schema.
+        :param crosswalk_list: `list`, default `None`
+            Crosswalk list of fields.
+        :param overwrite: `bool`, default `False`
+            Overwrite current schema
+        :param auto_send: `bool`, default `True`
+            Send the schema after creating.
+        :param export_data: `bool`, default `False`
+            Export data to CDS for this staging.
+        :param data: `json`, `list of dicts`, `pandas.DataFrame`, default `None`
+            Data to create schema from.
+        :return:
+        """
+
+
+        assert staging_name is not None, 'staging_name must be set.'
+        assert fields_dict is not None or data is not None, 'fields_dict or df must be set'
+
+        if fields_dict is not None:
+            warnings.warn(
+                "fields_dict will be deprecated, use `data`",
+                DeprecationWarning, stacklevel=3
+            )
+            data = fields_dict
 
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
         else:
             assert connector_id, f'connector_id or connector name should be set.'
 
+        if data is not None:
+            if isinstance(data, pd.DataFrame):
+                data = data.iloc[0].to_dict()
 
-        assert fields_dict is not None
+        if isinstance(data, list):
+            data = data[0]
 
-        if isinstance(fields_dict, list):
-            fields_dict = fields_dict[0]
-
-        if isinstance(fields_dict, dict):
-            schema = carolSchemaGenerator(fields_dict)
+        if isinstance(data, dict):
+            schema = carolSchemaGenerator(data)
             schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible, export_data=export_data,
                                     crosswalkname=crosswalk_name, crosswalkList=crosswalk_list)
-        elif isinstance(fields_dict, str):
-            schema = carolSchemaGenerator.from_json(fields_dict)
+        elif isinstance(data, str):
+            schema = carolSchemaGenerator.from_json(data)
             schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible, export_data=export_data,
                                     crosswalkname=crosswalk_name, crosswalkList=crosswalk_list)
         else:
-            print('Behavior for type %s not defined!' % type(fields_dict))
+            print('Behavior for type %s not defined!' % type(data))
 
         if auto_send:
             self.send_schema(schema=schema, staging_name=staging_name, connector_id=connector_id, overwrite=overwrite)
