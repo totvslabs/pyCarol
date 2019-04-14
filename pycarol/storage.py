@@ -1,20 +1,8 @@
-
-from multiprocessing import Process
-import os
-import pickle
-import calendar
-import gzip
-import pandas as pd
 from multiprocessing import Process
 from collections import defaultdict
-
 from .carol_cloner import Cloner
 from .utils.singleton import KeySingleton
 from .carolina import Carolina
-from .storage_gcpcs import StorageGCPCS
-from .storage_awss3 import StorageAWSS3
-from .carolina import Carolina
-from . import __BUCKET_NAME__, __TEMP_STORAGE__
 from .utils.miscellaneous import prettify_path, _attach_path, _FILE_MARKER
 
 
@@ -31,8 +19,10 @@ class Storage(metaclass=KeySingleton):
         carolina = Carolina(self.carol)
         carolina.init_if_needed()
         if carolina.engine == 'GCP-CS':
+            from .utils.storage_gcpcs import StorageGCPCS
             self.backend = StorageGCPCS(self.carol, carolina)
         elif carolina.engine == 'AWS-S3':
+            from .utils.storage_awss3 import StorageAWSS3
             self.backend = StorageAWSS3(self.carol, carolina)
 
     def save_async(self, name, obj):
@@ -49,6 +39,7 @@ class Storage(metaclass=KeySingleton):
         self._init_if_needed()
         return self.backend.load(name, format, parquet, cache, storage_space)
 
+    #TODO: put this inside the AWS storage class
     def files_storage_list(self, app_name=None, all_apps=False,  print_paths=False):
         """
 

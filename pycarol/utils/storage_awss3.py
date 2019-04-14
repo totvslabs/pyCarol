@@ -3,9 +3,8 @@ import pickle
 import calendar
 import gzip
 import pandas as pd
-from pycarol.utils.singleton import KeySingleton
 import botocore
-from . import __TEMP_STORAGE__
+from .. import __TEMP_STORAGE__
 
 
 class StorageAWSS3:
