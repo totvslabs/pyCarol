@@ -81,13 +81,15 @@ class StorageAWSS3:
             if e.response['Error']['Code'] == "404":
                 return None
 
+
+        # TODO: it does not make sence to have this cache here.
         if not cache and format == 'raw':
-            import joblib
             from io import BytesIO
             buffer = BytesIO()
             self.bucket.download_fileobj(s3_file_name, buffer)
             return buffer
 
+        # TODO: it does not make sence to have this cache here.
         elif not cache and format == 'joblib':
             import joblib
             from io import BytesIO
@@ -103,6 +105,7 @@ class StorageAWSS3:
         if os.path.isfile(local_file_name):
             if parquet:
                 return pd.read_parquet(local_file_name)
+            # TODO: It will never come here. there is a joblib type early. cache there it will be always False.
             elif format == 'joblib':
                 import joblib
                 return joblib.load(local_file_name)
