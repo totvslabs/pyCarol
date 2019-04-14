@@ -43,7 +43,7 @@ def _import_dask(storage, merge_records=False,
 
 
 def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mapping_columns=None,
-                   staging_name=None, n_jobs=1, verbose=0, golden=False, max_hits=None, callback=None):
+                   staging_name=None, golden=False, max_hits=None, callback=None):
     if columns:
         columns = list(set(columns))
         columns += __DM_FIELDS
@@ -54,38 +54,26 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
     else:
         file_paths = storage.get_staging_file_paths(staging_name=staging_name, connector_id=connector_id)
 
-    if n_jobs == 1:
-        df_list = []
-        count = 0
-        for i, file in enumerate(tqdm(file_paths)):
-            buffer = storage.load(file['name'], format='raw', cache=False, storage_space=file['storage_space'])
-            result = pd.read_parquet(buffer, columns=columns)
+    df_list = []
+    count = 0
+    for i, file in enumerate(tqdm(file_paths)):
+        buffer = storage.load(file['name'], format='raw', cache=False, storage_space=file['storage_space'])
+        result = pd.read_parquet(buffer, columns=columns)
 
-            if mapping_columns is not None:
-                result.rename(columns=mapping_columns, inplace=True) #fix columns names (we replace `-` for `_` due to parquet limitations.
-            if callback:
-                assert callable(callback), \
-                    f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function/class.'
-                result = callback(result)
+        if mapping_columns is not None:
+            result.rename(columns=mapping_columns, inplace=True) #fix columns names (we replace `-` for `_` due to parquet limitations.
+        if callback:
+            assert callable(callback), \
+                f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function/class.'
+            result = callback(result)
 
-            df_list.append(result)
-            if max_hits is not None:
-                count_old = count
-                count += len(df_list[i])
-                if count >= max_hits:
-                    df_list[i] = df_list[i].iloc[:max_hits - count_old]
-                    break
-        if not df_list:
-            return None
-        return pd.concat(df_list, ignore_index=True)
-
-    else:
-        raise NotImplementedError('need to think how to pickle the objects')
-        list_to_compute = Parallel(n_jobs=n_jobs,
-                                   verbose=verbose)(delayed(_par_paquet)(
-            s3, file
-        )
-                                                    for file in file_paths)
-
-        df = pd.concat(list_to_compute, ignore_index=True)
-        return df
+        df_list.append(result)
+        if max_hits is not None:
+            count_old = count
+            count += len(df_list[i])
+            if count >= max_hits:
+                df_list[i] = df_list[i].iloc[:max_hits - count_old]
+                break
+    if not df_list:
+        return None
+    return pd.concat(df_list, ignore_index=True)
