@@ -176,12 +176,20 @@ class StorageAWSS3:
     def get_staging_file_paths(self, staging_name, connector_id):
         self._init_if_needed()
         tenant_id = self.carol.tenant['mdmId']
+        template = dict(
+            staging_type=staging_name,
+            connector_id=connector_id,
+            tenant_id=tenant_id
+        )
         parq_stag = list(
-            self.bucket.objects.filter(Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/staging'))
-        parq_master = list(self.bucket.objects.filter(
-            Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/master_staging'))
-        parq_stag_rejected = list(self.bucket.objects.filter(
-            Prefix=f'carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging'))
+            self.bucket.objects.filter(Prefix=self.carolina.cds_staging_path['path'].format(**template))
+        )
+        parq_master = list(
+            self.bucket.objects.filter(Prefix=self.carolina.cds_staging_master_path['path'].format(**template))
+        )
+        parq_stag_rejected = list(
+            self.bucket.objects.filter(Prefix=self.carolina.cds_staging_rejected_path['path'].format(**template))
+        )
 
         bs = [{'storage_space': 'staging', 'name': i.key} for i in parq_stag if i.key.endswith('.parquet')]
         bm = [{'storage_space': 'staging_master', 'name': i.key} for i in parq_master if i.key.endswith('.parquet')]
