@@ -1,9 +1,9 @@
 from multiprocessing import Process
-from pycarol.carol_cloner import Cloner
-from pycarol.utils.singleton import KeySingleton
-from pycarol.carolina import Carolina
-from pycarol.storage_gcpcs import StorageGCPCS
-from pycarol.storage_awss3 import StorageAWSS3
+from .carol_cloner import Cloner
+from .utils.singleton import KeySingleton
+from .carolina import Carolina
+from .storage_gcpcs import StorageGCPCS
+from .storage_awss3 import StorageAWSS3
 
 
 class Storage(metaclass=KeySingleton):
