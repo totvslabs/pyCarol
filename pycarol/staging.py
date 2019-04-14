@@ -13,16 +13,17 @@ from .filter import Filter, TYPE_FILTER
 from .utils import async_helpers
 from .utils.miscellaneous import stream_data
 
-
 _SCHEMA_TYPES_MAPPING = {
-    "geo_point": str,
+    "geopoint": str,
     "long": int,
     "double": float,
     "nested": str,
     "string": str,
     "base64": str,
+    "date": str,
     "boolean": bool
 }
+
 
 
 class Staging:
@@ -30,9 +31,10 @@ class Staging:
         self.carol = carol
 
     def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100,
-                  print_stats=True,
-                  gzip=True, auto_create_schema=False, crosswalk_auto_create=None, flexible_schema=False, force=False, max_workers=None,
-                  dm_to_delete=None, async_send=False):
+                  print_stats=True, gzip=True, auto_create_schema=False, crosswalk_auto_create=None,
+                  flexible_schema=False, force=False,  max_workers=None,  dm_to_delete=None,
+                  async_send=False,
+                  carol_data_storage=False):
         '''
         :param staging_name:  `str`,
             Staging name to send the data.
@@ -51,7 +53,7 @@ class Staging:
         :param auto_create_schema: `bool`, default `False`
             If to auto create the schema for the data being sent.
         :param crosswalk_auto_create: `list`, default `None`
-            If `auto_create_schema=True`, one should send the crosswalk for the staging.
+            If `auto_create_schema=True`, crosswalk list of fields.
         :param flexible_schema: `bool`, default `False`
             If `auto_create_schema=True`, to use a flexible schema.
         :param force: `bool`, default `False`
@@ -63,6 +65,8 @@ class Staging:
             Name of the data model to be erased before send the data.
         :param async_send: `bool`, default `False`
             To use async to send the data. This is much faster than a sequential send.
+        :param carol_data_storage: `bool`, default `False`
+            To use Carol Data Storage flow.
         :return: None
         '''
 
@@ -99,17 +103,16 @@ class Staging:
             data = [data]
             data_size = len(data)
 
-        if (not schema) and (auto_create_schema):
+        if (not schema) and auto_create_schema:
             assert crosswalk_auto_create, "You should provide a crosswalk"
-            print('creating schema...')
-            self.create_schema(_sample_json, staging_name, connector_id=connector_id,
+            self.create_schema(_sample_json, staging_name, connector_id=connector_id, export_data=carol_data_storage,
                                crosswalk_list=crosswalk_auto_create, mdm_flexible=flexible_schema)
             print('created schema...')
             _crosswalk = crosswalk_auto_create
             print('provided crosswalk ', _crosswalk)
         elif auto_create_schema:
             assert crosswalk_auto_create, "You should provide a crosswalk"
-            self.create_schema(_sample_json, staging_name, connector_id=connector_id,
+            self.create_schema(_sample_json, staging_name, connector_id=connector_id, export_data=carol_data_storage,
                                crosswalk_list=crosswalk_auto_create, overwrite=True, mdm_flexible=flexible_schema)
             _crosswalk = crosswalk_auto_create
             print('provided crosswalk ', _crosswalk)
@@ -124,12 +127,13 @@ class Staging:
 
         if is_df and not force:
             assert data.duplicated(subset=_crosswalk).sum() == 0, \
-                "crosswalk is not unique on dataframe. set force=True to send it anyway."
+                "crosswalk is not unique on data frame. set force=True to send it anyway."
 
         if dm_to_delete is not None:
             delete_golden(self.carol, dm_to_delete)
 
-        url = f'v2/staging/tables/{staging_name}?returnData=false&connectorId={connector_id}'
+        url = f'v2/staging/tables/{staging_name}?carolDataStorage={carol_data_storage}&returnData=false&connectorId={connector_id}'
+        
         self.cont = 0
         if async_send:
             loop = asyncio.get_event_loop()
@@ -166,37 +170,84 @@ class Staging:
         except Exception:
             return None
 
-    def create_schema(self, fields_dict, staging_name, connector_id=None, mdm_flexible='false',
-                      crosswalk_name=None, crosswalk_list=None, overwrite=False):
+    def create_schema(self, fields_dict=None, staging_name=None, connector_id=None, connector_name=None,
+                      mdm_flexible=False,  crosswalk_name=None, crosswalk_list=None, overwrite=False, auto_send=True,
+                      export_data=False, data=None):
+        """
 
-        if isinstance(mdm_flexible, bool): #for compability
-            # TODO: review `mdm_flexible` as type string. Probably it would work if we use bool.
-            if mdm_flexible:
-                mdm_flexible = 'true'
-            else:
-                mdm_flexible = 'false'
+        :param fields_dict: `json`, `list of dicts`, `pandas.DataFrame`, default `None`
+            Data to create schema from. `fields_dict` will be removed in the future. Use `data`
+        :param staging_name:  `str`,
+            Staging name to send the data.
+        :param connector_name: `str`, default `None`
+            Connector name where the staging should be.
+        :param connector_id: `str`, default `None`
+            Connector Id where the staging should be.
+        :param mdm_flexible: `bool`, default `False`
+            If flexible schema.
+        :param crosswalk_name: `None`, default `staging_name`
+            Crosswalk name in the Schema.
+        :param crosswalk_list: `list`, default `None`
+            Crosswalk list of fields.
+        :param overwrite: `bool`, default `False`
+            Overwrite current schema
+        :param auto_send: `bool`, default `True`
+            Send the schema after creating.
+        :param export_data: `bool`, default `False`
+            Export data to CDS for this staging.
+        :param data: `json`, `list of dicts`, `pandas.DataFrame`, default `None`
+            Data to create schema from.
+        :return:
+        """
 
-        assert fields_dict is not None
+        assert staging_name is not None, 'staging_name must be set.'
+        assert fields_dict is not None or data is not None, 'fields_dict or df must be set'
 
-        if isinstance(fields_dict, list):
-            fields_dict = fields_dict[0]
+        if fields_dict is not None:
+            warnings.warn(
+                "fields_dict will be deprecated, use `data`",
+                DeprecationWarning, stacklevel=3
+            )
+            data = fields_dict
 
-        print('calling schema generator...')
-        if isinstance(fields_dict, dict):
-            schema = carolSchemaGenerator(fields_dict)
-            schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible,
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            assert connector_id, f'connector_id or connector name should be set.'
+
+        if data is not None:
+            if isinstance(data, pd.DataFrame):
+                data = data.iloc[0].to_dict()
+
+        if isinstance(data, list):
+            data = data[0]
+
+        if isinstance(data, dict):
+            schema = carolSchemaGenerator(data)
+            schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible, export_data=export_data,
                                     crosswalkname=crosswalk_name, crosswalkList=crosswalk_list)
-        elif isinstance(fields_dict, str):
-            schema = carolSchemaGenerator.from_json(fields_dict)
-            schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible,
+        elif isinstance(data, str):
+            schema = carolSchemaGenerator.from_json(data)
+            schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible, export_data=export_data,
                                     crosswalkname=crosswalk_name, crosswalkList=crosswalk_list)
         else:
-            print('Behavior for type %s not defined!' % type(fields_dict))
+            print('Behavior for type %s not defined!' % type(data))
 
-        print('done.. sending..')
-        self.send_schema(schema=schema, staging_name=staging_name, connector_id=connector_id, overwrite=overwrite)
+        if auto_send:
+            self.send_schema(schema=schema, staging_name=staging_name, connector_id=connector_id, overwrite=overwrite)
+        else:
+            return schema
 
-    def send_schema(self, schema, staging_name, connector_id=None, overwrite=False):
+    def send_schema(self, schema, staging_name=None, connector_id=None, connector_name=None,
+                    overwrite=False):
+
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+
+        if staging_name is None:
+            staging_name = schema.get('mdmStagingType')
+            assert staging_name is not None, f"staging_name should be given or defined in the schema."
+
         query_string = {"connectorId": connector_id}
         if connector_id is None:
             connector_id = self.carol.connector_id
@@ -260,52 +311,60 @@ class Staging:
         :return:
         """
 
-        old_columns = None
-        if columns:
-            old_columns = columns
-            columns = [i.replace("-", "_") for i in columns]
-            columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
-            old_columns = dict(zip([i.replace("-", "_") for i in columns], old_columns))
+        assert backend == 'dask' or backend == 'pandas'
+        if return_dask_graph:
+            assert backend == 'dask'
 
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
         else:
             assert connector_id
 
-        assert backend == 'dask' or backend == 'pandas'
-
-        if return_dask_graph:
-            assert backend == 'dask'
+        if columns:
+            mapping_columns = columns
+            columns = [i.replace("-", "_") for i in columns]
+            columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
+            mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
+        else:
+            mapping_columns = list(self.get_schema(staging_name=staging_name,
+                                                   connector_id=connector_id)['mdmStagingMapping']['properties'].keys())
+            columns = [i.replace("-", "_") for i in mapping_columns]
+            columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
+            mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
 
         # validate export
         stags = self._get_staging_export_stats()
-        if (not stags.get(connector_id+'_'+staging_name)):
+        if not stags.get(connector_id + '_' + staging_name):
             raise Exception(f'"{staging_name}" is not set to export data, \n '
                             f'use `dm = Staging(login).export(staging_name="{staging_name}",'
                             f'connector_id="{connector_id}", sync_staging=True) to activate')
 
-        if stags.get(connector_id+'_'+staging_name)['mdmConnectorId'] != connector_id:
+        if stags.get(connector_id + '_' + staging_name)['mdmConnectorId'] != connector_id:
             raise Exception(
                 f'"Wrong connector Id {connector_id}. The connector Id associeted to this staging is  '
                 f'{stags.get(staging_name)["mdmConnectorId"]}"')
 
         storage = Storage(self.carol)
         if backend == 'dask':
+
             d = _import_dask(storage=storage, connector_id=connector_id, staging_name=staging_name,
                              merge_records=merge_records, golden=False, return_dask_graph=return_dask_graph,
+                             mapping_columns=mapping_columns,
                              columns=columns, max_hits=max_hits)
 
         elif backend == 'pandas':
             d = _import_pandas(storage=storage, connector_id=connector_id, verbose=verbose,
                                staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns,
-                               max_hits=max_hits, callback=callback)
+                               max_hits=max_hits, callback=callback, mapping_columns=mapping_columns)
 
             # TODO: Do the same for dask backend
             if d is None:
                 warnings.warn(f'No data to fetch! {staging_name} has no data', UserWarning)
                 cols_keys = list(self.get_schema(
-                    staging_name=staging_name, connector_name=connector_name
+                    staging_name=staging_name, connector_id=connector_id
                 )['mdmStagingMapping']['properties'].keys())
+                cols_keys = [i.replace("-", "_") for i in cols_keys]
+
                 if return_metadata:
                     cols_keys.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
 
@@ -314,33 +373,31 @@ class Staging:
 
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in self.get_schema(staging_name=staging_name,
-                                                  connector_name=connector_name)['mdmStagingMapping'][
+                                                  connector_id=connector_id)['mdmStagingMapping'][
                     'properties'].items():
+                    key = key.replace("-", "_")
                     d.loc[:, key] = d.loc[:, key].astype(_SCHEMA_TYPES_MAPPING.get(value['type'], str), copy=False)
                 if columns:
+                    columns = list(set(columns))
                     d = d[list(set(columns))]
-                return d
+                return d.rename(columns=mapping_columns)
         else:
-            raise ValueError(f'backend should be "dask" or "pandas" you entered {backend}')
+            raise ValueError(f'backend should be either "dask" or "pandas" you entered {backend}')
 
         if merge_records:
             if not return_dask_graph:
-                if old_columns is not None:
-                    d.rename(columns=old_columns, inplace=True)
                 d.sort_values('mdmCounterForEntity', inplace=True)
                 d.reset_index(inplace=True, drop=True)
                 d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
-                if not return_metadata:
-                    d.drop(columns=['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'], inplace=True)
                 d.reset_index(inplace=True, drop=True)
             else:
-                if old_columns is not None:
-                    d.rename(columns=old_columns, inplace=True)
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                     .drop_duplicates(subset='mdmId', keep='last') \
                     .reset_index(drop=True)
-                if not return_metadata:
-                    d = d.drop(columns=['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
+
+        if not return_metadata:
+            to_drop = set(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated']).intersection(set(d.columns))
+            d = d.drop(labels=to_drop, axis=1)
 
         return d
 
@@ -354,7 +411,7 @@ class Staging:
         s3.
 
         :param staging_name: `str`, default `None`
-            Datamodel Name
+            Staging Name
         :param sync_staging: `bool`, default `True`
             Sync the data model
         :param connector_name: `str`
@@ -457,3 +514,119 @@ class Staging:
         staging_results = list(itertools.chain(*staging_results))
         if staging_results is not None:
             return {f"{i['mdmConnectorId']}_{i['mdmStagingType']}": i for i in staging_results}
+
+    def _sync_counters(self, staging_name, connector_id=None, connector_name=None, incremental=False):
+        """
+
+        :param staging_name: `str`
+            Staging Name
+        :param connector_name: `str`, default `None`
+            Connector name
+        :param connector_id: `str`, default `None`
+            Connector id
+        :param incremental: `bool`, default `False`
+            If `True`, it will reset all `mdmCountForEntity`, if `False`, it will only increment the missing values.
+
+        :return: None
+        """
+
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            assert connector_id
+
+        query_params = {"incrementAll": incremental}
+        url = f'v2/staging/{connector_id}/{staging_name}/syncCounters'
+        return self.carol.call_api(url, method='POST', params=query_params, errors='ignore')
+
+    def get_mapping_snapshot(self, connector_id, mapping_id, entity_space='PRODUCTION', reverse_mapping=False):
+
+        self.snap = {}
+        querystring = {"entitySpace": entity_space, "reverseMapping": reverse_mapping}
+
+        url = f"v1/connectors/{connector_id}/entityMappings/{mapping_id}/snapshot"
+        response = self.carol.call_api(url, method='GET', params=querystring, )
+
+        mapping_name = response.get('entityMappingName')
+        return {mapping_name: response}
+
+    def delete_mapping(self, staging_name=None, connector_id=None, connector_name=None, mapping_id=None,
+                       entity_space='PRODUCTION'):
+
+        cc = Connectors(self.carol)
+        st = cc.get_dm_mappings(all_connectors=True)
+
+        if mapping_id is None:
+            assert staging_name is not None, "staging_name should be set."
+            if (connector_id is None) and (connector_name is not None):
+                connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
+                entity = [i['mdmId'] for i in st
+                          if (i.get('mdmConnectorId') == connector_id) and
+                          (i.get('mdmStagingType') == staging_name)]
+                assert len(entity) == 1, f'No data model mapped for {staging_name}'
+                mapping_id = entity[0]
+
+            elif connector_id is None:
+                entity = [i for i in st if (i.get('mdmStagingType') == staging_name)]
+
+                if len(entity) > 1:
+                    raise KeyError(f'There are more than one connector for staging {staging_name}')
+                elif len(entity) < 1:
+                    raise KeyError(f'No data model mapped for {staging_name}')
+                entity = entity[0]
+                connector_id = entity['mdmConnectorId']
+                mapping_id = entity['mdmId']
+            elif connector_id:
+                entity = [i['mdmId'] for i in st
+                          if (i.get('mdmConnectorId') == connector_id) and
+                          (i.get('mdmStagingType') == staging_name)]
+
+                assert len(entity) == 1, f'No mapping for {staging_name}'
+                mapping_id = entity[0]
+
+        url_mapping = f'v1/connectors/{connector_id}/entityMappings/{mapping_id}'
+        querystring = {"entitySpace": entity_space, "reverseMapping": "false"}
+
+        self.carol.call_api(url_mapping, method='DELETE', params=querystring, )
+
+    def _check_if_exists(self, connector_id, staging_name):
+        conn = Connectors(self.carol)
+
+        try:
+            mappings = conn.get_dm_mappings(connector_id=connector_id, staging_name=staging_name)
+            return mappings
+        except Exception as e:
+            if 'Entity mapping not found' in str(e):
+                return None
+            else:
+                raise e
+
+    def mapping_from_snapshot(self, mapping_snapshot, connector_id=None, connector_name=None,
+                              publish=True, overwrite=False):
+
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        else:
+            assert connector_id
+
+        staging_name = mapping_snapshot.get('stagingEntityType')
+        assert staging_name, f"Snapshot incomplete, `stagingEntityType` not in snapshot"
+
+        _mappings = self._check_if_exists(connector_id=connector_id, staging_name=staging_name)
+
+        if (_mappings is not None) and overwrite:
+            _mapping_id = [i['mdmId'] for i in _mappings]
+            assert len(_mapping_id) == 1
+            _mapping_id = _mapping_id[0]
+            method = 'PUT'
+            url_mapping = f"v1/connectors/{connector_id}/entityMappings/{_mapping_id}/snapshot"
+        else:
+            method = 'POST'
+            url_mapping = f'v1/connectors/{connector_id}/entityMappings/snapshot'
+
+        resp = self.carol.call_api(url_mapping, method=method, data=mapping_snapshot)
+        _mapping_id = resp['mdmEntityMapping']['mdmId']
+
+        if publish:
+            url = f"v1/connectors/{connector_id}/entityMappings/{_mapping_id}/publish"
+            self.carol.call_api(url, method='POST')

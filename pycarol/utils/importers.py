@@ -11,7 +11,7 @@ __DM_FIELDS = ['mdmCounterForEntity', 'mdmId']
 
 def _import_dask(storage, merge_records=False,
                  dm_name=None, golden=False, return_dask_graph=False,
-                 connector_id=None, staging_name=None, columns=None, max_hits=None):
+                 connector_id=None, staging_name=None, columns=None, max_hits=None, mapping_columns=None):
     if columns:
         columns = list(set(columns))
         columns += __STAGING_FIELDS
@@ -35,13 +35,14 @@ def _import_dask(storage, merge_records=False,
 
     d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns)
 
+    d= d.rename(columns=mapping_columns)
     if return_dask_graph:
         return d
     else:
         return d.compute()
 
 
-def _import_pandas(storage, dm_name=None, connector_id=None, columns=None,
+def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mapping_columns=None,
                    staging_name=None, n_jobs=1, verbose=0, golden=False, max_hits=None, callback=None):
     if columns:
         columns = list(set(columns))
@@ -59,6 +60,9 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None,
         for i, file in enumerate(tqdm(file_paths)):
             buffer = storage.load(file['name'], format='raw', cache=False, storage_space=file['storage_space'])
             result = pd.read_parquet(buffer, columns=columns)
+
+            if mapping_columns is not None:
+                result.rename(columns=mapping_columns, inplace=True) #fix columns names (we replace `-` for `_` due to parquet limitations.
             if callback:
                 assert callable(callback), \
                     f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function/class.'

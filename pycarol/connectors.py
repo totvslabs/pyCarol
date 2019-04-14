@@ -40,7 +40,7 @@ class Connectors:
         else:
             raise Exception(resp)
 
-    def get_by_name(self, name):
+    def get_by_name(self, name, errors='raise'):
         """
         Get connector information using the connector name
         :param name:
@@ -48,10 +48,10 @@ class Connectors:
         :return: None
         :rtype: None
         """
-        resp = self.carol.call_api(f'v1/connectors/name/{name}')
+        resp = self.carol.call_api(f'v1/connectors/name/{name}', errors=errors)
         return resp
 
-    def get_by_id(self, id):
+    def get_by_id(self, id, errors='raise'):
         """
         Get connector information using the connector id
         :param id:
@@ -59,7 +59,7 @@ class Connectors:
         :return: None
         :rtype: None
         """
-        resp = self.carol.call_api(f'v1/connectors/{id}')
+        resp = self.carol.call_api(f'v1/connectors/{id}', errors=errors)
         return resp
 
     def delete_by_name(self, name, force_deletion=True):
@@ -94,6 +94,9 @@ class Connectors:
                 set_param = False
             conn = conn['hits']
 
+            if not conn:
+                break
+
             connectors.extend(conn)
             params['offset'] = count
             if print_status:
@@ -106,17 +109,20 @@ class Connectors:
             file.close()
         return connectors
 
-    def stats(self, connector_id=None, connector_name=None):
+    def stats(self, connector_id=None, connector_name=None, all_connectors=False):
 
-        if connector_name:
-            connector_id = self.get_by_name(connector_name)['mdmId']
+        if all_connectors:
+            response = self.carol.call_api('v1/connectors/stats/all')
         else:
-            assert connector_id
+            if connector_name:
+                connector_id = self.get_by_name(connector_name)['mdmId']
+            else:
+                assert connector_id
 
-        response = self.carol.call_api('v1/connectors/{}/stats'.format(connector_id))
+            response = self.carol.call_api('v1/connectors/{}/stats'.format(connector_id))
 
-        conn_stats = response['aggs']
-        return {key: list(value['stagingEntityStats'].keys()) for key, value in conn_stats.items()}
+        self._conn_stats = response['aggs']
+        return {key: list(value['stagingEntityStats'].keys()) for key, value in self._conn_stats.items()}
 
     def staging_to_connectors_map(self):
         d = defaultdict(list)
@@ -140,3 +146,87 @@ class Connectors:
             elif len(conn) > 1:
                 print('More than one connector with the staging {}'.format(staging_name))
                 return conn
+
+    def get_dm_mappings(self, connector_id=None, connector_name=None, staging_name=None,
+                        dm_id=None, dm_name=None, reverse_mapping=False, offset=0, page_size=1000, sort_by=None,
+                        sort_order='ASC', all_connectors=False):
+        """
+        Get data models mappings information.
+
+        :param connector_id: `str`, default `None`
+            Connector Id
+        :param connector_name: `str`, default `None`
+            Connectot name
+        :param staging_name: `str`, default `None`
+            Staging name
+        :param dm_id:  `str`, default `None`
+            Data model Id
+        :param dm_name: `str`, default `None`
+            Data model name
+        :param reverse_mapping: `bool`, default `False`
+            If to return the reverse mapping.
+        :param offset: `int`, default `0`
+            Offset for the response.
+        :param page_size: `int`, default `1000`
+            number of records in each call.
+        :param sort_by: `str`, default `None`
+            Sort response by
+        :param sort_order: `str`, default `ASC`
+            Sort Order. Possible values "ASC" and "DESC"
+        :param all_connectors: `bool`, default `False`
+            It will return all the mapping for all connectors/stagings
+        :return:
+        """
+
+        if all_connectors:
+            payload = {
+                "offset": offset,
+                "sortBy": sort_by,
+                "pageSize": page_size,
+                "sortOrder": sort_order
+            }
+            url = "v1/connectors/mappings/all"
+
+        else:
+            if connector_name:
+                connector_id = self.get_by_name(connector_name)['mdmId']
+            else:
+                assert connector_id
+
+            if dm_name is not None:
+                url_dm = f"v1/entities/templates/name/{dm_name}"
+                dm_id = self.carol.call_api(url_dm, method='GET')['mdmId']
+
+            payload = {
+                "reverseMapping": reverse_mapping,
+                "entityId": dm_id,
+                "stagingType": staging_name,
+                "offset": offset,
+                "sortBy": sort_by,
+                "pageSize": page_size,
+                "sortOrder": sort_order
+            }
+
+            url = f"v1/connectors/{connector_id}/entityMappings"
+        set_param = True
+        to_get = float('inf')
+        count = 0
+        self.resp=[]
+        while count < to_get:
+
+            resp = self.carol.call_api(url, method='GET', params=payload)
+            if set_param:
+                self.total_hits = resp["totalHits"]
+                to_get = resp["totalHits"]
+                set_param = False
+
+            count += resp['count']
+            query = resp['hits']
+            if not query:
+                break
+
+            self.resp.extend(query)
+            payload['offset'] = count
+
+
+        return self.resp

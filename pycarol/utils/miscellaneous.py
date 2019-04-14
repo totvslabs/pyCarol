@@ -1,6 +1,59 @@
 import json
 import gzip, io
 import pandas as pd
+from collections import defaultdict
+import numpy as np
+
+_FILE_MARKER = '<files>'
+
+
+class NumpyEncoder(json.JSONEncoder):
+    """ Special json encoder for numpy types """
+
+    def default(self, obj):
+        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
+                            np.int16, np.int32, np.int64, np.uint8,
+                            np.uint16, np.uint32, np.uint64)):
+            return int(obj)
+        elif isinstance(obj, (np.float_, np.float16, np.float32,
+                              np.float64)):
+            return float(obj)
+        elif isinstance(obj, (np.ndarray,)):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
+
+def _attach_path(branch, trunk):
+    '''
+    Insert a branch of directories on its trunk.
+    '''
+    parts = branch.split('/', 1)
+    if len(parts) == 1:  # branch is a file
+        trunk[_FILE_MARKER].append(parts[0])
+    else:
+        node, others = parts
+        if node not in trunk:
+            trunk[node] = defaultdict(dict, ((_FILE_MARKER, []),))
+        _attach_path(others, trunk[node])
+
+def prettify_path(d, indent=0):
+    '''
+    Print the file tree structure with proper indentation.
+
+    :param: d: `dict`
+        list of path to prettify
+    :param : indent: `int`, defaut `0`
+        Ident to use.
+    '''
+    for key, value in d.items():
+        if key == _FILE_MARKER:
+            if value:
+                print('  ' * indent + str(value))
+        else:
+            print('  ' * indent + str(key))
+            if isinstance(value, dict):
+                prettify_path(value, indent+1)
+
 
 def ranges(min_v, max_v, nb):
     if min_v == max_v:
@@ -11,7 +64,9 @@ def ranges(min_v, max_v, nb):
         step.append(max_v)
     step = [[step[i], step[i + 1] - 1] for i in range(len(step) - 1)]
     step.append([max_v, None])
+    step = [[None, min_v-1]] + step
     return step
+
 
 # TODO: reused from staging. Should I put in utils/?
 def stream_data(data, step_size, compress_gzip):
@@ -55,7 +110,7 @@ def stream_data(data, step_size, compress_gzip):
             if compress_gzip:
                 out = io.BytesIO()
                 with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
-                    f.write(json.dumps(data_to_send).encode('utf-8'))
+                    f.write(json.dumps(data_to_send,  cls=NumpyEncoder).encode('utf-8'))
                 yield out.getvalue(), cont
             else:
                 yield data_to_send, cont

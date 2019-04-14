@@ -37,7 +37,8 @@ class PyCarolTarget(luigi.Target):
 
         namespace = task.get_task_namespace()
         file_id = task._file_id()
-        self.path = os.path.join('pipeline', namespace, "{}.{}".format(file_id,self.FILE_EXT))
+        file_id = file_id.split(namespace+'.')[-1] #this will prevent to copy all the module path to the name of the file.
+        self.path = os.path.join('pipeline', namespace, "{}.{}".format(file_id, self.FILE_EXT))
         self.log_path = os.path.join('pipeline',namespace, "{}_log.pkl".format(file_id))
 
 
@@ -153,6 +154,7 @@ class LocalTarget(luigi.LocalTarget):
         if path is None:
             file_id = task._file_id()
             ext = '.' + self.FILE_EXT
+            file_id = file_id.split(namespace+'.')[-1]  #this will prevent to copy all the module path to the name of the file.
             path = os.path.join(task.TARGET_DIR, namespace, file_id + ext)
         super().__init__(path=path, *args, **kwargs)
 
