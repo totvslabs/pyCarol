@@ -170,7 +170,12 @@ class StorageAWSS3:
     def get_golden_file_paths(self, dm_name):
         self._init_if_needed()
         tenant_id = self.carol.tenant['mdmId']
-        parq = list(self.bucket.objects.filter(Prefix=f'carol_export/{tenant_id}/{dm_name}/golden'))
+        template = dict(
+            dm_name=dm_name,
+        )
+        parq = list(
+            self.bucket.objects.filter(Prefix=self.carolina.cds_golden_path['path'].format(**template))
+        )
         return [{'storage_space': 'golden', 'name': i.key} for i in parq if i.key.endswith('.parquet')]
 
     def get_staging_file_paths(self, staging_name, connector_id):
