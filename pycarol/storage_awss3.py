@@ -146,6 +146,7 @@ class StorageAWSS3:
         if os.path.isfile(local_file_name):
             os.remove(local_file_name)
 
+    # TODO: Use the path from caroline
     def build_url_parquet_golden(self, dm_name):
         tenant_id = self.carol.tenant['mdmId']
         return f's3://{self.carolina.cds_app_storage_path["bucket"]}/carol_export/{tenant_id}/{dm_name}/golden'
@@ -172,6 +173,7 @@ class StorageAWSS3:
         tenant_id = self.carol.tenant['mdmId']
         template = dict(
             dm_name=dm_name,
+            tenant_id=tenant_id
         )
         parq = list(
             self.bucket.objects.filter(Prefix=self.carolina.cds_golden_path['path'].format(**template))
