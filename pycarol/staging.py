@@ -278,8 +278,8 @@ class Staging:
         """
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
-    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask', verbose=0,
-                      merge_records=True, n_jobs=1, return_dask_graph=False, columns=None, max_hits=None,
+    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',
+                      merge_records=True, return_dask_graph=False, columns=None, max_hits=None,
                       return_metadata=False, callback=None):
         """
 
@@ -291,15 +291,11 @@ class Staging:
             Connector id to fetch parquet of
         :param connector_name: `str`, default `None`
             Connector name to fetch parquet of
-        :param verbose: `int`, default `0`
-            Verbosity
         :param backend: ['dask','pandas'], default `dask`
             if to use either dask or pandas to fetch the data
         :param merge_records: `bool`, default `True`
             This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
             one should keep only the last records.
-        :param n_jobs: `int`, default `1`
-            To be used with `backend='pandas'`. It is the number of threads to load the data from carol export.
         :param return_dask_graph: `bool`, default `false`
             If to return the dask graph or the dataframe.
         :param columns: `list`, default `None`
@@ -353,8 +349,8 @@ class Staging:
                              columns=columns, max_hits=max_hits)
 
         elif backend == 'pandas':
-            d = _import_pandas(storage=storage, connector_id=connector_id, verbose=verbose,
-                               staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns,
+            d = _import_pandas(storage=storage, connector_id=connector_id,
+                               staging_name=staging_name, golden=False, columns=columns,
                                max_hits=max_hits, callback=callback, mapping_columns=mapping_columns)
 
             # TODO: Do the same for dask backend
