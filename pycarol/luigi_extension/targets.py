@@ -35,6 +35,11 @@ class PyCarolTarget(luigi.Target):
             PyCarolTarget.storage_cache = self.storage
             PyCarolTarget.tenant_cache = task.tenant #TODO: make cache more robust, not depending on task.tenant
 
+        if hasattr(task,'_df_columns'):
+            self.target_columns = task._df_columns
+        else:
+            self.target_columns = None
+
         namespace = task.get_task_namespace()
         file_id = task._file_id()
         file_id = file_id.split(namespace+'.')[-1] #this will prevent to copy all the module path to the name of the file.
@@ -100,10 +105,9 @@ class PicklePyCarolTarget(PyCarolTarget):
 
 class ParquetPyCarolTarget(PyCarolTarget):
     FILE_EXT = 'parquet'
-    columns = None
 
     def load(self):
-        return self.storage.load(self.path, format='joblib', cache=False, parquet=True, columns=self.columns)
+        return self.storage.load(self.path, format='joblib', cache=False, parquet=True, columns=self.target_columns)
 
     def dump(self, function_output):
         self.storage.save(self.path, function_output, format='joblib', cache=False, parquet=True)
@@ -174,6 +178,12 @@ class LocalTarget(luigi.LocalTarget):
             ext = '.' + self.FILE_EXT
             file_id = file_id.split(namespace+'.')[-1]  #this will prevent to copy all the module path to the name of the file.
             path = os.path.join(task.TARGET_DIR, namespace, file_id + ext)
+
+        if hasattr(task,'_df_columns'):
+            self.target_columns = task._df_columns
+        else:
+            self.target_columns = None
+
         super().__init__(path=path, *args, **kwargs)
 
     def loadlog(self):
@@ -205,7 +215,7 @@ class ParquetLocalTarget(LocalTarget):
     FILE_EXT = 'parquet'
 
     def load(self):
-        return pd.read_parquet(self.path)
+        return pd.read_parquet(self.path, columns=self.target_columns)
 
     def dump(self, function_output):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
