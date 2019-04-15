@@ -66,7 +66,7 @@ class Storage(metaclass=KeySingleton):
         self.bucket.upload_file(local_file_name, s3_file_name)
         os.utime(local_file_name, None)
 
-    def load(self, name, format='pickle', parquet=False, cache=True):
+    def load(self, name, format='pickle', parquet=False, cache=True, columns=None):
         self._init_if_needed()
         s3_file_name = f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files/{name}"
         local_file_name = os.path.join(__TEMP_STORAGE__, s3_file_name.replace("/", "-"))
@@ -102,7 +102,7 @@ class Storage(metaclass=KeySingleton):
 
         if os.path.isfile(local_file_name):
             if parquet:
-                return pd.read_parquet(local_file_name)
+                return pd.read_parquet(local_file_name, columns=columns)
             elif format == 'joblib':
                 import joblib
                 return joblib.load(local_file_name)
