@@ -100,9 +100,10 @@ class PicklePyCarolTarget(PyCarolTarget):
 
 class ParquetPyCarolTarget(PyCarolTarget):
     FILE_EXT = 'parquet'
+    columns = None
 
     def load(self):
-        return self.storage.load(self.path, format='joblib', cache=False, parquet=True)
+        return self.storage.load(self.path, format='joblib', cache=False, parquet=True, columns=self.columns)
 
     def dump(self, function_output):
         self.storage.save(self.path, function_output, format='joblib', cache=False, parquet=True)
