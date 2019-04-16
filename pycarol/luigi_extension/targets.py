@@ -102,7 +102,7 @@ class ParquetPyCarolTarget(PyCarolTarget):
     FILE_EXT = 'parquet'
 
     def load(self):
-        return self.storage.load(self.path, format='joblib', cache=False, parquet=True)
+        return self.storage.load(self.path, format='joblib', cache=True, parquet=True)
 
     def dump(self, function_output):
         self.storage.save(self.path, function_output, format='joblib', cache=False, parquet=True)
