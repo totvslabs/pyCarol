@@ -55,7 +55,7 @@ class StorageAWSS3:
         self.bucket.upload_file(local_file_name, s3_file_name)
         os.utime(local_file_name, None)
 
-    def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage'):
+    def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage', columns=None):
         self._init_if_needed()
         if storage_space == 'app_storage':
             s3_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
@@ -66,6 +66,20 @@ class StorageAWSS3:
         obj = self.bucket.Object(s3_file_name)
         if obj is None:
             return None
+
+        if not cache and format == 'raw':
+            from io import BytesIO
+            buffer = BytesIO()
+            self.bucket.download_fileobj(s3_file_name, buffer)
+            return buffer
+
+        elif not cache and format == 'joblib':
+            import joblib
+            from io import BytesIO
+            with BytesIO() as data:
+                self.bucket.download_fileobj(s3_file_name, data)
+                data.seek(0)
+                return joblib.load(data)
 
         has_cache = cache and os.path.isfile(local_file_name)
 
@@ -80,31 +94,13 @@ class StorageAWSS3:
             if e.response['Error']['Code'] == "404":
                 return None
 
-
-        # TODO: it does not make sence to have this cache here.
-        if not cache and format == 'raw':
-            from io import BytesIO
-            buffer = BytesIO()
-            self.bucket.download_fileobj(s3_file_name, buffer)
-            return buffer
-
-        # TODO: it does not make sence to have this cache here.
-        elif not cache and format == 'joblib':
-            import joblib
-            from io import BytesIO
-            with BytesIO() as data:
-                self.bucket.download_fileobj(s3_file_name, data)
-                data.seek(0)
-                return joblib.load(data)
-
         # Local cache is outdated
         if localts < s3ts:
             self.bucket.download_file(s3_file_name, local_file_name)
 
         if os.path.isfile(local_file_name):
             if parquet:
-                return pd.read_parquet(local_file_name)
-            # TODO: It will never come here. there is a joblib type early. cache there it will be always False.
+                return pd.read_parquet(local_file_name,columns=columns)
             elif format == 'joblib':
                 import joblib
                 return joblib.load(local_file_name)

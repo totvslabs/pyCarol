@@ -37,7 +37,8 @@ class Storage(metaclass=KeySingleton):
 
     def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage', columns=None):
         self._init_if_needed()
-        return self.backend.load(name, format, parquet, cache, storage_space, columns=None)
+        return self.backend.load(name=name, format=format, parquet=parquet, cache=cache, storage_space=storage_space,
+                                 columns=columns)
 
     #TODO: put this inside the AWS storage class
     def files_storage_list(self, app_name=None, all_apps=False,  print_paths=False):

@@ -57,7 +57,7 @@ class StorageGCPCS:
         blob.upload_from_filename(filename=local_file_name)
         os.utime(local_file_name, None)
 
-    def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage'):
+    def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage', columns=None):
         self._init_if_needed()
         if storage_space == 'app_storage':
             remote_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
@@ -102,7 +102,7 @@ class StorageGCPCS:
 
         if os.path.isfile(local_file_name):
             if parquet:
-                return pd.read_parquet(local_file_name)
+                return pd.read_parquet(local_file_name, columns=columns)
             elif format == 'joblib':
                 import joblib
                 return joblib.load(local_file_name)
