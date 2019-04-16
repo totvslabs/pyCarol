@@ -28,6 +28,8 @@ class Carol:
         :param verbose: `bool`, default `False
             If True will print the header, method and URL of each API call.
         """
+        self.legacy_mode = True
+        self.legacy_bucket = 'carol-internal'
 
         settings = dict()
         if auth is None and domain is None:
