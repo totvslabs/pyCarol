@@ -1,8 +1,10 @@
 from string import Formatter
 
 class Carolina:
-    def __init__(self, carol):
+    def __init__(self, carol, legacy_mode=False, legacy_bucket=None):
         self.carol = carol
+        self.legacy_mode = legacy_mode
+        self.legacy_bucket = legacy_bucket
         self.client = None
         self.engine = None
         self.token = None
@@ -16,7 +18,38 @@ class Carolina:
         if self.client:
             return
 
-        token = self.carol.call_api('v1/storage/storage/token')
+        if self.legacy_mode:
+            response = self.carol.call_api('v1/carolina/carolina/token', params={'carolAppName': self.carol.app_name})
+
+            token = {}
+            token['engine'] = "AWS-S3"
+            token['cdsAppStoragePath'] = {
+                "bucket": self.legacy_bucket,
+                "path": f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files"
+            }
+            token['cdsGoldenPath'] = {
+                "bucket": self.legacy_bucket,
+                "path": f"carol_export/{self.carol.tenant['mdmId']}/{{dm_name}}/golden"
+            }
+            token['cdsStagingPath'] = {
+                "bucket": self.legacy_bucket,
+                "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/staging"
+            }
+            token['cdsStagingMasterPath'] = {
+                "bucket": self.legacy_bucket,
+                "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/master_staging"
+            }
+            token['cdsStagingRejectedPath'] = {
+                "bucket": self.legacy_bucket,
+                "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/rejected_staging"
+            }
+
+            token['aiAccessKeyId'] = response['aiAccessKeyId']
+            token['aiSecretKey'] = response['aiSecretKey']
+            token['aiAccessToken'] = response['aiAccessToken']
+            token['aiTokenExpirationDate'] = response['aiTokenExpirationDate']
+        else:
+            token = self.carol.call_api('v1/storage/storage/token')
 
         self.engine = token['engine']
 
