@@ -89,10 +89,10 @@ class Task(luigi.Task):
     def run(self):
         from contextlib import redirect_stdout
         if isinstance(self.input(), list):
-            function_inputs = [input_i.load(**self.load_input_params()) if self.load_input_params(input_i)
+            function_inputs = [input_i.load(**self.load_input_params(input_i)) if self.load_input_params(input_i)
                                else input_i.load() for input_i in self.input()]
         elif isinstance(self.input(), dict):
-            function_inputs = {i: (input_i.load(**self.load_input_params())
+            function_inputs = {i: (input_i.load(**self.load_input_params(input_i))
                                    if self.load_input_params(input_i) else input_i.load())
                                for i, input_i in self.input().items()}
 
