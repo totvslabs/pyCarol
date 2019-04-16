@@ -1,10 +1,10 @@
 from string import Formatter
 
 class Carolina:
-    def __init__(self, carol, legacy_mode=True, legacy_bucket='carol-internal'):
+    def __init__(self, carol):
         self.carol = carol
-        self.legacy_mode = legacy_mode
-        self.legacy_bucket = legacy_bucket
+        self.legacy_mode = carol.legacy_mode
+        self.legacy_bucket = carol.legacy_bucket
         self.client = None
         self.engine = None
         self.token = None
