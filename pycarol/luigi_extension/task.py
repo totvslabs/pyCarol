@@ -112,11 +112,11 @@ class Task(luigi.Task):
         self.output().dump(function_output)
 
 
-    def _easy_run(self,inputs):
+    def _easy_run(self, inputs):
         # Override this method to implement standard pre/post-processing
         return self.easy_run(inputs)
 
-    def easy_run(self,inputs):
+    def easy_run(self, inputs):
         return None
 
     #this method was changed from the original version to allow execution of a task
@@ -187,11 +187,11 @@ class Task(luigi.Task):
 
         return params
 
-    def load_input_params(self, input_task):
+    def load_input_params(self, input_target):
         """
         Overwrite this if need to pass parameters when loading a requirement.
 
-        :param input_task:
+        :param input_target:
             Target that will be loaded.
         :return: `Dict`
             Return a dict with key/value parameters to be passed to Target.load()
