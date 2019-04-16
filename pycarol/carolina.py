@@ -20,6 +20,8 @@ class Carolina:
 
         self.engine = token['engine']
 
+        # TODO: FIX THIS WHEN FIXED IN CAROL
+        token['cdsAppStoragePath']['path'] = f"storage/{self.carol.tenant['mdmId']}/files"
         self.cds_app_storage_path = token['cdsAppStoragePath']
         self.cds_golden_path = token['cdsGoldenPath']
         self.cds_staging_path = token['cdsStagingPath']
