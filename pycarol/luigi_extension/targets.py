@@ -101,8 +101,8 @@ class PicklePyCarolTarget(PyCarolTarget):
 class ParquetPyCarolTarget(PyCarolTarget):
     FILE_EXT = 'parquet'
 
-    def load(self):
-        return self.storage.load(self.path, format='joblib', cache=True, parquet=True)
+    def load(self, **kwargs):
+        return self.storage.load(self.path, format='joblib', cache=True, parquet=True, **kwargs)
 
     def dump(self, function_output):
         self.storage.save(self.path, function_output, format='joblib', cache=False, parquet=True)
@@ -203,8 +203,8 @@ class PickleLocalTarget(LocalTarget):
 class ParquetLocalTarget(LocalTarget):
     FILE_EXT = 'parquet'
 
-    def load(self):
-        return pd.read_parquet(self.path)
+    def load(self, **kwargs):
+        return pd.read_parquet(self.path, **kwargs)
 
     def dump(self, function_output):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
