@@ -49,7 +49,7 @@ class Carolina:
             token['aiAccessToken'] = response['aiAccessToken']
             token['aiTokenExpirationDate'] = response['aiTokenExpirationDate']
         else:
-            token = self.carol.call_api('v1/storage/storage/token')
+            token = self.carol.call_api('v1/storage/storage/token', params={'carolAppName': self.carol.app_name})
 
         self.engine = token['engine']
 
