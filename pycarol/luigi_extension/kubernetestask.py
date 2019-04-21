@@ -235,7 +235,7 @@ class EasyKubernetesTask(EasyDockerTask):
     def __get_job(self):
         api_response = self.__api_instance.list_namespaced_job(self.namespace, selector_label="luigi_task_id=" + self.job_uuid)
         jobs = api_response.get("items", [])
-        assert len(jobs) == 1, "Kubernetes job " + self.job_namespace +"/"+ self.uu_name + " not found" "(job_uuid= "+  self.job_uuid + ")"
+        assert len(jobs) == 1, "Kubernetes job " + self.namespace +"/"+ self.uu_name + " not found" "(job_uuid= "+  self.job_uuid + ")"
         return jobs[0]
 
     def __get_pods(self):
