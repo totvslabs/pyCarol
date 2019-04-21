@@ -12,6 +12,10 @@ from kubernetes.client.rest import ApiException
 
 from pycarol.luigi_extension.dockertask import EasyDockerTask, Task
 
+import urllib3
+urllib3.disable_warnings()
+
+
 logger = logging.getLogger('luigi-interface')
 
 class EasyKubernetesTask(EasyDockerTask):
@@ -195,16 +199,9 @@ class EasyKubernetesTask(EasyDockerTask):
             self.__init_kubernetes()
         return self.__kubernetes_config
 
-    def __job_has_started(self):
-        """Check if the job has started and update current job status
-        """
-        job_stated = False
-
-        return job_stated
-
     def __track_job(self):
         # """Poll job status while active"""
-        while not self.__job_has_started():
+        while not self.__verify_job_has_started():
             time.sleep(self.__POLL_TIME)
             self.__logger.debug("Waiting for Kubernetes job " + self.uu_name + " to start")
         self.__print_kubectl_hints()
@@ -233,8 +230,9 @@ class EasyKubernetesTask(EasyDockerTask):
         pass
 
     def __get_job(self):
-        api_response = self.__api_instance.list_namespaced_job(self.namespace, selector_label="luigi_task_id=" + self.job_uuid)
-        jobs = api_response.get("items", [])
+        api_response = self.__api_instance.list_namespaced_job(
+            self.namespace, label_selector="luigi_task_id=" + self.job_uuid)
+        jobs = api_response.items
         assert len(jobs) == 1, "Kubernetes job " + self.namespace +"/"+ self.uu_name + " not found" "(job_uuid= "+  self.job_uuid + ")"
         return jobs[0]
 
@@ -248,10 +246,26 @@ class EasyKubernetesTask(EasyDockerTask):
             )
         return pods.items
 
+    def __get_pod_log(self, pod):
+        api_response = ""
+        try:
+            api_instance = client.CoreV1Api(
+                kubernetes.client.ApiClient(self.kubernetes_config)
+            )
+            api_response = api_instance.read_namespaced_pod_log(
+                pod.metadata.name,
+                self.namespace,
+                pretty='true',
+                timestamps='true')
+            self.__logger.debug(api_response)
+        except ApiException as e:
+            print("Exception when calling CoreV1Api->read_namespaced_pod_log: %s\n" % e)
+        return api_response
+
     def __print_pod_logs(self):
         for pod in self.__get_pods():
-            logs = pod.logs(timestamps=True).strip()
-            self.__logger.info("Fetching logs from " + pod.name)
+            self.__logger.info("Fetching logs from " + pod.metadata.name)
+            logs = self.__get_pod_log(pod)
             if len(logs) > 0:
                 for l in logs.split('\n'):
                     self.__logger.info(l)
@@ -259,7 +273,7 @@ class EasyKubernetesTask(EasyDockerTask):
     def __print_kubectl_hints(self):
         self.__logger.info("To stream Pod logs, use:")
         for pod in self.__get_pods():
-            self.__logger.info("`kubectl logs -f pod/%s`" % pod.name)
+            self.__logger.info("`kubectl logs -f pod/%s`" % pod.metadata.name)
 
     def __verify_job_has_started(self):
         # """Asserts that the job has successfully started"""
@@ -271,25 +285,26 @@ class EasyKubernetesTask(EasyDockerTask):
 
         assert len(pods) > 0, "No pod scheduled by " + self.uu_name
         for pod in pods:
-            status = pod.obj['status']
-            for cont_stats in status.get('container_statuses', []):
-                if 'terminated' in cont_stats['state']:
-                    t = cont_stats['state']['terminated']
-                    err_msg = "Pod %s %s (exit code %d). Logs: `kubectl logs pod/%s`" % (
-                        pod.name, t['reason'], t['exitCode'], pod.name)
-                    assert t['exitCode'] == 0, err_msg
+            status = pod.status
+            if status.container_statuses:
+                for cont_stats in status.container_statuses:
+                    if cont_stats.state.terminated:
+                        t = cont_stats.state.terminated
+                        err_msg = "Pod %s %s (exit code %d). Logs: `kubectl logs pod/%s`" % (
+                            pod.metadata.name, t.reason, t.exitCode, pod.metadata.name)
+                        assert t.exitCode == 0, err_msg
 
-                if 'waiting' in cont_stats['state']:
-                    wr = cont_stats['state']['waiting']['reason']
-                    assert wr == 'ContainerCreating', "Pod %s %s. Logs: `kubectl logs pod/%s`" % (
-                        pod.name, wr, pod.name)
-
-            for cond in status.get('conditions', []):
-                if 'message' in cond:
-                    if cond['reason'] == 'ContainersNotReady':
-                        return False
-                    assert cond['status'] != 'False', \
-                        "[ERROR] %s - %s" % (cond['reason'], cond['message'])
+                    if cont_stats.state.waiting:
+                        wr = cont_stats.state.waiting.reason
+                        assert wr == 'ContainerCreating', "Pod %s %s. Logs: `kubectl logs pod/%s`" % (
+                            pod.metadata.name, wr, pod.metadata.name)
+            if status.conditions:
+                for cond in status.conditions:
+                    if cond.message:
+                        if cond.reason == 'ContainersNotReady':
+                            return False
+                        assert cond.status != 'False', \
+                            "[ERROR] %s - %s" % (cond.reason, cond.message)
         return True
 
     def __get_job_status(self):
@@ -297,35 +312,66 @@ class EasyKubernetesTask(EasyDockerTask):
         # # Figure out status and return it
         job = self.__get_job()
 
-        if "succeeded" in job.obj["status"] and job.obj["status"]["succeeded"] > 0:
-            job.scale(replicas=0)
+        if job.status.succeeded:
+            # job.scale(replicas=0)
             if self.print_pod_logs_on_exit:
                 self.__print_pod_logs()
             if self.delete_on_success:
-                self.__delete_job_cascade(job)
+                self.__cleanup_finished_jobs(namespace=self.namespace, job=self.uu_name)
             return "SUCCEEDED"
 
-        if "failed" in job.obj["status"]:
-            failed_cnt = job.obj["status"]["failed"]
+        if job.status.failed:
+            failed_cnt = job.status.failed
             self.__logger.debug("Kubernetes job " + self.uu_name
                                 + " status.failed: " + str(failed_cnt))
             if self.print_pod_logs_on_exit:
                 self.__print_pod_logs()
             if failed_cnt > self.max_retrials:
-                job.scale(replicas=0)  # avoid more retrials
                 return "FAILED"
         return "RUNNING"
 
-    def __delete_job_cascade(self, job):
-        # delete_options_cascade = {
-        #     "kind": "DeleteOptions",
-        #     "apiVersion": "v1",
-        #     "propagationPolicy": "Background"
-        # }
-        # r = self.__kube_api.delete(json=delete_options_cascade, **job.api_kwargs())
-        # if r.status_code != 200:
-        #     self.__kube_api.raise_for_status(r)
-        pass
+    def __cleanup_finished_jobs(self, namespace='default', state='Finished', job=""):
+        deleteoptions = client.V1DeleteOptions()
+        try:
+            jobs = self.__api_instance.list_namespaced_job(
+                namespace,
+                include_uninitialized=False,
+                pretty=True,
+                label_selector="job-name=" + job,
+                timeout_seconds=60
+            )
+            # print(jobs)
+        except ApiException as e:
+            print("Exception when calling BatchV1Api->list_namespaced_job: %s\n" % e)
+
+        # Now we have all the jobs, lets clean up
+        # We are also logging the jobs we didn't clean up because they either failed or are still running
+        for job in jobs.items:
+            logging.debug(job)
+            jobname = job.metadata.name
+            jobstatus = job.status.conditions
+            if job.status.succeeded == 1:
+                # Clean up Job
+                logging.info("Cleaning up Job: {}. Finished at: {}".format(
+                    jobname, job.status.completion_time))
+                try:
+                    # What is at work here. Setting Grace Period to 0 means delete ASAP. Otherwise it defaults to
+                    # some value I can't find anywhere. Propagation policy makes the Garbage cleaning Async
+                    api_response = self.__api_instance.delete_namespaced_job(jobname,
+                                                                    namespace,
+                                                                    body=deleteoptions,
+                                                                    grace_period_seconds=0,
+                                                                    propagation_policy='Background')
+                    logging.debug(api_response)
+                except ApiException as e:
+                    print(
+                        "Exception when calling BatchV1Api->delete_namespaced_job: %s\n" % e)
+            else:
+                if jobstatus is None and job.status.active == 1:
+                    jobstatus = 'active'
+                logging.info("Job: {} not cleaned up. Current status: {}".format(
+                    jobname, jobstatus))
+        return
 
     def run(self):
         """Run the Luigi Pipeline task on Kubernetes Job
@@ -350,7 +396,8 @@ class EasyKubernetesTask(EasyDockerTask):
                 job_spec,
                 pretty=True
             )
-            self.__logger.debug("Submitting Kubernetes Job: " + self.uu_name + " Result: " + api_response)
+            self.__logger.debug("Submitting Kubernetes Job: " +
+                                self.uu_name + " Result: " + api_response.kind)
 
             # Track the Job (wait while active)
             self.__logger.info("Start tracking Kubernetes Job: " + self.uu_name)
@@ -368,11 +415,17 @@ class EasyKubernetesTask(EasyDockerTask):
         Docs: https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1Job.md
         Docs2: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#writing-a-job-spec
         """
+        labels = {
+            "spawned_by": "luigi",
+            "luigi_task_id": self.job_uuid
+        }
+
         body = client.V1Job(api_version="batch/v1", kind="Job")
-        body.metadata = client.V1ObjectMeta(namespace=namespace, name=name)
+        body.metadata = client.V1ObjectMeta(namespace=namespace, name=name, labels=labels)
         body.status = client.V1JobStatus()
         template = client.V1PodTemplate()
-        template.template = client.V1PodTemplateSpec()
+        template.template = client.V1PodTemplateSpec(
+            metadata=client.V1ObjectMeta(name=self.uu_name))
         env_list = []
 
         for env_name, env_value in env_vars.items():
