@@ -30,4 +30,4 @@ from .visualization import (
 #     EasyDockerTask
 # )
 
-# from .kubernetestask import KubernetesJobTask
+from .kubernetestask import (EasyKubernetesTask)

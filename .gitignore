@@ -121,3 +121,4 @@ tests/testes_pack.py
 app_config.json
 .vscode/
 
+**/.DS_Store
