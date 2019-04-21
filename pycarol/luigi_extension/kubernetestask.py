@@ -1,57 +1,57 @@
 import logging
+import os
+import ssl
 import time
 import uuid
 from datetime import datetime
-import os
 
+import kubernetes.client
 import luigi
-from .dockertask import EasyDockerTask, Task
+from kubernetes import client, config, utils
+from kubernetes.client.rest import ApiException
+
+from pycarol.luigi_extension.dockertask import EasyDockerTask, Task
 
 logger = logging.getLogger('luigi-interface')
 
-from pykube.config import KubeConfig
-from pykube.http import HTTPClient
-from pykube.objects import Job, Pod
-
-
-
-#TODO we can use or remove this.
-class kubernetes(luigi.Config):
-    auth_method = luigi.Parameter(
-        default="service-account",
-        description="Authorization method to access the cluster")
-    kubeconfig_path = luigi.Parameter(
-        default="~/.kube/config",
-        description="Path to kubeconfig file for cluster authentication")
-    max_retrials = luigi.IntParameter(
-        default=0,
-        description="Max retrials in event of job failure")
-
-
 class EasyKubernetesTask(EasyDockerTask):
-
     """
     Need to define the following in each task:
     easy_run(self,inputs)
-    image
-    job_namespace
     """
-    image_pull_policy = 'Never' #TODO Think if it is the best place to use this variable.
-                                # possible values "IfNotPresent" or "Never" or "Always"
-                                # production should be "IfNotPresent"
-                                #local should be "Never"
-    __POLL_TIME = 5  # see __track_job
-    _kubernetes_config = None  # Needs to be loaded at runtime
 
-    def _init_kubernetes(self):
+    def __init__(self, *args, **kwargs):
+        super(EasyKubernetesTask, self).__init__(*args, **kwargs)
+        self.__image_pull_policy = 'Never' #TODO Think if it is the best place to use this variable.
+                                    # possible values "IfNotPresent" or "Never" or "Always"
+                                    # production should be "IfNotPresent"
+                                    #local should be "Never"
+        self.__POLL_TIME = 5  # see __track_job
+        self.__kubernetes_config = None  # Needs to be loaded at runtime
+        self.__kubeconfig_path = '~/.kube/config'
+        self.__auth_method = "service-account"
+        self.__active_deadline_seconds = None
+        self.__restart_policy = "Never"
+        self.__namespace = 'carol-jobs'
+        self.__image = os.environ.get('IMAGE', 'busibox')
+        self.__command = ''
+        self.__args = []
+        self.__labels = {}
+
+    def __init_kubernetes(self):
         self.__logger = logger
         self.__logger.debug("Kubernetes auth method: " + self.auth_method)
         if self.auth_method == "kubeconfig":
-            self.__kube_api = HTTPClient(KubeConfig.from_file(self.kubeconfig_path))
+            config.load_kube_config(config_file=self.kubeconfig_path)
         elif self.auth_method == "service-account":
-            self.__kube_api = HTTPClient(KubeConfig.from_service_account())
+            config.load_kube_config()
         else:
             raise ValueError("Illegal auth_method")
+        self.__kubernetes_config = kubernetes.client.Configuration()
+        self.__api_instance = kubernetes.client.BatchV1Api(
+            kubernetes.client.ApiClient(self.__kubernetes_config)
+        )
+
         self.job_uuid = str(uuid.uuid4().hex)
         now = datetime.utcnow()
         self.uu_name = "%s-%s-%s" % (self.name, now.strftime('%Y%m%d%H%M%S'), self.job_uuid[:16])
@@ -60,14 +60,26 @@ class EasyKubernetesTask(EasyDockerTask):
     def auth_method(self):
         """
         This can be set to ``kubeconfig`` or ``service-account``.
-        It defaults to ``kubeconfig``.
+        It defaults to ``service-account``.
 
         For more details, please refer to:
 
         - kubeconfig: http://kubernetes.io/docs/user-guide/kubeconfig-file
         - service-account: http://kubernetes.io/docs/user-guide/service-accounts
         """
-        return "service-account"
+        return self.__auth_method
+
+    @auth_method.setter
+    def auth_method(self, method):
+        self.__auth_method = method
+
+    @property
+    def restart_policy(self):
+        return self.__restart_policy if self.__restart_policy is not None else 'Never'
+
+    @restart_policy.setter
+    def restart_policy(self, policy):
+        self.__restart_policy = policy
 
     @property
     def kubeconfig_path(self):
@@ -83,7 +95,23 @@ class EasyKubernetesTask(EasyDockerTask):
         For more details, please refer to:
         http://kubernetes.io/docs/user-guide/kubeconfig-file
         """
-        return self.kubernetes_config.kubeconfig_path
+        return self.__kubeconfig_path
+
+    @kubeconfig_path.setter
+    def kubeconfig_path(self, path):
+        """
+        Path to kubeconfig file used for cluster authentication.
+        It defaults to "~/.kube/config", which is the default location
+        when using minikube (http://kubernetes.io/docs/getting-started-guides/minikube).
+        When auth_method is ``service-account`` this property is ignored.
+
+        **WARNING**: For Python versions < 3.5 kubeconfig must point to a Kubernetes API
+        hostname, and NOT to an IP address.
+
+        For more details, please refer to:
+        http://kubernetes.io/docs/user-guide/kubeconfig-file
+        """
+        self.__kubeconfig_path = path
 
     @property
     def name(self):
@@ -95,27 +123,38 @@ class EasyKubernetesTask(EasyDockerTask):
         #TODO: Is this the best way? this will be the name of the task+package it is in.
 
         return '-'.join(self.__class__.__name__.lower().split('.'))
-        #return '-'.join(self.get_task_family().lower().split('.')[-2:])
+
+    @property
+    def image(self):
+        return self.__image
+
+    @image.setter
+    def image(self, image_name):
+        self.__image = image_name
+
+    @property
+    def namespace(self):
+        return self.__namespace
+
+    @namespace.setter
+    def namespace(self, namespace_value):
+        self.__namespace = namespace_value
+
+    @property
+    def command(self):
+        return self.__command
+
+    @command.setter
+    def command(self, command_value):
+        self.__command = command_value
 
     @property
     def labels(self):
-        """
-        Return custom labels for kubernetes job.
-        example::
-        ``{"run_dt": datetime.date.today().strftime('%F')}``
-        """
-        return {}
+        return self.__labels
 
-    @property
-    def spec_schema(self):
-        return {
-            "containers": [{
-                "name": self.name,
-                "image": self.image,
-                "command": self.command,
-                "imagePullPolicy": self.image_pull_policy,
-            }],
-        }
+    @labels.setter
+    def labels(self, labels_value):
+        self.__labels = labels_value
 
     @property
     def max_retrials(self):
@@ -123,14 +162,6 @@ class EasyKubernetesTask(EasyDockerTask):
         Maximum number of retrials in case of failure.
         """
         return self.kubernetes_config.max_retrials
-
-    @property
-    def backoff_limit(self):
-        """
-        Maximum number of retries before considering the job as failed.
-        See: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#pod-backoff-failure-policy
-        """
-        return 1
 
     @property
     def delete_on_success(self):
@@ -152,17 +183,28 @@ class EasyKubernetesTask(EasyDockerTask):
         Time allowed to successfully schedule pods.
         See: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#job-termination-and-cleanup
         """
-        return None
+        return self.__active_deadline_seconds
+
+    @active_deadline_seconds.setter
+    def active_deadline_seconds(self, seconds):
+        self.__active_deadline_seconds = seconds
 
     @property
     def kubernetes_config(self):
-        if not self._kubernetes_config:
-            self._kubernetes_config = kubernetes()
-        return self._kubernetes_config
+        if not self.__kubernetes_config:
+            self.__init_kubernetes()
+        return self.__kubernetes_config
+
+    def __job_has_started(self):
+        """Check if the job has started and update current job status
+        """
+        job_stated = False
+
+        return job_stated
 
     def __track_job(self):
-        """Poll job status while active"""
-        while not self.__verify_job_has_started():
+        # """Poll job status while active"""
+        while not self.__job_has_started():
             time.sleep(self.__POLL_TIME)
             self.__logger.debug("Waiting for Kubernetes job " + self.uu_name + " to start")
         self.__print_kubectl_hints()
@@ -190,21 +232,21 @@ class EasyKubernetesTask(EasyDockerTask):
         """
         pass
 
-    def __get_pods(self):
-
-        self.__logger.info(f"checking __get_pods")
-        pod_objs = Pod.objects(self.__kube_api) \
-            .filter(namespace=self.job_namespace, selector="job-name=" + self.uu_name) \
-            .response['items']
-        return [Pod(self.__kube_api, p) for p in pod_objs]
-
     def __get_job(self):
-        jobs = Job.objects(self.__kube_api) \
-            .filter(namespace=self.job_namespace, selector="luigi_task_id=" + self.job_uuid) \
-            .response['items']
-
+        api_response = self.__api_instance.list_namespaced_job(self.namespace, selector_label="luigi_task_id=" + self.job_uuid)
+        jobs = api_response.get("items", [])
         assert len(jobs) == 1, "Kubernetes job " + self.job_namespace +"/"+ self.uu_name + " not found" "(job_uuid= "+  self.job_uuid + ")"
-        return Job(self.__kube_api, jobs[0])
+        return jobs[0]
+
+    def __get_pods(self):
+        self.__logger.info(f"checking __get_pods")
+        api_instance = kubernetes.client.CoreV1Api(
+            kubernetes.client.ApiClient(self.kubernetes_config)
+        )
+        pods = api_instance.list_namespaced_pod(
+            self.namespace, label_selector="job-name=" + self.uu_name
+            )
+        return pods.items
 
     def __print_pod_logs(self):
         for pod in self.__get_pods():
@@ -220,9 +262,9 @@ class EasyKubernetesTask(EasyDockerTask):
             self.__logger.info("`kubectl logs -f pod/%s`" % pod.name)
 
     def __verify_job_has_started(self):
-        """Asserts that the job has successfully started"""
+        # """Asserts that the job has successfully started"""
         # Verify that the job started
-        self.__get_job()
+        job = self.__get_job()
 
         # Verify that the pod started
         pods = self.__get_pods()
@@ -230,7 +272,7 @@ class EasyKubernetesTask(EasyDockerTask):
         assert len(pods) > 0, "No pod scheduled by " + self.uu_name
         for pod in pods:
             status = pod.obj['status']
-            for cont_stats in status.get('containerStatuses', []):
+            for cont_stats in status.get('container_statuses', []):
                 if 'terminated' in cont_stats['state']:
                     t = cont_stats['state']['terminated']
                     err_msg = "Pod %s %s (exit code %d). Logs: `kubectl logs pod/%s`" % (
@@ -252,7 +294,7 @@ class EasyKubernetesTask(EasyDockerTask):
 
     def __get_job_status(self):
         """Return the Kubernetes job status"""
-        # Figure out status and return it
+        # # Figure out status and return it
         job = self.__get_job()
 
         if "succeeded" in job.obj["status"] and job.obj["status"]["succeeded"] > 0:
@@ -275,79 +317,104 @@ class EasyKubernetesTask(EasyDockerTask):
         return "RUNNING"
 
     def __delete_job_cascade(self, job):
-        delete_options_cascade = {
-            "kind": "DeleteOptions",
-            "apiVersion": "v1",
-            "propagationPolicy": "Background"
-        }
-        r = self.__kube_api.delete(json=delete_options_cascade, **job.api_kwargs())
-        if r.status_code != 200:
-            self.__kube_api.raise_for_status(r)
+        # delete_options_cascade = {
+        #     "kind": "DeleteOptions",
+        #     "apiVersion": "v1",
+        #     "propagationPolicy": "Background"
+        # }
+        # r = self.__kube_api.delete(json=delete_options_cascade, **job.api_kwargs())
+        # if r.status_code != 200:
+        #     self.__kube_api.raise_for_status(r)
+        pass
 
     def run(self):
+        """Run the Luigi Pipeline task on Kubernetes Job
+        """
         if self.runlocal:
             Task.run(self)
         else:
-            # KubernetesJobTask.run()
-            self._init_kubernetes()
-            # Render job
-            job_json = self._create_job_json()
-            job_json = self._add_env_variables(job_json)
-
-            if self.active_deadline_seconds is not None:
-                job_json['spec']['activeDeadlineSeconds'] = \
-                    self.active_deadline_seconds
-            # Update user labels
-            job_json['metadata']['labels'].update(self.labels)
-            # Add default restartPolicy if not specified
-            if "restartPolicy" not in self.spec_schema:
-                job_json["spec"]["template"]["spec"]["restartPolicy"] = "Never"
+            self.__init_kubernetes()
+            env_vars = self.env_vars
+            job_spec = self.__create_job(
+                self.uu_name,
+                self.image,
+                self.namespace,
+                command=self.__command,
+                env_vars=env_vars
+            )
             # Submit job
             self.__logger.info("Submitting Kubernetes Job: " + self.uu_name)
-            job = Job(self.__kube_api, job_json)
-            job.create()
+
+            api_response = self.__api_instance.create_namespaced_job(
+                self.namespace,
+                job_spec,
+                pretty=True
+            )
+            self.__logger.debug("Submitting Kubernetes Job: " + self.uu_name + " Result: " + api_response)
+
             # Track the Job (wait while active)
             self.__logger.info("Start tracking Kubernetes Job: " + self.uu_name)
             self.__track_job()
 
-    def _create_job_json(self):
-        job_json = {
-            "apiVersion": "batch/v1",
-            "kind": "Job",
-            "metadata": {
-                "name": self.uu_name,
-                "labels": {
-                    "spawned_by": "luigi",
-                    "luigi_task_id": self.job_uuid
-                },
-                # "namespace": os.environ.get('CAROLTENANTID', '')
-                "namespace": self.job_namespace
-            },
-            "spec": {
-                "backoffLimit": self.backoff_limit,
-                "template": {
-                    "metadata": {
-                        "name": self.uu_name
-                    },
-                    "spec": self.spec_schema
-                }
-            }
+    def __create_job(self, name, container_image, namespace="luigi-jobs", container_name="luigi-jobcontainer", command=[], args=[], env_vars={}):
+        """
+        Create a k8 Job Object
+        Minimum definition of a job object:
+        {'api_version': None, - Str
+        'kind': None,     - Str
+        'metadata': None, - Metada Object
+        'spec': None,     -V1JobSpec
+        'status': None}   - V1Job Status
+        Docs: https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1Job.md
+        Docs2: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#writing-a-job-spec
+        """
+        body = client.V1Job(api_version="batch/v1", kind="Job")
+        body.metadata = client.V1ObjectMeta(namespace=namespace, name=name)
+        body.status = client.V1JobStatus()
+        template = client.V1PodTemplate()
+        template.template = client.V1PodTemplateSpec()
+        env_list = []
+
+        for env_name, env_value in env_vars.items():
+            env_list.append(client.V1EnvVar(name=env_name, value=env_value))
+
+        container = client.V1Container(
+            name=container_name,
+            image=container_image,
+            command=command,
+            args=args,
+            env=env_list
+        )
+        template.template.spec = client.V1PodSpec(
+            containers=[container],
+            restart_policy=self.restart_policy
+        )
+        # And finaly we can create our V1JobSpec!
+        body.spec = client.V1JobSpec(
+            ttl_seconds_after_finished=600,
+            template=template.template
+        )
+        if self.active_deadline_seconds is not None:
+            body.spec.active_deadline_seconds = self.__active_deadline_seconds
+        return body
+
+    @property
+    def env_vars(self):
+        """Get Carol environment variables and return as a dict object to this class
+        TODO: This a mixing of code responsabilites, Carol and Luigi, we have to thing about to segregate luigi code
+        from Carol.ai code
+
+        Returns:
+            dict -- A dict object containing all default Carol enviroment variables.
+        """
+        return {
+            "CAROLCONNECTORID": os.environ.get('CAROLCONNECTORID', ''),
+            "CAROLAPPOAUTH": os.environ.get('CAROLAPPOAUTH', ''),
+            "LONGTASKID": os.environ.get('LONGTASKID', ''),
+            "CAROLTENANT": os.environ.get('CAROLTENANT', ''),
+            "CAROLAPPNAME": os.environ.get('CAROLAPPNAME', ''),
+            "IMAGE_NAME": os.environ.get('IMAGE_NAME', '')
         }
 
-        return job_json
-
-    def _add_env_variables(self,job_json):
-
-
-        env_var = dict(CAROLCONNECTORID=os.environ['CAROLCONNECTORID'],
-                       CAROLAPPOAUTH=os.environ['CAROLAPPOAUTH'],
-                       LONGTASKID=os.environ.get('LONGTASKID', ''),
-                       CAROLTENANT=os.environ['CAROLTENANT'],
-                       CAROLAPPNAME=os.environ['CAROLAPPNAME'],
-                       IMAGE_NAME=os.environ['IMAGE_NAME'],
-                          )
-        #env_var = self.get_whole_env()
-        env_var = [{'name': key, 'value': value} for key, value in env_var.items()]
-        job_json['spec']['template']['spec']['containers'][0]['env'] = env_var
-
-        return job_json
+if __name__ == "__main__":
+    pass
