@@ -308,7 +308,6 @@ class EasyKubernetesTask(EasyDockerTask):
         return True
 
     def __get_job_status(self):
-        """Return the Kubernetes job status"""
         # # Figure out status and return it
         job = self.__get_job()
 
@@ -317,7 +316,8 @@ class EasyKubernetesTask(EasyDockerTask):
             if self.print_pod_logs_on_exit:
                 self.__print_pod_logs()
             if self.delete_on_success:
-                self.__cleanup_finished_jobs(namespace=self.namespace, job=self.uu_name)
+                self.__logger.info("Removing Kubernetes job " + self.uu_name)
+                self.__cleanup_finished_job(job, namespace=self.namespace)
             return "SUCCEEDED"
 
         if job.status.failed:
@@ -330,47 +330,31 @@ class EasyKubernetesTask(EasyDockerTask):
                 return "FAILED"
         return "RUNNING"
 
-    def __cleanup_finished_jobs(self, namespace='default', state='Finished', job=""):
+    def __cleanup_finished_job(self, job, namespace='default'):
         deleteoptions = client.V1DeleteOptions()
-        try:
-            jobs = self.__api_instance.list_namespaced_job(
-                namespace,
-                include_uninitialized=False,
-                pretty=True,
-                label_selector="luigi_task_id=" + job,
-                timeout_seconds=60
-            )
-            # print(jobs)
-        except ApiException as e:
-            print("Exception when calling BatchV1Api->list_namespaced_job: %s\n" % e)
-
-        # Now we have all the jobs, lets clean up
-        # We are also logging the jobs we didn't clean up because they either failed or are still running
-        for job in jobs.items:
-            logging.debug(job)
-            jobname = job.metadata.name
-            jobstatus = job.status.conditions
-            if job.status.succeeded == 1:
-                # Clean up Job
-                logging.info("Cleaning up Job: {}. Finished at: {}".format(
-                    jobname, job.status.completion_time))
-                try:
-                    # What is at work here. Setting Grace Period to 0 means delete ASAP. Otherwise it defaults to
-                    # some value I can't find anywhere. Propagation policy makes the Garbage cleaning Async
-                    api_response = self.__api_instance.delete_namespaced_job(jobname,
-                                                                    namespace,
-                                                                    body=deleteoptions,
-                                                                    grace_period_seconds=0,
-                                                                    propagation_policy='Background')
-                    logging.debug(api_response)
-                except ApiException as e:
-                    print(
-                        "Exception when calling BatchV1Api->delete_namespaced_job: %s\n" % e)
-            else:
-                if jobstatus is None and job.status.active == 1:
-                    jobstatus = 'active'
-                logging.info("Job: {} not cleaned up. Current status: {}".format(
-                    jobname, jobstatus))
+        jobname = job.metadata.name
+        jobstatus = job.status.conditions
+        if job.status.succeeded == 1:
+            # Clean up Job
+            self.__logger.info("Cleaning up Job: {}. Finished at: {}".format(
+                jobname, job.status.completion_time))
+            try:
+                # What is at work here. Setting Grace Period to 0 means delete ASAP. Otherwise it defaults to
+                # some value I can't find anywhere. Propagation policy makes the Garbage cleaning Async
+                api_response = self.__api_instance.delete_namespaced_job(jobname,
+                                                                namespace,
+                                                                body=deleteoptions,
+                                                                grace_period_seconds=0,
+                                                                propagation_policy='Background')
+                logging.debug(api_response)
+            except ApiException as e:
+                print(
+                    "Exception when calling BatchV1Api->delete_namespaced_job: %s\n" % e)
+        else:
+            if jobstatus is None and job.status.active == 1:
+                jobstatus = 'active'
+            logging.info("Job: {} not cleaned up. Current status: {}".format(
+                jobname, jobstatus))
         return
 
     def run(self):

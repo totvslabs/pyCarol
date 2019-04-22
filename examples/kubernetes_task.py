@@ -21,10 +21,10 @@ class PerlPi(EasyKubernetesTask):
 
     # defining the two functions below allows for dependency checking,
     # but isn't a requirement
-    def signal_complete(self):
-        with self.output().open('w') as output:
-            output.write('')
+    # def signal_complete(self):
+    #     with self.output().open('w') as output:
+    #         output.write('')
 
-    def output(self):
-        target = os.path.join("/tmp", "PerlPi")
-        return luigi.LocalTarget(target)
+    # def output(self):
+    #     target = os.path.join("/tmp", "PerlPi")
+    #     return luigi.LocalTarget(target)
