@@ -337,7 +337,7 @@ class EasyKubernetesTask(EasyDockerTask):
                 namespace,
                 include_uninitialized=False,
                 pretty=True,
-                label_selector="job-name=" + job,
+                label_selector="luigi_task_id=" + job,
                 timeout_seconds=60
             )
             # print(jobs)
