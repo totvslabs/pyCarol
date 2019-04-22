@@ -1,6 +1,7 @@
 import logging
 import os
 import unittest
+import kubernetes.client
 
 from pycarol.luigi_extension.kubernetestask import EasyKubernetesTask
 

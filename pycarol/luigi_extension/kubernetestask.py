@@ -365,7 +365,7 @@ class EasyKubernetesTask(EasyDockerTask):
         else:
             self.__init_kubernetes()
             env_vars = self.env_vars
-            job_spec = self.__create_job(
+            self.job_spec = self.__create_job(
                 self.uu_name,
                 self.image,
                 self.namespace,
@@ -377,7 +377,7 @@ class EasyKubernetesTask(EasyDockerTask):
 
             api_response = self.__api_instance.create_namespaced_job(
                 self.namespace,
-                job_spec,
+                self.job_spec,
                 pretty=True
             )
             self.__logger.debug("Submitting Kubernetes Job: " +
