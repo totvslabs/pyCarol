@@ -24,6 +24,7 @@ class Task(luigi.Task):
     requires_dict = {}
     resources = {'cpu': 1}  # default resource to be overridden or complemented
 
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.visualize = self.visualization_class(task=self)
@@ -75,8 +76,8 @@ class Task(luigi.Task):
 
         return self.target_type(self)
 
-    def load(self):
-        return self.output().load()
+    def load(self, **kwargs):
+        return self.output().load(**kwargs)
 
     def remove(self):
         self.output().remove()
@@ -88,9 +89,12 @@ class Task(luigi.Task):
     def run(self):
         from contextlib import redirect_stdout
         if isinstance(self.input(), list):
-            function_inputs = [input_i.load() for input_i in self.input()]
+            function_inputs = [input_i.load(**self.load_input_params(input_i)) if self.load_input_params(input_i)
+                               else input_i.load() for input_i in self.input()]
         elif isinstance(self.input(), dict):
-            function_inputs = {i: input_i.load() for i, input_i in self.input().items()}
+            function_inputs = {i: (input_i.load(**self.load_input_params(input_i))
+                                   if self.load_input_params(input_i) else input_i.load())
+                               for i, input_i in self.input().items()}
 
         if self.output().is_cloud_target and self.persist_stdout:
             try:
@@ -108,11 +112,11 @@ class Task(luigi.Task):
         self.output().dump(function_output)
 
 
-    def _easy_run(self,inputs):
+    def _easy_run(self, inputs):
         # Override this method to implement standard pre/post-processing
         return self.easy_run(inputs)
 
-    def easy_run(self,inputs):
+    def easy_run(self, inputs):
         return None
 
     #this method was changed from the original version to allow execution of a task
@@ -182,6 +186,18 @@ class Task(luigi.Task):
             params.update({param_name: param_obj})
 
         return params
+
+    def load_input_params(self, input_target):
+        """
+        Overwrite this if need to pass parameters when loading a requirement.
+
+        :param input_target:
+            Target that will be loaded.
+        :return: `Dict`
+            Return a dict with key/value parameters to be passed to Target.load()
+        """
+        return {}
+
 
 
 class WrapperTask(Task):

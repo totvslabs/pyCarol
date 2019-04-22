@@ -28,6 +28,8 @@ class Carol:
         :param verbose: `bool`, default `False
             If True will print the header, method and URL of each API call.
         """
+        self.legacy_mode = False
+        self.legacy_bucket = 'carol-internal'
 
         settings = dict()
         if auth is None and domain is None:
@@ -145,7 +147,6 @@ class Carol:
         session.mount('http://', adapter)
         session.mount('https://', adapter)
         return session
-
 
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json',retries=5,
                  session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524), downloadable=False,

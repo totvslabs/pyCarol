@@ -7,7 +7,7 @@ import asyncio
 from .query import Query, delete_golden
 from .schema_generator import carolSchemaGenerator
 from .connectors import Connectors
-from .carolina import Carolina
+from .storage import Storage
 from .utils.importers import _import_dask, _import_pandas
 from .filter import Filter, TYPE_FILTER
 from .utils import async_helpers
@@ -53,7 +53,7 @@ class Staging:
         :param auto_create_schema: `bool`, default `False`
             If to auto create the schema for the data being sent.
         :param crosswalk_auto_create: `list`, default `None`
-            If `auto_create_schema=True`, one should send the crosswalk for the staging.
+            If `auto_create_schema=True`, crosswalk list of fields.
         :param flexible_schema: `bool`, default `False`
             If `auto_create_schema=True`, to use a flexible schema.
         :param force: `bool`, default `False`
@@ -107,6 +107,7 @@ class Staging:
             assert crosswalk_auto_create, "You should provide a crosswalk"
             self.create_schema(_sample_json, staging_name, connector_id=connector_id, export_data=carol_data_storage,
                                crosswalk_list=crosswalk_auto_create, mdm_flexible=flexible_schema)
+            print('created schema...')
             _crosswalk = crosswalk_auto_create
             print('provided crosswalk ', _crosswalk)
         elif auto_create_schema:
@@ -146,7 +147,6 @@ class Staging:
                                                                                 compress_gzip=self.gzip))
             loop.run_until_complete(future)
 
-
         else:
             for data_json, cont in stream_data(data=data,
                                                step_size=step_size,
@@ -170,30 +170,68 @@ class Staging:
         except Exception:
             return None
 
-    def create_schema(self, fields_dict, staging_name, connector_id=None, connector_name=None, mdm_flexible=False,
-                      crosswalk_name=None, crosswalk_list=None, overwrite=False, auto_send=True, export_data=False):
+    def create_schema(self, fields_dict=None, staging_name=None, connector_id=None, connector_name=None,
+                      mdm_flexible=False,  crosswalk_name=None, crosswalk_list=None, overwrite=False, auto_send=True,
+                      export_data=False, data=None):
+        """
+
+        :param fields_dict: `json`, `list of dicts`, `pandas.DataFrame`, default `None`
+            Data to create schema from. `fields_dict` will be removed in the future. Use `data`
+        :param staging_name:  `str`,
+            Staging name to send the data.
+        :param connector_name: `str`, default `None`
+            Connector name where the staging should be.
+        :param connector_id: `str`, default `None`
+            Connector Id where the staging should be.
+        :param mdm_flexible: `bool`, default `False`
+            If flexible schema.
+        :param crosswalk_name: `None`, default `staging_name`
+            Crosswalk name in the Schema.
+        :param crosswalk_list: `list`, default `None`
+            Crosswalk list of fields.
+        :param overwrite: `bool`, default `False`
+            Overwrite current schema
+        :param auto_send: `bool`, default `True`
+            Send the schema after creating.
+        :param export_data: `bool`, default `False`
+            Export data to CDS for this staging.
+        :param data: `json`, `list of dicts`, `pandas.DataFrame`, default `None`
+            Data to create schema from.
+        :return:
+        """
+
+        assert staging_name is not None, 'staging_name must be set.'
+        assert fields_dict is not None or data is not None, 'fields_dict or df must be set'
+
+        if fields_dict is not None:
+            warnings.warn(
+                "fields_dict will be deprecated, use `data`",
+                DeprecationWarning, stacklevel=3
+            )
+            data = fields_dict
 
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
         else:
             assert connector_id, f'connector_id or connector name should be set.'
 
+        if data is not None:
+            if isinstance(data, pd.DataFrame):
+                data = data.iloc[0].to_dict()
 
-        assert fields_dict is not None
+        if isinstance(data, list):
+            data = data[0]
 
-        if isinstance(fields_dict, list):
-            fields_dict = fields_dict[0]
-
-        if isinstance(fields_dict, dict):
-            schema = carolSchemaGenerator(fields_dict)
+        if isinstance(data, dict):
+            schema = carolSchemaGenerator(data)
             schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible, export_data=export_data,
                                     crosswalkname=crosswalk_name, crosswalkList=crosswalk_list)
-        elif isinstance(fields_dict, str):
-            schema = carolSchemaGenerator.from_json(fields_dict)
+        elif isinstance(data, str):
+            schema = carolSchemaGenerator.from_json(data)
             schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible, export_data=export_data,
                                     crosswalkname=crosswalk_name, crosswalkList=crosswalk_list)
         else:
-            print('Behavior for type %s not defined!' % type(fields_dict))
+            print('Behavior for type %s not defined!' % type(data))
 
         if auto_send:
             self.send_schema(schema=schema, staging_name=staging_name, connector_id=connector_id, overwrite=overwrite)
@@ -240,8 +278,8 @@ class Staging:
         """
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
-    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask', verbose=0,
-                      merge_records=True, n_jobs=1, return_dask_graph=False, columns=None, max_hits=None,
+    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',
+                      merge_records=True, return_dask_graph=False, columns=None, max_hits=None,
                       return_metadata=False, callback=None):
         """
 
@@ -253,15 +291,11 @@ class Staging:
             Connector id to fetch parquet of
         :param connector_name: `str`, default `None`
             Connector name to fetch parquet of
-        :param verbose: `int`, default `0`
-            Verbosity
         :param backend: ['dask','pandas'], default `dask`
             if to use either dask or pandas to fetch the data
         :param merge_records: `bool`, default `True`
             This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
             one should keep only the last records.
-        :param n_jobs: `int`, default `1`
-            To be used with `backend='pandas'`. It is the number of threads to load the data from carol export.
         :param return_dask_graph: `bool`, default `false`
             If to return the dask graph or the dataframe.
         :param columns: `list`, default `None`
@@ -306,22 +340,17 @@ class Staging:
                 f'"Wrong connector Id {connector_id}. The connector Id associeted to this staging is  '
                 f'{stags.get(staging_name)["mdmConnectorId"]}"')
 
-        carolina = Carolina(self.carol)
-        carolina._init_if_needed()
+        storage = Storage(self.carol)
         if backend == 'dask':
-            access_id = carolina.ai_access_key_id
-            access_key = carolina.ai_secret_key
-            aws_session_token = carolina.ai_access_token
 
-            d = _import_dask(tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, staging_name=staging_name,
-                             access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
-                             golden=False, return_dask_graph=return_dask_graph, mapping_columns=mapping_columns,
+            d = _import_dask(storage=storage, connector_id=connector_id, staging_name=staging_name,
+                             merge_records=merge_records, golden=False, return_dask_graph=return_dask_graph,
+                             mapping_columns=mapping_columns,
                              columns=columns, max_hits=max_hits)
 
         elif backend == 'pandas':
-            s3 = carolina.s3
-            d = _import_pandas(s3=s3, tenant_id=self.carol.tenant['mdmId'], connector_id=connector_id, verbose=verbose,
-                               staging_name=staging_name, n_jobs=n_jobs, golden=False, columns=columns,
+            d = _import_pandas(storage=storage, connector_id=connector_id,
+                               staging_name=staging_name, golden=False, columns=columns,
                                max_hits=max_hits, callback=callback, mapping_columns=mapping_columns)
 
             # TODO: Do the same for dask backend

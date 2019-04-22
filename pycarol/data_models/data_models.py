@@ -12,7 +12,7 @@ from .data_model_types import DataModelTypeIds
 
 from ..utils.importers import _import_dask, _import_pandas
 from ..verticals import Verticals
-from ..carolina import Carolina
+from ..storage import Storage
 from ..query import Query, delete_golden
 from ..connectors import Connectors
 from ..filter import RANGE_FILTER as RF
@@ -114,22 +114,14 @@ class DataModel:
         if columns:
             columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
 
-        carolina = Carolina(self.carol)
-        carolina._init_if_needed()
-
+        storage = Storage(self.carol)
         if backend == 'dask':
-            access_id = carolina.ai_access_key_id
-            access_key = carolina.ai_secret_key
-            aws_session_token = carolina.ai_access_token
-            d = _import_dask(dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
-                             access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
+            d = _import_dask(storage=storage, dm_name=dm_name,
                              merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph,
                              columns=columns)
 
-
         elif backend == 'pandas':
-            s3 = carolina.s3
-            d = _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
+            d = _import_pandas(storage=storage, dm_name=dm_name,
                                n_jobs=n_jobs, golden=True, columns=columns)
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
