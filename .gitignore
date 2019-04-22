@@ -122,3 +122,5 @@ app_config.json
 .vscode/
 
 **/.DS_Store
+
+.scannerwork/
