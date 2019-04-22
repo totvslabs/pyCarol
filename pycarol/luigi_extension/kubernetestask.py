@@ -237,6 +237,7 @@ class EasyKubernetesTask(EasyDockerTask):
         return jobs[0]
 
     def __get_pods(self):
+        self.__logger.info(f"checking __get_pods")
         api_instance = kubernetes.client.CoreV1Api(
             kubernetes.client.ApiClient(self.kubernetes_config)
         )
@@ -290,8 +291,8 @@ class EasyKubernetesTask(EasyDockerTask):
                     if cont_stats.state.terminated:
                         t = cont_stats.state.terminated
                         err_msg = "Pod %s %s (exit code %d). Logs: `kubectl logs pod/%s`" % (
-                            pod.metadata.name, t.reason, t.exit_code, pod.metadata.name)
-                        assert t.exit_code == 0, err_msg
+                            pod.metadata.name, t.reason, t.exitCode, pod.metadata.name)
+                        assert t.exitCode == 0, err_msg
 
                     if cont_stats.state.waiting:
                         wr = cont_stats.state.waiting.reason
