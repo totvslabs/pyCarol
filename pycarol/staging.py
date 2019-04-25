@@ -304,6 +304,8 @@ class Staging:
             Number of records to get. This only should be user for tests.
         :param return_metadata: `bool`, default `False`
             To return or not the fields ['mdmId', 'mdmCounterForEntity']
+        :param callback: `callable`, default `None`
+            Function to be called each downloaded file.
         :return:
         """
 
