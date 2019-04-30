@@ -1,0 +1,17 @@
+steps:
+  - command: "pip install -r requirements.txt && pip install nose coverage nose-cover3 twine"
+    label: ":python: pip install"
+  - wait
+  - commands:
+    - echo -e "[pypi]" > ~/.pypirc
+    - echo -e "username = ${PYPI_USERNAME}" >> ~/.pypirc
+    - echo -e "password = ${PYPI_PASSWORD}" >> ~/.pypirc
+  - wait
+  - command: "make test"
+    label: ":hammer: build/test with errors"
+  - wait
+  - command: "python setup.py sdist"
+    label: ":hammer: build"
+  - wait
+  - command: "twine upload dist/*"
+    label: ":ship: upload to nexus pypi"
