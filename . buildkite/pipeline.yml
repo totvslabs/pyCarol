@@ -10,7 +10,7 @@ steps:
   - command: "make test"
     label: ":hammer: build/test with errors"
   - wait
-  - command: "python setup.py sdist"
+  - command: "make package"
     label: ":hammer: build"
   - wait
   - command: "twine upload dist/*"
