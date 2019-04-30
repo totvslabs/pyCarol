@@ -3,9 +3,16 @@ steps:
     label: ":python: pip install"
   - wait
   - commands:
-    - echo -e "[pypi]" > ~/.pypirc
-    - echo -e "username = ${PYPI_USERNAME}" >> ~/.pypirc
-    - echo -e "password = ${PYPI_PASSWORD}" >> ~/.pypirc
+    - echo -e "[distutils]" > ~/.pypirc
+    - echo -e "index-servers=" >> ~/.pypirc
+    - echo -e "    totvslabs" >> ~/.pypirc
+    - echo -e "[totvslabs]" >> ~/.pypirc
+    - echo -e "repository: http://nexus3.carol.ai:8080/repository/totvslabspypi/pypi" >> ~/.pypirc
+    - echo -e "username: ${PYPI_USERNAME}" >> ~/.pypirc
+    - echo -e "password: ${PYPI_PASSWORD}" >> ~/.pypirc
+    - echo -e "[global]" > ~/.config/pip/pip.conf
+    - echo -e "index = http://nexus3.carol.ai:8080/repository/totvslabspypi/pypi" >> ~/.config/pip/pip.conf
+    - echo -e "index-url = http://nexus3.carol.ai:8080/repository/totvslabspypi/simple" >> ~/.config/pip/pip.conf
   - wait
   - command: "make test"
     label: ":hammer: build/test with errors"
@@ -13,5 +20,5 @@ steps:
   - command: "make package"
     label: ":hammer: build"
   - wait
-  - command: "twine upload dist/*"
+  - command: "twine upload dist/* -r totvslabs"
     label: ":ship: upload to nexus pypi"
