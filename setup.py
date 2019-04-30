@@ -1,23 +1,38 @@
 from distutils.core import setup
 from setuptools import setup, find_packages
 
+import codecs
+import os
+import re
+import sys
+
+here = os.path.abspath(os.path.dirname(__file__))
 
 with open('requirements.txt', 'r') as req_file:
     install_requires = req_file.read()
 
-# setup(
-#     name='pycarol',
-#     version='2.12',
-#     description='Carol Python API',
-#     packages=find_packages(exclude=['docs', 'doc']),
-#     maintainer='TOTVS Labs',
-#     install_requires=install_requires.splitlines()
-# )
+def read(*parts):
+    # intentionally *not* adding an encoding option to open, See:
+    #   https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
+    with codecs.open(os.path.join(here, *parts), 'r') as fp:
+        return fp.read()
+
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(
+        r"^__version__ = ['\"]([^'\"]*)['\"]",
+        version_file,
+        re.M,
+    )
+    if version_match:
+        return version_match.group(1)
+
+    raise RuntimeError("Unable to find version string.")
 
 setup(
     name='pycarol',
     packages=find_packages(exclude=['docs', 'doc']),
-    version='2.12',
+    version=find_version("pycarol", "__init__.py"),
     license='TOTVS',
     description='Carol Python API and Tools',
     author='TotvsLabs',
