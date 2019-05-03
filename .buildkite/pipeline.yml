@@ -1,3 +1,3 @@
 steps:
   - label: ":docker: build, test and lint"
-    command: docker build --rm --build-arg pypi_user=${PYPI_USERNAME} --build-arg pypi_pass=PYPI_PASSWORD .
+    command: docker build --rm --build-arg pypi_user=${PYPI_USERNAME} --build-arg pypi_pass=${PYPI_PASSWORD} .
