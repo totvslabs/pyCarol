@@ -23,7 +23,6 @@ package:
 
 deploy:
 	twine upload dist/* -r totvslabs
-	# @echo "deploy"
 
 setup_pypi:
 	echo -e "[distutils]" > ~/.pypirc
