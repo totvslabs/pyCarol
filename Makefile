@@ -29,12 +29,12 @@ setup_pypi:
 	echo "index-servers =" >> ~/.pypirc
 	echo "	totvslabs" >> ~/.pypirc
 	echo "[totvslabs]" >> ~/.pypirc
-	echo "repository = http://nexus3.carol.ai:8080/repository/totvslabspypi/pypi" >> ~/.pypirc
+	echo "repository = http://nexus3.carol.ai:8080/repository/labspypi/pypi" >> ~/.pypirc
 	echo "username = ${PYPI_USERNAME}" >> ~/.pypirc
 	echo "password = ${PYPI_PASSWORD}" >> ~/.pypirc
 	echo "trusted-host = nexus3.carol.ai"
-	pip config set global.index http://nexus3.carol.ai:8080/repository/totvslabspypi/pypi
-	pip config set global.index-url http://nexus3.carol.ai:8080/repository/totvslabspypi/simple
+	pip config set global.index http://nexus3.carol.ai:8080/repository/labspypi/pypi
+	pip config set global.index-url http://nexus3.carol.ai:8080/repository/labspypi/simple
 	pip config set global.trusted-host nexus3.carol.ai
 
 test:
