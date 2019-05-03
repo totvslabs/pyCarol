@@ -17,13 +17,13 @@ WORKDIR /pycarol
 
 RUN pip install -r requirements.txt && \
     pip install nose coverage nose-cover3 twine && \
-    echo -e "[distutils]" > ~/.pypirc && \
-    echo -e "index-servers=" >> ~/.pypirc && \
-    echo -e "    totvslabs" >> ~/.pypirc && \
-    echo -e "[totvslabs]" >> ~/.pypirc && \
-    echo -e "repository: http://nexus3.carol.ai:8080/repository/totvslabspypi/pypi" >> ~/.pypirc && \
-    echo -e "username: ${PYPI_USERNAME}" >> ~/.pypirc && \
-    echo -e "password: ${PYPI_PASSWORD}" >> ~/.pypirc && \
+    echo "[distutils]" > ~/.pypirc && \
+    echo "index-servers=" >> ~/.pypirc && \
+    echo "    totvslabs" >> ~/.pypirc && \
+    echo "[totvslabs]" >> ~/.pypirc && \
+    echo "repository: http://nexus3.carol.ai:8080/repository/totvslabspypi/pypi" >> ~/.pypirc && \
+    echo "username: ${PYPI_USERNAME}" >> ~/.pypirc && \
+    echo "password: ${PYPI_PASSWORD}" >> ~/.pypirc && \
     pip config set global.index http://nexus3.carol.ai:8080/repository/totvslabspypi/pypi && \
     pip config set global.index-url http://nexus3.carol.ai:8080/repository/totvslabspypi/simple
 
