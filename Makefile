@@ -25,14 +25,14 @@ deploy:
 	twine upload dist/* -r totvslabs
 
 setup_pypi:
-	echo -e "[distutils]" > ~/.pypirc
-	echo -e "index-servers =" >> ~/.pypirc
-	echo -e "	totvslabs" >> ~/.pypirc
-	echo -e "[totvslabs]" >> ~/.pypirc
-	echo -e "repository = http://nexus3.carol.ai:8080/repository/totvslabspypi/pypi" >> ~/.pypirc
-	echo -e "username = ${PYPI_USERNAME}" >> ~/.pypirc
-	echo -e "password = ${PYPI_PASSWORD}" >> ~/.pypirc
-	echo -e "trusted-host = nexus3.carol.ai"
+	echo "[distutils]" > ~/.pypirc
+	echo "index-servers =" >> ~/.pypirc
+	echo "	totvslabs" >> ~/.pypirc
+	echo "[totvslabs]" >> ~/.pypirc
+	echo "repository = http://nexus3.carol.ai:8080/repository/totvslabspypi/pypi" >> ~/.pypirc
+	echo "username = ${PYPI_USERNAME}" >> ~/.pypirc
+	echo "password = ${PYPI_PASSWORD}" >> ~/.pypirc
+	echo "trusted-host = nexus3.carol.ai"
 	pip config set global.index http://nexus3.carol.ai:8080/repository/totvslabspypi/pypi
 	pip config set global.index-url http://nexus3.carol.ai:8080/repository/totvslabspypi/simple
 	pip config set global.trusted-host nexus3.carol.ai
@@ -43,4 +43,4 @@ test:
 	nosetests --with-coverage3 --collect-only
 	coverage xml -o cov.xml
 
-ci: clean package setup_pypi deploy
+ci: clean test package setup_pypi deploy
