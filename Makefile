@@ -22,7 +22,7 @@ package:
 	python setup.py bdist_wheel
 
 deploy:
-	twine upload dist/* -r totvslabs
+	# twine upload dist/* -r totvslabs
 
 setup_pypi:
 	echo "[distutils]" > ~/.pypirc
