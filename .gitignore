@@ -122,3 +122,4 @@ app_config.json
 **/.DS_Store
 .vscode
 query_result.json
+cov.xml
