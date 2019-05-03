@@ -41,6 +41,5 @@ test:
 	# coverage --collect-only run -m unittest discover
 	echo "This is a temporary step. CHECK THOSES TESTS"
 	nosetests --with-coverage3 --collect-only
-	coverage xml -o cov.xml
 
 ci: clean test package setup_pypi deploy
