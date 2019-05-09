@@ -92,9 +92,7 @@ class set_parameters(object):
         self.params_task.get_from_carol()
         for name, val in self.params_task.app.items():
             if isinstance(val, luigi.Parameter):
-                # Do not add if it is a Carol Parameter (case of user has not passed)
-                if hasattr(val, 'carol') and not val.carol:
-                    setattr(task_that_inherits, name, val)
+                setattr(task_that_inherits, name, val)
             else:
                 setattr(task_that_inherits, name, Parameter(default=val))
         return task_that_inherits
