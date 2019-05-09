@@ -9,10 +9,12 @@ def send_a(carol, session, url, data_json, extra_headers, content_type):
     Helper function to be used when sending data async.
 
 
-    :param carol: c
-        c
+    :param carol: requests.Session
+        Carol object
     :param session: `requests.Session`
         Session object to handle multiple API calls.
+    :param url: `str`
+        end point to be called.
     :param data_json: `dict`
         The json to be send.
     :param extra_headers: `dict`
@@ -29,8 +31,8 @@ async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
                                  content_type, max_workers, compress_gzip):
     """
 
-    :param carol: requests.Session
-        requests.Session
+    :param carol: `pycarol.carol.Carol`.
+        Carol object
     :param data: `pandas.DataFrame` or `list of dict`,
         Data to be sent.
     :param step_size: 'int'
@@ -49,7 +51,8 @@ async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
     """
     # based on https://hackernoon.com/how-to-run-asynchronous-web-requests-in-parallel-with-python-3-5-without-aiohttp-264dc0f8546
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        session = carol._retry_session()
+        session = carol._retry_session(status_forcelist=[502],
+                                       method_whitelist=frozenset(['POST']))
         # Set any session parameters here before calling `send_a`
         loop = asyncio.get_event_loop()
         tasks = [
