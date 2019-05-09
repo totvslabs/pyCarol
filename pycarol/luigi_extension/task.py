@@ -199,7 +199,6 @@ class Task(luigi.Task):
         return {}
 
 
-
 class WrapperTask(Task):
     """
     Use for tasks that only wrap other tasks and that by definition are done if all their requirements exist.
