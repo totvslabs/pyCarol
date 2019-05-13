@@ -1,7 +1,7 @@
 from unittest.mock import patch, MagicMock, PropertyMock
 import unittest
 import luigi
-from luigi_extension import Task, inherit_list
+from pycarol.luigi_extension import Task, inherit_list
 from ..luigi import SettingsDefinition, Parameter, set_parameters
 from ...query import Query
 from ...carol import Carol
