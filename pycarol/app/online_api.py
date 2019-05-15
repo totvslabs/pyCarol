@@ -106,12 +106,12 @@ class OnlineApi():
 
             local.request = OnlineRequest(values=flask_request.values, json=flask_request.json)
             r = api()
-			if type(r) is np.ndarray:
+            if type(r) is np.ndarray:
                 r = r.tolist()
-			if (isinstance(r, tuple)):
-				resp = r[0]
-				code = r[1]
-				return Response(json.dumps(resp), status=code, mimetype='application/json')
+            if isinstance(r, tuple):
+                resp = r[0]
+                code = r[1]
+                return Response(json.dumps(resp), status=code, mimetype='application/json')
             return json.dumps(r)
 
         @flask.route(f'/statusz')
