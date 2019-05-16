@@ -74,7 +74,7 @@ class DataModel:
         self.fields_dict.update({resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
 
-    def fetch_parquet(self, dm_name, merge_records=True, backend='pandas', n_jobs=1, return_dask_graph=False,
+    def fetch_parquet(self, dm_name, merge_records=True, backend='pandas', return_dask_graph=False,
                       columns=None, return_metadata=False):
         """
 
@@ -85,8 +85,6 @@ class DataModel:
             one should keep only the last records.
         :param backend: ['dask','pandas'], default `dask`
             if to use either dask or pandas to fetch the data
-        :param n_jobs: `int`, default `1`
-            To be used with `backend='pandas'`. It is the number of threads to load the data from carol export.
         :param return_dask_graph: `bool`, default `false`
             If to return the dask graph or the dataframe.
         :param columns: `list`, default `None`
@@ -121,8 +119,7 @@ class DataModel:
                              columns=columns)
 
         elif backend == 'pandas':
-            d = _import_pandas(storage=storage, dm_name=dm_name,
-                               n_jobs=n_jobs, golden=True, columns=columns)
+            d = _import_pandas(storage=storage, dm_name=dm_name, golden=True, columns=columns)
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
                 _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
