@@ -25,15 +25,20 @@ class PyCarolTarget(luigi.Target):
         from ..carol import Carol
         from ..storage import Storage
 
-        if (PyCarolTarget.login_cache and PyCarolTarget.storage_cache) and (PyCarolTarget.tenant_cache == task.tenant):
+        # We CANNOT cache the storage with GCP because the GCP API is not thread safe and would result in SSL errors
+        # if luigi is using more than 1 worker
+        if (PyCarolTarget.login_cache) and (PyCarolTarget.tenant_cache == task.tenant):
             self.login = PyCarolTarget.login_cache
-            self.storage = PyCarolTarget.storage_cache
+            #self.storage = PyCarolTarget.storage_cache
         else:
             self.login = Carol()
-            self.storage = Storage(self.login)
+            #self.storage = Storage(self.login)
             PyCarolTarget.login_cache = self.login
-            PyCarolTarget.storage_cache = self.storage
+            #PyCarolTarget.storage_cache = self.storage
             PyCarolTarget.tenant_cache = task.tenant #TODO: make cache more robust, not depending on task.tenant
+
+        # Storage var needs to be always created per Target
+        self.storage = Storage(self.login)
 
         namespace = task.get_task_namespace()
         file_id = task._file_id()
