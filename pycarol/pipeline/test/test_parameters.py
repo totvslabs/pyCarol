@@ -2,7 +2,7 @@ from unittest.mock import patch, MagicMock, PropertyMock
 import unittest
 import luigi
 from pycarol.luigi_extension import Task, inherit_list
-from ..luigi import SettingsDefinition, Parameter, set_parameters
+from ..luigi import SettingsDefinition, Parameter, inherits_carol
 from ...query import Query
 from ...carol import Carol
 from ...auth import ApiKeyAuth
@@ -217,7 +217,7 @@ class TestLuigiExtensionParameterTask(unittest.TestCase):
 
         AppParams.api_token = None
 
-        @set_parameters(AppParams)
+        @inherits_carol(AppParams)
         class Run(luigi.WrapperTask):
             task = Parameter()
 

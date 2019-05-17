@@ -65,9 +65,9 @@ class CarolAppConfig(luigi.Config):
                 try:
                     if v.carol_name is not None:
                         logger.debug(f'{v.carol_name}: {cls.app_carol[v.carol_name]}')
-                        v = cls.app_carol[v.carol_name]
+                        v._default = cls.app_carol[v.carol_name]
                     else:
-                        v = cls.app_carol[k]
+                        v._default = cls.app_carol[k]
                         logger.debug(f'{k}: {v}')
                 except KeyError as e:
                     logger.warning(f"Could not set up variable from Carol. Key = {str(e)}")
@@ -81,7 +81,7 @@ class CarolAppConfig(luigi.Config):
         pass
 
 
-class set_parameters(object):
+class inherits_carol(object):
     """ Add CarolConfig parameters to a Task
     """
 
@@ -91,12 +91,8 @@ class set_parameters(object):
     def __call__(self, task_that_inherits):
         self.params_task.get_from_carol()
         for name, val in self.params_task.app.items():
-            if isinstance(val, luigi.Parameter):
                 setattr(task_that_inherits, name, val)
-            else:
-                setattr(task_that_inherits, name, Parameter(default=val))
         return task_that_inherits
-
 
 # Create Luigi mappings
 
