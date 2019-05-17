@@ -1,6 +1,9 @@
 from string import Formatter
 
+
 class Carolina:
+    token = None
+
     def __init__(self, carol):
         self.carol = carol
         self.legacy_mode = carol.legacy_mode
@@ -18,39 +21,42 @@ class Carolina:
         if self.client:
             return
 
-        if self.legacy_mode:
-            response = self.carol.call_api('v1/carolina/carolina/token', params={'carolAppName': self.carol.app_name})
+        if not Carolina.token:
+            if self.legacy_mode:
+                response = self.carol.call_api('v1/carolina/carolina/token', params={'carolAppName': self.carol.app_name})
 
-            token = {}
-            token['engine'] = "AWS-S3"
-            token['cdsAppStoragePath'] = {
-                "bucket": self.legacy_bucket,
-                "path": f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files"
-            }
-            token['cdsGoldenPath'] = {
-                "bucket": self.legacy_bucket,
-                "path": f"carol_export/{self.carol.tenant['mdmId']}/{{dm_name}}/golden"
-            }
-            token['cdsStagingPath'] = {
-                "bucket": self.legacy_bucket,
-                "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/staging"
-            }
-            token['cdsStagingMasterPath'] = {
-                "bucket": self.legacy_bucket,
-                "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/master_staging"
-            }
-            token['cdsStagingRejectedPath'] = {
-                "bucket": self.legacy_bucket,
-                "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/rejected_staging"
-            }
+                token = {}
+                token['engine'] = "AWS-S3"
+                token['cdsAppStoragePath'] = {
+                    "bucket": self.legacy_bucket,
+                    "path": f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files"
+                }
+                token['cdsGoldenPath'] = {
+                    "bucket": self.legacy_bucket,
+                    "path": f"carol_export/{self.carol.tenant['mdmId']}/{{dm_name}}/golden"
+                }
+                token['cdsStagingPath'] = {
+                    "bucket": self.legacy_bucket,
+                    "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/staging"
+                }
+                token['cdsStagingMasterPath'] = {
+                    "bucket": self.legacy_bucket,
+                    "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/master_staging"
+                }
+                token['cdsStagingRejectedPath'] = {
+                    "bucket": self.legacy_bucket,
+                    "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/rejected_staging"
+                }
 
-            token['aiAccessKeyId'] = response['aiAccessKeyId']
-            token['aiSecretKey'] = response['aiSecretKey']
-            token['aiAccessToken'] = response['aiAccessToken']
-            token['aiTokenExpirationDate'] = response['aiTokenExpirationDate']
-        else:
-            token = self.carol.call_api('v1/storage/storage/token', params={'carolAppName': self.carol.app_name})
+                token['aiAccessKeyId'] = response['aiAccessKeyId']
+                token['aiSecretKey'] = response['aiSecretKey']
+                token['aiAccessToken'] = response['aiAccessToken']
+                token['aiTokenExpirationDate'] = response['aiTokenExpirationDate']
+            else:
+                token = self.carol.call_api('v1/storage/storage/token', params={'carolAppName': self.carol.app_name})
+            Carolina.token = token
 
+        token = Carolina.token
         self.engine = token['engine']
 
         self.cds_app_storage_path = token['cdsAppStoragePath']
