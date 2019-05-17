@@ -6,8 +6,6 @@ from .targets import PickleLocalTarget, DummyTarget, PytorchLocalTarget, KerasLo
 import logging
 import warnings
 
-luigi.build([], workers=1, local_scheduler=True)
-
 logger = logging.getLogger('luigi-interface')
 logger.setLevel(logging.INFO)
 
