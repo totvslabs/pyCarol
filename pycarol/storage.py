@@ -6,8 +6,7 @@ from .carolina import Carolina
 from .utils.miscellaneous import prettify_path, _attach_path, _FILE_MARKER
 
 
-
-class Storage(metaclass=KeySingleton):
+class Storage:
     def __init__(self, carol):
         self.carol = carol
         self.backend = None
