@@ -4,6 +4,7 @@ from luigi import Parameter
 import logging
 import json
 import os
+import datetime
 from ..apps import Apps
 from ..carol import Carol
 from ..staging import Staging
@@ -65,10 +66,14 @@ class CarolAppConfig(luigi.Config):
                 try:
                     if v.carol_name is not None:
                         logger.debug(f'{v.carol_name}: {cls.app_carol[v.carol_name]}')
-                        v = cls.app_carol[v.carol_name]
+                        carol_val = cls.app_carol[v.carol_name]
                     else:
-                        v = cls.app_carol[k]
-                        logger.debug(f'{k}: {v}')
+                        carol_val = cls.app_carol[k]
+                    # Convert Parameter type
+                    if carol_val is not None:
+                        if isinstance(v, luigi.DateParameter):
+                            carol_val = datetime.datetime.strptime(carol_val, '%Y-%m-%d')  # TEMP - Carol should have a Date Parameter type
+                    v._default = carol_val
                 except KeyError as e:
                     logger.warning(f"Could not set up variable from Carol. Key = {str(e)}")
             cls.app.update({k: v})
@@ -81,7 +86,7 @@ class CarolAppConfig(luigi.Config):
         pass
 
 
-class set_parameters(object):
+class inherits_carol(object):
     """ Add CarolConfig parameters to a Task
     """
 
@@ -91,14 +96,11 @@ class set_parameters(object):
     def __call__(self, task_that_inherits):
         self.params_task.get_from_carol()
         for name, val in self.params_task.app.items():
-            if isinstance(val, luigi.Parameter):
                 setattr(task_that_inherits, name, val)
-            else:
-                setattr(task_that_inherits, name, Parameter(default=val))
         return task_that_inherits
 
-
 # Create Luigi mappings
+
 
 class StagingIngestion(Task):
     """ Task to execute Staging ingestion
