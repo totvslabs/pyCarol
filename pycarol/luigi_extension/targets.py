@@ -161,12 +161,6 @@ class PickleTarget(CDSTarget):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         joblib.dump(function_output, self.path)
 
-    def remove_local(self):
-        try:
-            os.remove(self.path)
-        except(FileNotFoundError):
-            print("file not found")
-
 
 class ParquetTarget(CDSTarget):
     FILE_EXT = 'parquet'
@@ -183,13 +177,6 @@ class ParquetTarget(CDSTarget):
     def dump_local(self, function_output):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         function_output.to_parquet(self.path, engine='fastparquet', has_nulls='infer')
-
-    def remove_local(self):
-        try:
-            os.remove(self.path)
-            print("file removed")
-        except(FileNotFoundError):
-            print("file not found")
 
 
 class KerasTarget(CDSTarget):
@@ -212,13 +199,6 @@ class KerasTarget(CDSTarget):
     def dump_local(self, model):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         model.save(self.path)
-
-    def remove_local(self):
-        try:
-            os.remove(self.path)
-            print("file removed")
-        except(FileNotFoundError):
-            print("file not found")
 
 
 class PytorchTarget(CDSTarget):
@@ -278,9 +258,6 @@ class JsonTarget(CDSTarget):
         #TODO: json only works for dataframe
         function_output.to_json(self.path)
 
-    def remove_local(self):
-        os.remove(self.path)
-
 
 class FeatherTarget(CDSTarget):
     FILE_EXT = 'feather'
@@ -295,10 +272,6 @@ class FeatherTarget(CDSTarget):
         import feather
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         feather.write_dataframe(function_output, self.path)
-
-    def remove_local(self):
-        os.remove(self.path)
-
 
 # ########### --------------------------- DEPRECATED ---------------------------   ############## #
 
