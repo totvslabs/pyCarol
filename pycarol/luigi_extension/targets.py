@@ -154,14 +154,14 @@ class PickleTarget(CDSTarget):
     def dump_cds(self, function_output):
         self.storage.save(self.path, function_output, format='joblib', cache=False)
 
-    def load(self):
+    def load_local(self):
         return joblib.load(self.path)
 
-    def dump(self, function_output):
+    def dump_local(self, function_output):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         joblib.dump(function_output, self.path)
 
-    def remove(self):
+    def remove_local(self):
         try:
             os.remove(self.path)
         except(FileNotFoundError):
@@ -177,14 +177,14 @@ class ParquetTarget(CDSTarget):
     def dump_cds(self, function_output):
         self.storage.save(self.path, function_output, format='joblib', cache=False, parquet=True)
 
-    def load(self, **kwargs):
+    def load_local(self, **kwargs):
         return pd.read_parquet(self.path, **kwargs)
 
-    def dump(self, function_output):
+    def dump_local(self, function_output):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         function_output.to_parquet(self.path, engine='fastparquet', has_nulls='infer')
 
-    def remove(self):
+    def remove_local(self):
         try:
             os.remove(self.path)
             print("file removed")
@@ -205,15 +205,15 @@ class KerasTarget(CDSTarget):
         model.save(self.path)
         self.storage.save(self.path, self.path, format='file')
 
-    def load(self):
+    def load_local(self):
         from keras.models import load_model
         return load_model(self.path)
 
-    def dump(self, model):
+    def dump_local(self, model):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         model.save(self.path)
 
-    def remove(self):
+    def remove_local(self):
         try:
             os.remove(self.path)
             print("file removed")
@@ -235,21 +235,14 @@ class PytorchTarget(CDSTarget):
         torch.save(model_state_dict, self.path)
         self.storage.save(self.path, self.path, format='file')
 
-    def load(self):
+    def load_local(self):
         import torch
         return torch.load(self.path)
 
-    def dump(self, model_state_dict):
+    def dump_local(self, model_state_dict):
         import torch
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         torch.save(model_state_dict, self.path)
-
-    def remove(self):
-        try:
-            os.remove(self.path)
-            print("file removed")
-        except(FileNotFoundError):
-            print("file not found")
 
 
 class DummyTarget:
@@ -278,14 +271,14 @@ class JsonTarget(CDSTarget):
 
     # TODO NOW: Define how to do that on the CDS
 
-    def load(self):
+    def load_local(self):
         return pd.read_json(self.path)
 
-    def dump(self, function_output):
+    def dump_local(self, function_output):
         #TODO: json only works for dataframe
         function_output.to_json(self.path)
 
-    def remove(self):
+    def remove_local(self):
         os.remove(self.path)
 
 
@@ -294,16 +287,16 @@ class FeatherTarget(CDSTarget):
 
     # TODO NOW: Define how to do that on the CDS
 
-    def load(self):
+    def load_local(self):
         import feather
         return feather.read_dataframe(self.path)
 
-    def dump(self, function_output):
+    def dump_local(self, function_output):
         import feather
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         feather.write_dataframe(function_output, self.path)
 
-    def remove(self):
+    def remove_local(self):
         os.remove(self.path)
 
 

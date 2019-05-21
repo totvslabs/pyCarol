@@ -106,7 +106,7 @@ class StagingIngestion(Task):
     """ Task to execute Staging ingestion
     """
 
-    domain = Parameter()
+    tenant = Parameter()
     connector_name = Parameter()
     staging_name = Parameter()
     return_dask_graph = Parameter(significant=False, default=False)
@@ -125,11 +125,11 @@ class DataModelValidation(Task):
     """ Task to execute Data Model validation
 
     """
-    domain = Parameter(default='Unspecified')
+    tenant = Parameter(default='Unspecified')
     ignore_errors = Parameter(default=True)
 
     def easy_run(self, inputs):
-        log = {'domain': self.domain,
+        log = {'domain': self.tenant,
                'datamodel': self.dm.get_name()}
 
         success, log_dm = self.dm.validate(inputs[0], ignore_errors=self.ignore_errors)
