@@ -22,7 +22,6 @@ class Task(luigi.Task):
     requires_dict = {}
     resources = {'cpu': 1}  # default resource to be overridden or complemented
 
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.visualize = self.visualization_class(task=self)
@@ -94,7 +93,7 @@ class Task(luigi.Task):
                                    if self.load_input_params(input_i) else input_i.load())
                                for i, input_i in self.input().items()}
 
-        if self.output().is_cloud_target and self.persist_stdout:
+        if hasattr(self.output(), '_is_cloud_target') and self.output()._is_cloud_target and self.persist_stdout:
             try:
                 import io
                 f = io.StringIO()
@@ -108,7 +107,6 @@ class Task(luigi.Task):
         print("dumping task",self)
 
         self.output().dump(function_output)
-
 
     def _easy_run(self, inputs):
         # Override this method to implement standard pre/post-processing
