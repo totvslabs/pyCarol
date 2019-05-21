@@ -22,22 +22,17 @@ package:
 	python setup.py bdist_wheel
 
 deploy:
-	twine upload dist/*.tar.gz -r totvslabs
+	twine upload dist/*.tar.gz
 
 setup_pypi:
-	echo "[distutils]" > ~/.pypirc
-	echo "index-servers =" >> ~/.pypirc
-	echo "    totvslabs" >> ~/.pypirc
-	echo "" >> ~/.pypirc
-	echo "[totvslabs]" >> ~/.pypirc
-	echo "repository: http://nexus3.carol.ai:8080/repository/labspypi/" >> ~/.pypirc
+	echo "[pypi]" > ~/.pypirc
 	echo "username = ${PYPI_USERNAME}" >> ~/.pypirc
 	echo "password = ${PYPI_PASSWORD}" >> ~/.pypirc
 
-setup_pip:
-	pip config set global.index http://nexus3.carol.ai:8080/repository/totvslabspypi/pypi
-	pip config set global.index-url http://nexus3.carol.ai:8080/repository/totvslabspypi/simple
-	pip config set global.trusted-host nexus3.carol.ai
+# setup_pip:
+# 	pip config set global.index http://nexus3.carol.ai:8080/repository/totvslabspypi/pypi
+# 	pip config set global.index-url http://nexus3.carol.ai:8080/repository/totvslabspypi/simple
+# 	pip config set global.trusted-host nexus3.carol.ai
 
 test:
 	# coverage --collect-only run -m unittest discover
