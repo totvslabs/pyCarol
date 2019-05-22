@@ -65,7 +65,7 @@ toolz==0.9.0
 tornado==4.5.3
 tqdm==4.28.1
 uritemplate==3.0.0
-urllib3==1.23
+urllib3>=1.24.2
 websocket-client==0.53.0
 werkzeug==0.14.1
 zict==0.1.3
