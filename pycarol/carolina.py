@@ -18,7 +18,6 @@ class Carolina:
         self.cds_staging_rejected_path = None
 
 
-    @staticmethod
     def _legacy_mode(self):
         response = self.carol.call_api('v1/carolina/carolina/token', params={'carolAppName': self.carol.app_name})
 
