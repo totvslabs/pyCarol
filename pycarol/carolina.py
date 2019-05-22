@@ -21,8 +21,8 @@ class Carolina:
         if self.client:
             return
 
-        if Carolina.token is not None:
-            if not Carolina.token.get('tenant_name','') == self.carol.tenant['mdmName']:
+        if Carolina.token is None:
+            if not Carolina.token.get('tenant_name', '') == self.carol.tenant['mdmName']:
                 if self.legacy_mode:
                     response = self.carol.call_api('v1/carolina/carolina/token', params={'carolAppName': self.carol.app_name})
 
