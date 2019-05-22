@@ -63,13 +63,14 @@ class Carolina:
             else:
                 token = self.carol.call_api('v1/storage/storage/token', params={'carolAppName': self.carol.app_name})
                 token['tenant_name'] = self.carol.tenant['mdmName']
+            Carolina.token = token
         elif Carolina.token.get('tenant_name', '') != self.carol.tenant['mdmName']:
             if self.legacy_mode:
                 token = self._legacy_mode()
             else:
                 token = self.carol.call_api('v1/storage/storage/token', params={'carolAppName': self.carol.app_name})
                 token['tenant_name'] = self.carol.tenant['mdmName']
-        Carolina.token = token
+            Carolina.token = token
 
         token = Carolina.token
         self.engine = token['engine']
