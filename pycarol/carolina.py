@@ -17,47 +17,60 @@ class Carolina:
         self.cds_staging_master_path = None
         self.cds_staging_rejected_path = None
 
+
+    @staticmethod
+    def _legacy_mode(self):
+        response = self.carol.call_api('v1/carolina/carolina/token', params={'carolAppName': self.carol.app_name})
+
+        token = {}
+        token['tenant_name'] = self.carol.tenant['mdmName']
+        token['engine'] = "AWS-S3"
+        token['cdsAppStoragePath'] = {
+            "bucket": self.legacy_bucket,
+            "path": f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files"
+        }
+        token['cdsGoldenPath'] = {
+            "bucket": self.legacy_bucket,
+            "path": f"carol_export/{self.carol.tenant['mdmId']}/{{dm_name}}/golden"
+        }
+        token['cdsStagingPath'] = {
+            "bucket": self.legacy_bucket,
+            "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/staging"
+        }
+        token['cdsStagingMasterPath'] = {
+            "bucket": self.legacy_bucket,
+            "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/master_staging"
+        }
+        token['cdsStagingRejectedPath'] = {
+            "bucket": self.legacy_bucket,
+            "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/rejected_staging"
+        }
+
+        token['aiAccessKeyId'] = response['aiAccessKeyId']
+        token['aiSecretKey'] = response['aiSecretKey']
+        token['aiAccessToken'] = response['aiAccessToken']
+        token['aiTokenExpirationDate'] = response['aiTokenExpirationDate']
+
+
+        return token
+
     def init_if_needed(self):
         if self.client:
             return
 
         if Carolina.token is None:
-            if not Carolina.token.get('tenant_name', '') == self.carol.tenant['mdmName']:
-                if self.legacy_mode:
-                    response = self.carol.call_api('v1/carolina/carolina/token', params={'carolAppName': self.carol.app_name})
-
-                    token = {}
-                    token['engine'] = "AWS-S3"
-                    token['cdsAppStoragePath'] = {
-                        "bucket": self.legacy_bucket,
-                        "path": f"storage/{self.carol.tenant['mdmId']}/{self.carol.app_name}/files"
-                    }
-                    token['cdsGoldenPath'] = {
-                        "bucket": self.legacy_bucket,
-                        "path": f"carol_export/{self.carol.tenant['mdmId']}/{{dm_name}}/golden"
-                    }
-                    token['cdsStagingPath'] = {
-                        "bucket": self.legacy_bucket,
-                        "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/staging"
-                    }
-                    token['cdsStagingMasterPath'] = {
-                        "bucket": self.legacy_bucket,
-                        "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/master_staging"
-                    }
-                    token['cdsStagingRejectedPath'] = {
-                        "bucket": self.legacy_bucket,
-                        "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/rejected_staging"
-                    }
-
-                    token['aiAccessKeyId'] = response['aiAccessKeyId']
-                    token['aiSecretKey'] = response['aiSecretKey']
-                    token['aiAccessToken'] = response['aiAccessToken']
-                    token['aiTokenExpirationDate'] = response['aiTokenExpirationDate']
-                    token['tenant_name'] = self.carol.tenant['mdmName']
-                else:
-                    token = self.carol.call_api('v1/storage/storage/token', params={'carolAppName': self.carol.app_name})
-                    token['tenant_name'] = self.carol.tenant['mdmName']
-                Carolina.token = token
+            if self.legacy_mode:
+                token = self._legacy_mode()
+            else:
+                token = self.carol.call_api('v1/storage/storage/token', params={'carolAppName': self.carol.app_name})
+                token['tenant_name'] = self.carol.tenant['mdmName']
+        elif Carolina.token.get('tenant_name', '') != self.carol.tenant['mdmName']:
+            if self.legacy_mode:
+                token = self._legacy_mode()
+            else:
+                token = self.carol.call_api('v1/storage/storage/token', params={'carolAppName': self.carol.app_name})
+                token['tenant_name'] = self.carol.tenant['mdmName']
+        Carolina.token = token
 
         token = Carolina.token
         self.engine = token['engine']
