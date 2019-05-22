@@ -93,6 +93,7 @@ class StorageAWSS3:
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == "404":
                 return None
+            raise e
 
         # Local cache is outdated
         if localts < s3ts:
