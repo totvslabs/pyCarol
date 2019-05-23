@@ -15,6 +15,7 @@ class Task(luigi.Task):
 
     TARGET = PickleTarget  # DEPRECATED!
     target_type = PickleTarget
+    is_cloud_target = None
     visualization_class = Visualization
 
     persist_stdout = False
@@ -67,7 +68,7 @@ class Task(luigi.Task):
             return []
 
     def output(self):
-        if self.TARGET != PickleLocalTarget:  # Check for deprecated use
+        if self.TARGET != PickleTarget:  # Check for deprecated use
             warnings.warn('TARGET is being replaced with target_type.', DeprecationWarning)
             return self.TARGET(self)
 
@@ -104,7 +105,8 @@ class Task(luigi.Task):
                 self.output().persistlog(f.getvalue())
         else:
             function_output = self._easy_run(function_inputs)
-        print("dumping task",self)
+
+        print("dumping task", self)
 
         self.output().dump(function_output)
 
