@@ -85,7 +85,7 @@ class Task(luigi.Task):
         return self.output().loadlog()
 
     def run(self):
-        from contextlib import redirect_stdout
+
         if isinstance(self.input(), list):
             function_inputs = [input_i.load(**self.load_input_params(input_i)) if self.load_input_params(input_i)
                                else input_i.load() for input_i in self.input()]
@@ -95,6 +95,7 @@ class Task(luigi.Task):
                                for i, input_i in self.input().items()}
 
         if self.output().is_cloud_target and self.persist_stdout:
+            from contextlib import redirect_stdout
             try:
                 import io
                 f = io.StringIO()
