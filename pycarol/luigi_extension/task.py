@@ -2,7 +2,7 @@ import luigi
 from luigi import parameter, six
 from luigi.task import flatten
 from .visualization import Visualization
-from .targets import PickleLocalTarget, DummyTarget, PytorchLocalTarget, KerasLocalTarget
+from .targets import PickleTarget, DummyTarget
 import logging
 import warnings
 
@@ -13,8 +13,8 @@ logger.setLevel(logging.INFO)
 class Task(luigi.Task):
     TARGET_DIR = './luigi_targets/'  # this class attribute can be redefined somewhere else
 
-    TARGET = PickleLocalTarget  # DEPRECATED!
-    target_type = PickleLocalTarget
+    TARGET = PickleTarget  # DEPRECATED!
+    target_type = PickleTarget
     visualization_class = Visualization
 
     persist_stdout = False

@@ -76,6 +76,7 @@ class DataModel:
 
     def fetch_parquet(self, dm_name, merge_records=True, backend='pandas', return_dask_graph=False,
                       columns=None, return_metadata=False, callback=None, max_hits=None):
+
         """
 
         :param dm_name: `str`
@@ -85,8 +86,6 @@ class DataModel:
             one should keep only the last records.
         :param backend: ['dask','pandas'], default `dask`
             if to use either dask or pandas to fetch the data
-        :param n_jobs: `int`, default `1`
-            To be used with `backend='pandas'`. It is the number of threads to load the data from carol export.
         :param return_dask_graph: `bool`, default `false`
             If to return the dask graph or the dataframe.
         :param columns: `list`, default `None`
@@ -125,6 +124,7 @@ class DataModel:
                              columns=columns)
 
         elif backend == 'pandas':
+
             d = _import_pandas(storage=storage, dm_name=dm_name, golden=True, columns=columns, callback=callback,
                                max_hits=max_hits)
             if d is None:

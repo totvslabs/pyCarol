@@ -1,5 +1,5 @@
 from importlib import import_module
-from flask import Flask
+from flask import Flask, Response
 from flask import request as flask_request
 import numpy as np
 import os
@@ -106,8 +106,11 @@ class OnlineApi():
 
             local.request = OnlineRequest(values=flask_request.values, json=flask_request.json)
             r = api()
-            if type(r) is np.ndarray:
+            if isinstance(r, np.ndarray):
                 r = r.tolist()
+            if isinstance(r, tuple):
+                resp, code = r
+                return Response(json.dumps(resp), status=code, mimetype='application/json')
             return json.dumps(r)
 
         @flask.route(f'/statusz')
