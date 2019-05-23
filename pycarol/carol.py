@@ -28,52 +28,20 @@ class Carol:
         :param verbose: `bool`, default `False
             If True will print the header, method and URL of each API call.
         """
+        self.legacy_mode = False
+        self.legacy_bucket = 'carol-internal'
 
         settings = dict()
         if auth is None and domain is None:
 
-            if os.path.isfile('app_config.json'):
-                with open('app_config.json', 'r') as f:
-                    settings = json.load(f)
-
-                if domain is None:
-                    domain = settings.get('domain', os.getenv('CAROLTENANT'))
-                if app_name is None:
-                    app_name = settings.get('app_name', os.getenv('CAROLAPPNAME'))
-
-                app_config = settings.get(domain)
-                if app_config is not None:
-                    if auth is None:
-                        auth_token = app_config.get('oauth_token')
-                        if auth_token is not None:
-                            auth = ApiKeyAuth(auth_token)
-                        else:
-                            auth_user = app_config.get('auth_user')
-                            auth_pwd = app_config.get('auth_pwd')
-                            if auth_user is not None and auth_pwd is not None:
-                                auth = PwdAuth(auth_user, auth_pwd)
-                            else:
-                                auth_token = os.getenv('CAROLAPPOAUTH')
-                                if auth_token is not None:
-                                    auth = ApiKeyAuth(auth_token)
-                                else:
-                                    auth_user = os.getenv('CAROLUSER')
-                                    auth_pwd = os.getenv('CAROLPWD')
-                                    if auth_user is not None and auth_pwd is not None:
-                                        auth = PwdAuth(auth_user, auth_pwd)
-
-                    if connector_id is None:
-                        connector_id = app_config.get('connector_id', os.getenv('CAROLCONNECTORID', __CONNECTOR_PYCAROL__))
-
-            else: # env login
-                domain = os.getenv('CAROLTENANT')
-                app_name = os.getenv('CAROLAPPNAME')
-                auth_token = os.getenv('CAROLAPPOAUTH')
-                connector_id = os.getenv('CAROLCONNECTORID')
-                assert (domain is not None) and (app_name is not None) and (auth_token is not None) and (connector_id is not None),\
-                        "One of the following env variables are missing:\n " \
-                        f"CAROLTENANT: {domain}\nCAROLAPPNAME: {app_name}\nCAROLAPPOAUTH: {auth}\nCAROLCONNECTORID: {connector_id}\n"
-                auth = ApiKeyAuth(auth_token)
+            domain = os.getenv('CAROLTENANT')
+            app_name = os.getenv('CAROLAPPNAME')
+            auth_token = os.getenv('CAROLAPPOAUTH')
+            connector_id = os.getenv('CAROLCONNECTORID')
+            assert (domain is not None) and (app_name is not None) and (auth_token is not None) and (connector_id is not None),\
+                    "One of the following env variables are missing:\n " \
+                    f"CAROLTENANT: {domain}\nCAROLAPPNAME: {app_name}\nCAROLAPPOAUTH: {auth}\nCAROLCONNECTORID: {connector_id}\n"
+            auth = ApiKeyAuth(auth_token)
 
 
         if connector_id is None:
@@ -95,15 +63,6 @@ class Carol:
         self.auth.login(self)
         self.response = None
 
-        self.long_task_id = settings.get('long_task_id', os.getenv('LONGTASKID'))
-        self.debug = settings.get('debug', os.getenv('DEBUG'))
-        self.env = settings.get('env', os.getenv('ENV'))
-        self.dry_run = settings.get('dry_run', os.getenv('DRYRUN'))
-        self.git = settings.get('git', os.getenv('GIT'))
-        self.file_name = settings.get('file_name', os.getenv('FILENAME'))
-        self.function_name = settings.get('function_name', os.getenv('FUNCTIONNAME'))
-        self.carol_batch_name = settings.get('carol_batch_name', os.getenv('CAROLBATCHNAME'))
-        self.carol_process_type = settings.get('carol_process_type', os.getenv('CAROLPROCESSTYPE'))
 
     def build_ws_url(self, path):
         """
@@ -145,7 +104,6 @@ class Carol:
         session.mount('http://', adapter)
         session.mount('https://', adapter)
         return session
-
 
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json',retries=5,
                  session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524), downloadable=False,

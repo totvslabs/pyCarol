@@ -12,7 +12,7 @@ from .data_model_types import DataModelTypeIds
 
 from ..utils.importers import _import_dask, _import_pandas
 from ..verticals import Verticals
-from ..carolina import Carolina
+from ..storage import Storage
 from ..query import Query, delete_golden
 from ..connectors import Connectors
 from ..filter import RANGE_FILTER as RF
@@ -74,8 +74,9 @@ class DataModel:
         self.fields_dict.update({resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
 
-    def fetch_parquet(self, dm_name, merge_records=True, backend='pandas', n_jobs=1, return_dask_graph=False,
-                      columns=None, return_metadata=False):
+    def fetch_parquet(self, dm_name, merge_records=True, backend='pandas', return_dask_graph=False,
+                      columns=None, return_metadata=False, callback=None, max_hits=None):
+
         """
 
         :param dm_name: `str`
@@ -85,14 +86,16 @@ class DataModel:
             one should keep only the last records.
         :param backend: ['dask','pandas'], default `dask`
             if to use either dask or pandas to fetch the data
-        :param n_jobs: `int`, default `1`
-            To be used with `backend='pandas'`. It is the number of threads to load the data from carol export.
         :param return_dask_graph: `bool`, default `false`
             If to return the dask graph or the dataframe.
         :param columns: `list`, default `None`
             List of columns to fetch.
         :param return_metadata: `bool`, default `False`
             To return or not the fields ['mdmId', 'mdmCounterForEntity']
+        :param callback: `callable`, default `None`
+            Function to be called each downloaded file.
+        :param max_hits: `int`, default `None`
+            Number of records to get.
         :return:
         """
 
@@ -114,23 +117,16 @@ class DataModel:
         if columns:
             columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
 
-        carolina = Carolina(self.carol)
-        carolina._init_if_needed()
-
+        storage = Storage(self.carol)
         if backend == 'dask':
-            access_id = carolina.ai_access_key_id
-            access_key = carolina.ai_secret_key
-            aws_session_token = carolina.ai_access_token
-            d = _import_dask(dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
-                             access_key=access_key, access_id=access_id, aws_session_token=aws_session_token,
+            d = _import_dask(storage=storage, dm_name=dm_name,
                              merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph,
                              columns=columns)
 
-
         elif backend == 'pandas':
-            s3 = carolina.s3
-            d = _import_pandas(s3=s3, dm_name=dm_name, tenant_id=self.carol.tenant['mdmId'],
-                               n_jobs=n_jobs, golden=True, columns=columns)
+
+            d = _import_pandas(storage=storage, dm_name=dm_name, golden=True, columns=columns, callback=callback,
+                               max_hits=max_hits)
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
                 _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
