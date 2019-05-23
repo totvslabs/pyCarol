@@ -2,7 +2,7 @@ import luigi
 from luigi import parameter, six
 from luigi.task import flatten
 from .visualization import Visualization
-from .targets import PickleLocalTarget, DummyTarget, PytorchLocalTarget, KerasLocalTarget
+from .targets import PickleTarget, DummyTarget
 import logging
 import warnings
 
@@ -13,15 +13,15 @@ logger.setLevel(logging.INFO)
 class Task(luigi.Task):
     TARGET_DIR = './luigi_targets/'  # this class attribute can be redefined somewhere else
 
-    TARGET = PickleLocalTarget  # DEPRECATED!
-    target_type = PickleLocalTarget
+    TARGET = PickleTarget  # DEPRECATED!
+    target_type = PickleTarget
+    is_cloud_target = None
     visualization_class = Visualization
 
     persist_stdout = False
     requires_list = []
     requires_dict = {}
     resources = {'cpu': 1}  # default resource to be overridden or complemented
-
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -68,7 +68,7 @@ class Task(luigi.Task):
             return []
 
     def output(self):
-        if self.TARGET != PickleLocalTarget:  # Check for deprecated use
+        if self.TARGET != PickleTarget:  # Check for deprecated use
             warnings.warn('TARGET is being replaced with target_type.', DeprecationWarning)
             return self.TARGET(self)
 
@@ -94,9 +94,10 @@ class Task(luigi.Task):
                                    if self.load_input_params(input_i) else input_i.load())
                                for i, input_i in self.input().items()}
 
-        if self.output().is_cloud_target and self.persist_stdout:
-            from contextlib import redirect_stdout
+
+        if hasattr(self.output(), '_is_cloud_target') and self.output()._is_cloud_target and self.persist_stdout:
             try:
+                from contextlib import redirect_stdout
                 import io
                 f = io.StringIO()
                 with redirect_stdout(f):
@@ -106,10 +107,10 @@ class Task(luigi.Task):
                 self.output().persistlog(f.getvalue())
         else:
             function_output = self._easy_run(function_inputs)
-        print("dumping task",self)
+
+        print("dumping task", self)
 
         self.output().dump(function_output)
-
 
     def _easy_run(self, inputs):
         # Override this method to implement standard pre/post-processing
