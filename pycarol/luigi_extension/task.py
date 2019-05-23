@@ -15,6 +15,7 @@ class Task(luigi.Task):
 
     TARGET = PickleTarget  # DEPRECATED!
     target_type = PickleTarget
+    is_cloud_target = None
     visualization_class = Visualization
 
     persist_stdout = False
@@ -106,7 +107,8 @@ class Task(luigi.Task):
                 self.output().persistlog(f.getvalue())
         else:
             function_output = self._easy_run(function_inputs)
-        print("dumping task",self)
+
+        print("dumping task", self)
 
         self.output().dump(function_output)
 
