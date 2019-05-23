@@ -16,5 +16,5 @@ from .connectors import Connectors
 from .query import Query
 from .storage import Storage
 from .carolina import Carolina
-from .task import Task
+from .task import Tasks
 from .data_models import DataModel
