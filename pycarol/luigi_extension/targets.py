@@ -43,7 +43,7 @@ class CDSTarget(LocalTarget):
         super().__init__(task, *args, **kwargs)
 
         self._is_cloud_target = task.is_cloud_target if task.is_cloud_target is not None else \
-            os.environ.get('CLOUD_TARGET', 'false') == 'true'
+            os.environ.get('CLOUD_TARGET', 'false').lower() == 'true'
         
         if self._is_cloud_target:
             from ..carol import Carol
