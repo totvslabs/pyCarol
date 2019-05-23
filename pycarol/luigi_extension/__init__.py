@@ -6,6 +6,16 @@ from .task import(
 )
 
 from .targets import (
+    CDSTarget,
+    PickleTarget,
+    KerasTarget,
+    DummyTarget,
+    JsonTarget,
+    FeatherTarget,
+    PytorchTarget,
+    PickleTarget,
+    PytorchTarget,
+    KerasTarget,
     LocalTarget,
     PickleLocalTarget,
     KerasLocalTarget,

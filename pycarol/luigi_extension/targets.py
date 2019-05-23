@@ -276,12 +276,63 @@ class FeatherTarget(CDSTarget):
 # ########### --------------------------- DEPRECATED ---------------------------   ############## #
 
 @deprecated
-class PycarolTarget(CDSTarget): # Old name
-    pass
+class PyCarolTarget(luigi.Target):
+    """
+    This is an abstract cloud target. Not to be called directly.
+    In order to use PyCarol Targets, env or files configuration should allow Carol authentication
+    with no parameters, Carol().
+    If more than one tenant are used in same session, luigi parameter "tenant" should exist.
+    """
+    login_cache = None
+    tenant_cache = None
+    storage_cache = None
+
+    is_cloud_target = True
+
+    def __init__(self, task, *args, **kwargs):
+        from ..carol import Carol
+        from ..storage import Storage
+
+        # We CANNOT cache the storage with GCP because the GCP API is not thread safe and would result in SSL errors
+        # if luigi is using more than 1 worker
+        if (PyCarolTarget.login_cache) and (PyCarolTarget.tenant_cache == task.tenant):
+            self.login = PyCarolTarget.login_cache
+            # self.storage = PyCarolTarget.storage_cache
+        else:
+            self.login = Carol()
+            # self.storage = Storage(self.login)
+            PyCarolTarget.login_cache = self.login
+            # PyCarolTarget.storage_cache = self.storage
+            PyCarolTarget.tenant_cache = task.tenant #TODO: make cache more robust, not depending on task.tenant
+
+        # Storage var needs to be always created per Target
+        self.storage = Storage(self.login)
+
+        namespace = task.get_task_namespace()
+        file_id = task._file_id()
+        file_id = file_id.split(namespace+'.')[-1] #this will prevent to copy all the module path to the name of the file.
+        self.path = os.path.join('pipeline', namespace, "{}.{}".format(file_id, self.FILE_EXT))
+        self.log_path = os.path.join('pipeline',namespace, "{}_log.pkl".format(file_id))
+
+
+    def persistlog(self,string):
+        self.storage.save( self.log_path, string,format='joblib')
+
+    def loadlog(self):
+        try:
+            text = self.storage.load(self.log_path, format='joblib')
+        except Exception:
+            return str(Exception)
+        if not text:
+            return "Log not found. log path: {}".format(self.log_path)
+        return text
+
+    def removelog(self):
+        self.storage.delete(self.log_path)
 
 
 @deprecated
-class PyCarolFileTarget(CDSTarget):
+class PyCarolFileTarget(PyCarolTarget):
     """
     This target operates with filepaths.
     easy_run should return a filepath for a local temporary file. This file will be removed after been sent to Carol.
@@ -306,7 +357,7 @@ class PyCarolFileTarget(CDSTarget):
 
 
 @deprecated
-class PicklePyCarolTarget(CDSTarget):
+class PicklePyCarolTarget(PyCarolTarget):
     FILE_EXT = 'pkl'
 
     def load(self):
@@ -323,7 +374,7 @@ class PicklePyCarolTarget(CDSTarget):
 
 
 @deprecated
-class ParquetPyCarolTarget(CDSTarget):
+class ParquetPyCarolTarget(PyCarolTarget):
     FILE_EXT = 'parquet'
 
     def load(self, **kwargs):
@@ -340,7 +391,7 @@ class ParquetPyCarolTarget(CDSTarget):
 
 
 @deprecated
-class PytorchPyCarolTarget(CDSTarget):
+class PytorchPyCarolTarget(PyCarolTarget):
     FILE_EXT = 'pth'
 
     def load(self):
@@ -362,7 +413,7 @@ class PytorchPyCarolTarget(CDSTarget):
 
 
 @deprecated
-class KerasPyCarolTarget(CDSTarget):
+class KerasPyCarolTarget(PyCarolTarget):
     FILE_EXT = 'h5'
 
     def load(self):

@@ -1,6 +1,6 @@
 import luigi
 import os
-from ..targets import DummyTarget, PickleLocalTarget
+from ..targets import DummyTarget, PickleTarget
 from collections import namedtuple
 from unittest.mock import patch, MagicMock, PropertyMock
 from contextlib import ExitStack
@@ -143,7 +143,7 @@ class mock_task:
                             if 'target_class' in dic:
                                 TARGET = dic['target_class']
                             else:
-                                TARGET = PickleLocalTarget
+                                TARGET = PickleTarget
                             out_target = TARGET(task, path=target_filename, is_tmp=True)
                             out_target.remove = lambda: None  # Use this to avoid having the file removed
 
