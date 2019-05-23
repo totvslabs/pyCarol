@@ -152,7 +152,10 @@ class Staging:
                                                step_size=step_size,
                                                compress_gzip=self.gzip):
 
-                self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
+                self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type,
+                                    status_forcelist=[502],
+                                    method_whitelist=frozenset(['POST'])
+                                    )
                 if print_stats:
                     print('{}/{} sent'.format(cont, data_size), end='\r')
 
@@ -304,6 +307,8 @@ class Staging:
             Number of records to get. This only should be user for tests.
         :param return_metadata: `bool`, default `False`
             To return or not the fields ['mdmId', 'mdmCounterForEntity']
+        :param callback: `callable`, default `None`
+            Function to be called each downloaded file.
         :return:
         """
 

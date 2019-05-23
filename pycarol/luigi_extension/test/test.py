@@ -1,6 +1,6 @@
 import luigi
 import os
-from ..targets import DummyTarget, PickleLocalTarget
+from ..targets import DummyTarget, PickleTarget
 from collections import namedtuple
 from unittest.mock import patch, MagicMock, PropertyMock
 from contextlib import ExitStack
@@ -50,9 +50,10 @@ def task_execution_debug(task, parameters=None, worker_scheduler_factory=None, *
     # TODO Get only parameters that are used in task_instance. Similar to self.clone
     task_instance = task(**parameters)
     out['task'] = task_instance
-    print(f"Building task {task_instance}!")
     exec_out = luigi.interface._schedule_and_run([task_instance], worker_scheduler_factory,
                                                  override_defaults=env_params)
+    # TODO: Check luigi version
+    # if luigi.__version__
     out.update({'success': exec_out['success']})
     task_history = exec_out['worker']._add_task_history
     out.update({'task_history': task_history})
@@ -78,18 +79,20 @@ def task_execution_debug(task, parameters=None, worker_scheduler_factory=None, *
 def luigi_extension_test(cls):
     """ Mock luigi_extension Task to have TARGET_DIR inside test directory and erase target files before each test
     """
-    new_target = 'luigi_targets/test/' + cls.__name__  # TODO Get local target name
+    new_target = f'luigi_targets/test/{cls.__module__}/{cls.__name__}'
+    class_setUp = cls.setUp
 
-    class TestNewClass(cls):
-        def setUp(self):
-            patcher = patch('pycarol.luigi_extension.Task.TARGET_DIR', new_callable=PropertyMock, return_value=new_target)
-            self.addCleanup(patcher.stop)
-            self.mock_target = patcher.start()
-            if os.path.isdir(new_target):
-                shutil.rmtree(new_target)
-            return super().setUp()
+    def mocked_setUp(self):
+        patcher = patch('pycarol.luigi_extension.Task.TARGET_DIR', new_callable=PropertyMock, return_value=new_target)
+        self.addCleanup(patcher.stop)
+        self.mock_target = patcher.start()
+        if os.path.isdir(new_target):
+            shutil.rmtree(new_target)
+        return class_setUp(self)
 
-    return TestNewClass
+    cls.setUp = mocked_setUp
+
+    return cls
 
 
 class mock_task:
@@ -140,7 +143,7 @@ class mock_task:
                             if 'target_class' in dic:
                                 TARGET = dic['target_class']
                             else:
-                                TARGET = PickleLocalTarget
+                                TARGET = PickleTarget
                             out_target = TARGET(task, path=target_filename, is_tmp=True)
                             out_target.remove = lambda: None  # Use this to avoid having the file removed
 

@@ -75,7 +75,8 @@ class DataModel:
         return resp
 
     def fetch_parquet(self, dm_name, merge_records=True, backend='pandas', return_dask_graph=False,
-                      columns=None, return_metadata=False):
+                      columns=None, return_metadata=False, callback=None, max_hits=None):
+
         """
 
         :param dm_name: `str`
@@ -91,6 +92,10 @@ class DataModel:
             List of columns to fetch.
         :param return_metadata: `bool`, default `False`
             To return or not the fields ['mdmId', 'mdmCounterForEntity']
+        :param callback: `callable`, default `None`
+            Function to be called each downloaded file.
+        :param max_hits: `int`, default `None`
+            Number of records to get.
         :return:
         """
 
@@ -119,7 +124,9 @@ class DataModel:
                              columns=columns)
 
         elif backend == 'pandas':
-            d = _import_pandas(storage=storage, dm_name=dm_name, golden=True, columns=columns)
+
+            d = _import_pandas(storage=storage, dm_name=dm_name, golden=True, columns=columns, callback=callback,
+                               max_hits=max_hits)
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
                 _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
