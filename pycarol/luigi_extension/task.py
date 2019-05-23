@@ -93,6 +93,7 @@ class Task(luigi.Task):
                                    if self.load_input_params(input_i) else input_i.load())
                                for i, input_i in self.input().items()}
 
+
         if hasattr(self.output(), '_is_cloud_target') and self.output()._is_cloud_target and self.persist_stdout:
             try:
                 from contextlib import redirect_stdout
