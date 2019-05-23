@@ -67,7 +67,7 @@ class Task(luigi.Task):
             return []
 
     def output(self):
-        if self.TARGET != PickleLocalTarget:  # Check for deprecated use
+        if self.TARGET != PickleTarget:  # Check for deprecated use
             warnings.warn('TARGET is being replaced with target_type.', DeprecationWarning)
             return self.TARGET(self)
 
