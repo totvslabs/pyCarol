@@ -17,7 +17,7 @@ _carol_levels = dict(
 
 class CarolHandler(logging.StreamHandler):
 
-    def __init__(self, carol, level=logging.INFO):
+    def __init__(self, carol):
         """
 
         Carol logger handler.
@@ -26,9 +26,6 @@ class CarolHandler(logging.StreamHandler):
 
         :param carol: Carol object
             Carol object.
-        :param get_times: `int`, default `20`
-            Log level. By default, in python, there are 5 standard levels indicating the severity of events.
-            20 is lvel INFO.
 
         """
         super().__init__(stream=sys.stdout)
