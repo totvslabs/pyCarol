@@ -1,7 +1,7 @@
 from . import Tasks
 import os
 import logging
-
+import sys
 
 
 _carol_levels = dict(
@@ -27,11 +27,12 @@ class CarolHandler(logging.StreamHandler):
             20 is lvel INFO.
 
         """
-        super().__init__(level)
+        super().__init__(stream=sys.stdout)
         self.carol = carol
         self._task = Tasks(self.carol)
         self.task_id = os.getenv('LONGTASKID', None)
         self._task.task_id = self.task_id
+
 
 
 
@@ -44,6 +45,6 @@ class CarolHandler(logging.StreamHandler):
 
     def emit(self, record):
         if self.task_id is None:
-            super().__init__(record)
+            super().emit(record)
         else:
             self._log_carol(record)
