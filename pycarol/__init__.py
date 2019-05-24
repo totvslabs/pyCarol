@@ -18,3 +18,4 @@ from .storage import Storage
 from .carolina import Carolina
 from .tasks import Tasks
 from .data_models import DataModel
+from .logger import CarolHandler
