@@ -1,4 +1,4 @@
-from . import Tasks
+from . import Tasks, Carol
 import os
 import logging
 import sys
@@ -17,7 +17,7 @@ _carol_levels = dict(
 
 class CarolHandler(logging.StreamHandler):
 
-    def __init__(self, carol):
+    def __init__(self, carol=None):
         """
 
         Carol logger handler.
@@ -29,6 +29,23 @@ class CarolHandler(logging.StreamHandler):
 
         """
         super().__init__(stream=sys.stdout)
+
+        self._use_console = False
+        if carol is None:
+            domain = os.getenv('CAROLTENANT')
+            app_name = os.getenv('CAROLAPPNAME')
+            auth_token = os.getenv('CAROLAPPOAUTH')
+            connector_id = os.getenv('CAROLCONNECTORID')
+            if ((domain is not None)
+                    and (app_name is not None)
+                    and (auth_token is not None)
+                    and (connector_id is not None)):
+                carol = Carol()
+                self._use_console = False
+
+            else:
+                self._use_console = True
+
         self.carol = carol
         self._task = Tasks(self.carol)
         self.task_id = os.getenv('LONGTASKID', None)
@@ -40,7 +57,7 @@ class CarolHandler(logging.StreamHandler):
         self._task.add_log(msg, log_level=log_level)
 
     def emit(self, record):
-        if self.task_id is None:
+        if (self.task_id is None) or (self._use_console):
             super().emit(record)
         else:
             self._log_carol(record)
