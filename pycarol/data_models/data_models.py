@@ -289,8 +289,9 @@ class DataModel:
 
         for i in self.template_dict.values():
             dm_id = i['mdmId']
-            self.export(dm_id=dm_id, sync_dm=sync_dm, full_export=full_export,
-                        delete_previous=delete_previous)
+            if i['mdmEntitySpace'] == 'WORKING':
+                self.export(dm_id=dm_id, sync_dm=sync_dm, full_export=full_export,
+                            delete_previous=delete_previous)
 
     def delete(self, dm_id=None, dm_name=None, entity_space='WORKING'):
         # TODO: Check Possible entity_spaces
