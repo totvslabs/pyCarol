@@ -202,7 +202,8 @@ class DataModel:
             self.fields_dict.update({i['mdmName']: self._get_name_type_data_models(i['mdmFields'])
                                      for i in query})
             self.template_dict.update({i['mdmName']: {'mdmId': i['mdmId'],
-                                                      'mdmEntitySpace': i['mdmEntitySpace']}
+                                                      'mdmEntitySpace': i['mdmEntitySpace'],
+                                                      'mdmPublishedExists': i['mdmPublishedExists']}
                                        for i in query})
 
             self.query_params['offset'] = count
@@ -215,6 +216,7 @@ class DataModel:
         if save_file:
             file.close()
         return self
+
 
     def get_by_name(self, name):
         return self._get(name, by='name')
@@ -287,11 +289,13 @@ class DataModel:
         """
         self.get_all()
 
-        for i in self.template_dict.values():
+        for _name, i in self.template_dict.items():
             dm_id = i['mdmId']
-            if i['mdmEntitySpace'] == 'WORKING':
+            if i['mdmPublishedExists']:
                 self.export(dm_id=dm_id, sync_dm=sync_dm, full_export=full_export,
                             delete_previous=delete_previous)
+            else:
+                print(f'Data Model `{_name}` is only in draft, and cannot be exported. Publish the Data Model to export it.')
 
     def delete(self, dm_id=None, dm_name=None, entity_space='WORKING'):
         # TODO: Check Possible entity_spaces
