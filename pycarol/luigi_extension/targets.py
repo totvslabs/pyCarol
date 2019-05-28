@@ -257,6 +257,7 @@ class JsonTarget(CDSTarget):
 
     def dump_local(self, function_output):
         #TODO: json only works for dataframe
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
         function_output.to_json(self.path)
 
 
