@@ -1,3 +1,7 @@
+""" PyCarol - Connecting Carol to Python
+
+"""
+
 import os
 import tempfile
 
