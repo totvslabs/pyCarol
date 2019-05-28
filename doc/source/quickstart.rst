@@ -270,6 +270,7 @@ Settings
 *********************************************
 
 We can use pyCarol to access the settings of your Carol App.
+
 .. code-block:: python
 
     # To get a specific setting
@@ -288,6 +289,7 @@ Data Validation
 *********************************************
 
 There are some built-in data validation in pyCarol that we can use to ensure the data is ok
+
 .. code-block:: python
 
     from pycarol.validator import Validator
