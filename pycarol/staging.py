@@ -355,7 +355,7 @@ class Staging:
 
         elif backend == 'pandas':
             d = _import_pandas(storage=storage, connector_id=connector_id,
-                               staging_name=staging_name, golden=False, columns=columns,
+                               staging_name=staging_name, import_type='staging',  columns=columns,
                                max_hits=max_hits, callback=callback, mapping_columns=mapping_columns)
 
             # TODO: Do the same for dask backend
@@ -514,7 +514,7 @@ class Staging:
                            if elem.get('hits', None)]
         staging_results = list(itertools.chain(*staging_results))
         if staging_results is not None:
-            return {f"{i.get('mdmConnectorId', '__NOT_FOUND__')}_{i.get('mdmStagingType', '__NOT_FOUND__')}": i for i in staging_results}
+            return {f"{i.get('mdmConnectorId', 'connectorId_not_found')}_{i.get('mdmStagingType', 'staging_not_found')}": i for i in staging_results}
 
     def _sync_counters(self, staging_name, connector_id=None, connector_name=None, incremental=False):
         """

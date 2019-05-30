@@ -176,6 +176,18 @@ class StorageAWSS3:
         )
         return [{'storage_space': 'golden', 'name': i.key} for i in parq if i.key.endswith('.parquet')]
 
+    def get_view_file_paths(self, view_name):
+        self._init_if_needed()
+        tenant_id = self.carol.tenant['mdmId']
+        template = dict(
+            relationship_view_name=view_name,
+            tenant_id=tenant_id
+        )
+        parq = list(
+            self.bucket.objects.filter(Prefix=self.carolina.cds_view_path['path'].format(**template))
+        )
+        return [{'storage_space': 'view', 'name': i.key} for i in parq if i.key.endswith('.parquet')]
+
     def get_staging_file_paths(self, staging_name, connector_id):
         self._init_if_needed()
         tenant_id = self.carol.tenant['mdmId']

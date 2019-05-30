@@ -125,7 +125,7 @@ class DataModel:
 
         elif backend == 'pandas':
 
-            d = _import_pandas(storage=storage, dm_name=dm_name, golden=True, columns=columns, callback=callback,
+            d = _import_pandas(storage=storage, dm_name=dm_name, import_type='golden', columns=columns, callback=callback,
                                max_hits=max_hits)
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)

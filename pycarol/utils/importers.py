@@ -43,16 +43,20 @@ def _import_dask(storage, merge_records=False,
 
 
 def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mapping_columns=None,
-                   staging_name=None, golden=False, max_hits=None, callback=None):
+                   staging_name=None, view_name=None, import_type='staging', golden=False, max_hits=None, callback=None):
     if columns:
         columns = list(set(columns))
         columns += __DM_FIELDS
         columns = list(set(columns))
 
-    if golden:
+    if import_type=='golden':
         file_paths = storage.get_golden_file_paths(dm_name=dm_name)
-    else:
+    elif import_type=='staging':
         file_paths = storage.get_staging_file_paths(staging_name=staging_name, connector_id=connector_id)
+    elif import_type == 'view':
+        file_paths = storage.get_view_file_paths(view_name=view_name)
+    else:
+        raise KeyError('import_type should be `golden`,`staging` or `view`')
 
     df_list = []
     count = 0
