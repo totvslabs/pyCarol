@@ -177,7 +177,7 @@ class ParquetTarget(CDSTarget):
 
     def dump_local(self, function_output):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
-        function_output.to_parquet(self.path, has_nulls='infer')
+        function_output.to_parquet(self.path)
 
 
 class KerasTarget(CDSTarget):
