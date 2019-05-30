@@ -74,7 +74,7 @@ class CarolHandler(logging.StreamHandler):
 
         match = re.search(r'\d+.?\d*', msg)
         if match:
-            current_count = float(match.group()[-1])
+            current_count = float(match.group())
         else:
             current_count = 100
             self._task.add_log('Something wrong with task counter', log_level='WARN')
