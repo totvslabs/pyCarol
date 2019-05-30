@@ -147,6 +147,10 @@ class StorageAWSS3:
         tenant_id = self.carol.tenant['mdmId']
         return f's3://{self.carolina.cds_app_storage_path["bucket"]}/carol_export/{tenant_id}/{dm_name}/golden'
 
+    def build_url_parquet_view(self, view_name):
+        tenant_id = self.carol.tenant['mdmId']
+        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/carol_export/{tenant_id}/{view_name}/view'
+
     def build_url_parquet_staging(self, staging_name, connector_id):
         tenant_id = self.carol.tenant['mdmId']
         return f's3://{self.carolina.cds_app_storage_path["bucket"]}/carol_export/{tenant_id}/{connector_id}_{staging_name}/staging'

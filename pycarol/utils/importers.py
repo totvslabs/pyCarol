@@ -10,16 +10,17 @@ __DM_FIELDS = ['mdmCounterForEntity', 'mdmId']
 
 
 def _import_dask(storage, merge_records=False,
-                 dm_name=None, golden=False, return_dask_graph=False,
-                 connector_id=None, staging_name=None, columns=None, max_hits=None, mapping_columns=None):
+                 dm_name=None, import_type='staging', return_dask_graph=False,
+                 connector_id=None, staging_name=None, view_name=None, columns=None,
+                 max_hits=None, mapping_columns=None):
     if columns:
         columns = list(set(columns))
         columns += __STAGING_FIELDS
         columns = list(set(columns))
 
-    if golden:
+    if import_type=='golden':
         url = [storage.build_url_parquet_golden(dm_name=dm_name)]
-    else:
+    elif import_type == 'staging':
         url = []
         url1 = storage.build_url_parquet_staging(staging_name=staging_name, connector_id=connector_id)
         if url1 is not None:
@@ -32,6 +33,12 @@ def _import_dask(storage, merge_records=False,
         url3 = storage.build_url_parquet_staging_rejected(staging_name=staging_name, connector_id=connector_id)
         if url3 is not None:
             url.append(url3)
+    elif import_type == 'view':
+        url = [storage.build_url_parquet_view(view_name=view_name)]
+    else:
+        raise KeyError('import_type should be `golden`,`staging` or `view`')
+
+
 
     d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns)
 
