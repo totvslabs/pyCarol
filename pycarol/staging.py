@@ -349,7 +349,7 @@ class Staging:
         if backend == 'dask':
 
             d = _import_dask(storage=storage, connector_id=connector_id, staging_name=staging_name,
-                             merge_records=merge_records, golden=False, return_dask_graph=return_dask_graph,
+                             merge_records=merge_records, import_type='staging', return_dask_graph=return_dask_graph,
                              mapping_columns=mapping_columns,
                              columns=columns, max_hits=max_hits)
 

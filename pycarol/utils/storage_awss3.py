@@ -142,26 +142,53 @@ class StorageAWSS3:
         if os.path.isfile(local_file_name):
             os.remove(local_file_name)
 
-    # TODO: Use the path from caroline
     def build_url_parquet_golden(self, dm_name):
         tenant_id = self.carol.tenant['mdmId']
-        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/carol_export/{tenant_id}/{dm_name}/golden'
+        template = dict(
+            dm_name=dm_name,
+            tenant_id=tenant_id,
+            bucket=self.carolina.cds_app_storage_path["bucket"]
+        )
+        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/{self.carolina.cds_golden_path["path"].format(**template)}'
 
     def build_url_parquet_view(self, view_name):
         tenant_id = self.carol.tenant['mdmId']
-        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/carol_export/{tenant_id}/{view_name}/view'
+        template = dict(
+            view_name=view_name,
+            tenant_id=tenant_id,
+            bucket=self.carolina.cds_app_storage_path["bucket"]
+        )
+        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/{self.carolina.cds_view_path["path"].format(**template)}'
 
     def build_url_parquet_staging(self, staging_name, connector_id):
         tenant_id = self.carol.tenant['mdmId']
-        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/carol_export/{tenant_id}/{connector_id}_{staging_name}/staging'
+        template = dict(
+            staging_type=staging_name,
+            connector_id=connector_id,
+            tenant_id=tenant_id,
+            bucket=self.carolina.cds_app_storage_path["bucket"]
+        )
+        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/{self.carolina.cds_staging_path["path"].format(**template)}'
 
     def build_url_parquet_staging_master(self, staging_name, connector_id):
         tenant_id = self.carol.tenant['mdmId']
-        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/carol_export/{tenant_id}/{connector_id}_{staging_name}/master_staging'
+        template = dict(
+            staging_type=staging_name,
+            connector_id=connector_id,
+            tenant_id=tenant_id,
+            bucket=self.carolina.cds_app_storage_path["bucket"]
+        )
+        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/{self.carolina.cds_staging_master_path["path"].format(**template)}'
 
     def build_url_parquet_staging_rejected(self, staging_name, connector_id):
         tenant_id = self.carol.tenant['mdmId']
-        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/carol_export/{tenant_id}/{connector_id}_{staging_name}/rejected_staging'
+        template = dict(
+            staging_type=staging_name,
+            connector_id=connector_id,
+            tenant_id=tenant_id,
+            bucket=self.carolina.cds_app_storage_path["bucket"]
+        )
+        return f's3://{self.carolina.cds_app_storage_path["bucket"]}/{self.carolina.cds_staging_rejected_path["path"].format(**template)}'
 
     def get_dask_options(self):
         return {"key": self.carolina.token['aiAccessKeyId'],
