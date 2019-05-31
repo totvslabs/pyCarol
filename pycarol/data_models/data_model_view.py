@@ -136,8 +136,8 @@ class DataModelView:
 
         storage = Storage(self.carol)
         if backend == 'dask':
-            d = _import_dask(storage=storage, dm_name=dm_name,
-                             merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph,
+            d = _import_dask(storage=storage, view_name=view_name, import_type='view',
+                             merge_records=merge_records, return_dask_graph=return_dask_graph,
                              columns=columns)
 
         elif backend == 'pandas':
