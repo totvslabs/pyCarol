@@ -200,3 +200,7 @@ class StorageGCPCS:
 
         ball = bs + bm + br
         return ball
+
+    def files_storage_list(self, app_name=None, all_apps=False,  print_paths=False):
+        print('')
+        raise NotImplementedError
