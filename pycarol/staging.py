@@ -514,7 +514,7 @@ class Staging:
                            if elem.get('hits', None)]
         staging_results = list(itertools.chain(*staging_results))
         if staging_results is not None:
-            return {f"{i['mdmConnectorId']}_{i['mdmStagingType']}": i for i in staging_results}
+            return {f"{i.get('mdmConnectorId', '__NOT_FOUND__')}_{i.get('mdmStagingType', '__NOT_FOUND__')}": i for i in staging_results}
 
     def _sync_counters(self, staging_name, connector_id=None, connector_name=None, incremental=False):
         """
