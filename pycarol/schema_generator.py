@@ -55,6 +55,7 @@ class Type(object):
             np.int64: IntType,
             np.int32: IntType,
             np.int: IntType,
+            np.bool_: BooleanType,
             datetime: DateType,
             pd.Timestamp:DateType
         }

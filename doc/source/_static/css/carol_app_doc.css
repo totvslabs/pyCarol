@@ -1,0 +1,23 @@
+@import url("theme.css");
+
+
+.wy-side-nav-search>a img.logo, .wy-side-nav-search .wy-dropdown>a img.logo {
+    height: 100px;
+}
+
+.wy-side-nav-search>div.version{
+        margin-top: -.4045em;
+    margin-bottom: .809em;
+    font-weight: normal;
+    color: rgb(12, 10, 10);
+}
+
+.wy-side-nav-search>a, .wy-side-nav-search .wy-dropdown>a {
+    color: #4a2f4e;
+    font-size: 100%;
+    font-weight: bold;
+    display: inline-block;
+    padding: 4px 6px;
+    margin-bottom: .809em;
+
+}

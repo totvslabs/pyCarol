@@ -1,9 +1,7 @@
 from multiprocessing import Process
-from collections import defaultdict
 from .carol_cloner import Cloner
-from .utils.singleton import KeySingleton
 from .carolina import Carolina
-from .utils.miscellaneous import prettify_path, _attach_path, _FILE_MARKER
+
 
 
 class Storage:
@@ -55,28 +53,8 @@ class Storage:
         :return: list of files paths.
         """
 
-        split = f"storage/{self.carol.tenant['mdmId']}/"
-        if all_apps:
-            prefix = f"storage/{self.carol.tenant['mdmId']}/"
-
-        elif app_name is None:
-            app_name = self.carol.app_name
-            prefix = f"storage/{self.carol.tenant['mdmId']}/{app_name}/files/"
-
-        else:
-            prefix = f"storage/{self.carol.tenant['mdmId']}/{app_name}/files/"
-
         self._init_if_needed()
-
-        files = list(self.bucket.objects.filter(Prefix=prefix))
-        files = [i.key.split(split)[1] for i in files]
-
-        if print_paths:
-            main_dict = defaultdict(dict, ((_FILE_MARKER, []),))
-            for line in files:
-                _attach_path(line, main_dict)
-            prettify_path(main_dict)
-        return files
+        return self.backend.files_storage_list(app_name=app_name, all_apps=all_apps,  print_paths=print_paths)
 
     def exists(self, name):
         self._init_if_needed()
