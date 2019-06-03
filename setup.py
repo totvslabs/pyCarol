@@ -44,7 +44,8 @@ except FileNotFoundError as e:
         'urllib3',
         'websocket-client==0.53.0',
         'missingno==0.4.1',
-        'deprecated'
+        'deprecated',
+        'kubernetes'
     ]
 
 def read(*parts):

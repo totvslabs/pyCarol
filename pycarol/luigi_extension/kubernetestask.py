@@ -1,6 +1,5 @@
 import logging
 import os
-import ssl
 import time
 import uuid
 from datetime import datetime
