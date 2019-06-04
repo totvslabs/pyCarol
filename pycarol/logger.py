@@ -90,8 +90,11 @@ class CarolHandler(logging.StreamHandler):
             self._total_number_of_tasks = current_count
 
         if wrong_value:
-            current_percentage = 100 - 100*(current_count/self._total_number_of_tasks)
-            current_percentage = int(min(current_percentage,99))
-            self._task.set_progress(current_percentage)
+            try:
+                current_percentage = 100 - 100*(current_count/self._total_number_of_tasks)
+                current_percentage = int(min(current_percentage,99))
+                self._task.set_progress(current_percentage)
+            except:
+                pass
         self._task.add_log(msg, log_level='INFO')
 
