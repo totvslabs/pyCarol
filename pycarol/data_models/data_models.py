@@ -99,6 +99,9 @@ class DataModel:
         :return:
         """
 
+        if not columns: #if an empty list was sent.
+            columns = None
+
         if isinstance(columns, str):
             columns = [columns]
 
