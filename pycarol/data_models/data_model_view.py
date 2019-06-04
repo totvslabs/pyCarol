@@ -231,22 +231,17 @@ class DataModelView:
         return d
 
 
-    def export_all(self, sync_dm=True, full_export=False, delete_previous=False):
+    def export_all(self, sync_view=True, full_export=False, delete_previous=False):
         """
 
         Export all datamodel to s3
 
-        This method will trigger or pause the export of the data in the datamodel to
-        s3
+        This method will trigger or pause the export of the data in the data model view to CDS
 
-        :param dm_name: `str`, default `None`
-            Datamodel Name
-        :param dm_id: `str`, default `None`
-            Datamodel id
-        :param sync_dm: `bool`, default `True`
-            Sync the data model
+        :param sync_view: `bool`, default `True`
+            Sync the data model view
         :param full_export: `bool`, default `True`
-            Do a resync of the data model
+            Do a resync of the data model view
         :param delete_previous: `bool`, default `False`
             Delete previous exported files.
         :return: None
@@ -254,13 +249,9 @@ class DataModelView:
         self.get_all()
 
         for _name, i in self.template_dict.items():
-            dm_id = i['mdmId']
-            if i['mdmPublishedExists']:
-                self.export(dm_id=dm_id, sync_dm=sync_dm, full_export=full_export,
-                            delete_previous=delete_previous)
-            else:
-                print(f'Data Model `{_name}` is only in draft, and cannot be exported. Publish the Data Model to export it.')
-
+            view_id = i['mdmId']
+            self.export(view_id=view_id, sync_view=sync_view, full_export=full_export,
+                        delete_previous=delete_previous)
 
 
     def _get_view_export_stats(self):

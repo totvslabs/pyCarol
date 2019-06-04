@@ -236,12 +236,12 @@ class DataModel:
         Export datamodel to s3
 
         This method will trigger or pause the export of the data in the datamodel to
-        s3
+        CDS
 
         :param dm_name: `str`, default `None`
-            Datamodel Name
+            Data model Name
         :param dm_id: `str`, default `None`
-            Datamodel id
+            Data model id
         :param sync_dm: `bool`, default `True`
             Sync the data model
         :param full_export: `bool`, default `True`
@@ -273,12 +273,8 @@ class DataModel:
         Export all datamodel to s3
 
         This method will trigger or pause the export of the data in the datamodel to
-        s3
+        CDS
 
-        :param dm_name: `str`, default `None`
-            Datamodel Name
-        :param dm_id: `str`, default `None`
-            Datamodel id
         :param sync_dm: `bool`, default `True`
             Sync the data model
         :param full_export: `bool`, default `True`
