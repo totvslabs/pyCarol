@@ -338,7 +338,7 @@ class DataModel:
                       if elem.get('hits', None)]
         dm_results = list(itertools.chain(*dm_results))
 
-        dm = DataModel(self.carol).get_all().template_data
+        dm = self.get_all().template_data
         dm = {i['mdmId']: i['mdmName'] for i in dm}
 
         if dm_results is not None:

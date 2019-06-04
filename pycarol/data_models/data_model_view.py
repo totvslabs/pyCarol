@@ -1,19 +1,15 @@
-import time
-import copy
 import warnings
 import pandas as pd
+import json
 
 
 
 from ..utils.importers import _import_dask, _import_pandas
-from ..verticals import Verticals
 from ..storage import Storage
 from ..query import Query
 from ..filter import TYPE_FILTER, Filter
 import itertools
 
-
-from ..connectors import Connectors
 
 
 
@@ -40,11 +36,64 @@ class DataModelView:
 
         return self.carol.call_api(url, method='GET')
 
+    def _build_query_params(self):
+        if self.sort_by is None:
+            self.query_params = {"offset": self.offset, "pageSize": str(self.page_size), "sortOrder": self.sort_order}
+        else:
+            self.query_params = {"offset": self.offset, "pageSize": str(self.page_size), "sortOrder": self.sort_order,
+                                 "sortBy": self.sort_by}
+
     def get_all(self, offset=0, page_size=-1, sort_order='ASC',
                 sort_by=None, print_status=False,
                 save_file=None):
-        # TODO:
-        pass
+
+
+        self.offset = offset
+        self.page_size = page_size
+        self.sort_order = sort_order
+        self.sort_by = sort_by
+        self._build_query_params()
+
+        self.template_dict = {}
+        self.template_data = []
+        count = self.offset
+
+        set_param = True
+        self.total_hits = float("inf")
+        if save_file:
+            assert isinstance(save_file, str)
+            file = open(save_file, 'w', encoding='utf8')
+        while count < self.total_hits:
+            url_filter = "v1/relationshipView"
+            query = self.carol.call_api(url_filter, params=self.query_params, method='GET')
+
+            if query['count'] == 0:
+                print('There are no more results.')
+                print('Expecting {}, reponse = {}'.format(self.total_hits, count))
+                break
+            count += query['count']
+            if set_param:
+                self.total_hits = query["totalHits"]
+                set_param = False
+
+            query = query['hits']
+            self.template_data.extend(query)
+
+            self.template_dict.update({i['mdmName']: {'mdmId': i['mdmId'],
+                                                      'mdmRunningState': i['mdmRunningState'],
+                                                      'mdmEntityType': i['mdmEntityType']}
+                                       for i in query})
+
+            self.query_params['offset'] = count
+            if print_status:
+                print('{}/{}'.format(count, self.total_hits), end='\r')
+            if save_file:
+                file.write(json.dumps(query, ensure_ascii=False))
+                file.write('\n')
+                file.flush()
+        if save_file:
+            file.close()
+        return self
 
 
     def export(self, view_name=None, view_id=None, sync_view=True, full_export=False,
@@ -123,13 +172,12 @@ class DataModelView:
         if return_dask_graph:
             assert backend == 'dask'
 
-        # validate export
-        #TODO: THIS IS NOT WORKING, BUG CAROL
-        #dms = self._get_view_export_stats()
-        #if not dms.get(dm_name):
-        #    raise Exception(
-        #        f'"{dm_name}" is not set to export data, \n'
-        #        f'use `dm = DataModel(login).export(dm_name="{dm_name}", sync_dm=True) to activate')
+
+        dms = self._get_view_export_stats()
+        if not dms.get(view_name):
+            raise Exception(
+                f'"{view_name}" is not set to export data, \n'
+                f'use `dm = DataModelView(login).export(view_name="{view_name}", sync_dm=True) to activate')
 
         if columns:
             columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
@@ -217,10 +265,10 @@ class DataModelView:
 
     def _get_view_export_stats(self):
         """
-        Get export status for data models
+        Get export status for views
 
         :return: `dict`
-            dict with the information of which data model is exporting its data.
+            dict with the information of which data model view is exporting its data.
         """
 
         json_q = Filter.Builder(key_prefix="") \
@@ -234,11 +282,11 @@ class DataModelView:
                       if elem.get('hits', None)]
         dm_results = list(itertools.chain(*dm_results))
 
-        dm = DataModel(self.carol).get_all().template_data
+        dm = self.get_all().template_data
         dm = {i['mdmId']: i['mdmName'] for i in dm}
 
         if dm_results is not None:
-            return {dm.get(i['mdmEntityTemplateId'], i['mdmEntityTemplateId']+'_NOT_FOUND' ): i for i in dm_results}
+            return {dm.get(i['mdmRelationshipViewId'], i['mdmRelationshipViewId'] + '_NOT_FOUND'): i for i in dm_results}
 
         return dm_results
 
