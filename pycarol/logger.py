@@ -78,14 +78,14 @@ class CarolHandler(logging.StreamHandler):
             try:
                 current_count = float(match.group())
             except:
-                wrong_value =True
+                wrong_value = True
 
         else:
             current_count = 100
             wrong_value=True
             self._task.add_log('Something wrong with task counter', log_level='WARN')
 
-        if self._first_pending:
+        if (self._first_pending) and (not wrong_value):
             self._first_pending = False
             self._total_number_of_tasks = current_count
 
