@@ -73,6 +73,7 @@ class CarolHandler(logging.StreamHandler):
     def _set_progress_task_luigi(self, msg, log_level):
 
         match = re.search(r'\d+.?\d*', msg)
+        wrong_value = False
         if match:
             try:
                 current_count = float(match.group())
