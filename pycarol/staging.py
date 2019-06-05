@@ -32,7 +32,7 @@ class Staging:
 
     def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100,
                   print_stats=True, gzip=True, auto_create_schema=False, crosswalk_auto_create=None,
-                  flexible_schema=False, force=False,  max_workers=None,  dm_to_delete=None,
+                  flexible_schema=False, force=False,  max_workers=2,  dm_to_delete=None,
                   async_send=False,
                   carol_data_storage=False):
         '''
@@ -153,7 +153,7 @@ class Staging:
                                                compress_gzip=self.gzip):
 
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type,
-                                    status_forcelist=[502],
+                                    status_forcelist=[502, 429],
                                     method_whitelist=frozenset(['POST'])
                                     )
                 if print_stats:
