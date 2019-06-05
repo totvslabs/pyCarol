@@ -30,7 +30,7 @@ class Staging:
     def __init__(self, carol):
         self.carol = carol
 
-    def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100,
+    def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=500,
                   print_stats=True, gzip=True, auto_create_schema=False, crosswalk_auto_create=None,
                   flexible_schema=False, force=False,  max_workers=2,  dm_to_delete=None,
                   async_send=False,
@@ -44,7 +44,7 @@ class Staging:
             Connector name where the staging should be.
         :param connector_id: `str`, default `None`
             Connector Id where the staging should be.
-        :param step_size: `int`, default `100`
+        :param step_size: `int`, default `500`
             Number of records to be sent in each iteration. Max size for each batch is 10MB
         :param print_stats: `bool`, default `True`
             If print the status
@@ -59,7 +59,7 @@ class Staging:
         :param force: `bool`, default `False`
             If `force=True` it will not check for repeated records according to crosswalk. If `False` it will check for
             duplicates and raise an error if so.
-        :param max_workers: `int`, default `None`
+        :param max_workers: `int`, default `2`
             To be used with `async_send=True`. Number of threads to use when sending.
         :param dm_to_delete: `str`, default `None`
             Name of the data model to be erased before send the data.
