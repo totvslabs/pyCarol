@@ -3,11 +3,11 @@ import dis
 def _traverse_code(analyzed_function):
     inner_functions_set = set()
     instructions = list(dis.get_instructions(analyzed_function))
-    instructions = list(reversed(instructions))
+
 
     for ix, inst in enumerate(instructions):
         if 'CALL_FUNCTION' == inst.opname:
-            called_function_name = instructions[ix + inst.arg + 1]
+            called_function_name = instructions[ix - inst.arg - 1]
             function_name = called_function_name.argval
             func = globals()[function_name]
             if func not in code_set:
