@@ -14,6 +14,10 @@ def c(x):
     return x - 5
 
 
+def d(x):
+    return x + 4
+
+
 def a_of_a(x):
     return a(x)
 
@@ -55,17 +59,24 @@ def outer_initial_value_b():
 
 
 def nested_a():
-    def _nested_a():
+    def _nested():
         return (0)
 
-    return _nested_a()
+    return _nested()
 
 
 def nested_b():
-    def _nested_b():
+    def _nested():
         return (100)
 
-    return _nested_b()
+    return _nested()
+
+
+def nested_c():
+    def _nested():
+        return (100)
+
+    return _nested()
 
 
 def variable_args_a(*args):
@@ -83,17 +94,19 @@ equal_functions_list = [
     (a_of_a, a_of_b),
     (eternal_recursion_a, eternal_recursion_b),
     (mutual_recursion_a, mutual_recursion_b),
-    (variable_args_a, variable_args_b)
+    (variable_args_a, variable_args_b),
+    (nested_b, nested_c),
 ]
 
 different_functions_list = [
     (a, c),
     (b, c),
+    (a, d),
     (mutual_recursion_a, eternal_recursion_a),
     (initial_value_a, a),
     (initial_value_a, initial_value_b),
     (outer_initial_value_a, outer_initial_value_b),
-    (nested_a, nested_b)
+    (nested_a, nested_b),
 ]
 
 
