@@ -42,7 +42,6 @@ except FileNotFoundError as e:
         's3transfer==0.1.13',
         'tqdm==4.28.1',
         'urllib3',
-        'websocket-client==0.53.0',
         'missingno==0.4.1',
         'deprecated'
     ]

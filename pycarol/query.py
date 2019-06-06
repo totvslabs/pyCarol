@@ -185,68 +185,10 @@ class Query:
         self._build_return_fields()
         self._build_query_params()
 
-        if self.use_stream and self.named_query is None:
-            self._streamable_query_handler(callback)
-        elif self.scrollable:
-            self._scrollable_query_handler(callback)
-        else:
-            self._oldQueryHandler()
+        self._scrollable_query_handler(callback)
 
         return self
 
-    def _streamable_query_handler(self, callback=None):
-        from websocket import create_connection
-        if not self.offset == 0:
-            raise ValueError('It is not possible to use offset when using streaming')
-
-        set_param = True
-        count = self.offset
-        if self.save_results:
-            file = open(self.filename, 'w', encoding='utf8')
-        url = self.carol.build_ws_url("query/" + self.carol.auth._token.access_token)
-        # print(url)
-        ws = create_connection(url)
-        params = self.query_params.copy()
-
-        if 'scrollable' in params:
-            del params['scrollable']
-        if 'pageSize' in params:
-            del params['pageSize']
-        params['query'] = self.json_query.copy()
-        # print(params)
-
-        ws.send(str(params))
-        to_get = float("inf")
-        downloaded = 0
-        try:
-            while ws.connected:
-                result = json.loads(ws.recv())
-                self.results.append(result)
-                count += 1
-                downloaded += 1
-                if callback:
-                    if callable(callback):
-                        callback(result)
-                    else:
-                        raise Exception(
-                            f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function.')
-                if self.print_status and count % 50 == 0:
-                    print('{}/{}'.format(downloaded, to_get), end='\r')
-                if self.save_results:
-                    print('Saving...')
-                    file.write(json.dumps(result, ensure_ascii=False))
-                    file.write('\n')
-                    if count % 1000 == 0:
-                        file.flush()
-                # print("Received '%s'" % result)
-        except Exception as e:
-            if self.save_results:
-                file.close()
-            print(f'{downloaded} rows downloaded before error')
-            raise Exception(e.args[0]['errorMessage'])
-        print("WS Closed")
-        if self.save_results:
-            file.close()
 
     def _scrollable_query_handler(self, callback=None):
         if not self.offset == 0:
