@@ -80,11 +80,35 @@ def nested_c():
 
 
 def variable_args_a(*args):
-    print(args)
+    return (args)
 
 
 def variable_args_b(*args):
-    print(args)
+    return (args)
+
+
+def variable_args_c(*args):
+    return args[::-1]
+
+
+def builtin_a():
+    print('hey')
+
+
+def builtin_b():
+    print('hey')
+
+
+def builtin_c():
+    print('hi')
+
+
+def builtin_d():
+    print('hey', 'hi')
+
+
+def variable_kwargs_a(a, *args, **kwargs):
+    return kwargs
 
 
 equal_functions_list = [
@@ -96,6 +120,7 @@ equal_functions_list = [
     (mutual_recursion_a, mutual_recursion_b),
     (variable_args_a, variable_args_b),
     (nested_b, nested_c),
+    (builtin_a, builtin_b),
 ]
 
 different_functions_list = [
@@ -107,6 +132,9 @@ different_functions_list = [
     (initial_value_a, initial_value_b),
     (outer_initial_value_a, outer_initial_value_b),
     (nested_a, nested_b),
+    (variable_args_a, variable_args_c),
+    (builtin_a, builtin_c),
+    (builtin_a, builtin_d)
 ]
 
 
