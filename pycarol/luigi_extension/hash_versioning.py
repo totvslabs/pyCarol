@@ -41,48 +41,74 @@ def _find_called_function(ix, inst, instructions):
     return function_name
 
 
+def _fetch_function_object(function_name, enclosing_function):
+    """
+    function_name can be found in Local, Enclosed, Global and Builtin Namespace
+    Local and enclosed namespaces cannot be discovered in static analysis.
+    So there is limited support to nested functions like this one.
+
+    Args:
+        function_name: string
+        enclosing_function: function object
+
+    Returns:
+        func: function object
+    """
+
+    module_namespace = importlib.import_module(enclosing_function.__module__)
+    if hasattr(module_namespace, function_name):
+        func = getattr(module_namespace, function_name)  # Module (Global) Namespace
+    elif hasattr(builtins, function_name):
+        func = getattr(builtins, function_name)  # Builtin Namespace
+    else:
+        raise NotImplementedError("{} was neither found in module {} nor it is builtin.\
+        \nLocal and Enclosed namespaces are not supported".format(function_name, module_namespace))
+    return func
+
+
 def get_bytecode_tree(analyzed_function: 'function', ignore_not_found_function=True) -> list:
-    def _traverse_code(_analyzed_function: 'function') -> list:
+    """
+
+    Args:
+        analyzed_function:
+        ignore_not_found_function:
+
+    Returns:
+
+    """
+
+    def _traverse_code(enclosed_function: 'function') -> list:
         nonlocal code_set
         inner_functions_set = set()
-        print(_analyzed_function.__name__)
-        if hasattr(builtins, _analyzed_function.__name__):
+        if hasattr(builtins, enclosed_function.__name__):
             # dis cannot get instructions for builtins
             # return function name instead of bytecode
-            return [_analyzed_function.__name__]
-        instructions = list(dis.get_instructions(_analyzed_function))
+            return [enclosed_function.__name__]
+        instructions = list(dis.get_instructions(enclosed_function))
 
-        m = _analyzed_function.__module__
-        imported = importlib.import_module(m)
         for ix, inst in enumerate(instructions):
             if "CALL_FUNCTION" in inst.opname:  # call_function op found
                 function_name = _find_called_function(ix, inst, instructions)
-
-                # function_name can be found in Local, Enclosed, Global and Builtin Namespace
-                # Local and enclosed namespaces cannot be discovered in static analysis.
-                # So there is limited support to nested functions like this one.
-                if hasattr(imported, function_name):
-                    func = getattr(imported, function_name)  # Module (Global) Namespace
-                elif hasattr(builtins, function_name):
-                    func = getattr(builtins, function_name)  # Builtin Namespace
-                else:
+                try:
+                    func = _fetch_function_object(function_name, enclosed_function)
+                except NotImplementedError as e:
                     if ignore_not_found_function:
                         continue
                     else:
-                        raise NotImplementedError("{} was neither found in module {} nor it is builtin.\
-                        \nLocal and Enclosed namespaces are not supported".format(function_name, imported))
+                        raise e
 
                 if func not in code_set:
                     code_set.add(func)
                     inner_functions_set.add(func)
+
         code_list = [_traverse_code(f) for f in inner_functions_set]
         function_code = b''.join([
-            _analyzed_function.__code__.co_code,
+            enclosed_function.__code__.co_code,
             asbytes(hash(
-                _analyzed_function.__code__.co_consts
+                enclosed_function.__code__.co_consts
             )),
             asbytes(hash(
-                dict(inspect.getmembers(_analyzed_function))['__defaults__']
+                dict(inspect.getmembers(enclosed_function))['__defaults__']
             )),
         ])
 
