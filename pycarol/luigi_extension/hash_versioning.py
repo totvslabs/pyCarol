@@ -8,6 +8,39 @@ def asbytes(i: int) -> bytes:
     return i.to_bytes(i.bit_length() // 8 + 1, 'little', signed=True)
 
 
+def _find_called_function(ix, inst, instructions):
+    """
+    When a CALL_FUNCTION instruction is found, the function name is not given
+    as a direct argument to this instruction. Instead, the function name can
+    be found some instructions above on the bytecode. Between the CALL_FUNCTION
+    instruction and the function pointer we found all the function parameters.
+    This method implements the logic needed to fetch the function pointer for
+    the three kind of CALL_FUNCTION operations.
+
+    Args:
+        ix: index of call function instruction
+        inst: call function instruction
+        instructions: list of instructions composing the whole bytecode
+
+    Returns:
+        function_name: the name of the called function
+    """
+    if "CALL_FUNCTION" == inst.opname:  # it is simple call function instruction
+        # for this instruction, we can find the called function some instructions
+        # above. we just need to skip backwards the number of arguments
+        called_function_name = instructions[ix - inst.arg - 1]
+    elif "CALL_FUNCTION_KW" == inst.opname:  # call function op with keyword arguments
+        # wrt CALL_FUNCTION there is one additional argument to skip
+        called_function_name = instructions[ix - inst.arg - 2]
+    elif "CALL_FUNCTION_EX":
+        raise NotImplementedError("instruction {} is not supported".format(inst.opname))
+    else:
+        raise NotImplementedError("instruction {} is not supported".format(inst.opname))
+
+    function_name = called_function_name.argval
+    return function_name
+
+
 def get_bytecode_tree(analyzed_function: 'function', ignore_not_found_function=True) -> list:
     def _traverse_code(_analyzed_function: 'function') -> list:
         nonlocal code_set
@@ -23,18 +56,8 @@ def get_bytecode_tree(analyzed_function: 'function', ignore_not_found_function=T
         imported = importlib.import_module(m)
         for ix, inst in enumerate(instructions):
             if "CALL_FUNCTION" in inst.opname:  # call_function op found
-                if "CALL_FUNCTION" == inst.opname:  # it is simple call function instruction
-                    # for this instruction, we can find the called function some instructions
-                    # above. we just need to skip backwards the number of arguments
-                    called_function_name = instructions[ix - inst.arg - 1]
-                elif "CALL_FUNCTION_KW" == inst.opname:  # call function op with keyword arguments
-                    # wrt CALL_FUNCTION there is one additional argument to skip
-                    called_function_name = instructions[ix - inst.arg - 2]
-                elif "CALL_FUNCTION_EX":
-                    raise NotImplementedError("instruction {} is not supported".format(inst.opname))
-                else:
-                    raise NotImplementedError("instruction {} is not supported".format(inst.opname))
-                function_name = called_function_name.argval
+                function_name = _find_called_function(ix, inst, instructions)
+
                 # function_name can be found in Local, Enclosed, Global and Builtin Namespace
                 # Local and enclosed namespaces cannot be discovered in static analysis.
                 # So there is limited support to nested functions like this one.

@@ -107,32 +107,26 @@ def builtin_d():
     print('hey', 'hi')
 
 
-def f_kwargs(a, *args, **kwargs):
-    return kwargs
-
-
-def f_kwargs_b(a, *args, **kwargs):
-    return a
+def dummy_function():
+    pass
 
 
 def call_kwargs_a():
-    return f_kwargs(0, p1=10, p2=20)
+    return dummy_function(0, p1=10, p2=20)
 
 
 def call_kwargs_b():
-    return f_kwargs(0, p1=10, p2=20)
+    return dummy_function(0, p1=10, p2=20)
 
 
 def call_kwargs_c():
-    return f_kwargs(0, p1=10, p2=50)
+    return dummy_function(0, p1=10, p2=50)
 
 
 def call_kwargs_d():
-    return f_kwargs(0, p1=10, p3=20)
+    return dummy_function(0, p1=10, p3=20)
 
 
-def call_kwargs_e():
-    return f_kwargs_b(0, p1=10, p2=20)
 
 equal_functions_list = [
     (a, a),
@@ -161,8 +155,24 @@ different_functions_list = [
     (builtin_a, builtin_d),
     (call_kwargs_a, call_kwargs_c),
     (call_kwargs_a, call_kwargs_d),
-    (call_kwargs_a, call_kwargs_e),
 ]
+
+calling_functions_list = [
+    call_kwargs_a,
+    call_kwargs_b,
+    call_kwargs_c,
+    call_kwargs_d,
+]
+
+
+@mark.parametrize("func", calling_functions_list)
+def test_find_called_function(func):
+    import dis
+    instructions = list(dis.get_instructions(func))
+    ix = len(instructions) - 2
+    inst = instructions[ix]
+    # assert that the func return another function
+    assert "CALL_FUNCTION" in inst.opname
 
 
 @mark.parametrize("f1,f2", equal_functions_list)
@@ -173,3 +183,4 @@ def test_equal_functions(f1, f2):
 @mark.parametrize("f1,f2", different_functions_list)
 def test_different_functions(f1, f2):
     assert get_bytecode_tree(f1) != get_bytecode_tree(f2)
+
