@@ -1,5 +1,5 @@
 from pytest import mark
-from ..hash_versioning import get_bytecode_tree
+from ..hash_versioning import get_bytecode_tree, _find_called_function
 
 
 def a(x):
@@ -127,6 +127,39 @@ def call_kwargs_d():
     return dummy_function(0, p1=10, p3=20)
 
 
+def call_ex_a(x):
+    return dummy_function(*x)
+
+
+def call_ex_b(x):
+    return dummy_function(*x, *x)
+
+
+def call_ex_c(x):
+    return dummy_function(**x)
+
+
+def call_ex_d(x):
+    return dummy_function(**x, **x)
+
+
+def call_ex_e(x):
+    import importlib
+    d = importlib.import_module(dis)
+    return dummy_function(d, *x)
+
+
+def call_ex_f(x):
+    return dummy_function(0, *x, **x)
+
+
+def call_ex_g(x):
+    return dummy_function(0, dummy_function, **x)
+
+
+def call_ex_h(x, y):
+    return dummy_function(0, 1, 2, [0, 1, 2], ('a', 0), *x, *x, **y, **y, p1={0, 1, 2})
+
 
 equal_functions_list = [
     (a, a),
@@ -162,17 +195,27 @@ calling_functions_list = [
     call_kwargs_b,
     call_kwargs_c,
     call_kwargs_d,
+    call_ex_a,
+    call_ex_b,
+    call_ex_c,
+    call_ex_d,
+    call_ex_e,
+    call_ex_f,
+    call_ex_g,
+    call_ex_h,
 ]
 
 
 @mark.parametrize("func", calling_functions_list)
 def test_find_called_function(func):
     import dis
+    print(dis.dis(func))
     instructions = list(dis.get_instructions(func))
     ix = len(instructions) - 2
     inst = instructions[ix]
     # assert that the func return another function
     assert "CALL_FUNCTION" in inst.opname
+    assert _find_called_function(ix, inst, instructions) == "dummy_function"
 
 
 @mark.parametrize("f1,f2", equal_functions_list)

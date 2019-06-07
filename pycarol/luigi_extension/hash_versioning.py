@@ -3,9 +3,26 @@ import importlib
 import builtins
 import inspect
 
+VERBOSE = True
 
 def asbytes(i: int) -> bytes:
     return i.to_bytes(i.bit_length() // 8 + 1, 'little', signed=True)
+
+
+number_of_parameters_in_build_ops = dict(
+    BUILD_TUPLE=lambda x: x,
+    BUILD_LIST=lambda x: x,
+    BUILD_SET=lambda x: x,
+    BUILD_MAP=lambda x: 2 * x,
+    BUILD_CONST_KEY_MAP=lambda x: x + 1,
+    BUILD_STRING=lambda x: x,
+    BUILD_TUPLE_UNPACK=lambda x: x,
+    BUILD_TUPLE_UNPACK_WITH_CALL=lambda x: x,
+    BUILD_LIST_UNPACK=lambda x: x,
+    BUILD_SET_UNPACK=lambda x: x,
+    BUILD_MAP_UNPACK=lambda x: x,
+    BUILD_MAP_UNPACK_WITH_CALL=lambda x: x,
+)
 
 
 def _find_called_function(ix, inst, instructions):
@@ -28,16 +45,36 @@ def _find_called_function(ix, inst, instructions):
     if "CALL_FUNCTION" == inst.opname:  # it is simple call function instruction
         # for this instruction, we can find the called function some instructions
         # above. we just need to skip backwards the number of arguments
-        called_function_name = instructions[ix - inst.arg - 1]
+        offset = inst.arg + 1
+        called_function_inst = instructions[ix - offset]
     elif "CALL_FUNCTION_KW" == inst.opname:  # call function op with keyword arguments
         # wrt CALL_FUNCTION there is one additional argument to skip
-        called_function_name = instructions[ix - inst.arg - 2]
+        offset = inst.arg + 2
+        called_function_inst = instructions[ix - offset]
     elif "CALL_FUNCTION_EX":
-        raise NotImplementedError("instruction {} is not supported".format(inst.opname))
+        offset = inst.arg + 2
+        # Next, we look for BUILD instructions between CALL_FUNCTION_EX instruction
+        # and estimated target function position defined by offset. Then, we update
+        # offset following each instruction behavior to skip all the parameters
+        # and finally find the target function name.
+        rev_ind = 0
+        while rev_ind < offset:
+            rev_ind += 1
+            ind_i = ix - rev_ind
+            if ind_i < 0:
+                raise KeyError("step out of the bytecode while searching CALL_FUNCION_EX target")
+            inst_i = instructions[ind_i]
+            opname = inst_i.opname
+            arg = inst_i.arg
+            if opname in number_of_parameters_in_build_ops:  # increase offset
+                offset += number_of_parameters_in_build_ops[opname](arg)
+        called_function_inst = instructions[ix - offset]
+        if VERBOSE:
+            print(called_function_inst, offset)
     else:
         raise NotImplementedError("instruction {} is not supported".format(inst.opname))
 
-    function_name = called_function_name.argval
+    function_name = called_function_inst.argval
     return function_name
 
 
@@ -123,6 +160,5 @@ def get_bytecode_tree(analyzed_function: 'function', ignore_not_found_function=T
     assert isinstance(bytecode_tree, list)
     return bytecode_tree
 
-# TODO: support CALL_FUNCTION_EX
 # TODO: support MAKE_FUNCTION. it should allow nested functions
 # TODO: support inner imports. possible?
