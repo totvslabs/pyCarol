@@ -22,11 +22,16 @@ def get_bytecode_tree(analyzed_function: 'function', ignore_not_found_function=T
         m = _analyzed_function.__module__
         imported = importlib.import_module(m)
         for ix, inst in enumerate(instructions):
-            if "CALL_FUNCTION" in inst.opname:  # call_function instruction found
+            if "CALL_FUNCTION" in inst.opname:  # call_function op found
                 if "CALL_FUNCTION" == inst.opname:  # it is simple call function instruction
                     # for this instruction, we can find the called function some instructions
                     # above. we just need to skip backwards the number of arguments
                     called_function_name = instructions[ix - inst.arg - 1]
+                elif "CALL_FUNCTION_KW" == inst.opname:  # call function op with keyword arguments
+                    # wrt CALL_FUNCTION there is one additional argument to skip
+                    called_function_name = instructions[ix - inst.arg - 2]
+                elif "CALL_FUNCTION_EX":
+                    raise NotImplementedError("instruction {} is not supported".format(inst.opname))
                 else:
                     raise NotImplementedError("instruction {} is not supported".format(inst.opname))
                 function_name = called_function_name.argval
@@ -69,7 +74,6 @@ def get_bytecode_tree(analyzed_function: 'function', ignore_not_found_function=T
     assert isinstance(bytecode_tree, list)
     return bytecode_tree
 
-# TODO: support CALL_FUNCTION_KW
 # TODO: support CALL_FUNCTION_EX
 # TODO: support MAKE_FUNCTION. it should allow nested functions
 # TODO: support inner imports. possible?

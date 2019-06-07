@@ -107,9 +107,32 @@ def builtin_d():
     print('hey', 'hi')
 
 
-def variable_kwargs_a(a, *args, **kwargs):
+def f_kwargs(a, *args, **kwargs):
     return kwargs
 
+
+def f_kwargs_b(a, *args, **kwargs):
+    return a
+
+
+def call_kwargs_a():
+    return f_kwargs(0, p1=10, p2=20)
+
+
+def call_kwargs_b():
+    return f_kwargs(0, p1=10, p2=20)
+
+
+def call_kwargs_c():
+    return f_kwargs(0, p1=10, p2=50)
+
+
+def call_kwargs_d():
+    return f_kwargs(0, p1=10, p3=20)
+
+
+def call_kwargs_e():
+    return f_kwargs_b(0, p1=10, p2=20)
 
 equal_functions_list = [
     (a, a),
@@ -121,6 +144,7 @@ equal_functions_list = [
     (variable_args_a, variable_args_b),
     (nested_b, nested_c),
     (builtin_a, builtin_b),
+    (call_kwargs_a, call_kwargs_b)
 ]
 
 different_functions_list = [
@@ -134,7 +158,10 @@ different_functions_list = [
     (nested_a, nested_b),
     (variable_args_a, variable_args_c),
     (builtin_a, builtin_c),
-    (builtin_a, builtin_d)
+    (builtin_a, builtin_d),
+    (call_kwargs_a, call_kwargs_c),
+    (call_kwargs_a, call_kwargs_d),
+    (call_kwargs_a, call_kwargs_e),
 ]
 
 
