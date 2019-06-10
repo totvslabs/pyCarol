@@ -9,6 +9,21 @@ def asbytes(i: int) -> bytes:
     return i.to_bytes(i.bit_length() // 8 + 1, 'little', signed=True)
 
 
+def get_consts_hash(f) -> bytes:
+    if hasattr(f, '__code__'):  # is function object
+        consts_list = list(f.__code__.co_consts)
+    elif hasattr(f, 'co_code'):  # is code object
+        consts_list = list(f.co_consts)
+    else:
+        raise TypeError
+
+    for i, v in enumerate(consts_list):
+        if isinstance(v, str) and "<locals>" in v:
+            consts_list[i] = v.split('.')[-1]
+    consts_tuple = tuple(consts_list)
+    return asbytes(hash(consts_tuple))
+
+
 number_of_parameters_in_build_ops = dict(
     BUILD_TUPLE=lambda x: x,
     BUILD_LIST=lambda x: x,
@@ -117,7 +132,7 @@ def _fetch_function_object(function_name: str, enclosing_function, local_functio
     Returns:
         func: function object
     """
-    # TODO: add support to Enclosed namespace
+
     if function_name in local_functions:  # Local Namespace
         return local_functions[function_name]
 
@@ -184,11 +199,12 @@ def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False)
         ]
 
         if hasattr(parent_function, '__code__'):  # parent_function is function object
+            consts = parent_function.__code__.co_consts
+
+
             function_code: list = b''.join([
                 parent_function.__code__.co_code,
-                asbytes(hash(
-                    parent_function.__code__.co_consts
-                )),
+                get_consts_hash(parent_function),
                 asbytes(hash(
                     dict(inspect.getmembers(parent_function))['__defaults__']
                 )),
@@ -196,9 +212,7 @@ def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False)
         elif hasattr(parent_function, 'co_code'):  # parent_function is code object
             function_code: list = b''.join([
                 parent_function.co_code,
-                asbytes(hash(
-                    parent_function.co_consts
-                )),
+                get_consts_hash(parent_function),
                 # missing default parameter information
                 # asbytes(hash(
                 #     dict(inspect.getmembers(parent_function))['__defaults__']
@@ -218,5 +232,6 @@ def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False)
     assert isinstance(bytecode_tree, list)
     return bytecode_tree
 
-# TODO: support MAKE_FUNCTION. it should allow nested functions
+# TODO: improve documentation
+# TODO: real scenario test case
 # TODO: support inner imports. possible?
