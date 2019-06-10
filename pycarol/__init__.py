@@ -22,5 +22,5 @@ from .query import Query
 from .storage import Storage
 from .carolina import Carolina
 from .tasks import Tasks
-from .data_models import DataModel
+from .data_models import DataModel, DataModelView
 from .logger import CarolHandler
