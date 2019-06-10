@@ -69,94 +69,152 @@ def _find_called_function(ix, inst, instructions):
             if opname in number_of_parameters_in_build_ops:  # increase offset
                 offset += number_of_parameters_in_build_ops[opname](arg)
         called_function_inst = instructions[ix - offset]
-        if VERBOSE:
-            print(called_function_inst, offset)
     else:
         raise NotImplementedError("instruction {} is not supported".format(inst.opname))
+    if VERBOSE:
+        print(called_function_inst)
+        print("offset: ", offset)
 
     function_name = called_function_inst.argval
     return function_name
 
 
-def _fetch_function_object(function_name, enclosing_function):
+def _find_defined_function(ix, inst, instructions):
+    """
+    When a MAKE_FUNCTION instruction is found, the name and code pointer can
+    be found on the two instructions above.
+    Args:
+        ix: index of MAKE_FUNCTION instruction
+        inst: MAKE_FUNCION instruction
+        instructions: list of instructions composing the whole bytecode
+
+    Returns: a dict, whose only key is the function name, and value is function code
+
+    """
+    assert inst.opname == "MAKE_FUNCTION"
+    assert ix >= 2
+
+    name = instructions[ix - 1].argval.split('.')[-1]  # discard context namespace
+    code = instructions[ix - 2].argval
+
+    return {name: code}
+
+
+def _fetch_function_object(function_name: str, enclosing_function, local_functions: dict):
     """
     function_name can be found in Local, Enclosed, Global and Builtin Namespace
-    Local and enclosed namespaces cannot be discovered in static analysis.
-    So there is limited support to nested functions like this one.
+    Local and Enclosed namespaces cannot be exactly inferred in static analysis.
+    For estimating local and enclosed namespaces, we do not consider conditional
+    branches(jumps) in the bytecode. All functions definitions encountered are
+    evaluated in the order they appear in the bytecode.
 
     Args:
-        function_name: string
-        enclosing_function: function object
+        function_name: name of called function
+        enclosing_function (function object or bytecode): context function in which
+        call function happens
+        local_functions: dict containing functions defined in enclosing_function
 
     Returns:
         func: function object
     """
+    # TODO: add support to Enclosed namespace
+    if function_name in local_functions:  # Local Namespace
+        return local_functions[function_name]
 
-    module_namespace = importlib.import_module(enclosing_function.__module__)
-    if hasattr(module_namespace, function_name):
-        func = getattr(module_namespace, function_name)  # Module (Global) Namespace
-    elif hasattr(builtins, function_name):
-        func = getattr(builtins, function_name)  # Builtin Namespace
-    else:
-        raise NotImplementedError("{} was neither found in module {} nor it is builtin.\
-        \nLocal and Enclosed namespaces are not supported".format(function_name, module_namespace))
-    return func
+    if hasattr(enclosing_function, '__module__'):
+        module_namespace = importlib.import_module(enclosing_function.__module__)
+        if hasattr(module_namespace, function_name):  # Module (Global) Namespace
+            return getattr(module_namespace, function_name)
+
+    if hasattr(builtins, function_name):  # Builtin Namespace
+        return getattr(builtins, function_name)
+    # else
+    raise NotImplementedError("{} was neither found in module {} nor it is builtin.\
+    \nLocal and Enclosed namespaces are not supported".format(function_name, module_namespace))
 
 
-def get_bytecode_tree(analyzed_function: 'function', ignore_not_found_function=True) -> list:
+def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False) -> list:
     """
 
     Args:
-        analyzed_function:
+        top_function:
         ignore_not_found_function:
 
     Returns:
 
     """
 
-    def _traverse_code(enclosed_function: 'function') -> list:
+    def _traverse_code(parent_function: 'function') -> list:
+
+        if hasattr(parent_function, '__name__'):
+            if hasattr(builtins, parent_function.__name__):
+                # dis cannot get instructions for builtins
+                # return function name instead of bytecode
+                return [parent_function.__name__]
+
         nonlocal code_set
-        inner_functions_set = set()
-        if hasattr(builtins, enclosed_function.__name__):
-            # dis cannot get instructions for builtins
-            # return function name instead of bytecode
-            return [enclosed_function.__name__]
-        instructions = list(dis.get_instructions(enclosed_function))
+        called_functions = set()
+        locally_defined_functions: dict = {}
+        instructions = list(dis.get_instructions(parent_function))
 
         for ix, inst in enumerate(instructions):
+            context = (ix, inst, instructions)
+
+            if inst.opname == "MAKE_FUNCTION":  # locally defined function
+                locally_defined_functions.update(_find_defined_function(*context))
+
             if "CALL_FUNCTION" in inst.opname:  # call_function op found
-                function_name = _find_called_function(ix, inst, instructions)
+                son_function_name = _find_called_function(*context)
                 try:
-                    func = _fetch_function_object(function_name, enclosed_function)
+                    son_function = _fetch_function_object(
+                        son_function_name, parent_function, locally_defined_functions
+                    )
                 except NotImplementedError as e:
                     if ignore_not_found_function:
                         continue
                     else:
                         raise e
+                if son_function not in code_set:
+                    code_set.add(son_function)
+                    called_functions.add(son_function)
 
-                if func not in code_set:
-                    code_set.add(func)
-                    inner_functions_set.add(func)
+        code_list = [
+            _traverse_code(f) for f in called_functions
+            # if f not in code_set  # analyze each function only once
+        ]
 
-        code_list = [_traverse_code(f) for f in inner_functions_set]
-        function_code = b''.join([
-            enclosed_function.__code__.co_code,
-            asbytes(hash(
-                enclosed_function.__code__.co_consts
-            )),
-            asbytes(hash(
-                dict(inspect.getmembers(enclosed_function))['__defaults__']
-            )),
-        ])
+        if hasattr(parent_function, '__code__'):  # parent_function is function object
+            function_code: list = b''.join([
+                parent_function.__code__.co_code,
+                asbytes(hash(
+                    parent_function.__code__.co_consts
+                )),
+                asbytes(hash(
+                    dict(inspect.getmembers(parent_function))['__defaults__']
+                )),
+            ])
+        elif hasattr(parent_function, 'co_code'):  # parent_function is code object
+            function_code: list = b''.join([
+                parent_function.co_code,
+                asbytes(hash(
+                    parent_function.co_consts
+                )),
+                # missing default parameter information
+                # asbytes(hash(
+                #     dict(inspect.getmembers(parent_function))['__defaults__']
+                # )),
+            ])
+        else:
+            raise TypeError("parent_function should be either function or code.")
 
         code_list.append(function_code)
         return code_list
 
-    if not hasattr(analyzed_function, '__code__'):
+    if not hasattr(top_function, '__code__'):
         raise TypeError('argument should be a function')
 
     code_set = set()  # memoization set
-    bytecode_tree = _traverse_code(analyzed_function)
+    bytecode_tree = _traverse_code(top_function)
     assert isinstance(bytecode_tree, list)
     return bytecode_tree
 

@@ -79,6 +79,13 @@ def nested_c():
     return _nested()
 
 
+def nested_d():
+    def _nested(x=5, y=80):
+        print(kw)
+        return (100 + x + y)
+
+    return _nested(y=0, x=7)
+
 def variable_args_a(*args):
     return (args)
 
@@ -226,4 +233,3 @@ def test_equal_functions(f1, f2):
 @mark.parametrize("f1,f2", different_functions_list)
 def test_different_functions(f1, f2):
     assert get_bytecode_tree(f1) != get_bytecode_tree(f2)
-
