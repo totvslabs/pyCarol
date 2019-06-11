@@ -226,13 +226,15 @@ class Carol:
                     return {}
                 return json.loads(response.text)
 
-            elif (response.reason == 'Unauthorized') and  isinstance(self.auth,PwdAuth):
+            elif (response.reason == 'Unauthorized') and isinstance(self.auth,PwdAuth):
+                if response.json().get('possibleResponsibleField') == 'password':
+                    raise Exception(response.text)
                 self.auth.get_access_token()  #It will refresh token if Unauthorized
                 __count+=1
                 if __count<5: #To avoid infinity loops
                     continue
                 else:
-                    raise Exception('Too many retries to refresh token.\n',response.text)
+                    raise Exception('Too many retries to refresh token.\n', response.text)
             raise Exception(response.text)
 
     def issue_api_key(self):
