@@ -238,12 +238,35 @@ class Carol:
             raise Exception(response.text)
 
     def issue_api_key(self):
+        """
+
+        Create an API key for a given connector.
+
+        Returns: `dict`
+            Dictionary with the API key.
+
+        """
         resp = self.call_api('v2/apiKey/issue', data={
             'connectorId': self.connector_id
         }, content_type='application/x-www-form-urlencoded')
         return resp
 
     def api_key_details(self, api_key, connector_id):
+
+        """
+
+        Display information about the API key.
+
+        Args:
+            api_key: `str`
+                Carol's api key
+            connector_id: `str`
+                Connector Id which API key was created.
+
+        Returns: `dict`
+            Dictionary with API key information.
+
+        """
 
         resp = self.call_api('v2/apiKey/details',
                              params = {"apiKey": api_key,
@@ -252,6 +275,16 @@ class Carol:
         return resp
 
     def api_key_revoke(self, connector_id):
+
+        """
+
+        Args:
+            connector_id: `str`
+                Connector Id which API key was created.
+        Returns: `dict`
+            Dictionary with API request response.
+
+        """
 
         resp = self.call_api('v2/apiKey/revoke', method='DELETE',
                              content_type='application/x-www-form-urlencoded',
