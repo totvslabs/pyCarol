@@ -227,7 +227,7 @@ class Carol:
                 return json.loads(response.text)
 
             elif (response.reason == 'Unauthorized') and isinstance(self.auth,PwdAuth):
-                if response.json().get('possibleResponsibleField') == 'password':
+                if response.json().get('possibleResponsibleField') in ['password', 'userLogin']:
                     raise Exception(response.text)
                 self.auth.get_access_token()  #It will refresh token if Unauthorized
                 __count+=1
