@@ -99,6 +99,9 @@ class DataModel:
         :return:
         """
 
+        if not columns: #if an empty list was sent.
+            columns = None
+
         if isinstance(columns, str):
             columns = [columns]
 
@@ -419,8 +422,8 @@ class DataModel:
             result = self.carol.call_api(url_filter, data=json_query, params=query_params)
             print(f"To go: {c + 1}/{len(chunks)}")
 
-    def send_data(self, data, dm_name=None, dm_id=None, step_size=100, gzip=False, delete_old_records=False,
-                  print_stats=True, max_workers=None, async_send=False):
+    def send_data(self, data, dm_name=None, dm_id=None, step_size=500, gzip=False, delete_old_records=False,
+                  print_stats=True, max_workers=2, async_send=False):
 
         """
         :param data: pandas data frame, json.
@@ -429,7 +432,7 @@ class DataModel:
             Data model name
         :param dm_id:  `str`, default `None`
             Data model id
-        :param step_size: `int`, default `100`
+        :param step_size: `int`, default `500`
             Number of records to be sent in each iteration. Max size for each batch is 10MB
         :param print_stats: `bool`, default `True`
             If print the status
@@ -437,7 +440,7 @@ class DataModel:
             If send each batch as a gzip file.
         :param delete_old_records: `bool`, default `False`
             Delete previous records in the data model.
-        :param max_workers: `int`, default `None`
+        :param max_workers: `int`, default `2`
             To be used with `async_send=True`. Number of threads to use when sending.
         :param async_send: `bool`, default `False`
             To use async to send the data. This is much faster than a sequential send.
@@ -497,7 +500,9 @@ class DataModel:
                                                step_size=step_size,
                                                compress_gzip=self.gzip):
 
-                self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
+                self.carol.call_api(url, data=data_json, extra_headers=extra_headers,
+                                    content_type=content_type, status_forcelist=[502, 429],
+                                    method_whitelist=frozenset(['POST']))
                 if print_stats:
                     print('{}/{} sent'.format(cont, data_size), end='\r')
 

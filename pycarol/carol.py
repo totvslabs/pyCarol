@@ -13,21 +13,35 @@ from . import __CONNECTOR_PYCAROL__
 class Carol:
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False):
         """
-        This class handle all Carol`s API calls
-        It will handle all API calls, for a given authentication method.
-        :param domain: `str`
-            Teanant name
-        :param app_name: `str`
-            Carol app name.
-        :param auth: `PwdAuth` or `ApiKeyAuth` object
-            Auth Carol object to handle authentication
-        :param connector_id: `str`, default `__CONNECTOR_PYCAROL__`
-            Connector Id
-        :param port: `int`, default 443
-            Port to be used (when running locally)
-        :param verbose: `bool`, default `False
-            If True will print the header, method and URL of each API call.
+        This class handle all Carol`s API calls It will handle all API calls,
+        for a given authentication method. :param domain: `str`.
+
+
+        Args:
+            domain: `str`. default `None`.
+                Tenant name. e.x., domain.carol.ai
+            app_name: `str`. default `None`.
+                Carol app name.
+            auth: `PwdAuth` or `ApiKeyAuth`.
+                object Auth Carol object to handle authentication
+            connector_id: `str` , default `__CONNECTOR_PYCAROL__`.
+                Connector Id
+            port: `int` , default 443.
+                Port to be used (when running locally it could change)
+            verbose: `bool` , default `False`.
+                If True will print the header, method and URL of each API call.
+
+        OBS:
+            In case all parameters are `None`, pycarol will try yo find their values in the environment variables.
+            The values are:
+                 1. `CAROLTENANT` for domain
+                 2. `CAROLAPPNAME` for app_name
+                 3. `CAROLAPPOAUTH` for auth
+                 4. `CAROLCONNECTORID` for connector_id
+
         """
+
+
         self.legacy_mode = False
         self.legacy_bucket = 'carol-internal'
 
@@ -38,18 +52,23 @@ class Carol:
             app_name = os.getenv('CAROLAPPNAME')
             auth_token = os.getenv('CAROLAPPOAUTH')
             connector_id = os.getenv('CAROLCONNECTORID')
-            assert (domain is not None) and (app_name is not None) and (auth_token is not None) and (connector_id is not None),\
+            assert ((domain is not None) and (app_name is not None) and (auth_token is not None)
+                    and (connector_id is not None),\
                     "One of the following env variables are missing:\n " \
-                    f"CAROLTENANT: {domain}\nCAROLAPPNAME: {app_name}\nCAROLAPPOAUTH: {auth}\nCAROLCONNECTORID: {connector_id}\n"
+                    f"CAROLTENANT: {domain}\nCAROLAPPNAME: {app_name}\nCAROLAPPOAUTH: "
+                    f"{auth}\nCAROLCONNECTORID: {connector_id}\n")
             auth = ApiKeyAuth(auth_token)
 
 
         if connector_id is None:
             connector_id =  __CONNECTOR_PYCAROL__
 
+
+        #TODO: the `CAROLUSER` and `CAROLPWD` are not being used.
         if domain is None or app_name is None or auth is None:
             raise ValueError("domain, app_name and auth must be specified as parameters, in the app_config.json file " +
-                             "or in the environment variables CAROLTENANT, CAROLAPPNAME, CAROLAPPOAUTH OR CAROLUSER+CAROLPWD and " +
+                             "or in the environment variables CAROLTENANT, CAROLAPPNAME, CAROLAPPOAUTH" +
+                             " OR CAROLUSER+CAROLPWD and " +
                              "CAROLCONNECTORID")
 
         self.domain = domain
@@ -64,33 +83,33 @@ class Carol:
         self.response = None
 
 
-    def build_ws_url(self, path):
-        """
-        Return the URS to be used with websocket and queries.
-        :param path: `str`
-            API and point.
-        :return: str
-        """
-        return 'wss://{}.carol.ai:{}/websocket/{}'.format(self.domain, self.port, path)
-
     @staticmethod
     def _retry_session(retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524),
                        method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE'])):
+
         """
-        :param retries: `int`, default `5`
-            Number of retries for the API all
-        :param session: Session object defaut `None`
-            It allows you to persist certain parameters across requests.
-        :param backoff_factor: `float`, default `0.5`
-            Backoff factor to apply between attempts. It will
-            sleep for: {backoff factor} * (2 ^ ({retries} - 1)) seconds
-        :param status_forcelist: `iterable`, default (500, 502, 503, 504, 524)
-            A set of integer HTTP status codes that we should force a retry on.
-             A retry is initiated if the request method is in method_whitelist and the response status code is in status_forcelist.
-        :param method_whitelist: `iterable`, default frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']))
-            Set of uppercased HTTP method verbs that we should retry on.
-        :return: session object
+        Static method used to handle retries between calls.
+
+
+        Args:
+            retries: `int` , default `5`
+                Number of retries for the API calls
+            session: Session object dealt `None`
+                It allows you to persist certain parameters across requests.
+            backoff_factor: `float` , default `0.5`
+                Backoff factor to apply between  attempts. It will sleep for:
+                        {backoff factor} * (2 ^ ({retries} - 1)) seconds
+            status_forcelist: `iterable` , default (500, 502, 503, 504, 524).
+                A set of integer HTTP status codes that we should force a retry on.
+                A retry is initiated if the request method is in method_whitelist and the response status code is in
+                status_forcelist.
+            method_whitelist: `iterable` , default frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']))
+                Set of uppercased HTTP method verbs that we should retry on.
+
+        Returns:
+            :class:`requests.Section`
         """
+
         session = session or requests.Session()
         retry = Retry(
             total=retries,
@@ -105,30 +124,55 @@ class Carol:
         session.mount('https://', adapter)
         return session
 
-    def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json',retries=5,
+    def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json', retries=5,
                  session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524), downloadable=False,
                  method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']), errors='raise',
                  extra_headers=None,
                  **kwds):
         """
-        :param path:
-        :param method:
-        :param data:
-        :param auth:
-        :param params:
-        :param content_type:
-        :param retries:
-        :param session:
-        :param backoff_factor:
-        :param status_forcelist:
-        :param downloadable:
-        :param method_whitelist:
-        :param extra_headers:
-        :param errors : {‘ignore’, ‘raise’}, default ‘raise’
-                If ‘raise’, then invalid request will raise an exception
-                If ‘ignore’, then invalid request will return the request response
-        :param kwds:
-        :return:
+        This method handles all the API calls.
+
+
+        Args:
+            path: `str`.
+                API URI path. e.x.  v2/staging/schema
+            method: 'str', default `None`.
+                Set of uppercased HTTP method verbs that we should call on.
+            data: 'dict`, default `None`.
+                Dictionary, list of tuples, bytes, or file-like object to send in
+                the body of the request.
+            auth: :class: `pycarol.ApiKeyAuth` or `pycarol.PwdAuth`
+                Auth type to be used within the API's calls.
+            params: (optional) Dictionary, list of tuples or bytes to send
+                     in the query string for the :class:`requests.Request`.
+            content_type: `str`, default 'application/json'
+                Content type for the api call
+            retries: `int` , default `5`
+                Number of retries for the API calls
+            session: :class `requests.Session` object dealt `None`
+                It allows you to persist certain parameters across requests.
+            backoff_factor: `float` , default `0.5`
+                Backoff factor to apply between  attempts. It will sleep for:
+                        {backoff factor} * (2 ^ ({retries} - 1)) seconds
+            status_forcelist: `iterable` , default (500, 502, 503, 504, 524).
+                A set of integer HTTP status codes that we should force a retry on.
+                A retry is initiated if the request method is in method_whitelist and the response status code is in
+                status_forcelist.
+            downloadable: `bool` default `False`.
+                If the request will return a file to donwload.
+            method_whitelist: `iterable` , default frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']))
+                Set of uppercased HTTP method verbs that we should retry on.
+            errors: {‘ignore’, ‘raise’}, default ‘raise’
+                If ‘raise’, then invalid request will raise an exception If ‘ignore’,
+                then invalid request will return the request response
+            extra_headers: `dict` default `None`
+                extra headers to be sent.
+            kwds: `dixt` default `None`
+                Extra parameters to be sent to :class: `requests.request`
+
+        Rerturn:
+            Dict with API response.
+
         """
 
         extra_headers = extra_headers or {}
@@ -182,13 +226,15 @@ class Carol:
                     return {}
                 return json.loads(response.text)
 
-            elif (response.reason == 'Unauthorized') and  isinstance(self.auth,PwdAuth):
+            elif (response.reason == 'Unauthorized') and isinstance(self.auth,PwdAuth):
+                if response.json().get('possibleResponsibleField') in ['password', 'userLogin']:
+                    raise Exception(response.text)
                 self.auth.get_access_token()  #It will refresh token if Unauthorized
                 __count+=1
                 if __count<5: #To avoid infinity loops
                     continue
                 else:
-                    raise Exception('Too many retries to refresh token.\n',response.text)
+                    raise Exception('Too many retries to refresh token.\n', response.text)
             raise Exception(response.text)
 
     def issue_api_key(self):

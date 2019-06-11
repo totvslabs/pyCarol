@@ -5,7 +5,8 @@ import gzip
 import pandas as pd
 import botocore
 from .. import __TEMP_STORAGE__
-
+from ..utils.miscellaneous import prettify_path, _attach_path, _FILE_MARKER
+from collections import defaultdict
 
 class StorageAWSS3:
     def __init__(self, carol, carolina):
@@ -242,3 +243,42 @@ class StorageAWSS3:
         br = [{'storage_space': 'staging_rejected', 'name': i.key} for i in parq_stag_rejected if i.key.endswith('.parquet')]
 
         return bs + bm + br
+
+
+    def files_storage_list(self, app_name=None, all_apps=False,  print_paths=False):
+        """
+
+        It will return all files in Carol data Storage (CDS).
+
+
+        :param app_name: `str`, default `None`
+            app_name to filter output. If 'None' it will get value used to initialize `Carol()`
+        :param all_apps: `bool`, default `False`
+            Get all files in CDS.
+        :param print_paths: `bool`, default `False`
+            Print the tree structure of the files in CDS
+        :return: list of files paths.
+        """
+
+        split = f"storage/{self.carol.tenant['mdmId']}/"
+        if all_apps:
+            prefix = f"storage/{self.carol.tenant['mdmId']}/"
+
+        elif app_name is None:
+            app_name = self.carol.app_name
+            prefix = f"storage/{self.carol.tenant['mdmId']}/{app_name}/files/"
+
+        else:
+            prefix = f"storage/{self.carol.tenant['mdmId']}/{app_name}/files/"
+
+        self._init_if_needed()
+
+        files = list(self.bucket.objects.filter(Prefix=prefix))
+        files = [i.key.split(split)[1] for i in files]
+
+        if print_paths:
+            main_dict = defaultdict(dict, ((_FILE_MARKER, []),))
+            for line in files:
+                _attach_path(line, main_dict)
+            prettify_path(main_dict)
+        return files
