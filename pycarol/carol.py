@@ -141,22 +141,34 @@ class Carol:
             data: 'dict`, default `None`.
                 Dictionary, list of tuples, bytes, or file-like object to send in
                 the body of the request.
-            auth:
+            auth: :class: `pycarol.ApiKeyAuth` or `pycarol.PwdAuth`
+                Auth type to be used within the API's calls.
             params: (optional) Dictionary, list of tuples or bytes to send
                      in the query string for the :class:`requests.Request`.
             content_type: `str`, default 'application/json'
                 Content type for the api call
-            retries:
-            session:
-            backoff_factor:
-            status_forcelist:
-            downloadable:
-            method_whitelist:
+            retries: `int` , default `5`
+                Number of retries for the API calls
+            session: :class `requests.Session` object dealt `None`
+                It allows you to persist certain parameters across requests.
+            backoff_factor: `float` , default `0.5`
+                Backoff factor to apply between  attempts. It will sleep for:
+                        {backoff factor} * (2 ^ ({retries} - 1)) seconds
+            status_forcelist: `iterable` , default (500, 502, 503, 504, 524).
+                A set of integer HTTP status codes that we should force a retry on.
+                A retry is initiated if the request method is in method_whitelist and the response status code is in
+                status_forcelist.
+            downloadable: `bool` default `False`.
+                If the request will return a file to donwload.
+            method_whitelist: `iterable` , default frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']))
+                Set of uppercased HTTP method verbs that we should retry on.
             errors: {‘ignore’, ‘raise’}, default ‘raise’
                 If ‘raise’, then invalid request will raise an exception If ‘ignore’,
                 then invalid request will return the request response
-            extra_headers:
-            kwds:
+            extra_headers: `dict` default `None`
+                extra headers to be sent.
+            kwds: `dixt` default `None`
+                Extra parameters to be sent to :class: `requests.request`
 
         Rerturn:
             Dict with API response.
