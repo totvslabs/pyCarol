@@ -22,9 +22,6 @@ from .targets import (
 from pycarol.luigi_extension.targets.deprecated_targets import PicklePyCarolTarget, PytorchPyCarolTarget, \
     KerasPyCarolTarget, PickleLocalTarget, KerasLocalTarget, PytorchLocalTarget, JsonLocalTarget, FeatherLocalTarget
 
-from .taskviewer.taskviewer import (
-    TaskViewer,
-)
 
 from pycarol.luigi_extension.taskviewer.visualization import (
     Visualization
