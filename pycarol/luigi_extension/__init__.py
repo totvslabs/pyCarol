@@ -17,27 +17,15 @@ from .targets import (
     PytorchTarget,
     KerasTarget,
     LocalTarget,
-    PickleLocalTarget,
-    KerasLocalTarget,
     DummyTarget,
-    JsonLocalTarget,
-    FeatherLocalTarget,
-    PytorchLocalTarget,
-    PicklePyCarolTarget,
-    PytorchPyCarolTarget,
-    KerasPyCarolTarget,
 )
+from pycarol.luigi_extension.targets.deprecated_targets import PicklePyCarolTarget, PytorchPyCarolTarget, \
+    KerasPyCarolTarget, PickleLocalTarget, KerasLocalTarget, PytorchLocalTarget, JsonLocalTarget, FeatherLocalTarget
 
-from .taskviewer import (
+from .taskviewer.taskviewer import (
     TaskViewer,
 )
 
-from .visualization import (
+from pycarol.luigi_extension.taskviewer.visualization import (
     Visualization
 )
-
-# from .dockertask import (
-#     EasyDockerTask
-# )
-
-# from .kubernetestask import KubernetesJobTask
