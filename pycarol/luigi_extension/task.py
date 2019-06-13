@@ -1,8 +1,8 @@
 import luigi
 from luigi import parameter, six
 from luigi.task import flatten
-from .visualization import Visualization
-from .targets import PickleTarget, DummyTarget
+from pycarol.luigi_extension.taskviewer.visualization import Visualization
+from .targets import PickleTarget
 import logging
 import warnings
 
