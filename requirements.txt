@@ -28,3 +28,4 @@ tqdm==4.28.1
 urllib3
 missingno==0.4.1
 deprecated
+pytest
