@@ -29,5 +29,5 @@ def test_task_run():
     T4(**params).buildme()
 
 def test_get_dag_from_task():
-    d = get_dag_from_task(T5(**params))
+    d = get_dag_from_task([T5(**params)],luigi_get_sons)
     print(d)

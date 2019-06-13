@@ -3,32 +3,43 @@ from pycarol.luigi_extension.task import Task
 
 from typing import Tuple
 
-
-def get_dag_from_task(task_list: list) -> Tuple[dict, list]:
+def luigi_get_sons(task) -> list:
     """
+    Returns a list of required tasks.
     Args:
-        task: list of luigi task instance with parameters defined
+        task: luigi Task
 
     Returns:
-        dag: dictionary encoding a DAG data structure. nodes in this DAG are
-        integers.
-        nodes_list: list of tasks. the nodes numbers in dag should be used as
-        indexes of this list.
-    """
-    if isinstance(task_list,Task):
-        task_list = [task_list]
+        l: list of luigi Task
 
-    if not isinstance(task_list,list):
-        raise TypeError
+    """
+    return task.requires()
+
+def get_dag_from_task(top_nodes: list, get_sons: 'function' = None) -> dict:
+    """
+    Extract a Direct Acyclic Graph structure of a pipeline using 
+    get_sons_method to fetch sons nodes
+    
+    Args:
+        task: list of top tasks/nodes
+        get_sons: method to extract sons node (required tasks) of a 
+        given node
+
+    Returns:
+        dag: dictionary encoding a DAG data structure.
+ 
+    """
+    assert isinstance(top_nodes,list)
     dag = {}
+
     def _traverse_tree(task_list):
         # breadth first search
-        nonlocal dag
+        nonlocal dag, get_sons
 
         # add new nodes
         for t in task_list:
             if t not in dag:
-                dag[t] = t.requires()
+                dag[t] = get_sons(t)
 
         # get all nodes of this level
         sons_list = []
@@ -40,7 +51,8 @@ def get_dag_from_task(task_list: list) -> Tuple[dict, list]:
         # recursion level wise
         if sons_list:
             _traverse_tree(sons_list)
-    _traverse_tree(task_list)
+
+    _traverse_tree(top_nodes)
     return dag
 
 
