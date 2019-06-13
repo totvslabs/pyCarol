@@ -52,11 +52,13 @@ class Carol:
             app_name = os.getenv('CAROLAPPNAME')
             auth_token = os.getenv('CAROLAPPOAUTH')
             connector_id = os.getenv('CAROLCONNECTORID')
-            assert ((domain is not None) and (app_name is not None) and (auth_token is not None)
+            assert (domain is not None) and (app_name is not None) and (
+                        auth_token is not None)
                     and (connector_id is not None),\
                     "One of the following env variables are missing:\n " \
-                    f"CAROLTENANT: {domain}\nCAROLAPPNAME: {app_name}\nCAROLAPPOAUTH: "
-                    f"{auth}\nCAROLCONNECTORID: {connector_id}\n")
+                    f"CAROLTENANT: {domain}\nCAROLAPPNAME: {app_name" \
+                    f"}\nCAROLAPPOAUTH: "
+            f"{auth}\nCAROLCONNECTORID: {connector_id}\n"
             auth = ApiKeyAuth(auth_token)
 
 
