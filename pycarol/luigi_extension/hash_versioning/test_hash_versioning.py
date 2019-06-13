@@ -1,5 +1,5 @@
 from pytest import mark
-from ..hash_versioning import get_bytecode_tree, _find_called_function
+from pycarol.luigi_extension.hash_versioning import get_bytecode_tree, _find_called_function
 
 
 def a(x):
