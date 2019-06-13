@@ -3,7 +3,7 @@ import importlib
 import builtins
 import inspect
 
-VERBOSE = True
+VERBOSE = False  # dev parameter
 
 def asbytes(i: int) -> bytes:
     return i.to_bytes(i.bit_length() // 8 + 1, 'little', signed=True)
@@ -231,6 +231,46 @@ def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False)
     bytecode_tree = _traverse_code(top_function)
     assert isinstance(bytecode_tree, list)
     return bytecode_tree
+
+
+def flat_list(tree: list) -> list:
+    """
+    Recursively unnest a nested list
+    Args:
+        tree: nested lists of unlimited depth
+
+    Returns:
+        l: flat list
+
+    """
+    l = []
+    for node in tree:
+        if isinstance(node, list):
+            l += flat_list(node)
+        else:
+            l.append(node)
+    return l
+
+
+def get_function_hash(f: 'function', ignore_not_found_function=False) -> int:
+    """
+    Module main function. It returns a proper hash for the given function.
+    Args:
+        f: function to be hashed
+        ignore_not_found_function: setting to True will ignore some errors
+        and compute a hash anyway. Some part of the code may be ignored.
+
+    Returns:
+        h: a hash number for the given function
+
+    """
+    bytecode_nested_list = get_bytecode_tree(f, ignore_not_found_function)
+    bytecode_flat_list = flat_list(bytecode_nested_list)
+    h = hash(tuple(bytecode_flat_list))
+    return h
+
+
+
 
 # TODO: improve documentation
 # TODO: real scenario test case
