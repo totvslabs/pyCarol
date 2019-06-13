@@ -3,10 +3,9 @@ import importlib
 import builtins
 import inspect
 
-VERBOSE = False  # dev parameter
+from pycarol.luigi_extension.utils import int_to_bytes, flat_list
 
-def asbytes(i: int) -> bytes:
-    return i.to_bytes(i.bit_length() // 8 + 1, 'little', signed=True)
+VERBOSE = False  # dev parameter
 
 
 def get_consts_hash(f) -> bytes:
@@ -21,7 +20,7 @@ def get_consts_hash(f) -> bytes:
         if isinstance(v, str) and "<locals>" in v:
             consts_list[i] = v.split('.')[-1]
     consts_tuple = tuple(consts_list)
-    return asbytes(hash(consts_tuple))
+    return int_to_bytes(hash(consts_tuple))
 
 
 number_of_parameters_in_build_ops = dict(
@@ -205,7 +204,7 @@ def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False)
             function_code: list = b''.join([
                 parent_function.__code__.co_code,
                 get_consts_hash(parent_function),
-                asbytes(hash(
+                int_to_bytes(hash(
                     dict(inspect.getmembers(parent_function))['__defaults__']
                 )),
             ])
@@ -231,25 +230,6 @@ def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False)
     bytecode_tree = _traverse_code(top_function)
     assert isinstance(bytecode_tree, list)
     return bytecode_tree
-
-
-def flat_list(tree: list) -> list:
-    """
-    Recursively unnest a nested list
-    Args:
-        tree: nested lists of unlimited depth
-
-    Returns:
-        l: flat list
-
-    """
-    l = []
-    for node in tree:
-        if isinstance(node, list):
-            l += flat_list(node)
-        else:
-            l.append(node)
-    return l
 
 
 def get_function_hash(f: 'function', ignore_not_found_function=False) -> int:
