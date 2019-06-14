@@ -1,5 +1,5 @@
-from pytest import mark
 from pycarol.luigi_extension.task import Task,inherit_list
+from pycarol.luigi_extension.utils import build_dag
 from .taskviewer import *
 
 class T1(Task):
@@ -29,5 +29,5 @@ def test_task_run():
     T4(**params).buildme()
 
 def test_get_dag_from_task():
-    d = get_dag_from_task([T5(**params)],luigi_get_sons)
+    d = build_dag([T5(**params)], luigi_get_sons)
     print(d)

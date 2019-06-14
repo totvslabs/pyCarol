@@ -1,11 +1,8 @@
-import numpy as np
-from pycarol.luigi_extension.task import Task
-
-from typing import Tuple
+from pycarol.luigi_extension.utils import build_dag
 
 def luigi_get_sons(task) -> list:
     """
-    Returns a list of required tasks.
+    Returns a list of required tasks. This is used in build_dag
     Args:
         task: luigi Task
 
@@ -15,44 +12,30 @@ def luigi_get_sons(task) -> list:
     """
     return task.requires()
 
-def get_dag_from_task(top_nodes: list, get_sons: 'function' = None) -> dict:
+
+def find_root_in_dag(dag: dict) -> list:
     """
-    Extract a Direct Acyclic Graph structure of a pipeline using 
-    get_sons_method to fetch sons nodes
-    
+    Search in a direct acyclic graph all nodes without incoming edges
     Args:
-        task: list of top tasks/nodes
-        get_sons: method to extract sons node (required tasks) of a 
-        given node
+        dag: dictionary encoding a DAG
 
     Returns:
-        dag: dictionary encoding a DAG data structure.
- 
+        root_nodes: list of root nodes
     """
-    assert isinstance(top_nodes,list)
-    dag = {}
 
-    def _traverse_tree(task_list):
-        # breadth first search
-        nonlocal dag, get_sons
+def get_dag_node_level(dag: dict, ) -> dict:
+    """
+    Returns a dict, whose keys are nodes found in dag and values are the
+    depth of the node. Root nodes have value 0.
+    Args:
+        dag: dictionary encoding a DAG
 
-        # add new nodes
-        for t in task_list:
-            if t not in dag:
-                dag[t] = get_sons(t)
-
-        # get all nodes of this level
-        sons_list = []
-        for k,v in dag.items():
-            for vi in v:
-                if vi not in dag:
-                    sons_list.append(vi)
-
-        # recursion level wise
-        if sons_list:
-            _traverse_tree(sons_list)
-
-    _traverse_tree(top_nodes)
-    return dag
-
-
+    Returns:
+        levels: dict
+    """
+    root_nodes = find_root_in_dag(dag)
+    self.dag_node_level[node] = max(level, self.dag_node_level[node])
+    if node not in self.dag:
+        return
+    for n_i in self.dag[node]:
+        self.set_dag_node_level(n_i, level + 1)
