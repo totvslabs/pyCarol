@@ -42,7 +42,7 @@ def build_dag(top_nodes: list, get_sons: 'function' = None) -> dict:
     assert isinstance(top_nodes,list)
     dag = {}
 
-    def _traverse_tree(task_list):
+    def build_tree(task_list):
         # breadth first search
         nonlocal dag, get_sons
 
@@ -60,7 +60,106 @@ def build_dag(top_nodes: list, get_sons: 'function' = None) -> dict:
 
         # recursion level wise
         if sons_list:
-            _traverse_tree(sons_list)
+            build_tree(sons_list)
 
-    _traverse_tree(top_nodes)
+    build_tree(top_nodes)
     return dag
+
+
+def find_root_in_dag(dag: dict) -> list:
+    """
+    Search in a direct acyclic graph all nodes without incoming edges
+    Args:
+        dag: dictionary encoding a DAG
+
+    Returns:
+        root_nodes: list of root nodes
+    """
+    candidates = [k for k in dag]
+    for k, sons_list in dag.items():
+        for it in sons_list:
+            if it in candidates:
+                candidates.remove(it)
+    root_nodes = candidates
+    return root_nodes
+
+
+def get_dag_node_level(dag: dict, ) -> dict:
+    """
+    Returns a dict, whose keys are nodes found in dag and values are the
+    depth of the node. Root nodes have value 0.
+    Args:
+        dag: dictionary encoding a DAG
+
+    Returns:
+        levels: dict
+    """
+    # levels are initialized to 0.
+    # all unreachable nodes are considered to be root nodes
+    levels = {}
+    for k in dag:
+        levels[k] = 0
+
+    root_nodes = find_root_in_dag(dag)
+
+    for level, nodes_list in enumerate(breadth_first_search(dag,root_nodes)):
+        for node in nodes_list:
+            levels[node] = level
+
+    return levels
+
+
+def breadth_first_search(dag: dict, starting_nodes: list, f: 'function'=None,
+                         *args,
+                         **kwargs):
+    """
+    Generator that traverse the DAG in breadth first search mode starting in
+    given nodes. At each node, execute the function f(node,*args,**kwargs).
+    After executing the function, it returns a list of nodes of the current
+    depth.
+    Args:
+        dag: dict encoding the DAG
+        starting_nodes:
+        f: function to be executed at each node. it receives at least one
+        argument
+
+    Returns:
+        None
+    """
+    yield starting_nodes
+
+    while starting_nodes:
+        if f is not None:
+            # visit nodes
+            for n in starting_nodes:
+                f(n, *args, **kwargs)
+
+        # get all nodes of this level
+        sons_list = [n for k in starting_nodes for n in dag[k]]
+
+        yield sons_list
+
+        starting_nodes = sons_list
+
+
+def get_reverse_dag(dag: dict) -> dict:
+    """
+    Returns a DAG with the same nodes as the original one, but with edges
+    direction reversed. Root nodes become leaf nodes and vice-versa.
+    Args:
+        dag: dict encoding a DAG
+
+    Returns:
+        rev_dag: dict encoding a DAG
+    """
+    rev_dag = {}
+    for source, v in dag.items():
+        if source not in rev_dag:
+            rev_dag[source] = []
+        for target in v:
+            if target in rev_dag:
+                rev_dag[target].append(source)
+            else:
+                rev_dag[target] = [source]
+
+    return rev_dag
