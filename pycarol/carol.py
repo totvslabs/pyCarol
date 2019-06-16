@@ -184,6 +184,10 @@ class Carol:
             else:
                 method = 'POST'
 
+        met_list = ['HEAD', 'TRACE', 'GET', 'PUT','POST', 'OPTIONS', 'PATCH',
+                    'DELETE', 'CONNECT' ]
+        assert method in met_list, f"API method must be {met_list}"
+
         headers = {'accept': 'application/json'}
         if auth:
             self.auth.authenticate_request(headers)
