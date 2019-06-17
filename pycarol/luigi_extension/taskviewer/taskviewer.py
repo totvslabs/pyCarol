@@ -69,21 +69,6 @@ def edges_layout(dag:dict, layout:dict) -> list:
             edges.append((layout[source_node],layout[target_node]),)
     return edges
 
-def make_layout(dag:dict) -> tuple:
-    """
-    wrapper around nodes_layout and edges_layout functions.
-    Args:
-        dag: dict encoding a DAG
-
-    Returns:
-        nodes: nodes_layout output
-        edges: edges_layout output
-
-    """
-    nodes = nodes_layout(dag)
-    edges = edges_layout(dag,nodes)
-    return nodes, edges
-
 def _get_task_id(t):
     return t.task_id()
 
@@ -122,6 +107,7 @@ def make_nodes_data_source(nodes_layout) -> dict:
     """
 
     data = dict(
+        task=[],
         x=[],
         y=[],
         task_id=[],
@@ -132,6 +118,7 @@ def make_nodes_data_source(nodes_layout) -> dict:
         hash_version=[],
     )
     for k,(x,y) in nodes_layout:
+        data['task'].append(k)
         data['x'].append[x]
         data['y'].append[y]
         data['task_id'].append[_get_task_id(k)]
@@ -145,18 +132,23 @@ def make_nodes_data_source(nodes_layout) -> dict:
 
 def make_edges_data_source(edges_layout) -> dict:
     """
-    Creates a bokeh compatible data source encoding edges plotting
+    Creates a bokeh segment glyph compatible data source encoding edges plotting
     properties. Returns this data source in bokeh compatible dict format
     Args:
         edges_layout: list containing edges coordinates.
 
     Returns:
-        data_source: bokeh compatible dict containing the columns: edges
+        data_source: bokeh segment glyph compatible dict containing the
+        columns: x0, y0, x1, y1
 
     """
 
-    data = dict(
-        edges = edges_layout,
-    )
+    data = dict()
+    for ((x0,y0,),(x1,y1)) in edges_layout:
+        data['x0'] = x0
+        data['y0'] = y0
+        data['x1'] = x1
+        data['y1'] = y1
+
     return data
 
