@@ -100,16 +100,14 @@ def get_dag_node_level(dag: dict, ) -> dict:
     for k in dag:
         levels[k] = 0
 
-    root_nodes = find_root_in_dag(dag)
-
-    for level, nodes_list in enumerate(breadth_first_search(dag,root_nodes)):
+    for level, nodes_list in enumerate(breadth_first_search(dag)):
         for node in nodes_list:
             levels[node] = level
 
     return levels
 
 
-def breadth_first_search(dag: dict, starting_nodes: list, f: 'function'=None,
+def breadth_first_search(dag: dict, starting_nodes = [], f: 'function'=None,
                          *args,
                          **kwargs):
     """
@@ -119,13 +117,16 @@ def breadth_first_search(dag: dict, starting_nodes: list, f: 'function'=None,
     depth.
     Args:
         dag: dict encoding the DAG
-        starting_nodes:
+        starting_nodes: list of starting nodes. if empty all root nodes are
+        used.
         f: function to be executed at each node. it receives at least one
         argument
 
     Returns:
         None
     """
+    if not starting_nodes:
+        starting_nodes = find_root_in_dag(dag)
     yield starting_nodes
 
     while starting_nodes:
