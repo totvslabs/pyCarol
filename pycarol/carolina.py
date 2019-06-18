@@ -44,6 +44,11 @@ class Carolina:
             "bucket": self.legacy_bucket,
             "path": f"carol_export/{self.carol.tenant['mdmId']}/{{connector_id}}_{{staging_type}}/rejected_staging"
         }
+        token['cdsViewPath'] = {
+            "bucket": self.legacy_bucket,
+            "path": f"carol_export/{self.carol.tenant['mdmId']}/{{relationship_view_name}}/view"
+        }
+
 
         token['aiAccessKeyId'] = response['aiAccessKeyId']
         token['aiSecretKey'] = response['aiSecretKey']
@@ -80,6 +85,7 @@ class Carolina:
         self.cds_staging_path = token['cdsStagingPath']
         self.cds_staging_master_path = token['cdsStagingMasterPath']
         self.cds_staging_rejected_path = token['cdsStagingRejectedPath']
+        self.cds_view_path = token['cdsViewPath']
 
         if self.engine == 'GCP-CS':
             self._init_gcp(token)
@@ -119,6 +125,8 @@ class Carolina:
             template = self.cds_staging_master_path['bucket']
         elif space == 'staging_rejected':
             template = self.cds_staging_rejected_path['bucket']
+        elif space == 'view':
+            template = self.cds_view_path['bucket']
 
         name = Formatter().vformat(template, None, {'tenant_id': self.carol.tenant['mdmId']})
         return name
@@ -134,6 +142,9 @@ class Carolina:
             template = self.cds_staging_master_path['path']
         elif space == 'staging_rejected':
             template = self.cds_staging_rejected_path['path']
+        elif space == 'view':
+            template = self.cds_view_path['path']
+
 
         name = Formatter().vformat(template, None, vars)
         return name
