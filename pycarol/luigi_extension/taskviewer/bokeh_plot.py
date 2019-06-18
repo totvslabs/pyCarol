@@ -1,4 +1,5 @@
-
+import bokeh
+assert bokeh.__version__ == '1.2.0'
 from bokeh.models import (
     ColumnDataSource,
     CDSView,
