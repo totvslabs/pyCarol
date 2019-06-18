@@ -27,5 +27,6 @@ class T5(Task):
 
 
 params = {}
+from pycarol.luigi_extension.pipetools.pipetools import Pipe
 
-pipeline1 = [T5(**params)]
+pipeline1 = Pipe([T5(**params)])

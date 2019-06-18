@@ -1,6 +1,6 @@
+from pycarol.luigi_extension.pipetools.pipetools import get_dag_from_task
 from pycarol.luigi_extension.task import Task,inherit_list
 
-from pycarol.luigi_extension.taskviewer.taskviewer import *
 
 class T1(Task):
     pass
