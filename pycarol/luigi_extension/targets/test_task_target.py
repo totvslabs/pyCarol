@@ -1,7 +1,7 @@
 from unittest import TestCase
-from pycarol.luigi_extension.task import Task
-from pycarol.luigi_extension.targets import DummyTarget
-from pycarol.luigi_extension import PickleLocalTarget
+from ..task import Task
+from ..targets import DummyTarget
+from .. import PickleLocalTarget
 import logging
 logger = logging.getLogger(__name__)
 

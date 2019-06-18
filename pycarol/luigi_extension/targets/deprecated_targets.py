@@ -22,8 +22,8 @@ class PyCarolTarget(luigi.Target):
     is_cloud_target = True
 
     def __init__(self, task, *args, **kwargs):
-        from ..carol import Carol
-        from ..storage import Storage
+        from ...carol import Carol
+        from ...storage import Storage
 
         # We CANNOT cache the storage with GCP because the GCP API is not thread safe and would result in SSL errors
         # if luigi is using more than 1 worker
