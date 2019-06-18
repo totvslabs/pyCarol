@@ -3,7 +3,7 @@ import importlib
 import builtins
 import inspect
 
-from pycarol.luigi_extension.utils import int_to_bytes, flat_list
+from ..utils import int_to_bytes, flat_list
 
 VERBOSE = False  # dev parameter
 
