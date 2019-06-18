@@ -139,6 +139,10 @@ class StorageGCPCS:
         path = self.carolina.get_path("golden", {'dm_name': dm_name})
         return f'gcs://{self.carolina.get_bucket_name("golden")}/{path}'
 
+    def build_url_parquet_view(self, view_name):
+        path = self.carolina.get_path("view", {'relationship_view_name': view_name})
+        return f'gcs://{self.carolina.get_bucket_name("view")}/{path}'
+
     def build_url_parquet_staging(self, staging_name, connector_id):
         self._init_if_needed()
         path = self.carolina.get_path("staging", {'connector_id': connector_id, 'staging_type': staging_name})
@@ -176,6 +180,13 @@ class StorageGCPCS:
         self._init_if_needed()
         bucket = self.client.bucket(self.carolina.get_bucket_name('golden'))
         path = self.carolina.get_path('golden', {'dm_name': dm_name})
+        blobs = bucket.list_blobs(prefix=path, delimiter=None)
+        return [{'storage_space': 'golden', 'name': i.name} for i in blobs if i.name.endswith('.parquet')]
+
+    def get_view_file_paths(self, view_name):
+        self._init_if_needed()
+        bucket = self.client.bucket(self.carolina.get_bucket_name('view'))
+        path = self.carolina.get_path('view', {'relationship_view_name': view_name})
         blobs = bucket.list_blobs(prefix=path, delimiter=None)
         return [{'storage_space': 'golden', 'name': i.name} for i in blobs if i.name.endswith('.parquet')]
 

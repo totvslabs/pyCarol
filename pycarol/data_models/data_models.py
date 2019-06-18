@@ -122,13 +122,13 @@ class DataModel:
 
         storage = Storage(self.carol)
         if backend == 'dask':
-            d = _import_dask(storage=storage, dm_name=dm_name,
-                             merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph,
+            d = _import_dask(storage=storage, dm_name=dm_name, import_type='golden',
+                             merge_records=merge_records,  return_dask_graph=return_dask_graph,
                              columns=columns)
 
         elif backend == 'pandas':
 
-            d = _import_pandas(storage=storage, dm_name=dm_name, golden=True, columns=columns, callback=callback,
+            d = _import_pandas(storage=storage, dm_name=dm_name, import_type='golden', columns=columns, callback=callback,
                                max_hits=max_hits)
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
@@ -239,12 +239,12 @@ class DataModel:
         Export datamodel to s3
 
         This method will trigger or pause the export of the data in the datamodel to
-        s3
+        CDS
 
         :param dm_name: `str`, default `None`
-            Datamodel Name
+            Data model Name
         :param dm_id: `str`, default `None`
-            Datamodel id
+            Data model id
         :param sync_dm: `bool`, default `True`
             Sync the data model
         :param full_export: `bool`, default `True`
@@ -276,12 +276,8 @@ class DataModel:
         Export all datamodel to s3
 
         This method will trigger or pause the export of the data in the datamodel to
-        s3
+        CDS
 
-        :param dm_name: `str`, default `None`
-            Datamodel Name
-        :param dm_id: `str`, default `None`
-            Datamodel id
         :param sync_dm: `bool`, default `True`
             Sync the data model
         :param full_export: `bool`, default `True`
@@ -341,7 +337,7 @@ class DataModel:
                       if elem.get('hits', None)]
         dm_results = list(itertools.chain(*dm_results))
 
-        dm = DataModel(self.carol).get_all().template_data
+        dm = self.get_all().template_data
         dm = {i['mdmId']: i['mdmName'] for i in dm}
 
         if dm_results is not None:
