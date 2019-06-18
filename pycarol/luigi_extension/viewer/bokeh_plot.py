@@ -208,9 +208,9 @@ def get_plot_from_pipeline(pipe):
 
     """
 
-    from .taskviewer import (nodes_layout, edges_layout,
-                             make_nodes_data_source, make_edges_data_source,
-                             )
+    from .viewer import (nodes_layout, edges_layout,
+                         make_nodes_data_source, make_edges_data_source,
+                         )
 
     dag = pipe.get_dag()
 
