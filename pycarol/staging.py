@@ -30,9 +30,9 @@ class Staging:
     def __init__(self, carol):
         self.carol = carol
 
-    def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=100,
+    def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=500,
                   print_stats=True, gzip=True, auto_create_schema=False, crosswalk_auto_create=None,
-                  flexible_schema=False, force=False,  max_workers=None,  dm_to_delete=None,
+                  flexible_schema=False, force=False,  max_workers=2,  dm_to_delete=None,
                   async_send=False,
                   carol_data_storage=False):
         '''
@@ -44,7 +44,7 @@ class Staging:
             Connector name where the staging should be.
         :param connector_id: `str`, default `None`
             Connector Id where the staging should be.
-        :param step_size: `int`, default `100`
+        :param step_size: `int`, default `500`
             Number of records to be sent in each iteration. Max size for each batch is 10MB
         :param print_stats: `bool`, default `True`
             If print the status
@@ -59,7 +59,7 @@ class Staging:
         :param force: `bool`, default `False`
             If `force=True` it will not check for repeated records according to crosswalk. If `False` it will check for
             duplicates and raise an error if so.
-        :param max_workers: `int`, default `None`
+        :param max_workers: `int`, default `2`
             To be used with `async_send=True`. Number of threads to use when sending.
         :param dm_to_delete: `str`, default `None`
             Name of the data model to be erased before send the data.
@@ -153,7 +153,7 @@ class Staging:
                                                compress_gzip=self.gzip):
 
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type,
-                                    status_forcelist=[502],
+                                    status_forcelist=[502, 429, 502],
                                     method_whitelist=frozenset(['POST'])
                                     )
                 if print_stats:
@@ -349,13 +349,13 @@ class Staging:
         if backend == 'dask':
 
             d = _import_dask(storage=storage, connector_id=connector_id, staging_name=staging_name,
-                             merge_records=merge_records, golden=False, return_dask_graph=return_dask_graph,
+                             merge_records=merge_records, import_type='staging', return_dask_graph=return_dask_graph,
                              mapping_columns=mapping_columns,
                              columns=columns, max_hits=max_hits)
 
         elif backend == 'pandas':
             d = _import_pandas(storage=storage, connector_id=connector_id,
-                               staging_name=staging_name, golden=False, columns=columns,
+                               staging_name=staging_name, import_type='staging',  columns=columns,
                                max_hits=max_hits, callback=callback, mapping_columns=mapping_columns)
 
             # TODO: Do the same for dask backend
@@ -514,7 +514,7 @@ class Staging:
                            if elem.get('hits', None)]
         staging_results = list(itertools.chain(*staging_results))
         if staging_results is not None:
-            return {f"{i.get('mdmConnectorId', '__NOT_FOUND__')}_{i.get('mdmStagingType', '__NOT_FOUND__')}": i for i in staging_results}
+            return {f"{i.get('mdmConnectorId', 'connectorId_not_found')}_{i.get('mdmStagingType', 'staging_not_found')}": i for i in staging_results}
 
     def _sync_counters(self, staging_name, connector_id=None, connector_name=None, incremental=False):
         """

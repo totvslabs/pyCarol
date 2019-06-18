@@ -1,8 +1,7 @@
 import luigi
 from luigi import parameter, six
 from luigi.task import flatten
-from .visualization import Visualization
-from .targets import PickleTarget, DummyTarget
+from .targets import PickleTarget
 import logging
 import warnings
 
@@ -16,7 +15,6 @@ class Task(luigi.Task):
     TARGET = PickleTarget  # DEPRECATED!
     target_type = PickleTarget
     is_cloud_target = None
-    visualization_class = Visualization
 
     persist_stdout = False
     requires_list = []
@@ -25,7 +23,10 @@ class Task(luigi.Task):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.visualize = self.visualization_class(task=self)
+
+    def visualize(self):
+        # override this method to provide a visualization for taskviewer
+        return None
 
     def buildme(self, local_scheduler=True, **kwargs):
         luigi.build([self, ], local_scheduler=local_scheduler, **kwargs)

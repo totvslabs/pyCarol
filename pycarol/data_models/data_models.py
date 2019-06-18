@@ -99,6 +99,9 @@ class DataModel:
         :return:
         """
 
+        if not columns: #if an empty list was sent.
+            columns = None
+
         if isinstance(columns, str):
             columns = [columns]
 
@@ -119,13 +122,13 @@ class DataModel:
 
         storage = Storage(self.carol)
         if backend == 'dask':
-            d = _import_dask(storage=storage, dm_name=dm_name,
-                             merge_records=merge_records, golden=True, return_dask_graph=return_dask_graph,
+            d = _import_dask(storage=storage, dm_name=dm_name, import_type='golden',
+                             merge_records=merge_records,  return_dask_graph=return_dask_graph,
                              columns=columns)
 
         elif backend == 'pandas':
 
-            d = _import_pandas(storage=storage, dm_name=dm_name, golden=True, columns=columns, callback=callback,
+            d = _import_pandas(storage=storage, dm_name=dm_name, import_type='golden', columns=columns, callback=callback,
                                max_hits=max_hits)
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
@@ -236,12 +239,12 @@ class DataModel:
         Export datamodel to s3
 
         This method will trigger or pause the export of the data in the datamodel to
-        s3
+        CDS
 
         :param dm_name: `str`, default `None`
-            Datamodel Name
+            Data model Name
         :param dm_id: `str`, default `None`
-            Datamodel id
+            Data model id
         :param sync_dm: `bool`, default `True`
             Sync the data model
         :param full_export: `bool`, default `True`
@@ -273,12 +276,8 @@ class DataModel:
         Export all datamodel to s3
 
         This method will trigger or pause the export of the data in the datamodel to
-        s3
+        CDS
 
-        :param dm_name: `str`, default `None`
-            Datamodel Name
-        :param dm_id: `str`, default `None`
-            Datamodel id
         :param sync_dm: `bool`, default `True`
             Sync the data model
         :param full_export: `bool`, default `True`
@@ -338,7 +337,7 @@ class DataModel:
                       if elem.get('hits', None)]
         dm_results = list(itertools.chain(*dm_results))
 
-        dm = DataModel(self.carol).get_all().template_data
+        dm = self.get_all().template_data
         dm = {i['mdmId']: i['mdmName'] for i in dm}
 
         if dm_results is not None:
@@ -423,8 +422,8 @@ class DataModel:
             result = self.carol.call_api(url_filter, data=json_query, params=query_params)
             print(f"To go: {c + 1}/{len(chunks)}")
 
-    def send_data(self, data, dm_name=None, dm_id=None, step_size=100, gzip=False, delete_old_records=False,
-                  print_stats=True, max_workers=None, async_send=False):
+    def send_data(self, data, dm_name=None, dm_id=None, step_size=500, gzip=False, delete_old_records=False,
+                  print_stats=True, max_workers=2, async_send=False):
 
         """
         :param data: pandas data frame, json.
@@ -433,7 +432,7 @@ class DataModel:
             Data model name
         :param dm_id:  `str`, default `None`
             Data model id
-        :param step_size: `int`, default `100`
+        :param step_size: `int`, default `500`
             Number of records to be sent in each iteration. Max size for each batch is 10MB
         :param print_stats: `bool`, default `True`
             If print the status
@@ -441,7 +440,7 @@ class DataModel:
             If send each batch as a gzip file.
         :param delete_old_records: `bool`, default `False`
             Delete previous records in the data model.
-        :param max_workers: `int`, default `None`
+        :param max_workers: `int`, default `2`
             To be used with `async_send=True`. Number of threads to use when sending.
         :param async_send: `bool`, default `False`
             To use async to send the data. This is much faster than a sequential send.
@@ -501,7 +500,9 @@ class DataModel:
                                                step_size=step_size,
                                                compress_gzip=self.gzip):
 
-                self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type)
+                self.carol.call_api(url, data=data_json, extra_headers=extra_headers,
+                                    content_type=content_type, status_forcelist=[502, 429, 502],
+                                    method_whitelist=frozenset(['POST']))
                 if print_stats:
                     print('{}/{} sent'.format(cont, data_size), end='\r')
 
