@@ -1,1 +1,1 @@
-from .bokeh_plot import get_plot_from_task
+from .bokeh_plot import get_plot_from_pipeline

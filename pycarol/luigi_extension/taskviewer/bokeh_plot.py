@@ -6,6 +6,7 @@ from bokeh.models import (
     BooleanFilter,
     HoverTool,
 )
+
 from bokeh.events import ButtonClick
 from bokeh.models import Button
 from bokeh.layouts import widgetbox
@@ -14,13 +15,12 @@ from bokeh.models.widgets import PreText
 from bokeh.layouts import column, row, layout
 from bokeh.plotting import figure
 from bokeh.transform import transform
-from bokeh.palettes import _PalettesModule
+from bokeh.palettes import Category10
 from bokeh.models.mappers import CategoricalColorMapper
-Category10 = _PalettesModule.Category10
 
 def _make_colormapper(data_source: dict, col_name: str):
     import numpy as np
-    factors = set(data_source[col_name])
+    factors = list(set(data_source[col_name]))
     nb_factors = np.clip(len(factors), 3, 10)
     return CategoricalColorMapper(factors=factors,
                                   palette=Category10[nb_factors])
@@ -31,12 +31,12 @@ def _make_pipeline_plot(
         edges_data_source,
 ):
 
-    family_color = _make_colormapper(nodes_data_source,'task_family')
+    family_color = _make_colormapper(nodes_data_source.data,'task_family')
 
     pipeline_plot = figure(
         title="Pipeline Debugger",
-        x_range=(-1, max(nodes_data_source['x']) + 1),
-        y_range=(-1, max(nodes_data_source['y']) + 1),
+        x_range=(-1, max(nodes_data_source.data['x']) + 1),
+        y_range=(-1, max(nodes_data_source.data['y']) + 1),
         tools=[
             HoverTool(names=['alltasks']),
             'wheel_zoom',
@@ -70,8 +70,8 @@ def _make_pipeline_plot(
         source=nodes_data_source,
         size=20,
         name='alltasks',
-        color=transform('family', family_color),
-        legend='family',
+        color=transform('task_family', family_color),
+        legend='task_family',
     )
 
     # pipeline_plot.circle(
@@ -85,7 +85,7 @@ def _make_pipeline_plot(
     pipeline_plot.text(
         x='x',
         y='y',
-        text='task_names',
+        text='task_name',
         source=nodes_data_source,
         text_font_size='8pt',
     )
@@ -189,28 +189,30 @@ def plot_pipeline(nodes_data,edges_data):
                 pipeline_plot,
                 row(dynamics.buttons()),
             ],
-            sizing_mode='stretch_both'
+            sizing_mode='scale_width'
         ),
     )
     return final_layout
 
 
-def get_plot_from_task(task):
+def get_plot_from_pipeline(tasks):
     """
-    Main module method. From a luig task, generates a bokeh plot of the
+    Main module method. From a luigi task with defined parameters, generates a
+    bokeh plot of the
     pipeline. It does not render the plot.
     Args:
-        task: luigi task initialised with proper parameters
+        tasks: list of luigi task initialised with proper parameters
 
     Returns:
         bokeh_layout:
 
     """
+    assert isinstance(tasks, list)
     from .taskviewer import (get_dag_from_task, nodes_layout, edges_layout,
                              make_nodes_data_source, make_edges_data_source, )
     from .bokeh_plot import plot_pipeline
 
-    dag = get_dag_from_task(task)
+    dag = get_dag_from_task(tasks)
     nodes_layout = nodes_layout(dag)
     edges_layout = edges_layout(dag, nodes_layout)
 

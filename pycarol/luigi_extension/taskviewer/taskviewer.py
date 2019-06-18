@@ -70,13 +70,16 @@ def edges_layout(dag:dict, layout:dict) -> list:
     return edges
 
 def _get_task_id(t):
-    return t.task_id()
+    return t.task_id
 
 def _get_task_family(t):
-    return t.split('.')[-2] if '.' in t else "empty_namespace"
+    if '.' in t.task_id:
+        return t.task_id.split('.')[-2]
+    else:
+        return "empty_namespace"
 
 def _get_task_name(t):
-    return t.split('.')[-1]
+    return t.task_id.split('.')[-1]
 
 def _get_complete(t):
     return t.complete()
@@ -107,7 +110,7 @@ def make_nodes_data_source(nodes_layout) -> dict:
     """
 
     data = dict(
-        task=[],
+        # task=[],
         x=[],
         y=[],
         task_id=[],
@@ -117,14 +120,14 @@ def make_nodes_data_source(nodes_layout) -> dict:
         tasklog=[],
         hash_version=[],
     )
-    for k,(x,y) in nodes_layout:
-        data['task'].append(k)
-        data['x'].append[x]
-        data['y'].append[y]
-        data['task_id'].append[_get_task_id(k)]
-        data['task_family'].append[_get_task_family(k)]
-        data['task_name'].append[_get_task_name(k)]
-        data['complete'].append[_get_complete(k)]
+    for k,(x,y) in nodes_layout.items():
+        # data['task'].append(k)
+        data['x'].append(x)
+        data['y'].append(y)
+        data['task_id'].append(_get_task_id(k))
+        data['task_family'].append(_get_task_family(k))
+        data['task_name'].append(_get_task_name(k))
+        data['complete'].append(_get_complete(k))
         data['tasklog'].append(_get_tasklog(k))
         data['hash_version'].append(_get_hash_version(k))
 
@@ -143,12 +146,17 @@ def make_edges_data_source(edges_layout) -> dict:
 
     """
 
-    data = dict()
+    data = dict(
+        x0=[],
+        y0=[],
+        x1=[],
+        y1=[]
+    )
     for ((x0,y0,),(x1,y1)) in edges_layout:
-        data['x0'] = x0
-        data['y0'] = y0
-        data['x1'] = x1
-        data['y1'] = y1
+        data['x0'].append(x0)
+        data['y0'].append(y0)
+        data['x1'].append(x1)
+        data['y1'].append(y1)
 
     return data
 
