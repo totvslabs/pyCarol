@@ -1,6 +1,6 @@
 # bokeh serve --show web_app.py
 
-from pycarol.luigi_extension.taskviewer.pipeline_example import pipeline1
+from pycarol.luigi_extension.taskviewer.test.pipeline_example import pipeline1
 
 from bokeh.plotting import curdoc
 doc = curdoc()
