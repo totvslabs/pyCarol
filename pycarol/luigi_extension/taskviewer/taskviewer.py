@@ -26,6 +26,26 @@ def get_dag_from_task(task:list) -> dict:
     dag = build_dag(task,luigi_get_sons)
     return dag
 
+class Pipe(object):
+    def __init__(self, tasks: list):
+        assert isinstance(tasks,list)
+        from pycarol.luigi_extension import Task
+        for t in tasks:
+            assert isinstance(t,Task)
+        self.top_nodes = tasks
+        self.dag = get_dag_from_task(tasks)
+        self.all_tasks = [k for k in self.dag]
+    def remove_upstream(self, task):
+        return
+    def remove_all(self):
+        return
+    def describe_targets(self):
+        return
+    def get_task_by_name(self,name):
+        return
+    def get_dag(self):
+        return self.dag
+
 def nodes_layout(dag:dict, align_on_leafs = True) -> dict:
     """
     Builds basic graph plot layout. In this version, nodes are placed on x

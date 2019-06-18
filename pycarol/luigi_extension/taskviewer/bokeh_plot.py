@@ -154,7 +154,7 @@ class PlotDynamics():
             self.removeupstream_button,
         ])
 
-def plot_pipeline(nodes_data,edges_data):
+def plot_pipeline(nodes_data,edges_data,pipe):
     """
     Receives data sources in dict format and returns dynamic plot
     Args:
@@ -195,31 +195,33 @@ def plot_pipeline(nodes_data,edges_data):
     return final_layout
 
 
-def get_plot_from_pipeline(tasks):
+def get_plot_from_pipeline(pipe):
     """
     Main module method. From a luigi task with defined parameters, generates a
     bokeh plot of the
     pipeline. It does not render the plot.
     Args:
-        tasks: list of luigi task initialised with proper parameters
+        pipe: list of luigi task initialised with proper parameters
 
     Returns:
         bokeh_layout:
 
     """
-    assert isinstance(tasks, list)
-    from .taskviewer import (get_dag_from_task, nodes_layout, edges_layout,
-                             make_nodes_data_source, make_edges_data_source, )
-    from .bokeh_plot import plot_pipeline
 
-    dag = get_dag_from_task(tasks)
+    from .taskviewer import (nodes_layout, edges_layout,
+                             make_nodes_data_source, make_edges_data_source,
+                             )
+
+    dag = pipe.get_dag()
+
     nodes_layout = nodes_layout(dag)
     edges_layout = edges_layout(dag, nodes_layout)
 
     nodes_data_source = make_nodes_data_source(nodes_layout)
     edges_data_source = make_edges_data_source(edges_layout)
 
-    bokeh_layout = plot_pipeline(nodes_data_source, edges_data_source)
+    bokeh_layout = plot_pipeline(nodes_data_source, edges_data_source,pipe)
+
     return bokeh_layout
 
 
