@@ -1,5 +1,5 @@
 from pytest import mark
-from .hash_versioning import get_bytecode_tree, find_called_function
+from . import get_bytecode_tree, find_called_function
 
 def a(x):
     return x + 5
