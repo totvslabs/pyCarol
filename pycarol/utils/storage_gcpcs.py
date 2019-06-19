@@ -27,6 +27,7 @@ class StorageGCPCS:
         local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
 
         bucket = self.bucket_app_storage
+        blob = bucket.blob(remote_file_name)
 
         if parquet:
             if not isinstance(obj, pd.DataFrame):
@@ -40,7 +41,7 @@ class StorageGCPCS:
                 with BytesIO() as buffer:
                     joblib.dump(obj, buffer)
                     buffer.seek(0)
-                    bucket.upload_fileobj(buffer, remote_file_name)
+                    blob.upload_from_file(buffer)
                 return
             else:
                 joblib.dump(obj, local_file_name)
@@ -51,8 +52,6 @@ class StorageGCPCS:
             local_file_name = obj
         else:
             raise ValueError("Supported formats are pickle, joblib or file")
-
-        blob = bucket.blob(remote_file_name)
 
         blob.upload_from_filename(filename=local_file_name)
         os.utime(local_file_name, None)
@@ -129,7 +128,8 @@ class StorageGCPCS:
         remote_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
 
         blob = self.bucket_app_storage.blob(remote_file_name)
-        blob.delete()
+        if blob.exists():
+            blob.delete()
 
         local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
         if os.path.isfile(local_file_name):
