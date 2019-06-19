@@ -1,3 +1,7 @@
+import warnings
+warnings.warn("The luigi_extension module is deprecated. It is now called 'pipeline'", DeprecationWarning,
+              stacklevel=2)
+
 from .task import(
     Task,
     WrapperTask,
