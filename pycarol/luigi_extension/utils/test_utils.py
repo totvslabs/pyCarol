@@ -1,4 +1,4 @@
-from .utils import *
+from . import *
 
 dag={
     0: [1,2],

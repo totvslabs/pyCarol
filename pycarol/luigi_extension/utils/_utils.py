@@ -1,3 +1,8 @@
+"""
+This module contains generic methods that operates on native python types and do
+not depend on external libraries.
+"""
+
 def int_to_bytes(i: int) -> bytes:
     """
     Wrapper around int.to_bytes. Set some defaults parameters
