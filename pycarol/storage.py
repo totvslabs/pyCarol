@@ -88,6 +88,10 @@ class Storage:
         self._init_if_needed()
         return self.backend.get_golden_file_paths(dm_name)
 
+    def get_view_file_paths(self, view_name):
+        self._init_if_needed()
+        return self.backend.get_view_file_paths(view_name)
+
     def get_staging_file_paths(self, staging_name, connector_id):
         self._init_if_needed()
         return self.backend.get_staging_file_paths(staging_name, connector_id)

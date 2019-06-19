@@ -5,8 +5,7 @@
 import os
 import tempfile
 
-__version__ = '2.15.1'
-
+__version__ = '2.16.0'
 
 __BUCKET_NAME__= 'carol-internal'
 __TEMP_STORAGE__ = os.path.join(tempfile.gettempdir(), 'carolina/cache')
@@ -21,7 +20,8 @@ from .query import Query
 from .storage import Storage
 from .carolina import Carolina
 from .tasks import Tasks
-from .data_models import DataModel
+from .data_models import DataModel, DataModelView
 from .logger import CarolHandler
 from .auth.PwdAuth import PwdAuth
 from .auth.ApiKeyAuth import ApiKeyAuth
+
