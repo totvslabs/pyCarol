@@ -39,7 +39,7 @@ number_of_parameters_in_build_ops = dict(
 )
 
 
-def _find_called_function(ix, inst, instructions):
+def find_called_function(ix, inst, instructions):
     """
     When a CALL_FUNCTION instruction is found, the function name is not given
     as a direct argument to this instruction. Instead, the function name can
@@ -93,7 +93,7 @@ def _find_called_function(ix, inst, instructions):
     return function_name
 
 
-def _find_defined_function(ix, inst, instructions):
+def find_defined_function(ix, inst, instructions):
     """
     When a MAKE_FUNCTION instruction is found, the name and code pointer can
     be found on the two instructions above.
@@ -114,7 +114,7 @@ def _find_defined_function(ix, inst, instructions):
     return {name: code}
 
 
-def _fetch_function_object(function_name: str, enclosing_function, local_functions: dict):
+def fetch_function_object(function_name: str, enclosing_function, local_functions: dict):
     """
     function_name can be found in Local, Enclosed, Global and Builtin Namespace
     Local and Enclosed namespaces cannot be exactly inferred in static analysis.
@@ -175,12 +175,12 @@ def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False)
             context = (ix, inst, instructions)
 
             if inst.opname == "MAKE_FUNCTION":  # locally defined function
-                locally_defined_functions.update(_find_defined_function(*context))
+                locally_defined_functions.update(find_defined_function(*context))
 
             if "CALL_FUNCTION" in inst.opname:  # call_function op found
-                son_function_name = _find_called_function(*context)
+                son_function_name = find_called_function(*context)
                 try:
-                    son_function = _fetch_function_object(
+                    son_function = fetch_function_object(
                         son_function_name, parent_function, locally_defined_functions
                     )
                 except NotImplementedError as e:

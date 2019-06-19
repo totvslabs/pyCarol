@@ -1,6 +1,6 @@
-from pytest import mark
+from pycarol.luigi_extension.pipetools.pipetools import get_dag_from_task
 from pycarol.luigi_extension.task import Task,inherit_list
-from .taskviewer import *
+
 
 class T1(Task):
     pass
@@ -29,5 +29,6 @@ def test_task_run():
     T4(**params).buildme()
 
 def test_get_dag_from_task():
-    d = get_dag_from_task([T5(**params)],luigi_get_sons)
+    d = get_dag_from_task([T5(**params)])
     print(d)
+
