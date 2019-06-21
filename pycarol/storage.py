@@ -1,7 +1,4 @@
-from multiprocessing import Process
-from .carol_cloner import Cloner
 from .carolina import Carolina
-
 
 
 class Storage:
@@ -22,12 +19,6 @@ class Storage:
             from .utils.storage_awss3 import StorageAWSS3
             self.backend = StorageAWSS3(self.carol, carolina)
 
-    def save_async(self, name, obj):
-        p = Process(target=_save_async, args=(Cloner(self.carol), name, obj))
-        p.start()
-
-        return p
-
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
         self._init_if_needed()
         self.backend.save(name, obj, format, parquet, cache)
@@ -37,8 +28,7 @@ class Storage:
         return self.backend.load(name=name, format=format, parquet=parquet, cache=cache, storage_space=storage_space,
                                  columns=columns)
 
-    #TODO: put this inside the AWS storage class
-    def files_storage_list(self, app_name=None, all_apps=False,  print_paths=False):
+    def files_storage_list(self, app_name=None, all_apps=False, print_paths=False):
         """
 
         It will return all files in Carol data Storage (CDS).
@@ -54,7 +44,7 @@ class Storage:
         """
 
         self._init_if_needed()
-        return self.backend.files_storage_list(app_name=app_name, all_apps=all_apps,  print_paths=print_paths)
+        return self.backend.files_storage_list(app_name=app_name, all_apps=all_apps, print_paths=print_paths)
 
     def exists(self, name):
         self._init_if_needed()
@@ -95,8 +85,3 @@ class Storage:
     def get_staging_file_paths(self, staging_name, connector_id):
         self._init_if_needed()
         return self.backend.get_staging_file_paths(staging_name, connector_id)
-
-
-def _save_async(cloner, name, obj):
-    return Storage(cloner.build()).backend.save(name, obj)
-
