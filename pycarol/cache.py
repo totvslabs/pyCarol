@@ -1,5 +1,6 @@
-from .utils.singleton import KeySingleton
 import redis
+
+from .utils.singleton import KeySingleton
 
 
 class Cache(metaclass=KeySingleton):
