@@ -166,6 +166,22 @@ def call_ex_g(x):
 def call_ex_h(x, y):
     return dummy_function(0, 1, 2, [0, 1, 2], ('a', 0), *x, *x, **y, **y, p1={0, 1, 2})
 
+import pandas as pd
+
+def external_import_a(x):
+    return pd.Series(x)
+
+def external_import_b(x):
+    return pd.DataFrame(x)
+
+def internal_import_a(x):
+    import pandas as pd
+    return pd.Series(x)
+
+def internal_import_b(x):
+    import pandas as pd
+    return pd.DataFrame(x)
+
 
 equal_functions_list = [
     (a, a),
@@ -194,6 +210,8 @@ different_functions_list = [
     (builtin_a, builtin_d),
     (call_kwargs_a, call_kwargs_c),
     (call_kwargs_a, call_kwargs_d),
+    (external_import_a,external_import_b),
+    (internal_import_a,internal_import_b),
 ]
 
 calling_functions_list = [
