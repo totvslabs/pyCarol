@@ -1,14 +1,12 @@
-Pipeline
-======================================
-
 .. automodule:: pycarol.pipeline
    :members:
 
 .. autosummary::
     :toctree: generated
 
-    pycarol.pipeline.data_model
-    pycarol.pipeline.field
-    pycarol.pipeline.luigi
-    pycarol.pipeline.mapping
-    pycarol.pipeline.model
+    pycarol.pipeline.task
+    pycarol.pipeline.targets
+    pycarol.pipeline.viewer
+    pycarol.pipeline.tools
+    pycarol.pipeline.utils
+    pycarol.pipeline.test

@@ -1,6 +1,5 @@
 from pytest import mark
-from .hash_versioning import get_bytecode_tree, _find_called_function
-
+from . import get_bytecode_tree, find_called_function
 
 def a(x):
     return x + 5
@@ -222,7 +221,7 @@ def test_find_called_function(func):
     inst = instructions[ix]
     # assert that the func return another function
     assert "CALL_FUNCTION" in inst.opname
-    assert _find_called_function(ix, inst, instructions) == "dummy_function"
+    assert find_called_function(ix, inst, instructions) == "dummy_function"
 
 
 @mark.parametrize("f1,f2", equal_functions_list)

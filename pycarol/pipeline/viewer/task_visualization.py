@@ -17,7 +17,7 @@ class Visualization:
         def plot_another_thing(...):
             do other plot...
 
-    and in a luigi_extension task:
+    and in a pipeline task:
 
     MyTask(Task):
         visualization_class = MyVisualization

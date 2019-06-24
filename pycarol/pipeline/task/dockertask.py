@@ -1,6 +1,6 @@
 
 from luigi import BoolParameter
-from .task import Task
+from pycarol.pipeline.task import Task
 
 import os
 

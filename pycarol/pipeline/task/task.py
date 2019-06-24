@@ -1,7 +1,7 @@
 import luigi
 from luigi import parameter, six
 from luigi.task import flatten
-from .targets import PickleTarget
+from pycarol.pipeline.targets import PickleTarget
 import logging
 import warnings
 

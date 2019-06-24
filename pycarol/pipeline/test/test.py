@@ -76,14 +76,14 @@ def task_execution_debug(task, parameters=None, worker_scheduler_factory=None, *
     return namedtuple("TaskOutput", out.keys())(*out.values())
 
 
-def luigi_extension_test(cls):
-    """ Mock luigi_extension Task to have TARGET_DIR inside test directory and erase target files before each test
+def pipeline_test(cls):
+    """ Mock pipeline Task to have TARGET_DIR inside test directory and erase target files before each test
     """
     new_target = f'luigi_targets/test/{cls.__module__}/{cls.__name__}'
     class_setUp = cls.setUp
 
     def mocked_setUp(self):
-        patcher = patch('pycarol.luigi_extension.Task.TARGET_DIR', new_callable=PropertyMock, return_value=new_target)
+        patcher = patch('pycarol.pipeline.Task.TARGET_DIR', new_callable=PropertyMock, return_value=new_target)
         self.addCleanup(patcher.stop)
         self.mock_target = patcher.start()
         if os.path.isdir(new_target):

@@ -4,7 +4,7 @@ import luigi
 import pandas as pd
 from deprecated import deprecated
 
-from pycarol.luigi_extension import LocalTarget
+from pycarol.pipeline import LocalTarget
 
 
 @deprecated
