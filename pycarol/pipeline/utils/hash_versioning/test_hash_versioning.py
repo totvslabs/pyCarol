@@ -182,6 +182,26 @@ def internal_import_b(x):
     import pandas as pd
     return pd.DataFrame(x)
 
+def pick_import_a(x):
+    from pandas import Series
+    return Series(x)
+
+def pick_import_b(x):
+    from pandas import DataFrame
+    return DataFrame(x)
+
+from pandas import Series, DataFrame
+def pick_import_c(x):
+    return Series(x)
+
+def pick_import_d(x):
+    return DataFrame(x)
+
+def pick_import_e(x):
+    return Series.cumsum(x)
+
+def pick_import_f(x):
+    return Series.rolling(x)
 
 equal_functions_list = [
     (a, a),
@@ -212,6 +232,9 @@ different_functions_list = [
     (call_kwargs_a, call_kwargs_d),
     (external_import_a,external_import_b),
     (internal_import_a,internal_import_b),
+    (pick_import_a,pick_import_b),
+    (pick_import_c, pick_import_d),
+    (pick_import_e, pick_import_f),
 ]
 
 calling_functions_list = [

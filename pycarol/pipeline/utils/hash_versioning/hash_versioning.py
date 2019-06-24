@@ -60,11 +60,11 @@ def find_called_function(ix, inst, instructions):
         # for this instruction, we can find the called function some instructions
         # above. we just need to skip backwards the number of arguments
         offset = inst.arg + 1
-        called_function_inst = instructions[ix - offset]
+        # called_function_inst = instructions[ix - offset]
     elif "CALL_FUNCTION_KW" == inst.opname:  # call function op with keyword arguments
         # wrt CALL_FUNCTION there is one additional argument to skip
         offset = inst.arg + 2
-        called_function_inst = instructions[ix - offset]
+        # called_function_inst = instructions[ix - offset]
     elif "CALL_FUNCTION_EX":
         offset = inst.arg + 2
         # Next, we look for BUILD instructions between CALL_FUNCTION_EX instruction
@@ -82,14 +82,28 @@ def find_called_function(ix, inst, instructions):
             arg = inst_i.arg
             if opname in number_of_parameters_in_build_ops:  # increase offset
                 offset += number_of_parameters_in_build_ops[opname](arg)
-        called_function_inst = instructions[ix - offset]
     else:
         raise NotImplementedError("instruction {} is not supported".format(inst.opname))
+    ix = ix - offset
+    called_function_inst = instructions[ix]
+
     if VERBOSE:
         print(called_function_inst)
         print("offset: ", offset)
 
-    function_name = called_function_inst.argval
+    if called_function_inst.opname == 'LOAD_GLOBAL':
+        function_name = called_function_inst.argval
+    elif called_function_inst.opname == 'LOAD_FAST':
+        function_name = called_function_inst.argval
+    elif called_function_inst.opname == 'LOAD_ATTR':
+        function_name = called_function_inst.argval
+        function_namespace_inst = instructions[ix - 1]
+        function_namespace = function_namespace_inst.argval
+        function_name = '.'.join([function_namespace,function_name])
+    else:
+        raise NotImplementedError(
+            f"Composed function name not implemented."
+            f"{called_function_inst.opname}")
     return function_name
 
 
