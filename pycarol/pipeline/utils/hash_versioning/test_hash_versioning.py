@@ -175,10 +175,12 @@ def external_import_b(x):
     return pd.DataFrame(x)
 
 def internal_import_a(x):
+    import joblib
     import pandas as pd
     return pd.Series(x)
 
 def internal_import_b(x):
+    import joblib
     import pandas as pd
     return pd.DataFrame(x)
 

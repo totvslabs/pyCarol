@@ -1,3 +1,27 @@
+"""
+One of the main purposes of using pipeline managers like Luigi, Dask, Airflow is
+to store the result of heavy computation tasks for further reuse. It happens
+often that the process of developing the whole pipeline is very dynamic. The
+code of a task can be explicitly changed or the task behavior can change due
+to external changes, like an update of a python package. It turns out that
+one cannot be certain that the stored result of the task is up-to-date with
+the code. This may invalidate any test/validation process.
+The solution we propose here is to generate a hash of the code of each task.
+In the case of using Luigi, we assume that if the target was generated with the
+same task parameters and it has the same hash code we can safely use this
+target (of course, excluding hash collision hypothesis). We observe that some
+pipeline managers also keep track of the data/inputs hash. This module can
+cooperate with these managers as well.
+Finally, the practical objective of this module is to obtain a hash code of a
+given function statically, i.e., without computing the python code itself.
+Due to its statical nature, some case cannot be supported, like import and
+functions definitions inside if statements.
+The method get_bytecode_tree performs all the hard work and return nested lists
+of bytecodes that may be useful for inspection.
+The method get_function_hash uses get_bytecode_tree to return a hash for a
+given function.
+"""
+
 import dis
 import importlib
 import builtins
@@ -5,7 +29,7 @@ import inspect
 
 from pycarol.pipeline.utils import int_to_bytes, flat_list
 
-VERBOSE = False  # dev parameter
+VERBOSE = True  # dev parameter
 
 
 def get_consts_hash(f) -> bytes:
@@ -38,6 +62,12 @@ number_of_parameters_in_build_ops = dict(
     BUILD_MAP_UNPACK_WITH_CALL=lambda x: x,
 )
 
+
+def _load_attr(ix,instructions):
+    function_name = instructions[ix].argval
+    function_namespace = instructions[ix - 1].argval
+    function_name = '.'.join([function_namespace, function_name])
+    return function_name
 
 def find_called_function(ix, inst, instructions):
     """
@@ -96,10 +126,7 @@ def find_called_function(ix, inst, instructions):
     elif called_function_inst.opname == 'LOAD_FAST':
         function_name = called_function_inst.argval
     elif called_function_inst.opname == 'LOAD_ATTR':
-        function_name = called_function_inst.argval
-        function_namespace_inst = instructions[ix - 1]
-        function_namespace = function_namespace_inst.argval
-        function_name = '.'.join([function_namespace,function_name])
+        function_name = _load_attr(ix,instructions)
     else:
         raise NotImplementedError(
             f"Composed function name not implemented."
@@ -126,6 +153,62 @@ def find_defined_function(ix, inst, instructions):
     code = instructions[ix - 2].argval
 
     return {name: code}
+
+
+def find_loaded_function(ix, inst, instructions,local_defs:dict):
+    """
+    When a LOAD_ATTR instruction is found, it may load a method from an outer
+    scope to be used further. The name of the method will be prepended by its
+    namespace.
+    Args:
+        ix: index of LOAD_ATTR instruction
+        inst: LOAD_ATTR instruction
+        instructions: list of instructions composing the whole bytecode
+        local_defs: dict containing all methods and modules visibles at this
+        point
+
+    Returns: a dict, whose only key is the function name, and value is function
+    code
+
+    """
+    assert inst.opname == "LOAD_ATTR"
+    assert ix >= 1
+
+    namespace = instructions[ix-1].argval
+    function_name = instructions[ix].argval
+    name = f"{namespace}.{function_name}"
+    try:
+        module = local_defs[namespace]
+    except KeyError:
+        print(local_defs.keys(),namespace, name)
+        raise KeyError
+    print(module)
+    code = getattr(module,function_name)
+    assert hasattr(code,'__code__'), code
+    code = code.__code__
+
+    return {name: code}
+
+
+def find_imported(ix, inst, instructions):
+    """
+    When a IMPORT_NAME instruction is found, we need to update local/global
+    context accordingly
+    Args:
+        ix: index of IMPORT_NAME instruction
+        inst: IMPORT_NAME instruction
+        instructions: list of instructions composing the whole bytecode
+
+    Returns: a dict, whose only key is the function name, and value is function
+    code
+
+    """
+    assert inst.opname == "IMPORT_NAME"
+
+    module = instructions[ix].argval
+    module_name = instructions[ix+1].argval
+
+    return {module_name: module}
 
 
 def fetch_function_object(function_name: str, enclosing_function, local_functions: dict):
@@ -190,6 +273,27 @@ def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False)
 
             if inst.opname == "MAKE_FUNCTION":  # locally defined function
                 locally_defined_functions.update(find_defined_function(*context))
+
+            if inst.opname == "IMPORT_NAME":
+                locally_defined_functions.update(find_imported(*context))
+
+            if inst.opname == "LOAD_GLOBAL":
+                try:
+                    son_function = fetch_function_object(
+                        son_function_name, parent_function, locally_defined_functions
+                    )
+                except NotImplementedError as e:
+                    if ignore_not_found_function:
+                        continue
+                    else:
+                        raise e
+                if son_function not in code_set:
+                    code_set.add(son_function)
+                    called_functions.add(son_function)
+
+            if inst.opname == "LOAD_ATTR":
+                locally_defined_functions.update(find_loaded_function(
+                    *context,locally_defined_functions))
 
             if "CALL_FUNCTION" in inst.opname:  # call_function op found
                 son_function_name = find_called_function(*context)
