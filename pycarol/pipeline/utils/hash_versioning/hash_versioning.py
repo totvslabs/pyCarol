@@ -27,7 +27,8 @@ import importlib
 import builtins
 import inspect
 
-from pycarol.pipeline.utils import int_to_bytes, flat_list
+from pycarol.pipeline.utils import int_to_bytes, flat_list, is_builtin, \
+    is_function, is_code, enumerate_with_context
 
 VERBOSE = True  # dev parameter
 
@@ -47,6 +48,83 @@ def _get_consts_hash(f) -> bytes:
             consts_list[i] = v.split('.')[-1]
     consts_tuple = tuple(consts_list)
     return int_to_bytes(hash(consts_tuple))
+
+
+def get_name_and_code_of_MAKE_FUNCTION(ix, inst, instructions):
+    """
+    When a MAKE_FUNCTION instruction is found, the name and code pointer can
+    be found on the two instructions above.
+    Args:
+        ix: index of MAKE_FUNCTION instruction
+        inst: MAKE_FUNCION instruction
+        instructions: list of instructions composing the whole bytecode
+
+    Returns: a dict, whose only key is the function name, and value is function code
+
+    """
+    assert inst.opname == "MAKE_FUNCTION"
+    assert ix >= 2
+
+    name = instructions[ix - 1].argval.split('.')[-1]  # discard context namespace
+    code = instructions[ix - 2].argval
+
+    return {name: code}
+
+
+def find_loaded_function(ix, inst, instructions,local_defs:dict):
+    """
+    When a LOAD_ATTR instruction is found, it may load a method from an outer
+    scope to be used further. The name of the method will be prepended by its
+    namespace.
+    Args:
+        ix: index of LOAD_ATTR instruction
+        inst: LOAD_ATTR instruction
+        instructions: list of instructions composing the whole bytecode
+        local_defs: dict containing all methods and modules visibles at this
+        point
+
+    Returns: a dict, whose only key is the function name, and value is function
+    code
+
+    """
+    assert inst.opname == "LOAD_ATTR"
+    assert ix >= 1
+
+    namespace = instructions[ix-1].argval
+    function_name = instructions[ix].argval
+    name = f"{namespace}.{function_name}"
+    try:
+        module = local_defs[namespace]
+    except KeyError:
+        print(local_defs.keys(),namespace, name)
+        raise KeyError
+    print(module)
+    code = getattr(module,function_name)
+    assert hasattr(code,'__code__'), code
+    code = code.__code__
+
+    return {name: code}
+
+
+def find_imported(ix, inst, instructions):
+    """
+    When a IMPORT_NAME instruction is found, we need to update local/global
+    context accordingly
+    Args:
+        ix: index of IMPORT_NAME instruction
+        inst: IMPORT_NAME instruction
+        instructions: list of instructions composing the whole bytecode
+
+    Returns: a dict, whose only key is the function name, and value is function
+    object
+
+    """
+    assert inst.opname == "IMPORT_NAME"
+
+    module = instructions[ix].argval
+    module_name = instructions[ix+1].argval
+
+    return {module_name: module}
 
 
 def get_name_of_CALL_FUNCTION(ix, inst, instructions):
@@ -132,83 +210,6 @@ def get_name_of_CALL_FUNCTION(ix, inst, instructions):
     return function_name
 
 
-def get_name_and_code_of_MAKE_FUNCTION(ix, inst, instructions):
-    """
-    When a MAKE_FUNCTION instruction is found, the name and code pointer can
-    be found on the two instructions above.
-    Args:
-        ix: index of MAKE_FUNCTION instruction
-        inst: MAKE_FUNCION instruction
-        instructions: list of instructions composing the whole bytecode
-
-    Returns: a dict, whose only key is the function name, and value is function code
-
-    """
-    assert inst.opname == "MAKE_FUNCTION"
-    assert ix >= 2
-
-    name = instructions[ix - 1].argval.split('.')[-1]  # discard context namespace
-    code = instructions[ix - 2].argval
-
-    return {name: code}
-
-
-def find_loaded_function(ix, inst, instructions,local_defs:dict):
-    """
-    When a LOAD_ATTR instruction is found, it may load a method from an outer
-    scope to be used further. The name of the method will be prepended by its
-    namespace.
-    Args:
-        ix: index of LOAD_ATTR instruction
-        inst: LOAD_ATTR instruction
-        instructions: list of instructions composing the whole bytecode
-        local_defs: dict containing all methods and modules visibles at this
-        point
-
-    Returns: a dict, whose only key is the function name, and value is function
-    code
-
-    """
-    assert inst.opname == "LOAD_ATTR"
-    assert ix >= 1
-
-    namespace = instructions[ix-1].argval
-    function_name = instructions[ix].argval
-    name = f"{namespace}.{function_name}"
-    try:
-        module = local_defs[namespace]
-    except KeyError:
-        print(local_defs.keys(),namespace, name)
-        raise KeyError
-    print(module)
-    code = getattr(module,function_name)
-    assert hasattr(code,'__code__'), code
-    code = code.__code__
-
-    return {name: code}
-
-
-def find_imported(ix, inst, instructions):
-    """
-    When a IMPORT_NAME instruction is found, we need to update local/global
-    context accordingly
-    Args:
-        ix: index of IMPORT_NAME instruction
-        inst: IMPORT_NAME instruction
-        instructions: list of instructions composing the whole bytecode
-
-    Returns: a dict, whose only key is the function name, and value is function
-    object
-
-    """
-    assert inst.opname == "IMPORT_NAME"
-
-    module = instructions[ix].argval
-    module_name = instructions[ix+1].argval
-
-    return {module_name: module}
-
-
 def get_function_object_by_name(
         function_name: str,
         enclosing_function, # function or function code
@@ -246,14 +247,35 @@ def get_function_object_by_name(
     \nEnclosed namespaces are not supported".format(function_name, module_namespace))
 
 
-def is_builtin(f: 'function') -> bool:
-    """Returns True if f is built-in"""
-    return hasattr(f, '__name__') and hasattr(builtins, f.__name__)
+def get_name_and_object_of_CALL_FUNCTION(
+        ix,inst,instructions,
+        parent_function,defined_functions
+) -> tuple:
+    """
+    Wrapper around get_name_of_CALL_FUNCTION and get_function_object_by_name
+    Args:
+        ix:
+        inst:
+        instructions:
+        parent_function:
+        defined_functions:
+
+    Returns:
+        tuple function name, function object
+
+    """
+    function_name = get_name_of_CALL_FUNCTION(ix,inst,instructions)
+    function_object = get_function_object_by_name(
+        function_name,
+        parent_function,
+        defined_functions
+    )
+    return function_name, function_object
 
 
 def get_bytecode_tree(
         top_function: 'function',
-        ignore_not_implemented=False
+        ignore_not_implemented=False,
 ) -> list:
     """
     This method recursively traverse the bytecodes of top_function entering
@@ -271,70 +293,53 @@ def get_bytecode_tree(
         bytecode_tree: nested lists of bytecode
 
     """
+    def process_op(
+            context,
+            defined_functions,
+            code_set,
+            called_functions,
+            parent_function,
+            ):
+        ix, inst, instructions = context
+        if inst.opname == "MAKE_FUNCTION":  # locally defined function
+            defined_functions.update(
+                get_name_and_code_of_MAKE_FUNCTION(*context))
+
+        if inst.opname == "IMPORT_NAME":
+            defined_functions.update(find_imported(*context))
+
+        if "CALL_FUNCTION" in inst.opname:
+            _, son_function = get_name_and_object_of_CALL_FUNCTION(
+                ix,inst,instructions,
+                parent_function,
+                defined_functions
+            )
+
+            if son_function not in code_set:
+                code_set.add(son_function)
+                called_functions.add(son_function)
+
 
     def traverse_code(parent_function: 'function') -> list:
 
-        if is_builtin(parent_function)
+        if is_builtin(parent_function):
             # dis cannot get instructions for builtins
             # return function name instead of bytecode
             return [parent_function.__name__]
 
         nonlocal code_set
         called_functions = set()
-        locally_defined_functions: dict = {}
+        defined_functions: dict = {}
 
         instructions = list(dis.get_instructions(parent_function))
-        for ix, inst in enumerate(instructions):
-            context = (ix, inst, instructions)
+        for context in enumerate_with_context(instructions):
+            process_op(context,defined_functions,code_set,called_functions,parent_function)
 
-            if inst.opname == "MAKE_FUNCTION":  # locally defined function
-                locally_defined_functions.update(get_name_and_code_of_MAKE_FUNCTION(*context))
+        # recursion step
+        code_list = [ traverse_code(f) for f in called_functions ]
 
-            if inst.opname == "IMPORT_NAME":
-                locally_defined_functions.update(find_imported(*context))
-
-            if inst.opname == "LOAD_GLOBAL":
-                try:
-                    son_function = get_function_object_by_name(
-                        son_function_name, parent_function, locally_defined_functions
-                    )
-                except NotImplementedError as e:
-                    if ignore_not_implemented:
-                        continue
-                    else:
-                        raise e
-                if son_function not in code_set:
-                    code_set.add(son_function)
-                    called_functions.add(son_function)
-
-            if inst.opname == "LOAD_ATTR":
-                locally_defined_functions.update(find_loaded_function(
-                    *context,locally_defined_functions))
-
-            if "CALL_FUNCTION" in inst.opname:  # call_function op found
-                son_function_name = get_name_of_CALL_FUNCTION(*context)
-                try:
-                    son_function = get_function_object_by_name(
-                        son_function_name, parent_function, locally_defined_functions
-                    )
-                except NotImplementedError as e:
-                    if ignore_not_implemented:
-                        continue
-                    else:
-                        raise e
-                if son_function not in code_set:
-                    code_set.add(son_function)
-                    called_functions.add(son_function)
-
-        code_list = [
-            traverse_code(f) for f in called_functions
-            # if f not in code_set  # analyze each function only once
-        ]
-
-        if hasattr(parent_function, '__code__'):  # parent_function is function object
-            consts = parent_function.__code__.co_consts
-
-
+        # leaf node step
+        if is_function(parent_function):
             function_code: list = b''.join([
                 parent_function.__code__.co_code,
                 _get_consts_hash(parent_function),
@@ -342,7 +347,7 @@ def get_bytecode_tree(
                     dict(inspect.getmembers(parent_function))['__defaults__']
                 )),
             ])
-        elif hasattr(parent_function, 'co_code'):  # parent_function is code object
+        elif is_code(parent_function):  # parent_function is code object
             function_code: list = b''.join([
                 parent_function.co_code,
                 _get_consts_hash(parent_function),
@@ -357,12 +362,13 @@ def get_bytecode_tree(
         code_list.append(function_code)
         return code_list
 
-    if not hasattr(top_function, '__code__'):
-        raise TypeError('argument should be a function')
+    ###get_bytecode_tree###
+    assert is_function(top_function), 'argument should be a function'
 
-    code_set = set()  # memoization set
+    code_set = set()  # "global" memoization set
+
     bytecode_tree = traverse_code(top_function)
-    assert isinstance(bytecode_tree, list)
+
     return bytecode_tree
 
 

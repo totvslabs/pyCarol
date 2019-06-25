@@ -1,6 +1,7 @@
 from pytest import mark
 from . import get_bytecode_tree, get_name_of_CALL_FUNCTION
 
+
 def a(x):
     return x + 5
 
@@ -175,12 +176,10 @@ def external_import_b(x):
     return pd.DataFrame(x)
 
 def internal_import_a(x):
-    import joblib
     import pandas as pd
     return pd.Series(x)
 
 def internal_import_b(x):
-    import joblib
     import pandas as pd
     return pd.DataFrame(x)
 
@@ -275,3 +274,4 @@ def test_equal_functions(f1, f2):
 @mark.parametrize("f1,f2", different_functions_list)
 def test_different_functions(f1, f2):
     assert get_bytecode_tree(f1) != get_bytecode_tree(f2)
+

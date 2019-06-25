@@ -2,7 +2,7 @@
 This module contains generic methods that operates on native python types and do
 not depend on external libraries.
 """
-
+import builtins
 
 def int_to_bytes(i: int) -> bytes:
     """
@@ -170,3 +170,31 @@ def get_reverse_dag(dag: dict) -> dict:
                 rev_dag[target] = [source]
 
     return rev_dag
+
+
+def is_builtin(f: 'function') -> bool:
+    """Returns True if f is built-in"""
+    return hasattr(f, '__name__') and hasattr(builtins, f.__name__)
+
+
+def is_function(f) -> bool:
+    """Returns True if f is function object"""
+    return hasattr(f, '__code__')
+
+
+def is_code(c) -> bool:
+    return hasattr(c, 'co_code')
+
+
+def test_isbuiltin():
+    assert is_builtin(print)
+    def f():
+        return None
+    assert not is_builtin(f)
+    from numpy.fft.fftpack import fft
+    assert not is_builtin(fft)
+
+
+def enumerate_with_context(instructions):
+    for ix, inst in enumerate(instructions):
+        yield (ix,inst,instructions)
