@@ -32,7 +32,9 @@ from pycarol.pipeline.utils import int_to_bytes, flat_list
 VERBOSE = True  # dev parameter
 
 
-def get_consts_hash(f) -> bytes:
+
+def _get_consts_hash(f) -> bytes:
+    """Returns hash code of local consts"""
     if hasattr(f, '__code__'):  # is function object
         consts_list = list(f.__code__.co_consts)
     elif hasattr(f, 'co_code'):  # is code object
@@ -47,36 +49,14 @@ def get_consts_hash(f) -> bytes:
     return int_to_bytes(hash(consts_tuple))
 
 
-number_of_parameters_in_build_ops = dict(
-    BUILD_TUPLE=lambda x: x,
-    BUILD_LIST=lambda x: x,
-    BUILD_SET=lambda x: x,
-    BUILD_MAP=lambda x: 2 * x,
-    BUILD_CONST_KEY_MAP=lambda x: x + 1,
-    BUILD_STRING=lambda x: x,
-    BUILD_TUPLE_UNPACK=lambda x: x,
-    BUILD_TUPLE_UNPACK_WITH_CALL=lambda x: x,
-    BUILD_LIST_UNPACK=lambda x: x,
-    BUILD_SET_UNPACK=lambda x: x,
-    BUILD_MAP_UNPACK=lambda x: x,
-    BUILD_MAP_UNPACK_WITH_CALL=lambda x: x,
-)
-
-
-def _load_attr(ix,instructions):
-    function_name = instructions[ix].argval
-    function_namespace = instructions[ix - 1].argval
-    function_name = '.'.join([function_namespace, function_name])
-    return function_name
-
-def find_called_function(ix, inst, instructions):
+def get_name_of_CALL_FUNCTION(ix, inst, instructions):
     """
     When a CALL_FUNCTION instruction is found, the function name is not given
     as a direct argument to this instruction. Instead, the function name can
     be found some instructions above on the bytecode. Between the CALL_FUNCTION
     instruction and the function pointer we found all the function parameters.
     This method implements the logic needed to fetch the function pointer for
-    the three kind of CALL_FUNCTION operations.
+    the three kinds of CALL_FUNCTION operations.
 
     Args:
         ix: index of call function instruction
@@ -86,6 +66,21 @@ def find_called_function(ix, inst, instructions):
     Returns:
         function_name: the name of the called function
     """
+    number_of_parameters_in_build_ops = dict(
+        BUILD_TUPLE=lambda x: x,
+        BUILD_LIST=lambda x: x,
+        BUILD_SET=lambda x: x,
+        BUILD_MAP=lambda x: 2 * x,
+        BUILD_CONST_KEY_MAP=lambda x: x + 1,
+        BUILD_STRING=lambda x: x,
+        BUILD_TUPLE_UNPACK=lambda x: x,
+        BUILD_TUPLE_UNPACK_WITH_CALL=lambda x: x,
+        BUILD_LIST_UNPACK=lambda x: x,
+        BUILD_SET_UNPACK=lambda x: x,
+        BUILD_MAP_UNPACK=lambda x: x,
+        BUILD_MAP_UNPACK_WITH_CALL=lambda x: x,
+    )
+
     if "CALL_FUNCTION" == inst.opname:  # it is simple call function instruction
         # for this instruction, we can find the called function some instructions
         # above. we just need to skip backwards the number of arguments
@@ -114,6 +109,7 @@ def find_called_function(ix, inst, instructions):
                 offset += number_of_parameters_in_build_ops[opname](arg)
     else:
         raise NotImplementedError("instruction {} is not supported".format(inst.opname))
+
     ix = ix - offset
     called_function_inst = instructions[ix]
 
@@ -125,16 +121,18 @@ def find_called_function(ix, inst, instructions):
         function_name = called_function_inst.argval
     elif called_function_inst.opname == 'LOAD_FAST':
         function_name = called_function_inst.argval
-    elif called_function_inst.opname == 'LOAD_ATTR':
-        function_name = _load_attr(ix,instructions)
+    elif called_function_inst.opname == 'LOAD_ATTR': # TODO: change this
+        function_name = instructions[ix].argval
+        function_namespace = instructions[ix - 1].argval
+        function_name = '.'.join([function_namespace, function_name])
     else:
         raise NotImplementedError(
-            f"Composed function name not implemented."
+            f"Composed function name not supported."
             f"{called_function_inst.opname}")
     return function_name
 
 
-def find_defined_function(ix, inst, instructions):
+def get_name_and_code_of_MAKE_FUNCTION(ix, inst, instructions):
     """
     When a MAKE_FUNCTION instruction is found, the name and code pointer can
     be found on the two instructions above.
@@ -200,7 +198,7 @@ def find_imported(ix, inst, instructions):
         instructions: list of instructions composing the whole bytecode
 
     Returns: a dict, whose only key is the function name, and value is function
-    code
+    object
 
     """
     assert inst.opname == "IMPORT_NAME"
@@ -211,7 +209,11 @@ def find_imported(ix, inst, instructions):
     return {module_name: module}
 
 
-def fetch_function_object(function_name: str, enclosing_function, local_functions: dict):
+def get_function_object_by_name(
+        function_name: str,
+        enclosing_function, # function or function code
+        local_functions: dict
+):
     """
     function_name can be found in Local, Enclosed, Global and Builtin Namespace
     Local and Enclosed namespaces cannot be exactly inferred in static analysis.
@@ -241,49 +243,63 @@ def fetch_function_object(function_name: str, enclosing_function, local_function
         return getattr(builtins, function_name)
     # else
     raise NotImplementedError("{} was neither found in module {} nor it is builtin.\
-    \nLocal and Enclosed namespaces are not supported".format(function_name, module_namespace))
+    \nEnclosed namespaces are not supported".format(function_name, module_namespace))
 
 
-def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False) -> list:
+def is_builtin(f: 'function') -> bool:
+    """Returns True if f is built-in"""
+    return hasattr(f, '__name__') and hasattr(builtins, f.__name__)
+
+
+def get_bytecode_tree(
+        top_function: 'function',
+        ignore_not_implemented=False
+) -> list:
     """
+    This method recursively traverse the bytecodes of top_function entering
+    in every function call found. At every level it returns a list of
+    bytecodes of respective functions called. The recursion is implemented by
+    local function traverse_code.
+
 
     Args:
-        top_function:
-        ignore_not_found_function:
+        top_function: analyzed function
+        ignore_not_implemented: if True, will generate bytecode_tree where it is
+        possible. Where it is not possible, will return empty list.
 
     Returns:
+        bytecode_tree: nested lists of bytecode
 
     """
 
-    def _traverse_code(parent_function: 'function') -> list:
+    def traverse_code(parent_function: 'function') -> list:
 
-        if hasattr(parent_function, '__name__'):
-            if hasattr(builtins, parent_function.__name__):
-                # dis cannot get instructions for builtins
-                # return function name instead of bytecode
-                return [parent_function.__name__]
+        if is_builtin(parent_function)
+            # dis cannot get instructions for builtins
+            # return function name instead of bytecode
+            return [parent_function.__name__]
 
         nonlocal code_set
         called_functions = set()
         locally_defined_functions: dict = {}
-        instructions = list(dis.get_instructions(parent_function))
 
+        instructions = list(dis.get_instructions(parent_function))
         for ix, inst in enumerate(instructions):
             context = (ix, inst, instructions)
 
             if inst.opname == "MAKE_FUNCTION":  # locally defined function
-                locally_defined_functions.update(find_defined_function(*context))
+                locally_defined_functions.update(get_name_and_code_of_MAKE_FUNCTION(*context))
 
             if inst.opname == "IMPORT_NAME":
                 locally_defined_functions.update(find_imported(*context))
 
             if inst.opname == "LOAD_GLOBAL":
                 try:
-                    son_function = fetch_function_object(
+                    son_function = get_function_object_by_name(
                         son_function_name, parent_function, locally_defined_functions
                     )
                 except NotImplementedError as e:
-                    if ignore_not_found_function:
+                    if ignore_not_implemented:
                         continue
                     else:
                         raise e
@@ -296,13 +312,13 @@ def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False)
                     *context,locally_defined_functions))
 
             if "CALL_FUNCTION" in inst.opname:  # call_function op found
-                son_function_name = find_called_function(*context)
+                son_function_name = get_name_of_CALL_FUNCTION(*context)
                 try:
-                    son_function = fetch_function_object(
+                    son_function = get_function_object_by_name(
                         son_function_name, parent_function, locally_defined_functions
                     )
                 except NotImplementedError as e:
-                    if ignore_not_found_function:
+                    if ignore_not_implemented:
                         continue
                     else:
                         raise e
@@ -311,7 +327,7 @@ def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False)
                     called_functions.add(son_function)
 
         code_list = [
-            _traverse_code(f) for f in called_functions
+            traverse_code(f) for f in called_functions
             # if f not in code_set  # analyze each function only once
         ]
 
@@ -321,7 +337,7 @@ def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False)
 
             function_code: list = b''.join([
                 parent_function.__code__.co_code,
-                get_consts_hash(parent_function),
+                _get_consts_hash(parent_function),
                 int_to_bytes(hash(
                     dict(inspect.getmembers(parent_function))['__defaults__']
                 )),
@@ -329,7 +345,7 @@ def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False)
         elif hasattr(parent_function, 'co_code'):  # parent_function is code object
             function_code: list = b''.join([
                 parent_function.co_code,
-                get_consts_hash(parent_function),
+                _get_consts_hash(parent_function),
                 # missing default parameter information
                 # asbytes(hash(
                 #     dict(inspect.getmembers(parent_function))['__defaults__']
@@ -345,7 +361,7 @@ def get_bytecode_tree(top_function: 'function', ignore_not_found_function=False)
         raise TypeError('argument should be a function')
 
     code_set = set()  # memoization set
-    bytecode_tree = _traverse_code(top_function)
+    bytecode_tree = traverse_code(top_function)
     assert isinstance(bytecode_tree, list)
     return bytecode_tree
 
