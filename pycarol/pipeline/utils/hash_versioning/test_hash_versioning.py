@@ -1,5 +1,6 @@
 from pytest import mark
-from . import get_bytecode_tree, get_name_of_CALL_FUNCTION
+from . import get_bytecode_tree
+from pycarol.pipeline.utils.hash_versioning import get_name_of_CALL_FUNCTION
 
 
 def a(x):
