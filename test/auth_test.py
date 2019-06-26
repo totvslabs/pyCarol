@@ -1,6 +1,4 @@
 import unittest
-import sys
-sys.path.append('../.')
 from pycarol.auth.ApiKeyAuth import ApiKeyAuth
 
 class ApiKeyAuthTestCase(unittest.TestCase):
