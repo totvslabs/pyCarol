@@ -169,12 +169,12 @@ def call_ex_h(x, y):
     return dummy_function(0, 1, 2, [0, 1, 2], ('a', 0), *x, *x, **y, **y, p1={0, 1, 2})
 
 import pandas as pd
-
+import pandas
 def external_import_a(x):
-    return pd.Series(x)
+    return pandas.Series.cumsum(x)
 
 def external_import_b(x):
-    return pd.DataFrame(x)
+    return pandas.Series.sum(x)
 
 def internal_import_a(x):
     import pandas as pd
@@ -264,7 +264,8 @@ def test_find_called_function(func):
     inst = instructions[ix]
     # assert that the func return another function
     assert "CALL_FUNCTION" in inst.opname
-    assert get_name_of_CALL_FUNCTION(ix, inst, instructions) == "dummy_function"
+    assert get_name_of_CALL_FUNCTION(ix, inst, instructions,func
+                                     ) == "dummy_function"
 
 
 @mark.parametrize("f1,f2", equal_functions_list)
@@ -276,3 +277,10 @@ def test_equal_functions(f1, f2):
 def test_different_functions(f1, f2):
     assert get_bytecode_tree(f1) != get_bytecode_tree(f2)
 
+@mark.parametrize("f1,f2", different_functions_list)
+def test_different_functions_robust(f1, f2):
+    assert get_bytecode_tree(f1,ignore_not_implemented=True) != \
+           get_bytecode_tree(f2,ignore_not_implemented=True)
+
+
+#TODO: defined supported/unsupported use cases
