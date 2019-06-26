@@ -50,22 +50,29 @@ class Carol:
 
             domain = os.getenv('CAROLTENANT')
             app_name = os.getenv('CAROLAPPNAME')
-            auth_token = os.getenv('CAROLAPPOAUTH')
-            connector_id = os.getenv('CAROLCONNECTORID')
 
-            assert domain and app_name and auth_token and connector_id,\
-                "One of the following env variables are missing:\n " \
-                f"CAROLTENANT: {domain}\nCAROLAPPNAME: {app_name}" \
-                f"\nCAROLAPPOAUTH: {auth}\nCAROLCONNECTORID: {connector_id}\n"
+            carol_user = os.getenv('CAROLUSER')
+            carol_pw = os.getenv('CAROLPWD')
 
-            auth = ApiKeyAuth(auth_token)
+            if carol_user and carol_pw:
+                auth = PwdAuth(user=carol_user, password=carol_pw)
+
+            else:
+                auth_token = os.getenv('CAROLAPPOAUTH')
+                connector_id = os.getenv('CAROLCONNECTORID')
+
+                assert domain and app_name and auth_token and connector_id,\
+                    "One of the following env variables are missing:\n " \
+                    f"CAROLTENANT: {domain}\nCAROLAPPNAME: {app_name}" \
+                    f"\nCAROLAPPOAUTH: {auth}\nCAROLCONNECTORID: {connector_id}\n"
+
+                auth = ApiKeyAuth(auth_token)
 
 
         if connector_id is None:
-            connector_id =  __CONNECTOR_PYCAROL__
+            connector_id = __CONNECTOR_PYCAROL__
 
 
-        #TODO: the `CAROLUSER` and `CAROLPWD` are not being used.
         if domain is None or app_name is None or auth is None:
             raise ValueError("domain, app_name and auth must be specified as parameters, in the app_config.json file " +
                              "or in the environment variables CAROLTENANT, CAROLAPPNAME, CAROLAPPOAUTH" +
