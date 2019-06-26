@@ -1,29 +1,27 @@
 import pytest
 import os
 
-os.environ['CAROLTENANT']
-os.getenv['CAROLAPPNAME']
-os.getenv['CAROLAPPOAUTH']
-os.getenv['CAROLCONNECTORID']
+os.environ['CAROLTENANT'] = 'pycarol'
+os.environ['CAROLAPPNAME'] = 'my_app'
+os.environ['CAROLUSER'] = 'pycarol@totvs.com.br'
+os.environ['CAROLPWD'] = 'foo123'
 
 
-TENANT_NAME = 'pycarol'
-APP_NAME = 'my_app'
-USERNAME = 'pycarol@totvs.com.br'
-PASSWORD = 'foo123'
 
-
-def test_password_login():
-    from pycarol import PwdAuth, Carol
-    login = Carol(domain=TENANT_NAME, app_name=APP_NAME, auth=PwdAuth(user=USERNAME, password=PASSWORD))
+def test_password_login_env_vars():
+    from pycarol import Carol
+    login = Carol()
     assert login.auth._token.access_token is not None
     assert login.auth._token.refresh_token is not None
     assert login.auth._token.expiration is not None
 
 
-def test_APIKEY_create_and_revoke():
-    from pycarol import ApiKeyAuth, Carol, PwdAuth
-    login = Carol(domain=TENANT_NAME, app_name=APP_NAME, auth=PwdAuth(user=USERNAME, password=PASSWORD))
+def test_APIKEY_create_and_revoke_env_vars():
+    from pycarol import Carol, PwdAuth
+    login = Carol()
+
+    old_user = os.environ.pop('CAROLUSER')
+    old_pw = os.environ.pop('CAROLPWD')
 
     api_key = login.issue_api_key()
 
@@ -33,8 +31,12 @@ def test_APIKEY_create_and_revoke():
     X_Auth_Key = api_key['X-Auth-Key']
     X_Auth_ConnectorId = api_key['X-Auth-ConnectorId']
 
-    print(f"This is a API key {api_key['X-Auth-Key']}")
-    print(f"This is the connector Id {api_key['X-Auth-ConnectorId']}")
+    os.environ['CAROLAPPOAUTH'] = X_Auth_Key
+    os.environ['CAROLCONNECTORID'] = X_Auth_ConnectorId
+
+
+    login = Carol(domain=os.environ['CAROLTENANT'], app_name=os.environ['CAROLAPPNAME'], auth=PwdAuth(user=old_user, password=old_pw))
+
 
     revoke = login.api_key_revoke(connector_id=X_Auth_ConnectorId)
 

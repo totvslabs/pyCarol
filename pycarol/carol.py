@@ -51,6 +51,9 @@ class Carol:
             domain = os.getenv('CAROLTENANT')
             app_name = os.getenv('CAROLAPPNAME')
 
+            assert domain and app_name, \
+                "One of the following env variables are missing:\n CAROLTENANT: {domain}\n CAROLAPPNAME: {app_name}"
+
             carol_user = os.getenv('CAROLUSER')
             carol_pw = os.getenv('CAROLPWD')
 
