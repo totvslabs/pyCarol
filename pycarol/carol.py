@@ -11,6 +11,7 @@ from . import __CONNECTOR_PYCAROL__
 
 
 class Carol:
+
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False):
         """
         This class handle all Carol`s API calls It will handle all API calls,
