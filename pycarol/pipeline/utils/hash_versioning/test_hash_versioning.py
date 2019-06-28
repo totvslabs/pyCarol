@@ -280,7 +280,6 @@ def test_different_functions_robust(f1, f2):
            get_bytecode_tree(f2,ignore_not_implemented=True)
 
 
-#TODO: defined supported/unsupported use cases
 TDD_tests = False
 
 if TDD_tests:
@@ -295,5 +294,3 @@ if TDD_tests:
         assert get_bytecode_tree(f1,ignore_not_implemented=True) != \
             get_bytecode_tree(f2,ignore_not_implemented=True)
 
-
-#TODO: defined supported/unsupported use cases
