@@ -39,7 +39,8 @@ VERBOSE = True  # TODO: move this to env variable
 from pycarol.pipeline.utils.hash_versioning.inspect_bytecode import (
     get_name_and_code_of_MAKE_FUNCTION,
     get_name_and_object_of_IMPORT_NAME,
-    get_name_and_object_of_CALL_FUNCTION
+    get_name_and_object_of_CALL_FUNCTION,
+    get_name_and_object_of_LOAD_ATTR,
 )
 
 
@@ -64,6 +65,7 @@ def process_op(
         code_set,
         called_functions,
         parent_function,
+        robust
         ):
     """
     Process instruction updating defined_functions, code_set and
@@ -74,6 +76,7 @@ def process_op(
         code_set: set of functions already inspected for hash versioning purpose
         called_functions: set of called functions until now in this bytecode
         parent_function: function object of this bytecode
+        robust: set true to ignore internal assertion errors
 
     Returns:
 
@@ -87,16 +90,29 @@ def process_op(
         defined_functions.update(
             get_name_and_object_of_IMPORT_NAME(*context))
 
+    # if inst.opname == "LOAD_ATTR":
+    #     defined_functions.update(
+    #         get_name_and_object_of_LOAD_ATTR(*context)
+    #     )
+
     if "CALL_FUNCTION" in inst.opname:
-        _, son_function = get_name_and_object_of_CALL_FUNCTION(
-            ix,inst,instructions,
-            parent_function,
-            defined_functions
-        )
+        try:
+            _, son_function = get_name_and_object_of_CALL_FUNCTION(
+                ix,inst,instructions,
+                parent_function,
+                defined_functions
+            )
+        except AssertionError as error:
+            if robust:
+                print(error)
+                return  # do not update code_set and called_functions
+            else:
+                raise(error)
 
         if son_function not in code_set:
             code_set.add(son_function)
             called_functions.add(son_function)
+    return
 
 def traverse_code(parent_function: 'function', code_set,
                   ignore_not_implemented=True) -> list:
@@ -128,7 +144,8 @@ def traverse_code(parent_function: 'function', code_set,
     instructions = list(dis.get_instructions(parent_function))
     for context in enumerate_with_context(instructions):
         try:
-            process_op(context,defined_functions,code_set,called_functions,parent_function)
+            process_op(context,defined_functions,code_set,called_functions,
+                       parent_function,ignore_not_implemented)
         except NotImplementedError as e:
             if ignore_not_implemented:
                 continue
@@ -141,11 +158,12 @@ def traverse_code(parent_function: 'function', code_set,
 
     # leaf node step
     if is_function(parent_function):
+
         function_code: list = b''.join([
             parent_function.__code__.co_code,
             _get_consts_hash(parent_function),
             int_to_bytes(hash(
-                dict(inspect.getmembers(parent_function))['__defaults__']
+                dict(inspect.getmembers(parent_function)).get('__defaults__',0)
             )),
         ])
     elif is_code(parent_function):  # parent_function is code object

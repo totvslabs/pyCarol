@@ -26,41 +26,6 @@ def get_name_and_code_of_MAKE_FUNCTION(ix, inst, instructions):
     return {name: code}
 
 
-def get_name_and_object_of_LOAD_ATTR(ix, inst, instructions, local_defs:dict):
-    """
-    When a LOAD_ATTR instruction is found, it may load a method from an outer
-    scope to be used further. The name of the method will be prepended by its
-    namespace.
-    Args:
-        ix: index of LOAD_ATTR instruction
-        inst: LOAD_ATTR instruction
-        instructions: list of instructions composing the whole bytecode
-        local_defs: dict containing all methods and modules visibles at this
-        point
-
-    Returns: a dict, whose only key is the function name, and value is function
-    code
-
-    """
-    assert inst.opname == "LOAD_ATTR"
-    assert ix >= 1
-
-    namespace = instructions[ix-1].argval
-    function_name = instructions[ix].argval
-    name = f"{namespace}.{function_name}"
-    try:
-        module = local_defs[namespace]
-    except KeyError:
-        print(local_defs.keys(),namespace, name)
-        raise KeyError
-    print(module)
-    code = getattr(module,function_name)
-    assert hasattr(code,'__code__'), code
-    code = code.__code__
-
-    return {name: code}
-
-
 def get_name_and_object_of_IMPORT_NAME(ix, inst, instructions):
     """
     When a IMPORT_NAME instruction is found, we can fetch the name of the
@@ -82,7 +47,7 @@ def get_name_and_object_of_IMPORT_NAME(ix, inst, instructions):
     return {module_name: module}
 
 
-def get_name_of_CALL_FUNCTION(ix, inst, instructions):
+def get_name_of_CALL_FUNCTION(ix, inst, instructions,parent_function):
     """
     When a CALL_FUNCTION instruction is found, the function name is not given
     as a direct argument to this instruction. Instead, the function name can
@@ -95,9 +60,11 @@ def get_name_of_CALL_FUNCTION(ix, inst, instructions):
         ix: index of call function instruction
         inst: call function instruction
         instructions: list of instructions composing the whole bytecode
+        parent_function: function object itself
 
     Returns:
-        function_name: the name of the called function
+        function_name: the name of the called function or tuple (
+        function_name,object) in some cases
     """
     number_of_parameters_in_build_ops = dict(
         BUILD_TUPLE=lambda x: x,
@@ -155,9 +122,9 @@ def get_name_of_CALL_FUNCTION(ix, inst, instructions):
     elif called_function_inst.opname == 'LOAD_FAST':
         function_name = called_function_inst.argval
     elif called_function_inst.opname == 'LOAD_ATTR': # TODO: change this
-        function_name = instructions[ix].argval
-        function_namespace = instructions[ix - 1].argval
-        function_name = '.'.join([function_namespace, function_name])
+        function_name = get_name_and_object_of_LOAD_ATTR(ix,
+                                                         called_function_inst,instructions,parent_function)
+        # in this case, function_name is actually (name,object)
     else:
         raise NotImplementedError(
             f"Composed function name not supported."
@@ -219,10 +186,59 @@ def get_name_and_object_of_CALL_FUNCTION(
         tuple function name, function object
 
     """
-    function_name = get_name_of_CALL_FUNCTION(ix,inst,instructions)
-    function_object = get_function_object_by_name(
-        function_name,
+    function_name = get_name_of_CALL_FUNCTION(ix,inst,instructions,parent_function)
+    if isinstance(function_name,tuple):
+        function_name, function_object = function_name
+    else:
+        function_object = get_function_object_by_name(
+            function_name,
+            parent_function,
+            defined_functions
+        )
+
+    from .._utils import is_function, is_builtin, is_code
+    assert is_function(function_object) or is_builtin(function_object) or \
+           is_code(function_object), f"{function_object} is not a function"
+
+    return function_name, function_object
+
+def get_name_and_object_of_LOAD_ATTR(
+        ix,inst,instructions,
         parent_function,
-        defined_functions
-    )
+) -> tuple:
+    """
+    Args:
+        ix:
+        inst:
+        instructions:
+
+    Returns:
+        tuple containing function name, function object
+
+    """
+    assert inst.opname == 'LOAD_ATTR'
+
+    composed_name = []
+    while inst.opname == "LOAD_ATTR":
+        composed_name.insert(0,inst.argval)
+        ix -= 1
+        inst = instructions[ix]
+    if inst.opname != "LOAD_GLOBAL":
+        raise NotImplementedError(
+            f"{inst.opname} not supported with LOAD_ATTR"
+        )
+
+    composed_name.insert(0,inst.argval)
+    function_name = ".".join(composed_name)
+
+    name = composed_name[0]
+    try:
+        o = importlib.import_module(name)
+    except ModuleNotFoundError:
+        m = importlib.import_module(parent_function.__module__)
+        o = getattr(m,name)
+    for name in composed_name[1:]:
+        o = getattr(o,name)
+    function_object = o
+
     return function_name, function_object
