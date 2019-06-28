@@ -1,0 +1,13 @@
+# Dockerfile to build public pycarol image
+FROM python:3.6
+
+ENV LANG "en_US.UTF-8"
+ENV LANGUAGE "en_US.UTF-8"
+ENV LC_ALL "en_US.UTF-8"
+
+RUN pip install pycarol && \
+    apt-get update && \
+    apt-get install locales -y && \
+    rm -rf /var/lib/apt/lists/* && \
+    dpkg-reconfigure locales && \
+    locale-gen en_US.UTF-8
