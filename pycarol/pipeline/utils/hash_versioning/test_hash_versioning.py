@@ -192,12 +192,13 @@ def pick_import_b(x):
     from pandas import DataFrame
     return DataFrame(x)
 
-from pandas import Series, DataFrame
+from numpy.fft import fft as f1
+from numpy.fft import fft2 as f2
 def pick_import_c(x):
-    return Series(x)
+    return f1(x)
 
 def pick_import_d(x):
-    return DataFrame(x)
+    return f2(x)
 
 def pick_import_e(x):
     return Series.cumsum(x)
