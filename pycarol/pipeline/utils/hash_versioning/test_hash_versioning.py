@@ -281,7 +281,8 @@ def test_different_functions_robust(f1, f2):
 
 
 TDD_tests = False
-
+# We place here tests that are not passing, but should not block a PR
+# Typically, they are tests related to WIP
 if TDD_tests:
     different_functions_list.append((internal_import_a,internal_import_b),)
 
