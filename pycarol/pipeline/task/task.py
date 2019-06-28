@@ -120,7 +120,12 @@ class Task(luigi.Task):
     def easy_run(self, inputs):
         return None
 
-    #this method was changed from the original version to allow execution of a task
+    def hash_version(self,):
+        """ Returns the hash of the task considering only function, not the parameters."""
+        from ..utils.hash_versioning import get_function_hash
+        return get_function_hash(self.run,ignore_not_implemented=True)
+
+    #following method was changed from the original version to allow execution of a task
     #with extra parameters. the original one, raises an exception. now, we print that exception
     #in this version we do not raise neither print it.
     @classmethod
