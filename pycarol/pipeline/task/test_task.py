@@ -44,3 +44,5 @@ def test_if_tasks_has_different_hash_2():
             return None
 
     assert Task1().hash_version() != Task2().hash_version()
+
+#TODO: hash versioning is not inspecting easy_run because it is class method. Either implement class method support in hash versioning or force function reference in Task definition
