@@ -21,6 +21,8 @@ class Task(luigi.Task):
     requires_dict = {}
     resources = {'cpu': 1}  # default resource to be overridden or complemented
 
+    task_function = None
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -114,8 +116,20 @@ class Task(luigi.Task):
         self.output().dump(function_output)
 
     def _easy_run(self, inputs):
-        # Override this method to implement standard pre/post-processing
-        return self.easy_run(inputs)
+        if self.easy_run and self.task_function:
+            raise(SyntaxError, "Both easy_run and task_function are defined.")
+        if not (self.easy_run or self.task_function):
+            raise(SyntaxError, "Either easy_run or task_function should be defined")
+
+        if self.easy_run:
+            return self.easy_run(inputs)
+        else:
+            if not isinstance(inputs,list):
+                raise(NotImplementedError,
+                 f"In task_function mode, inputs should be list, not {type(inputs)}")
+            params = self.get_params()
+            params = {k:v for (k,v) in params}
+            return self.task_function(*inputs,**params)
 
     def easy_run(self, inputs):
         return None
@@ -131,11 +145,16 @@ class Task(luigi.Task):
     @classmethod
     def get_param_values(cls, params, args, kwargs):
         """
+        This method was changed from the original version to allow execution of a task
+        with extra parameters. the original one, raises an exception. now, we print 
+        that exception in this version we do not raise neither print it.
+
         Get the values of the parameters from the args and kwargs.
         :param params: list of (param_name, Parameter).
         :param args: positional arguments
         :param kwargs: keyword arguments.
         :returns: list of `(name, value)` tuples, one for each parameter.
+        
         """
         result = {}
 
