@@ -18,13 +18,16 @@ class PwdAuth:
 
     def login(self, carol):
         self.carol = carol
-        resp = self.carol.call_api('v2/oauth2/token', auth=False, data={
+
+        data = {
             'username': self.user,
             'password': self.password,
             'grant_type': 'password',
             'subdomain': carol.domain,
             'connectorId': carol.connector_id
-        }, content_type='application/x-www-form-urlencoded')
+        }
+        resp = self.carol.call_api('v2/oauth2/token', auth=False, data=data,
+                                   content_type='application/x-www-form-urlencoded')
 
         self._token = types.SimpleNamespace()
         self._token.access_token = resp['access_token']
