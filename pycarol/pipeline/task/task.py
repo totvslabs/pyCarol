@@ -277,6 +277,7 @@ class inherit_list(object):
 
 
 class inherit_dict(object):
+    #TODO: hash versioning is not compatible with inherit_dict
     def __init__(self, **task_to_inherit_dict):
         self.requires_dict = task_to_inherit_dict
 
