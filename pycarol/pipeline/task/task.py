@@ -138,11 +138,15 @@ class Task(luigi.Task):
     def hash_version(self,):
         """ Returns the hash of the task considering only function, not the parameters."""
         from ..utils.hash_versioning import get_function_hash
-        return get_function_hash(self.run,ignore_not_implemented=True)
+        if not self.task_function:
+            warnings.warn(
+                "hash versioning only works in task_function mode. "\
+                "It will return dummy hash code",SyntaxWarning
+                )
+            return 0
+        else:
+            return get_function_hash(self.task_function, ignore_not_implemented=True)
 
-    #following method was changed from the original version to allow execution of a task
-    #with extra parameters. the original one, raises an exception. now, we print that exception
-    #in this version we do not raise neither print it.
     @classmethod
     def get_param_values(cls, params, args, kwargs):
         """
