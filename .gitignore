@@ -10,6 +10,8 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+.vscode/
+.pytest_cache/
 build/
 develop-eggs/
 dist/
@@ -26,6 +28,7 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+luigi_targets/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

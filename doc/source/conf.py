@@ -18,7 +18,6 @@ import pycarol
 import pycarol.app
 import pycarol.data_models
 import pycarol.pipeline
-import pycarol.luigi_extension
 import pycarol.nlp
 import pycarol.auth
 import pycarol.utils
