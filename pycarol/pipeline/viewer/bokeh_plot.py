@@ -93,6 +93,7 @@ def _make_pipeline_plot(
     edges_glyph.nonselection_glyph = None
     return pipeline_plot
 
+#TODO: integrate with pipetools
 class PlotDynamics():
     def __init__(
             self,

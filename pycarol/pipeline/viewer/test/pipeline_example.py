@@ -1,5 +1,6 @@
 from pycarol.pipeline import Task, inherit_list
-
+#TODO: update tasks definitions to new format
+#TODO: use same pipeline to test pipetools
 
 class T1(Task):
     pass
