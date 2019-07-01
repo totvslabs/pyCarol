@@ -117,16 +117,17 @@ class Task(luigi.Task):
 
     def _easy_run(self, inputs):
         if self.easy_run and self.task_function:
-            raise(SyntaxError, "Both easy_run and task_function are defined.")
+            raise SyntaxError("Both easy_run and task_function are defined.")
         if not (self.easy_run or self.task_function):
-            raise(SyntaxError, "Either easy_run or task_function should be defined")
+            raise SyntaxError("Either easy_run or task_function should be defined")
 
         if self.easy_run:
             return self.easy_run(inputs)
         else:
             if not isinstance(inputs,list):
-                raise(NotImplementedError,
-                 f"In task_function mode, inputs should be list, not {type(inputs)}")
+                raise NotImplementedError(
+                    f"In task_function mode, inputs should be list, not {type(inputs)}"
+                    )
             params = self.get_params()
             params = {k:v for (k,v) in params}
             return self.task_function(*inputs,**params)
