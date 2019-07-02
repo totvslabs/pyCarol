@@ -82,6 +82,7 @@ class Task(luigi.Task):
                                for i, input_i in self.input().items()}
 
         self.metadata['hash_version'] = self.hash_version()
+        self.metadata['params'] = self.get_params()
         #TODO: implement logger and metadata integration
         #TODO: save date, user, etc in metadata
         self.function_output = self._easy_run(function_inputs)
