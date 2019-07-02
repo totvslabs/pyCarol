@@ -17,6 +17,7 @@ class Task(luigi.Task):
     requires_dict = {}
     resources = {'cpu': 1}  # default resource to be overridden or complemented
     task_function = None
+    metadata = {}
     
     def buildme(self, local_scheduler=True, **kwargs):
         luigi.build([self, ], local_scheduler=local_scheduler, **kwargs)
@@ -59,12 +60,16 @@ class Task(luigi.Task):
     def load(self, **kwargs):
         return self.output().load(**kwargs)
 
+    def load_metadata(self):
+        return self.output().load_metadata()
+
     def remove(self):
         self.output().remove()
         self.output().remove_metadata()
 
-    def load_metadata(self):
-        return self.output().load_metadata()
+    def save(self):
+        self.output().dump(self.function_output)
+        self.output().dump_metadata(self.metadata)
 
     def run(self):
 
@@ -76,10 +81,12 @@ class Task(luigi.Task):
                                    if self.load_input_params(input_i) else input_i.load())
                                for i, input_i in self.input().items()}
 
-
-        function_output = self._easy_run(function_inputs)
-
-        self.output().dump(function_output)
+        self.metadata['hash_version'] = self.hash_version()
+        #TODO: implement logger and metadata integration
+        #TODO: save date, user, etc in metadata
+        self.function_output = self._easy_run(function_inputs)
+        self.save()
+        del self.function_output # after dump, free memory
 
     def _easy_run(self, inputs):
         if not (self.easy_run or self.task_function):
