@@ -1,5 +1,6 @@
 from pycarol.pipeline import Task, inherit_list
-
+#TODO: update tasks definitions to new format
+#TODO: use same pipeline to test pipetools
 
 class T1(Task):
     pass
@@ -27,6 +28,6 @@ class T5(Task):
 
 
 params = {}
-from pycarol.pipeline.tools.pipetools import Pipe
+from pycarol.pipeline.tools import Pipe
 
 pipeline1 = Pipe([T5(**params)])

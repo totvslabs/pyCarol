@@ -21,6 +21,8 @@ class Task(luigi.Task):
     requires_dict = {}
     resources = {'cpu': 1}  # default resource to be overridden or complemented
 
+    task_function = None
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -114,23 +116,53 @@ class Task(luigi.Task):
         self.output().dump(function_output)
 
     def _easy_run(self, inputs):
-        # Override this method to implement standard pre/post-processing
-        return self.easy_run(inputs)
+        if not (self.easy_run or self.task_function):
+            raise SyntaxError("Either easy_run or task_function should be defined")
+
+        if self.task_function:
+            if not isinstance(inputs,list):
+                raise NotImplementedError(
+                    f"In task_function mode, inputs should be list, not {type(inputs)}"
+                    )
+            params = self.get_params()
+            params = {k:v for (k,v) in params}
+            from functools import partial
+            if isinstance(self.task_function,partial):
+                f = self.task_function
+            else:
+                f = self.task_function.__func__
+            return f(*inputs,**params)            
+        else:
+            return self.easy_run(inputs)
 
     def easy_run(self, inputs):
         return None
 
-    #this method was changed from the original version to allow execution of a task
-    #with extra parameters. the original one, raises an exception. now, we print that exception
-    #in this version we do not raise neither print it.
+    def hash_version(self,):
+        """ Returns the hash of the task considering only function, not the parameters."""
+        from ..utils.hash_versioning import get_function_hash
+        if not self.task_function:
+            warnings.warn(
+                "hash versioning only works in task_function mode. "\
+                "It will return dummy hash code",SyntaxWarning
+                )
+            return 0
+        else:
+            return get_function_hash(self.task_function, ignore_not_implemented=True)
+
     @classmethod
     def get_param_values(cls, params, args, kwargs):
         """
+        This method was changed from the original version to allow execution of a task
+        with extra parameters. the original one, raises an exception. now, we print 
+        that exception in this version we do not raise neither print it.
+
         Get the values of the parameters from the args and kwargs.
         :param params: list of (param_name, Parameter).
         :param args: positional arguments
         :param kwargs: keyword arguments.
         :returns: list of `(name, value)` tuples, one for each parameter.
+        
         """
         result = {}
 
@@ -248,6 +280,7 @@ class inherit_list(object):
 
 
 class inherit_dict(object):
+    #TODO: hash versioning is not compatible with inherit_dict
     def __init__(self, **task_to_inherit_dict):
         self.requires_dict = task_to_inherit_dict
 
