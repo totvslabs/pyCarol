@@ -10,6 +10,7 @@ def test_create_pipe():
 def test_run_pipe():
     params = {}
     pipe = Pipe([T3],params)
+    pipe.remove_all()
     pipe.run()
     assert T1(**params).output().exists()
     assert T2(**params).output().exists()
@@ -18,7 +19,7 @@ def test_run_pipe():
 def test_remove_all():
     params = {}
     pipe = Pipe([T3],params)
-    # pipe.remove_all()
+    pipe.remove_all()
     pipe.run()
     assert T1(**params).output().exists()
     assert T2(**params).output().exists()
@@ -36,7 +37,7 @@ def test_remove_upstream():
     assert T1(**params).output().exists()
     assert T2(**params).output().exists()
     assert T3(**params).output().exists()
-    pipe.remove_upstream(T2)
+    pipe.remove_upstream([T2])
     assert T1(**params).output().exists()
     assert not T2(**params).output().exists()
     assert not T3(**params).output().exists()

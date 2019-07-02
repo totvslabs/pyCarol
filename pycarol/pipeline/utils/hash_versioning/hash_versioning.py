@@ -196,6 +196,10 @@ def get_bytecode_tree(
         bytecode_tree: nested lists of bytecode
 
     """
+    from functools import partial
+    if isinstance(top_function,partial):
+        top_function = top_function.func
+
     assert is_function(top_function), 'argument should be a function'
     code_set = set()  # "global" memoization set
     bytecode_tree = traverse_code(top_function, code_set,ignore_not_implemented)
