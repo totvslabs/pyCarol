@@ -18,6 +18,9 @@ class LocalTarget(luigi.LocalTarget):
             path = os.path.join(task.TARGET_DIR, namespace, file_id + ext)
         super().__init__(path=path, *args, **kwargs)
 
+    def dump_metadata(self,metadata: dict):
+        warnings.warn("dump_metadata not implemented in LocalTarget")
+
     def load_metadata(self):
         """Should return a dict."""
         warnings.warn("load_metadata not implemented in LocalTarget")
@@ -26,9 +29,8 @@ class LocalTarget(luigi.LocalTarget):
     def remove_metadata(self):
         warnings.warn("remove_metadata not implemented in LocalTarget")
 
-    def dump_metadata(self,metadata: dict):
-        warnings.warn("dump_metadata not implemented in LocalTarget")
-        
+    def get_metadata_path(self):
+        return f"{self.path}.metadata"        
 
 class CDSTarget(LocalTarget):
     """ A target that works both locally and on Carol Data Storage, based on env parameter CLOUD_TARGET
@@ -75,23 +77,24 @@ class CDSTarget(LocalTarget):
             self.path = os.path.join('pipeline', namespace, "{}.{}".format(file_id, self.FILE_EXT))
             self.log_path = os.path.join('pipeline',namespace, "{}_log.pkl".format(file_id))
 
-    def dump_metadata(self,*args,**kwargs):
+    def dump_metadata(self,metadata:dict ,*args,**kwargs):
         if self._is_cloud_target:
-            dump_metadata_cds()
+            self.storage.save(self.get_metadata_path(),metadata,format='joblib', cache=False)
         else:
-            super().dump_metadata(*args,**kwargs)
+            super().dump_metadata(metadata,*args,**kwargs)
 
     def load_metadata(self,*args,**kwargs):
         """Should return a dict."""
         if self._is_cloud_target:
-
+            metadata = self.storage.load(self.get_metadata_path(),format='joblib', cache=False)
+            assert isinstance(metadata,dict)
+            return metadata
         else:
             return super().load_metadata(*args,**kwargs)
-        
 
     def remove_metadata(self,*args,**kwargs):
         if self._is_cloud_target:
-
+            self.storage.delete(self.get_metadata_path())
         else:
             return super().load_metadata(*args,**kwargs)
 
