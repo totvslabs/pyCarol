@@ -37,7 +37,3 @@ from pycarol.pipeline.targets.deprecated_targets import (
     FeatherLocalTarget,
     ParquetPyCarolTarget
 )
-
-from pycarol.pipeline.viewer.task_visualization import (
-    Visualization
-)
