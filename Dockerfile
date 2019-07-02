@@ -16,6 +16,4 @@ COPY . /pycarol
 WORKDIR /pycarol
 
 RUN pip install -r requirements.txt && \
-    pip install nose coverage nose-cover3 twine 
-
-RUN make ci
+    pip install nose coverage nose-cover3 twine
