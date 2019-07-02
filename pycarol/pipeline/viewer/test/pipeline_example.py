@@ -28,6 +28,6 @@ class T5(Task):
 
 
 params = {}
-from pycarol.pipeline.tools.pipetools import Pipe
+from pycarol.pipeline.tools import Pipe
 
 pipeline1 = Pipe([T5(**params)])
