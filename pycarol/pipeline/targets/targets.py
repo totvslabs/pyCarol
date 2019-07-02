@@ -2,7 +2,7 @@ import luigi
 import pandas as pd
 import os
 import joblib
-
+import warnings
 
 class LocalTarget(luigi.LocalTarget):
     FILE_EXT = ''
@@ -18,12 +18,17 @@ class LocalTarget(luigi.LocalTarget):
             path = os.path.join(task.TARGET_DIR, namespace, file_id + ext)
         super().__init__(path=path, *args, **kwargs)
 
-    def loadlog(self):
-        return "task log not implemented for local targets"
+    def load_metadata(self):
+        """Should return a dict."""
+        warnings.warn("load_metadata not implemented in LocalTarget")
+        return {}
 
-    def removelog(self):
-        return "task log not implemented for local targets"
+    def remove_metadata(self):
+        warnings.warn("remove_metadata not implemented in LocalTarget")
 
+    def dump_metadata(self,metadata: dict):
+        warnings.warn("dump_metadata not implemented in LocalTarget")
+        
 
 class CDSTarget(LocalTarget):
     """ A target that works both locally and on Carol Data Storage, based on env parameter CLOUD_TARGET
@@ -70,20 +75,26 @@ class CDSTarget(LocalTarget):
             self.path = os.path.join('pipeline', namespace, "{}.{}".format(file_id, self.FILE_EXT))
             self.log_path = os.path.join('pipeline',namespace, "{}_log.pkl".format(file_id))
 
-    def persistlog(self, string):
-        self.storage.save(self.log_path, string,format='joblib')
+    def dump_metadata(self,*args,**kwargs):
+        if self._is_cloud_target:
+            dump_metadata_cds()
+        else:
+            super().dump_metadata(*args,**kwargs)
 
-    def loadlog(self):
-        try:
-            text = self.storage.load(self.log_path, format='joblib')
-        except Exception:
-            return str(Exception)
-        if not text:
-            return "Log not found. log path: {}".format(self.log_path)
-        return text
+    def load_metadata(self,*args,**kwargs):
+        """Should return a dict."""
+        if self._is_cloud_target:
 
-    def removelog(self):
-        self.storage.delete(self.log_path)
+        else:
+            return super().load_metadata(*args,**kwargs)
+        
+
+    def remove_metadata(self,*args,**kwargs):
+        if self._is_cloud_target:
+
+        else:
+            return super().load_metadata(*args,**kwargs)
+
 
     def load(self, *args, **kwargs):
         if self._is_cloud_target:
