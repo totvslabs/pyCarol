@@ -10,41 +10,20 @@ logger.setLevel(logging.INFO)
 
 
 class Task(luigi.Task):
-    TARGET_DIR = './luigi_targets/'  # this class attribute can be redefined somewhere else
-
-    TARGET = PickleTarget  # DEPRECATED!
+    TARGET_DIR = './TARGETS/'  # this class attribute can be redefined somewhere else
     target_type = PickleTarget
     is_cloud_target = None
-
-    persist_stdout = False
     requires_list = []
     requires_dict = {}
     resources = {'cpu': 1}  # default resource to be overridden or complemented
-
     task_function = None
     
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def visualize(self):
-        # override this method to provide a visualization for taskviewer
-        return None
-
     def buildme(self, local_scheduler=True, **kwargs):
         luigi.build([self, ], local_scheduler=local_scheduler, **kwargs)
-
-    def debug_task(self):
-        persist_stdout =self.persist_stdout
-        self.persist_stdout = False
-        self.run()
-        self.persist_stdout = persist_stdout
 
     def _file_id(self):
         # returns the output default file identifier
         return luigi.task.task_id_str(self.get_task_family(), self.to_str_params(only_significant=True))
-
-    def _txt_path(self):
-        return "{}.txt".format(self._file_id())
 
     def requires(self):
         if len(self.requires_list) > 0:
@@ -71,7 +50,7 @@ class Task(luigi.Task):
             return []
 
     def output(self):
-        if self.TARGET != PickleTarget:  # Check for deprecated use
+        if hasattr(self,'TARGET'):  # Check for deprecated use
             warnings.warn('TARGET is being replaced with target_type.', DeprecationWarning)
             return self.TARGET(self)
 
@@ -82,10 +61,10 @@ class Task(luigi.Task):
 
     def remove(self):
         self.output().remove()
-        self.output().removelog()
+        self.output().remove_metadata()
 
-    def loadlog(self):
-        return self.output().loadlog()
+    def load_metadata(self):
+        return self.output().load_metadata()
 
     def run(self):
 
@@ -98,20 +77,7 @@ class Task(luigi.Task):
                                for i, input_i in self.input().items()}
 
 
-        if hasattr(self.output(), '_is_cloud_target') and self.output()._is_cloud_target and self.persist_stdout:
-            try:
-                from contextlib import redirect_stdout
-                import io
-                f = io.StringIO()
-                with redirect_stdout(f):
-                    function_output = self._easy_run(function_inputs)
-            finally:
-                # self.output().persistlog(self._txt_path())
-                self.output().persistlog(f.getvalue())
-        else:
-            function_output = self._easy_run(function_inputs)
-
-        print("dumping task", self)
+        function_output = self._easy_run(function_inputs)
 
         self.output().dump(function_output)
 
@@ -126,11 +92,10 @@ class Task(luigi.Task):
                     )
             params = self.get_params()
             params = {k:v for (k,v) in params}
-            from functools import partial
-            if isinstance(self.task_function,partial):
-                f = self.task_function
-            else:
+            if hasattr(self.task_function,'__func__'):
                 f = self.task_function.__func__
+            else:
+                f = self.task_function
             return f(*inputs,**params)            
         else:
             return self.easy_run(inputs)
@@ -231,7 +196,7 @@ class Task(luigi.Task):
         """
         return {}
 
-
+#TODO: remove either WrapperTask or Dummy Target
 class WrapperTask(Task):
     """
     Use for tasks that only wrap other tasks and that by definition are done if all their requirements exist.
