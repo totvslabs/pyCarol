@@ -26,7 +26,7 @@ from .targets import (
     FileTarget,
     LocalTarget
 )
-from pycarol.pipeline.targets.deprecated_targets import (
+from .targets.deprecated_targets import (
     PicklePyCarolTarget,
     PytorchPyCarolTarget,
     KerasPyCarolTarget,
@@ -36,8 +36,4 @@ from pycarol.pipeline.targets.deprecated_targets import (
     JsonLocalTarget,
     FeatherLocalTarget,
     ParquetPyCarolTarget
-)
-
-from pycarol.pipeline.viewer.task_visualization import (
-    Visualization
 )
