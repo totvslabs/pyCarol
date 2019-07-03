@@ -33,10 +33,13 @@ test:
 	echo "This is a temporary step. CHECK THOSES TESTS"
 	nosetests --with-coverage3 --collect-only
 
+code_scan: test
+	sonar-scanner -Dsonar.projectKey=pyCarol -Dsonar.sources=. -Dsonar.host.url=https://sonar.ops.carol.ai -Dsonar.login=${SONAR_PYCAROL_TOKEN} -Dsonar.branch.name=${BUILDKITE_BRANCH}
+
 bump_patch:
 	bumpversion patch
 
-bump_minor
+bump_minor:
 	bumpversion minor
 
-ci: clean test package setup_pypi deploy
+ci: clean package setup_pypi
