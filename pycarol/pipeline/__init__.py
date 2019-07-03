@@ -26,7 +26,7 @@ from .targets import (
     FileTarget,
     LocalTarget
 )
-from pycarol.pipeline.targets.deprecated_targets import (
+from .targets.deprecated_targets import (
     PicklePyCarolTarget,
     PytorchPyCarolTarget,
     KerasPyCarolTarget,
