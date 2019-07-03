@@ -11,7 +11,6 @@ clean:
 	rm -rf dist/*
 
 dev:
-	pip install -r dev-requirements.txt
 	pip install -e .
 
 docs:
@@ -29,14 +28,18 @@ setup_pypi:
 	echo "username = ${PYPI_USERNAME}" >> ~/.pypirc
 	echo "password = ${PYPI_PASSWORD}" >> ~/.pypirc
 
-# setup_pip:
-# 	pip config set global.index http://nexus3.carol.ai:8080/repository/totvslabspypi/pypi
-# 	pip config set global.index-url http://nexus3.carol.ai:8080/repository/totvslabspypi/simple
-# 	pip config set global.trusted-host nexus3.carol.ai
-
 test:
 	# coverage --collect-only run -m unittest discover
 	echo "This is a temporary step. CHECK THOSES TESTS"
 	nosetests --with-coverage3 --collect-only
 
-ci: clean test package setup_pypi deploy
+code_scan: test
+	sonar-scanner -Dsonar.projectKey=pyCarol -Dsonar.sources=. -Dsonar.host.url=https://sonar.ops.carol.ai -Dsonar.login=${SONAR_PYCAROL_TOKEN} -Dsonar.branch.name=${BUILDKITE_BRANCH}
+
+bump_patch:
+	bumpversion patch
+
+bump_minor:
+	bumpversion minor
+
+ci: clean package setup_pypi
