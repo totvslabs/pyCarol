@@ -26,7 +26,7 @@ steps:
   - wait: ~
 
   - label: ":hammer: Tests"
-    command: docker run --rm -it pycarolci make code_scan
+    command: docker run --rm -it -e SONAR_PYCAROL_TOKEN=${SONAR_PYCAROL_TOKEN} -e BUILDKITE_BRANCH=${BUILDKITE_BRANCH} pycarolci make code_scan
     agents:
       queue: '${agent_name}'
 
