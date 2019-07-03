@@ -19,21 +19,31 @@ agent_name=$(buildkite-agent meta-data get name)
 
 cat << EOF
 steps:
-  - label: ":docker: Build"
-    command: docker build --build-arg pypi_user=${PYPI_USERNAME} --build-arg pypi_pass=${PYPI_PASSWORD} -f Dockerfile.buildkite -t pycarolci .
-    agents:
-      queue: '${agent_name}'
-  - wait: ~
+    - label: ":docker: Build"
+        command: docker build --build-arg pypi_user=${PYPI_USERNAME} --build-arg pypi_pass=${PYPI_PASSWORD} -f Dockerfile.buildkite -t pycarolci .
+        agents:
+            name: '${agent_name}'
 
-  - label: ":hammer: Tests"
-    command: docker run --rm -it -e SONAR_PYCAROL_TOKEN=${SONAR_PYCAROL_TOKEN} -e BUILDKITE_BRANCH=${BUILDKITE_BRANCH} pycarolci make code_scan
-    agents:
-      queue: '${agent_name}'
+    - wait: ~
 
-  - wait: ~
+    - label: ":hammer: Tests"
+        command: docker run --rm -it -e SONAR_PYCAROL_TOKEN=${SONAR_PYCAROL_TOKEN} -e BUILDKITE_BRANCH=${BUILDKITE_BRANCH} pycarolci make code_scan
+        agents:
+            name: '${agent_name}'
 
-  - label: ":shipit: Deploy"
-    command: docker run --rm -it pycarolci make deploy
-    agents:
-      queue: '${agent_name}'
+    - wait: ~
+
+    - label: ":shipit: Deploy"
+        command: docker run --rm -it pycarolci make deploy
+        branches: "master"
+        agents:
+            name: '${agent_name}'
+
+    - wait: ~
+
+    - label: ":recycle: Clean up"
+        command: docker rmi pycarolci
+        agents:
+            name: '${agent_name}'
+
 EOF
