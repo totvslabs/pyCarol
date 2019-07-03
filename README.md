@@ -1,4 +1,6 @@
-# pyCarol   <img src="https://github.com/TOTVS/carol-ds-retail/blob/master/recommender-project/image/pycarol.jpg" alt="Carol" width="32" data-canonical-src="http://svgur.com/i/ue.svg"> 
+# pyCarol   <img src="https://github.com/TOTVS/carol-ds-retail/blob/master/recommender-project/image/pycarol.jpg" alt="Carol" width="32" data-canonical-src="http://svgur.com/i/ue.svg">
+
+[![Build status](https://badge.buildkite.com/b92ca1611add8d61063f61c92b9798fe81e859d468aae36463.svg)](https://buildkite.com/totvslabs/pycarol)
 
 # Table of Contents
 1. [Initializing pyCarol](#using-pyCarol)
@@ -22,10 +24,10 @@ from pycarol.carol import Carol
 
 carol = Carol(domain=TENANT_NAME, app_name=APP_NAME,
               auth=PwdAuth(USERNAME, PASSWORD), connector_id=CONNECTOR)
-              
-```  
-where `domain` is the tenant name, `app_name` is the app name one is using to access, if any, 
-is the authentication method to be used (using user/password in this case) and `connector_id` is the connector 
+
+```
+where `domain` is the tenant name, `app_name` is the app name one is using to access, if any,
+is the authentication method to be used (using user/password in this case) and `connector_id` is the connector
 one wants to connect.
 ####  Running on a local Machine
 
@@ -48,12 +50,12 @@ To use API keys instead of username and password:
 from pycarol.auth.ApiKeyAuth import ApiKeyAuth
 from pycarol.carol import Carol
 
-carol = Carol(domain=DOMAIN, 
-              app_name=APP_NAME, 
+carol = Carol(domain=DOMAIN,
+              app_name=APP_NAME,
               auth=ApiKeyAuth(api_key=X_AUTH_KEY),
               connector_id=CONNECTOR)
 
-```  
+```
 
 To generate an API key
 
@@ -107,14 +109,14 @@ query = Query(carol, page_size=10, print_status=True, only_hits=True,
               fields=FIELDS_ITEMS, max_hits=200).query(json_query).go()
 query.results
 
-```  
+```
 The result will be `200` hits of the query `json_query`  above, the pagination will be 10, that means in each response
-there will be 10 records. The query will return only the fields set in `FIELDS_ITEMS`. 
+there will be 10 records. The query will return only the fields set in `FIELDS_ITEMS`.
 The parameter `only_hits = True` will make sure that only records into the path `$hits.mdmGoldenFieldAndValues` will return.
- If one wants all the response use `only_hits = False`. Also, if your filter has an aggregation, one should use 
- `only_hits = False` and `get_aggs=True`, e.g.,  
- 
- 
+ If one wants all the response use `only_hits = False`. Also, if your filter has an aggregation, one should use
+ `only_hits = False` and `get_aggs=True`, e.g.,
+
+
 ```python
 from pycarol.query import Query
 
@@ -140,7 +142,7 @@ query = Query(carol, get_aggs=True, only_hits=False,page_size=0)
 query.query(jsons).go()
 query.results
 
-``` 
+```
 
 
 #### Named queries
@@ -164,18 +166,18 @@ Query(carol).named_query_params(named_query)
 > {'revenueHist': ['*cnpj', 'dateFrom', 'dateTo', '*bin']}  #Parameters starting by * are mandatory.
 
 ```
- 
+
 ## Sending data
- 
- The first step to send data to Carol is to create a connector. 
- 
+
+ The first step to send data to Carol is to create a connector.
+
  ```python
 conn = Connectors(carol).create(connectorName='my_conector', connectorLabel="conector_label", groupName="GroupName")
 connectorId = conn.connectorId  # this is the just created connector Id
 
 ```
 With the connector Id on hands we can create the staging schema and then create the staging table. Assuming we have
-a sample of the data we want to send. 
+a sample of the data we want to send.
 
   ```python
 from pycarol.staging import Staging
@@ -220,7 +222,7 @@ The json schema will be in the variable `schema.schema`. The code above will cre
   'mdmStagingType': 'my_stag'
 }
 ```
-To send the data  (assuming we have a json with the data we want to send). 
+To send the data  (assuming we have a json with the data we want to send).
 
   ```python
 from pycarol.staging import Staging
@@ -229,13 +231,13 @@ json_ex = [{"name":'Rafael',"email": {"type": "email", "email": 'rafael@totvs.co
            {"name":'Leandro',"email": {"type": "email", "email": 'Leandro@totvs.com.br'}   },
            {"name":'Joao',"email": {"type": "email", "email": 'joao@rolima.com.br'}   },
            {"name":'Marcelo',"email": {"type": "email", "email": 'marcelo@totvs.com.br'}   }]
-           
+
 
 staging = Staging(carol)
 staging.sendData(staging_name = 'my_stag', data = json_ex, step_size = 2,
                  connector_id=connectorId, print_stats = True)
 ```
-The parameter `step_size` says how many registers will be sent each time. Remember the the max size per payload is 
+The parameter `step_size` says how many registers will be sent each time. Remember the the max size per payload is
 5MB. The parameter  `data` can be a pandas DataFrame (Beta).
 
 OBS: It is not possible to create a mapping using pycarol. The Mapping has to be done via the UI
