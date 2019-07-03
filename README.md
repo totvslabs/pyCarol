@@ -1,11 +1,6 @@
 # pyCarol   <img src="https://github.com/TOTVS/carol-ds-retail/blob/master/recommender-project/image/pycarol.jpg" alt="Carol" width="32" data-canonical-src="http://svgur.com/i/ue.svg">
 
 [![Build status](https://badge.buildkite.com/b92ca1611add8d61063f61c92b9798fe81e859d468aae36463.svg)](https://buildkite.com/totvslabs/pycarol)
-[![Lines of Code](https://sonar.ops.carol.ai/api/project_badges/measure?project=pyCarol&metric=ncloc)](https://sonar.ops.carol.ai/dashboard?id=pyCarol)
-[![Coverage](https://sonar.ops.carol.ai/api/project_badges/measure?project=pyCarol&metric=coverage)](https://sonar.ops.carol.ai/dashboard?id=pyCarol)
-[![Maintainability Rating](https://sonar.ops.carol.ai/api/project_badges/measure?project=pyCarol&metric=sqale_rating)](https://sonar.ops.carol.ai/dashboard?id=pyCarol)
-[![Security Rating](https://sonar.ops.carol.ai/api/project_badges/measure?project=pyCarol&metric=security_rating)](https://sonar.ops.carol.ai/dashboard?id=pyCarol)
-[![Technical Debt](https://sonar.ops.carol.ai/api/project_badges/measure?project=pyCarol&metric=sqale_index)](https://sonar.ops.carol.ai/dashboard?id=pyCarol)
 
 # Table of Contents
 1. [Initializing pyCarol](#using-pyCarol)
