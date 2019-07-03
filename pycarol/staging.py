@@ -327,8 +327,10 @@ class Staging:
             columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
             mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
         else:
-            mapping_columns = list(self.get_schema(staging_name=staging_name,
-                                                   connector_id=connector_id)['mdmStagingMapping']['properties'].keys())
+            _staging = self.get_schema(staging_name=staging_name, connector_id=connector_id)
+            if not _staging:
+                raise ValueError(f"{staging_name} does not exist for connector ID {connector_id}")
+            mapping_columns = list(_staging['mdmStagingMapping']['properties'].keys())
             columns = [i.replace("-", "_") for i in mapping_columns]
             columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
             mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
