@@ -82,7 +82,7 @@ class Task(luigi.Task):
                                for i, input_i in self.input().items()}
 
         self.metadata['hash_version'] = self.hash_version()
-        self.metadata['params'] = self.get_params()
+        self.metadata['params'] = self.get_execution_params()
         #TODO: implement logger and metadata integration
         #TODO: save date, user, etc in metadata
         self.function_output = self._easy_run(function_inputs)
@@ -186,12 +186,8 @@ class Task(luigi.Task):
         return [(param_name, list_to_tuple(result[param_name])) for param_name, param_obj in params]
 
     def get_execution_params(self):
-        params = {}
-        for param_name in dir(self.__class__):
-            param_obj = getattr(self, param_name)
-            params.update({param_name: param_obj})
 
-        return params
+        return self.to_str_params(only_significant=False, only_public=True)
 
     def load_input_params(self, input_target):
         """
