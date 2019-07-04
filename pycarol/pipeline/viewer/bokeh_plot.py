@@ -2,7 +2,6 @@ import bokeh
 assert bokeh.__version__ == '1.2.0'
 from bokeh.models import (
     ColumnDataSource,
-    CDSView,
     BooleanFilter,
     HoverTool,
 )
@@ -39,10 +38,6 @@ def _make_pipeline_plot(
         nodes_data_source,
         edges_data_source,
 ):
-    # done_tasks_data_source = CDSView(
-    #     source=nodes_data_source,
-    #     filters=[BooleanFilter(complete)]
-    # )
 
     incomplete_nodes_data_source = ColumnDataSource()
     _update_incomplete(nodes_data_source,incomplete_nodes_data_source)
@@ -52,7 +47,7 @@ def _make_pipeline_plot(
         )
 
     family_color = _make_colormapper(nodes_data_source.data,'task_family')
-
+    #TODO: remove grid. set light  gray background color
     pipeline_plot = figure(
         title="Pipeline Debugger",
         x_range=(-1, max(nodes_data_source.data['x']) + 1),
@@ -113,7 +108,7 @@ def _make_pipeline_plot(
     edges_glyph.nonselection_glyph = None
     return pipeline_plot
 
-#TODO: integrate with pipetools
+#TODO: make plotsdynamics abstract class with button decorator and so on
 class PlotDynamics():
     def __init__(
             self,
@@ -177,6 +172,7 @@ class PlotDynamics():
             t.remove()
 
     def removeupstream_callback(self,event):
+        #TODO: implement this
         return
 
     def update_callback(self,event):
@@ -188,8 +184,9 @@ class PlotDynamics():
         else:
             self.nodes_data_source.data['complete'] = new_complete
         
-
+    #TODO: make buttons decorator
     def buttons(self):
+        # TODO: return buttons array if too many buttons
         return row([
             self.remove_button,
             self.update_button,
@@ -208,7 +205,7 @@ def plot_pipeline(nodes_data,edges_data,pipe):
         final_layout:
 
     """
-
+    #TODO: get nodes_data and edges_data from pipe
     nodes_data_source = ColumnDataSource(data=nodes_data)
     edges_data_source = ColumnDataSource(data=edges_data)
 
