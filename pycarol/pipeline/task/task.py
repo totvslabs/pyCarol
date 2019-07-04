@@ -16,6 +16,7 @@ class Task(luigi.Task):
     is_cloud_target = None
     requires_list = []
     requires_dict = {}
+    #TODO (renan):  Remove support to requires_dict. ask me why...
     resources = {'cpu': 1}  # default resource to be overridden or complemented
     task_function = None
     metadata = {}
@@ -84,8 +85,8 @@ class Task(luigi.Task):
 
         self.metadata['hash_version'] = self.hash_version()
         self.metadata['params'] = self.get_execution_params(only_significant=False, only_public=True)
-        #TODO: implement logger and metadata integration
-        #TODO: save date, user, etc in metadata
+        #TODO (renan): implement logger and metadata integration
+        #TODO (renan): save date, user, git-info, etc in metadata
         self.function_output = self._easy_run(function_inputs)
         self.save()
         del self.function_output # after dump, free memory
