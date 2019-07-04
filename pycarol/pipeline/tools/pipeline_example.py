@@ -1,4 +1,5 @@
 from pycarol.pipeline.task import Task, inherit_list
+from pycarol.pipeline.tools import Pipe
 
 from functools import partial
 import numpy as np
@@ -24,4 +25,6 @@ class T2(Task):
 class T3(Task):
     task_function = f3
 
+params = {}
 
+pipeline1 = Pipe([T3],params)
