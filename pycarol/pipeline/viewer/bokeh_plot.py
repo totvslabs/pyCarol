@@ -24,20 +24,20 @@ def _make_colormapper(data_source: dict, col_name: str):
     return CategoricalColorMapper(factors=factors,
                                   palette=Category10[nb_factors])
 
-def _update_incomplete(nodes_data_source,incomplete_nodes_data_source):
-    nodes_dict = nodes_data_source.data
-    incomplete_mask = [(not c) for c in nodes_dict['complete']]
-    incomplete_dict = {
-        'x': [x for i,x in enumerate(nodes_dict['x']) if incomplete_mask[i]],
-        'y': [x for i,x in enumerate(nodes_dict['y']) if incomplete_mask[i]]
-        }
-    incomplete_nodes_data_source.data = incomplete_dict
 
 
 def _make_pipeline_plot(
         nodes_data_source,
         edges_data_source,
 ):
+    def _update_incomplete(nodes_data_source,incomplete_nodes_data_source):
+        nodes_dict = nodes_data_source.data
+        incomplete_mask = [(not c) for c in nodes_dict['complete']]
+        incomplete_dict = {
+            'x': [x for i,x in enumerate(nodes_dict['x']) if incomplete_mask[i]],
+            'y': [x for i,x in enumerate(nodes_dict['y']) if incomplete_mask[i]]
+            }
+        incomplete_nodes_data_source.data = incomplete_dict
 
     incomplete_nodes_data_source = ColumnDataSource()
     _update_incomplete(nodes_data_source,incomplete_nodes_data_source)
