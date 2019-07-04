@@ -117,4 +117,11 @@ class Pipe(object):
 
     def get_dag(self):
         return self.dag
+
+    def get_task_by_id(self,task_id):
+        for t in self.all_tasks:
+            if task_id == t.task_id:
+                return t
+        else:
+            raise KeyError(f"{task_id} not found in this pipeline.")
     

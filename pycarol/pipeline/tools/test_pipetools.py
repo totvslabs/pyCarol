@@ -56,6 +56,26 @@ def test_remove_orphans():
     assert T2(**params).output().exists()
     assert not T3(**params).output().exists()
 
+def test_get_task_by_id():
+    params = {}
+    pipe = Pipe([T3],params)
+    t3_id = T3(**params).task_id
+    assert pipe.get_task_by_id(t3_id) == T3(**params)
+
+def test_get_task_by_id_raises():
+    params = {}
+    pipe = Pipe([T3],params)
+    try:
+        pipe.get_task_by_id("wrog_name")
+    except KeyError:
+        return # success
+    raise Exception("Key error waas not triggered")
+
+def test_import_bokeh_plot():
+    import pycarol.pipeline.viewer.bokeh_plot
+
+
 # def test_remove_obsolete():
 #     # need to implement metadata in targets
 # test hard to automate
+
