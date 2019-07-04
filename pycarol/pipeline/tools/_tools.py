@@ -64,7 +64,10 @@ class Pipe(object):
         traverse_dag_generator = breadth_first_search( self.rev_dag,tasks)
         for task_list in traverse_dag_generator:
             for t in task_list:
-                t.remove()
+                try:
+                    t(**self.params).remove()
+                except FileNotFoundError:
+                    pass
     
     def remove_orphans(self):
         """Remove all targets for which respective downstream targets are not complete"""
@@ -74,20 +77,22 @@ class Pipe(object):
                     continue
                 sons = dag[task]
                 if sons: # recursion step
-                    downstream_complete_dict[task] = task.complete() and \
+                    downstream_complete_dict[task] = task(**self.params).complete() and \
                         all([
                             downstream_complete(dag,[t],downstream_complete_dict) 
                             for t in sons
                             ])
                 else: # stop recursion step
-                    downstream_complete_dict[task] = task.complete()
+                    downstream_complete_dict[task] = task(**self.params).complete()
         downstream_complete_dict = {}
         downstream_complete(self.dag,self.top_nodes,downstream_complete_dict)
 
-        for task, is_downstream_complete in downstream_complete_dict.items():
+        for t, is_downstream_complete in downstream_complete_dict.items():
             if  not is_downstream_complete:
-                task.remove()
-        return
+                try:
+                    t(**self.params).remove()
+                except FileNotFoundError:
+                    pass
 
     def remove_obsolete(self):
         """Remove all targets whose hash_versions do not match to current version"""
