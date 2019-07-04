@@ -34,7 +34,7 @@ from pycarol.pipeline.utils import (
     enumerate_with_context
 )
 
-VERBOSE = True  # TODO: move this to env variable
+VERBOSE = False  # TODO: move this to env variable
 
 from pycarol.pipeline.utils.hash_versioning.inspect_bytecode import (
     get_name_and_code_of_MAKE_FUNCTION,
