@@ -85,7 +85,7 @@ def make_nodes_data_source(nodes_layout) -> dict:
         task_family=[],
         task_name=[],
         complete=[],
-        tasklog=[],
+        # tasklog=[],
         hash_version=[],
     )
     for k,(x,y) in nodes_layout.items():
@@ -98,6 +98,12 @@ def make_nodes_data_source(nodes_layout) -> dict:
         data['complete'].append(_get_complete(k))
         # data['tasklog'].append(_get_tasklog(k))
         data['hash_version'].append(_get_hash_version(k))
+    
+    v_gen = (v for v in data.values())
+    first_v = next(v_gen)
+    for v in v_gen:
+        if len(first_v) != len(v):
+            raise ValueError("all items in data should have the same length")
 
     return data
 
