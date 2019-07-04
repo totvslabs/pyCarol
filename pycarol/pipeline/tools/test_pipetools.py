@@ -37,7 +37,7 @@ def test_remove_upstream():
     assert T1(**params).output().exists()
     assert T2(**params).output().exists()
     assert T3(**params).output().exists()
-    pipe.remove_upstream([T2])
+    pipe.remove_upstream([T2(**params)])
     assert T1(**params).output().exists()
     assert not T2(**params).output().exists()
     assert not T3(**params).output().exists()

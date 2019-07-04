@@ -31,7 +31,16 @@ def get_dag_from_task(task:list) -> dict:
     dag = build_dag(task,luigi_get_sons)
     return dag
 
-#TODO: implement the following methods
+def get_instances_from_classes(dag:dict,params:dict):
+    """Returns a dag of task instances, given a dag of task classes and pipeline params."""
+    instances_dag = {}
+    for k,v in dag.items():
+        instances_dag[k(**params)] = [
+            t(**params) for t in v
+        ]
+    return instances_dag
+
+
 class Pipe(object):
     """
     This class should be used to compose a pipeline given a list of tasks. It
@@ -39,22 +48,25 @@ class Pipe(object):
     """
     def __init__(self, tasks: list, params: dict):
         assert isinstance(tasks,list)
+        assert isinstance(params,dict)
 
         for t in tasks:
             assert issubclass(t,Task)
+        self.params = params
         self.top_nodes = tasks # top nodes are root nodes
-        self.dag = get_dag_from_task(tasks)
+        self.top_nodes = [t(**self.params) for t in self.top_nodes]
+        dag = get_dag_from_task(tasks)
+        self.dag = get_instances_from_classes(dag,self.params)
         self.rev_dag = get_reverse_dag(self.dag)
         self.leaf_nodes = find_root_in_dag(self.rev_dag) #  leaf nodes are root nodes of rev dag
         self.all_tasks = [k for k in self.dag]
-        assert isinstance(params,dict)
-        self.params = params
+        
 
     def remove_all(self):
         """Remove all targets related to this pipeline."""
         for t in self.all_tasks:
             try:
-                t(**self.params).remove()
+                t.remove()
             except FileNotFoundError:
                 pass
 
@@ -65,7 +77,7 @@ class Pipe(object):
         for task_list in traverse_dag_generator:
             for t in task_list:
                 try:
-                    t(**self.params).remove()
+                    t.remove()
                 except FileNotFoundError:
                     pass
     
@@ -77,20 +89,20 @@ class Pipe(object):
                     continue
                 sons = dag[task]
                 if sons: # recursion step
-                    downstream_complete_dict[task] = task(**self.params).complete() and \
+                    downstream_complete_dict[task] = task.complete() and \
                         all([
                             downstream_complete(dag,[t],downstream_complete_dict) 
                             for t in sons
                             ])
                 else: # stop recursion step
-                    downstream_complete_dict[task] = task(**self.params).complete()
+                    downstream_complete_dict[task] = task.complete()
         downstream_complete_dict = {}
         downstream_complete(self.dag,self.top_nodes,downstream_complete_dict)
 
         for t, is_downstream_complete in downstream_complete_dict.items():
             if  not is_downstream_complete:
                 try:
-                    t(**self.params).remove()
+                    t.remove()
                 except FileNotFoundError:
                     pass
 
@@ -100,6 +112,9 @@ class Pipe(object):
 
     def run(self):
         """Run the whole pipeline"""
-        tasks = [t(**self.params) for t in self.top_nodes]
+        tasks = [t for t in self.top_nodes]
         luigi.build(tasks,local_scheduler = True)
+
+    def get_dag(self):
+        return self.dag
     
