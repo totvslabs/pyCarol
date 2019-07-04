@@ -1,6 +1,7 @@
 import luigi
 from luigi import parameter, six
 from luigi.task import flatten
+from luigi.parameter import ParameterVisibility
 from pycarol.pipeline.targets import PickleTarget
 import logging
 import warnings
@@ -82,7 +83,7 @@ class Task(luigi.Task):
                                for i, input_i in self.input().items()}
 
         self.metadata['hash_version'] = self.hash_version()
-        self.metadata['params'] = self.get_execution_params()
+        self.metadata['params'] = self.get_execution_params(only_significant=False, only_public=True)
         #TODO: implement logger and metadata integration
         #TODO: save date, user, etc in metadata
         self.function_output = self._easy_run(function_inputs)
@@ -185,9 +186,24 @@ class Task(luigi.Task):
         # Sort it by the correct order and make a list
         return [(param_name, list_to_tuple(result[param_name])) for param_name, param_obj in params]
 
-    def get_execution_params(self):
+    def get_execution_params(self, only_significant=False, only_public=True):
+        """
+        Get params values.
 
-        return self.to_str_params(only_significant=False, only_public=True)
+
+        """
+        params_str = {}
+        params = dict(self.get_params())
+        for param_name, param_value in six.iteritems(self.param_kwargs):
+            if (((not only_significant) or params[param_name].significant)
+                    and ((not only_public) or params[param_name].visibility == ParameterVisibility.PUBLIC)
+                    and params[param_name].visibility != ParameterVisibility.PRIVATE):
+
+                #TODO: Should we save the :class: luigi.Parameter itself?
+                params_str[param_name] = param_value
+
+        return params_str
+
 
     def load_input_params(self, input_target):
         """
