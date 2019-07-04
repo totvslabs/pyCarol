@@ -59,13 +59,6 @@ def _get_task_name(t):
 def _get_complete(t):
     return t.complete()
 
-def _get_tasklog(t):
-    log = t.loadlog()
-    if isinstance(log, str):
-        return log
-    else:
-        return "Log type is wrong."
-
 def _get_hash_version(t):
     return ""
 
@@ -103,7 +96,7 @@ def make_nodes_data_source(nodes_layout) -> dict:
         data['task_family'].append(_get_task_family(k))
         data['task_name'].append(_get_task_name(k))
         data['complete'].append(_get_complete(k))
-        data['tasklog'].append(_get_tasklog(k))
+        # data['tasklog'].append(_get_tasklog(k))
         data['hash_version'].append(_get_hash_version(k))
 
     return data
