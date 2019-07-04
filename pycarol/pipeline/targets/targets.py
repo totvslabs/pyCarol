@@ -18,18 +18,18 @@ class LocalTarget(luigi.LocalTarget):
             path = os.path.join(task.TARGET_DIR, namespace, file_id + ext)
         super().__init__(path=path, *args, **kwargs)
 
-    def dump_metadata(self,metadata: dict):
+    def dump_metadata(self, metadata: dict,  *args, **kwargs):
         warnings.warn("dump_metadata not implemented in LocalTarget")
 
-    def load_metadata(self):
+    def load_metadata(self, *args,**kwargs):
         """Should return a dict."""
         warnings.warn("load_metadata not implemented in LocalTarget")
         return {}
 
-    def remove_metadata(self):
+    def remove_metadata(self, *args,**kwargs):
         warnings.warn("remove_metadata not implemented in LocalTarget")
 
-    def get_metadata_path(self):
+    def get_metadata_path(self, *args,**kwargs):
         return f"{self.path}.metadata"        
 
 class CDSTarget(LocalTarget):
@@ -77,16 +77,17 @@ class CDSTarget(LocalTarget):
             self.path = os.path.join('pipeline', namespace, "{}.{}".format(file_id, self.FILE_EXT))
             self.log_path = os.path.join('pipeline',namespace, "{}_log.pkl".format(file_id))
 
-    def dump_metadata(self,metadata:dict ,*args,**kwargs):
+    def dump_metadata(self, metadata:dict, *args,**kwargs):
         if self._is_cloud_target:
-            self.storage.save(self.get_metadata_path(),metadata,format='joblib', cache=False)
+            assert isinstance(metadata, dict)
+            self.storage.save(self.get_metadata_path(), metadata, format='joblib', cache=False)
         else:
-            super().dump_metadata(metadata,*args,**kwargs)
+            super().dump_metadata(metadata, *args, **kwargs)
 
-    def load_metadata(self,*args,**kwargs):
+    def load_metadata(self, *args, **kwargs):
         """Should return a dict."""
         if self._is_cloud_target:
-            metadata = self.storage.load(self.get_metadata_path(),format='joblib', cache=False)
+            metadata = self.storage.load(self.get_metadata_path(), format='joblib', cache=False)
             assert isinstance(metadata,dict)
             return metadata
         else:
@@ -126,15 +127,15 @@ class CDSTarget(LocalTarget):
         return super().dump(*args, **kwargs)
 
     def exists_local(self, *args, **kwargs):
-        return super().exists(*args, **kwargs)
+        return super().exists()
 
     def remove_local(self, *args, **kwargs):
-        return super().remove(*args, **kwargs)
+        return super().remove()
 
-    def remove_cds(self):
+    def remove_cds(self, *args, **kwargs):
         self.storage.delete(self.path)
 
-    def exists_cds(self):
+    def exists_cds(self, *args, **kwargs):
         return self.storage.exists(self.path)
     
 
