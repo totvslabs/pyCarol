@@ -25,11 +25,31 @@ def _make_colormapper(data_source: dict, col_name: str):
     return CategoricalColorMapper(factors=factors,
                                   palette=Category10[nb_factors])
 
+def _update_incomplete(nodes_data_source,incomplete_nodes_data_source):
+    nodes_dict = nodes_data_source.data
+    incomplete_mask = [(not c) for c in nodes_dict['complete']]
+    incomplete_dict = {
+        'x': [x for i,x in enumerate(nodes_dict['x']) if incomplete_mask[i]],
+        'y': [x for i,x in enumerate(nodes_dict['y']) if incomplete_mask[i]]
+        }
+    incomplete_nodes_data_source.data = incomplete_dict
+
 
 def _make_pipeline_plot(
         nodes_data_source,
         edges_data_source,
 ):
+    # done_tasks_data_source = CDSView(
+    #     source=nodes_data_source,
+    #     filters=[BooleanFilter(complete)]
+    # )
+
+    incomplete_nodes_data_source = ColumnDataSource()
+    _update_incomplete(nodes_data_source,incomplete_nodes_data_source)
+    nodes_data_source.on_change(
+        'data',
+        lambda attr,old,new: _update_incomplete(nodes_data_source,incomplete_nodes_data_source)
+        )
 
     family_color = _make_colormapper(nodes_data_source.data,'task_family')
 
@@ -74,13 +94,13 @@ def _make_pipeline_plot(
         legend='task_family',
     )
 
-    # pipeline_plot.circle(
-    #     'x',
-    #     'y',
-    #     source=s2,
-    #     size=10,
-    #     color='white',
-    # )
+    pipeline_plot.circle(
+        'x',
+        'y',
+        source=incomplete_nodes_data_source,
+        size=10,
+        color='white',
+    )
 
     pipeline_plot.text(
         x='x',
@@ -99,6 +119,7 @@ class PlotDynamics():
             self,
             nodes_data_source,
             edges_data_source,
+            pipe,
     ):
         nodes_data_source.selected.on_change(
             'indices', self.select_callback
@@ -107,6 +128,7 @@ class PlotDynamics():
         self.remove_button = Button(label='Remove Selected')
         self.removeupstream_button = Button(label='Remove Upstream')
         self.update_button = Button(label='Update')
+        self.run_button = Button(label='Run')
 
         self.remove_button.on_event(
             ButtonClick,
@@ -120,39 +142,59 @@ class PlotDynamics():
             ButtonClick,
             self.update_callback,
         )
+        self.run_button.on_event(
+            ButtonClick,
+            self.run_callback,
+        )
+
 
         self.nodes_data_source = nodes_data_source
         self.edges_data_source = edges_data_source
         self.selected_nodes = []
+        self.pipe = pipe
 
+    def get_selected_tasks(self):
+        task_id_column = self.nodes_data_source.data['task_id']
+        task_ids = [task_id_column[i] for i in self.selected_nodes]
+        selected_tasks = [self.pipe.get_task_by_id(id) for id in task_ids]
+        return selected_tasks
 
     def select_callback(self,attr, old, new):
         self.selected_nodes = new
         # pre.text = self.tasklog[new[0]]
         print("selected {}".format(new))
 
-    def remove_callback(self,event):
-        return
 
-        # target_list = self.nodes_data_source.selected.indices
-        # for t in target_list:
-        #     print('removing', t)
-        #     task = self.
-        #     TaskViewer.nodes[t].remove()
+    def run_callback(self,event):
+        print("entered run callback")
+        for t in self.get_selected_tasks():
+            print(f"Running {t}")
+            t.run()
+
+    def remove_callback(self,event):
+        for t in self.get_selected_tasks():
+            print(f"Removing {t}")
+            t.remove()
 
     def removeupstream_callback(self,event):
         return
 
-    def update_callback(event):
-        # complete = self.update_complete()
-        # s2.data = {k: [vi for i, vi in enumerate(v) if not complete[i]] for
-        #            k, v in source_dict.items()}
-        return
+    def update_callback(self,event):
+        task_id_column = self.nodes_data_source.data['task_id']
+        old_complete_column = self.nodes_data_source.data['complete']
+        new_complete = [self.pipe.get_task_by_id(id).complete() for id in task_id_column]
+        if old_complete_column == new_complete:
+            print("No changes detected in complete column.")
+        else:
+            self.nodes_data_source.data['complete'] = new_complete
+        
+
     def buttons(self):
         return row([
             self.remove_button,
             self.update_button,
             self.removeupstream_button,
+            self.run_button,
         ])
 
 def plot_pipeline(nodes_data,edges_data,pipe):
@@ -170,18 +212,10 @@ def plot_pipeline(nodes_data,edges_data,pipe):
     nodes_data_source = ColumnDataSource(data=nodes_data)
     edges_data_source = ColumnDataSource(data=edges_data)
 
-    # done_tasks_data_source = CDSView(
-    #     source=nodes_data_source,
-    #     filters=[BooleanFilter(complete)]
-    # )
-    # notdone_tasks_data_source = CDSView(
-    #     source=nodes_data_source,
-    #     filters=[BooleanFilter([not c for c in complete])]
-    # )
 
     pipeline_plot = _make_pipeline_plot(nodes_data_source, edges_data_source)
 
-    dynamics = PlotDynamics(nodes_data_source,edges_data_source)
+    dynamics = PlotDynamics(nodes_data_source,edges_data_source,pipe)
 
     ### Layout
     final_layout = layout(
@@ -221,7 +255,7 @@ def get_plot_from_pipeline(pipe):
     nodes_data_source = make_nodes_data_source(nodes_layout)
     edges_data_source = make_edges_data_source(edges_layout)
 
-    bokeh_layout = plot_pipeline(nodes_data_source, edges_data_source,pipe)
+    bokeh_layout = plot_pipeline(nodes_data_source, edges_data_source, pipe)
 
     return bokeh_layout
 
