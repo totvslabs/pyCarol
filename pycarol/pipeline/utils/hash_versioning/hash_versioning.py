@@ -86,14 +86,9 @@ def process_op(
         defined_functions.update(
             get_name_and_code_of_MAKE_FUNCTION(*context))
 
-    if inst.opname == "IMPORT_NAME": #TODO: tests are failing for IMPORT_NAME
+    if inst.opname == "IMPORT_NAME": #TODO: strong tests are failing for IMPORT_NAME
         defined_functions.update(
             get_name_and_object_of_IMPORT_NAME(*context))
-
-    # if inst.opname == "LOAD_ATTR":
-    #     defined_functions.update(
-    #         get_name_and_object_of_LOAD_ATTR(*context)
-    #     )
 
     if "CALL_FUNCTION" in inst.opname:
         try:
