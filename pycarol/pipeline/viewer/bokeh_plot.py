@@ -52,7 +52,8 @@ def _make_pipeline_plot(
         )
 
     family_color = _make_colormapper(nodes_data_source.data,'task_family')
-    #TODO: remove grid. set light  gray background color
+    #TODO(renan): remove grid. set light  gray background color
+    #TODO(renan): add more info to tooltips
     pipeline_plot = figure(
         title="Pipeline Debugger",
         x_range=(-1, max(nodes_data_source.data['x']) + 1),
@@ -101,7 +102,7 @@ def _make_pipeline_plot(
         size=10,
         color='white',
     )
-
+    #TODO(renan): fix task_name
     pipeline_plot.text(
         x='x',
         y='y',
