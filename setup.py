@@ -8,43 +8,40 @@ import sys
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-try:
-    with open('requirements.txt', 'r') as req_file:
-        requirements = req_file.read()
-    install_requires = requirements.splitlines()
-except FileNotFoundError as e:
-    install_requires = [
-        'bokeh',
-        'pykube',
-        'boto3==1.9.16',
-        'botocore==1.12.16',
-        'click==7.0',
-        'dask[complete]==0.19.3',
-        'toolz',
-        'fastparquet',
-        'flask==1.0.2',
-        'google-api-core',
-        'google-api-python-client',
-        'google-auth-httplib2',
-        'google-auth',
-        'google-cloud-core',
-        'google-cloud-logging',
-        'google-cloud-storage',
-        'googleapis-common-protos',
-        'joblib==0.11',
-        'luigi',
-        'numpy==1.16.3',
-        'pandas==0.23.4',
-        'pyarrow==0.11.1',
-        'redis==2.10.6',
-        'requests',
-        's3fs==0.1.6',
-        's3transfer==0.1.13',
-        'tqdm==4.28.1',
-        'urllib3',
-        'missingno==0.4.1',
-        'deprecated'
-    ]
+install_requires = [
+    'bokeh==1.2.0',
+    'pykube',
+    'boto3==1.9.16',
+    'botocore==1.12.16',
+    'click==7.0',
+    'dask[complete]==0.19.3',
+    'toolz',
+    'fastparquet',
+    'flask==1.0.2',
+    'google-api-core',
+    'google-api-python-client',
+    'google-auth-httplib2',
+    'google-auth',
+    'google-cloud-core',
+    'google-cloud-logging',
+    'google-cloud-storage',
+    'googleapis-common-protos',
+    'joblib==0.11',
+    'luigi',
+    'numpy==1.16.3',
+    'pandas==0.23.4',
+    'pyarrow==0.11.1',
+    'redis==2.10.6',
+    'requests',
+    's3fs==0.1.6',
+    's3transfer==0.1.13',
+    'tqdm==4.28.1',
+    'urllib3',
+    'missingno==0.4.1',
+    'deprecated',
+    'pytest',
+    'bumpversion'
+]
 
 def read(*parts):
     # intentionally *not* adding an encoding option to open, See:
