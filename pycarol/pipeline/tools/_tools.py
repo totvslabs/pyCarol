@@ -77,7 +77,7 @@ class Pipe(object):
     This class should be used to compose a pipeline given a list of tasks. It
     contains many methods to interact with the pipeline as a whole.
     """
-    def __init__(self, tasks: list, params = None):
+    def __init__(self, tasks: list, params:dict):
         assert isinstance(tasks,list)
         assert params is None or isinstance(params,dict)
         assert _tasks_are_instance(tasks) or _tasks_are_class(tasks)
