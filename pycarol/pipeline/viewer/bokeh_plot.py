@@ -84,7 +84,7 @@ def _make_pipeline_plot(
         color='gray',
         line_alpha=0.3,
     )
-
+    #TODO(renan): check/show hash version is equal
     pipeline_plot.circle(
         'x',
         'y',
