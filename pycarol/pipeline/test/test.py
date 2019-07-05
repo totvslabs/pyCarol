@@ -6,7 +6,8 @@ from unittest.mock import patch, MagicMock, PropertyMock
 from contextlib import ExitStack
 import shutil
 import logging
-
+from luigi.execution_summary import LuigiStatusCode
+from pycarol.pipeline import Task
 logger = logging.getLogger(__name__)
 
 """ 
@@ -54,8 +55,8 @@ def task_execution_debug(task, parameters=None, worker_scheduler_factory=None, *
                                                  override_defaults=env_params)
     # TODO: Check luigi version
     # if luigi.__version__
-    out.update({'success': exec_out['success']})
-    task_history = exec_out['worker']._add_task_history
+    out.update({'success': exec_out.status==LuigiStatusCode.SUCCESS})
+    task_history = exec_out.worker._add_task_history
     out.update({'task_history': task_history})
 
     def history_has(task, status, ignore_parameters=True):
@@ -201,3 +202,14 @@ class mock_task_wrapper:
                 exec_func(*args, **kwargs)
 
         return patched_func
+
+
+class TaskA(Task):
+    def easy_run(self, inputs):
+        return True
+
+
+def test_task_execution_debug():
+    out = task_execution_debug(TaskA)
+    assert out.success
+    assert TaskA in [task.__class__ for task, _, _ in out.task_history]
