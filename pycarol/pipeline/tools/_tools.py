@@ -40,6 +40,22 @@ def get_instances_from_classes(dag:dict,params:dict):
         ]
     return instances_dag
 
+def downstream_complete(dag,top_nodes,downstream_complete_dict):
+    """Recursively traverses dag starting from top_nodes to update downstream_complet_dict"""
+    #TODO: reimplement  breadth_first_search
+    for task in top_nodes:
+        if task in downstream_complete_dict:
+            continue
+        sons = dag[task]
+        if sons: # recursion step
+            downstream_complete_dict[task] = task.complete() and \
+                all([
+                    downstream_complete(dag,[t],downstream_complete_dict) 
+                    for t in sons
+                    ])
+        else: # stop recursion step
+            downstream_complete_dict[task] = task.complete()
+
 
 class Pipe(object):
     """
@@ -83,19 +99,7 @@ class Pipe(object):
     
     def remove_orphans(self):
         """Remove all targets for which respective downstream targets are not complete"""
-        def downstream_complete(dag,top_nodes,downstream_complete_dict):
-            for task in top_nodes:
-                if task in downstream_complete_dict:
-                    continue
-                sons = dag[task]
-                if sons: # recursion step
-                    downstream_complete_dict[task] = task.complete() and \
-                        all([
-                            downstream_complete(dag,[t],downstream_complete_dict) 
-                            for t in sons
-                            ])
-                else: # stop recursion step
-                    downstream_complete_dict[task] = task.complete()
+
         downstream_complete_dict = {}
         downstream_complete(self.dag,self.top_nodes,downstream_complete_dict)
 
