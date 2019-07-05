@@ -1,7 +1,7 @@
 from pycarol.pipeline import Task
 from pycarol.pipeline.utils import build_dag
 from pycarol.pipeline.utils import breadth_first_search, get_reverse_dag, find_root_in_dag
-
+import warnings
 
 import luigi
 
@@ -42,7 +42,7 @@ def get_instances_from_classes(dag:dict,params:dict):
 
 def downstream_complete(dag,top_nodes,downstream_complete_dict):
     """Recursively traverses dag starting from top_nodes to update downstream_complet_dict"""
-    #TODO: reimplement  breadth_first_search
+    #TODO: reimplement using breadth_first_search
     for task in top_nodes:
         if task in downstream_complete_dict:
             continue
@@ -56,23 +56,41 @@ def downstream_complete(dag,top_nodes,downstream_complete_dict):
         else: # stop recursion step
             downstream_complete_dict[task] = task.complete()
 
+def _tasks_are_class(tasks):
+    for t in tasks:
+        if not issubclass(t,Task):
+            return False
+    else:
+        return True
+
+def _tasks_are_instance(tasks):
+    for t in tasks:
+        if not isinstance(t,Task):
+            return False
+    else:
+        return True
+
+
 
 class Pipe(object):
     """
     This class should be used to compose a pipeline given a list of tasks. It
     contains many methods to interact with the pipeline as a whole.
     """
-    def __init__(self, tasks: list, params: dict):
+    def __init__(self, tasks: list, params = None):
         assert isinstance(tasks,list)
-        assert isinstance(params,dict)
+        assert params is None or isinstance(params,dict)
+        assert _tasks_are_instance(tasks) or _tasks_are_class(tasks)
 
-        for t in tasks:
-            assert issubclass(t,Task)
         self.params = params
         self.top_nodes = tasks # top nodes are root nodes
-        self.top_nodes = [t(**self.params) for t in self.top_nodes]
-        dag = get_dag_from_task(tasks)
-        self.dag = get_instances_from_classes(dag,self.params)
+        self.dag = get_dag_from_task(tasks)
+        if _tasks_are_instance(tasks) and params is not None:
+            warnings.warn("params will not be used because tasks are already initialized")
+        if _tasks_are_class(tasks):
+            self.top_nodes = [t(**self.params) for t in self.top_nodes]
+            self.dag = get_instances_from_classes(self.dag,self.params)
+
         self.rev_dag = get_reverse_dag(self.dag)
         self.leaf_nodes = find_root_in_dag(self.rev_dag) #  leaf nodes are root nodes of rev dag
         self.all_tasks = [k for k in self.dag]
