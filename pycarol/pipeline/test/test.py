@@ -212,4 +212,4 @@ class TaskA(Task):
 def test_task_execution_debug():
     out = task_execution_debug(TaskA)
     assert out.success
-    assert TaskA in [task.__class__ for task, _, _ in out.task_history]
+    assert out.history_has(TaskA, 'DONE')
