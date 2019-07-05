@@ -6,6 +6,9 @@ def test_create_pipe():
     params = {}
     pipe = Pipe([T3],params)
     assert pipe.dag
+    pipe = Pipe([T3(**params)])
+    assert pipe.dag
+
 
 def test_run_pipe():
     params = {}
@@ -78,4 +81,14 @@ def test_import_bokeh_plot():
 # def test_remove_obsolete():
 #     # need to implement metadata in targets
 # test hard to automate
+def test_tasks_are_instance():
+    from ._tools import _tasks_are_instance
+    assert not _tasks_are_instance([T1,T2])
+    params = {}
+    assert _tasks_are_instance([T1(**params),T2(**params)])
 
+def test_tasks_are_class():
+    from ._tools import _tasks_are_class
+    assert _tasks_are_class([T1,T2])
+    params = {}
+    assert not _tasks_are_class([T1(**params),T2(**params)])
