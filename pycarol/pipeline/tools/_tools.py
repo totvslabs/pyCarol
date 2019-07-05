@@ -85,6 +85,8 @@ class Pipe(object):
         self.params = params
         self.top_nodes = tasks # top nodes are root nodes
         self.dag = get_dag_from_task(tasks)
+        if _tasks_are_instance(tasks):
+            raise NotImplementedError(f"Currently, we cannot create Pipe objects from instantiated tasks.")
         if _tasks_are_instance(tasks) and params is not None:
             warnings.warn("params will not be used because tasks are already initialized")
         if _tasks_are_class(tasks):

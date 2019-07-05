@@ -6,19 +6,11 @@ def test_create_pipe():
     params = {}
     pipe = Pipe([T3],params)
     assert pipe.dag
-    pipe = Pipe([T3(**params)])
-    assert pipe.dag
 
 
 def test_run_pipe():
     params = {}
     pipe = Pipe([T3],params)
-    pipe.remove_all()
-    pipe.run()
-    assert T1(**params).output().exists()
-    assert T2(**params).output().exists()
-    assert T3(**params).output().exists()
-    pipe = Pipe([T3(**params)])
     pipe.remove_all()
     pipe.run()
     assert T1(**params).output().exists()
