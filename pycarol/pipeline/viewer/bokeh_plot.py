@@ -17,6 +17,11 @@ from bokeh.transform import transform
 from bokeh.palettes import Category10
 from bokeh.models.mappers import CategoricalColorMapper
 
+# Annotation imports
+from typing import Type, List
+from pycarol.pipeline import Pipe, Task
+
+
 def _make_colormapper(data_source: dict, col_name: str):
     import numpy as np
     factors = list(set(data_source[col_name]))
@@ -27,8 +32,8 @@ def _make_colormapper(data_source: dict, col_name: str):
 
 
 def _make_pipeline_plot(
-        nodes_data_source,
-        edges_data_source,
+        nodes_data_source: Type[ColumnDataSource],
+        edges_data_source: Type[ColumnDataSource],
 ):
     def _update_incomplete(nodes_data_source,incomplete_nodes_data_source):
         nodes_dict = nodes_data_source.data
@@ -112,9 +117,9 @@ def _make_pipeline_plot(
 class PlotDynamics():
     def __init__(
             self,
-            nodes_data_source,
-            edges_data_source,
-            pipe,
+            nodes_data_source: Type[ColumnDataSource],
+            edges_data_source: Type[ColumnDataSource],
+            pipe: Type[Pipe],
     ):
         nodes_data_source.selected.on_change(
             'indices', self.select_callback
@@ -146,9 +151,10 @@ class PlotDynamics():
         self.nodes_data_source = nodes_data_source
         self.edges_data_source = edges_data_source
         self.selected_nodes = []
+        assert isinstance(pipe, Pipe)
         self.pipe = pipe
 
-    def get_selected_tasks(self):
+    def get_selected_tasks(self) -> List[Type[Task]]:
         task_id_column = self.nodes_data_source.data['task_id']
         task_ids = [task_id_column[i] for i in self.selected_nodes]
         selected_tasks = [self.pipe.get_task_by_id(id) for id in task_ids]
@@ -172,7 +178,10 @@ class PlotDynamics():
             t.remove()
 
     def removeupstream_callback(self,event):
-        #TODO: implement this
+        for t in self.get_selected_tasks():
+            assert isinstance(t,Task), f"{t} should be instance of {Task}"
+            print(f"Removing upstream {t}")
+            self.pipe.remove_upstream([t])
         return
 
     def update_callback(self,event):
@@ -194,7 +203,11 @@ class PlotDynamics():
             self.run_button,
         ])
 
-def plot_pipeline(nodes_data,edges_data,pipe):
+def plot_pipeline(
+    nodes_data:dict,
+    edges_data:dict,
+    pipe: Type[Pipe],
+    ):
     """
     Receives data sources in dict format and returns dynamic plot
     Args:
@@ -227,7 +240,7 @@ def plot_pipeline(nodes_data,edges_data,pipe):
     return final_layout
 
 
-def get_plot_from_pipeline(pipe):
+def get_plot_from_pipeline(pipe: Type[Pipe]):
     """
     Main module method. From a luigi task with defined parameters, generates a
     bokeh plot of the
@@ -256,5 +269,5 @@ def get_plot_from_pipeline(pipe):
 
     return bokeh_layout
 
-
+#TODO: implement python bokeh server to make dev and tests easier
 

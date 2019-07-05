@@ -37,3 +37,7 @@ from .targets.deprecated_targets import (
     FeatherLocalTarget,
     ParquetPyCarolTarget
 )
+
+from .tools import (
+    Pipe,
+)
