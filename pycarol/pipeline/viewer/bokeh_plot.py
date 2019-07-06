@@ -52,9 +52,8 @@ def _make_pipeline_plot(
         )
 
     family_color = _make_colormapper(nodes_data_source.data,'task_family')
-    #TODO(renan): remove grid. set light  gray background color
     #TODO(renan): add more info to tooltips
-    pipeline_plot = figure(
+    fig = figure(
         title="Pipeline Debugger",
         x_range=(-1, max(nodes_data_source.data['x']) + 1),
         y_range=(-1, max(nodes_data_source.data['y']) + 1),
@@ -74,8 +73,13 @@ def _make_pipeline_plot(
         plot_width=900,
         plot_height=500,
     )
+    fig.xgrid.visible = False
+    fig.ygrid.visible = False
+    fig.xaxis.visible = False
+    fig.yaxis.visible = False
+    fig.background_fill_color = "#D3D3D3"
 
-    edges_glyph = pipeline_plot.segment(
+    edges_glyph = fig.segment(
         'x0',
         'y0',
         'x1',
@@ -85,7 +89,7 @@ def _make_pipeline_plot(
         line_alpha=0.3,
     )
     #TODO(renan): check/show hash version is equal
-    pipeline_plot.circle(
+    fig.circle(
         'x',
         'y',
         source=nodes_data_source,
@@ -95,7 +99,7 @@ def _make_pipeline_plot(
         legend='task_family',
     )
 
-    pipeline_plot.circle(
+    fig.circle(
         'x',
         'y',
         source=incomplete_nodes_data_source,
@@ -103,7 +107,7 @@ def _make_pipeline_plot(
         color='white',
     )
     
-    pipeline_plot.text(
+    fig.text(
         x='x',
         y='y',
         text='task_name',
@@ -112,7 +116,7 @@ def _make_pipeline_plot(
     )
 
     edges_glyph.nonselection_glyph = None
-    return pipeline_plot
+    return fig
 
 #TODO: WIP. make plotsdynamics abstract class with button decorator and so on
 class PlotDynamics():
