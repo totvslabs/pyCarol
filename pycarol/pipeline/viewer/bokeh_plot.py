@@ -130,6 +130,7 @@ class PlotDynamics():
         self.removeupstream_button = Button(label='Remove Upstream')
         self.update_button = Button(label='Update')
         self.run_button = Button(label='Run')
+        self.close_button = Button(label='Close')
 
         self.remove_button.on_event(
             ButtonClick,
@@ -147,6 +148,7 @@ class PlotDynamics():
             ButtonClick,
             self.run_callback,
         )
+        self.close_button.on_event(ButtonClick,self.close_callback)
 
 
         self.nodes_data_source = nodes_data_source
@@ -178,6 +180,11 @@ class PlotDynamics():
             print(f"Removing {t}")
             t.remove()
 
+    def close_callback(self,event):
+        from tornado.ioloop import IOLoop
+        ioloop = IOLoop.current()
+        ioloop.stop()
+
     def removeupstream_callback(self,event):
         for t in self.get_selected_tasks():
             assert isinstance(t,Task), f"{t} should be instance of {Task}"
@@ -202,6 +209,7 @@ class PlotDynamics():
             self.update_button,
             self.removeupstream_button,
             self.run_button,
+            self.close_button,
         ])
 
 def plot_pipeline(
@@ -270,5 +278,5 @@ def get_plot_from_pipeline(pipe: Type[Pipe]):
 
     return bokeh_layout
 
-#TODO: implement python bokeh server to make dev and tests easier
+#TODO: implement python bokeh server to make dev and tests easier: tried with tornado ioloop, but degbugger does not get into async process
 
