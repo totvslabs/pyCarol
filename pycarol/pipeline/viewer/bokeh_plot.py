@@ -114,7 +114,7 @@ def _make_pipeline_plot(
     edges_glyph.nonselection_glyph = None
     return pipeline_plot
 
-#TODO: make plotsdynamics abstract class with button decorator and so on
+#TODO: WIP. make plotsdynamics abstract class with button decorator and so on
 class PlotDynamics():
     def __init__(
             self,
@@ -122,40 +122,29 @@ class PlotDynamics():
             edges_data_source: Type[ColumnDataSource],
             pipe: Type[Pipe],
     ):
-        nodes_data_source.selected.on_change(
-            'indices', self.select_callback
-        )
-
-        self.remove_button = Button(label='Remove Selected')
-        self.removeupstream_button = Button(label='Remove Upstream')
-        self.update_button = Button(label='Update')
-        self.run_button = Button(label='Run')
-        self.close_button = Button(label='Close')
-
-        self.remove_button.on_event(
-            ButtonClick,
-            self.remove_callback,
-        )
-        self.removeupstream_button.on_event(
-            ButtonClick,
-            self.removeupstream_callback,
-        )
-        self.update_button.on_event(
-            ButtonClick,
-            self.update_callback,
-        )
-        self.run_button.on_event(
-            ButtonClick,
-            self.run_callback,
-        )
-        self.close_button.on_event(ButtonClick,self.close_callback)
-
-
+        #  Note that, although we consider datasources to be instance attributes, a ColumnDataSource can always be externally modified
         self.nodes_data_source = nodes_data_source
         self.edges_data_source = edges_data_source
-        self.selected_nodes = []
         assert isinstance(pipe, Pipe)
         self.pipe = pipe
+        self.selected_nodes = []
+        
+        # === Dynamics ===
+        self.nodes_data_source.selected.on_change('indices', self.select_callback)
+
+        self.buttons = []
+        self.cb_fn_and_names = [
+            (self.remove_callback, "Remove Selected"),
+            (self.removeupstream_callback, "Remove Upstream"),
+            (self.run_callback, "Run"),
+            (self.update_callback, "Update"),
+            (self.close_callback, "Close"),
+        ]
+        for cb_fn, name in self.cb_fn_and_names:
+            button = Button(label = name)
+            button.on_event(ButtonClick,cb_fn)
+            self.buttons.append(button)
+
 
     def get_selected_tasks(self) -> List[Type[Task]]:
         task_id_column = self.nodes_data_source.data['task_id']
@@ -165,7 +154,6 @@ class PlotDynamics():
 
     def select_callback(self,attr, old, new):
         self.selected_nodes = new
-        # pre.text = self.tasklog[new[0]]
         print("selected {}".format(new))
 
 
@@ -201,16 +189,8 @@ class PlotDynamics():
         else:
             self.nodes_data_source.data['complete'] = new_complete
         
-    #TODO: make buttons decorator
-    def buttons(self):
-        # TODO: return buttons array if too many buttons
-        return row([
-            self.remove_button,
-            self.update_button,
-            self.removeupstream_button,
-            self.run_button,
-            self.close_button,
-        ])
+    def buttons_layout(self):
+        return row(self.buttons)
 
 def plot_pipeline(
     nodes_data:dict,
@@ -241,7 +221,7 @@ def plot_pipeline(
         column(
             [
                 pipeline_plot,
-                row(dynamics.buttons()),
+                row(dynamics.buttons_layout()),
             ],
             sizing_mode='scale_width'
         ),
