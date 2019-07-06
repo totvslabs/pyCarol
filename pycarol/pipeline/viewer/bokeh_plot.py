@@ -102,7 +102,7 @@ def _make_pipeline_plot(
         size=10,
         color='white',
     )
-    #TODO(renan): fix task_name
+    
     pipeline_plot.text(
         x='x',
         y='y',

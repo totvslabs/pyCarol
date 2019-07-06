@@ -48,13 +48,14 @@ def _get_task_id(t):
     return t.task_id
 
 def _get_task_family(t):
-    if '.' in t.task_id:
-        return t.task_id.split('.')[-2]
-    else:
-        return "empty_namespace"
+    # returns task namespace
+        if '.' in t.task_id:
+            return t.task_id.split('.')[-2]
+        else:
+            return ""
 
 def _get_task_name(t):
-    return t.task_id.split('.')[-1]
+    return t.get_task_family() # name of the task class
 
 def _get_complete(t):
     return t.complete()
