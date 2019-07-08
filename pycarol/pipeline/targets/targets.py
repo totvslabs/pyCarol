@@ -46,9 +46,10 @@ class CDSTarget(LocalTarget):
 
     def __init__(self, task, *args, **kwargs):
         super().__init__(task, *args, **kwargs)
-
-        self._is_cloud_target = task.is_cloud_target if task.is_cloud_target is not None else \
-            os.environ.get('CLOUD_TARGET', 'false').lower() == 'true'
+        
+        env_is_cloud_target = os.environ.get('CLOUD_TARGET', 'false').lower() == 'true'
+        self._is_cloud_target = task.is_cloud_target or env_is_cloud_target
+        
         
         if self._is_cloud_target:
             from ...carol import Carol
@@ -88,7 +89,7 @@ class CDSTarget(LocalTarget):
         """Should return a dict."""
         if self._is_cloud_target:
             metadata = self.storage.load(self.get_metadata_path(), format='joblib', cache=False)
-            assert isinstance(metadata,dict)
+            assert isinstance(metadata,dict), f"metadata is type {type(metadata)}"
             return metadata
         else:
             return super().load_metadata(*args,**kwargs)
