@@ -16,7 +16,7 @@ def test_bokeh_doc():
 if False:#WIP
     #temporarily disable possibly blocking test
     def test_start_app():
-        
+        # This test is in the context of searching an easy way to debug bokeh apps
         from tornado.ioloop import IOLoop
 
         from bokeh.application.handlers import FunctionHandler
