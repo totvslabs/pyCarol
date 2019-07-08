@@ -91,7 +91,7 @@ def _make_pipeline_plot(
         color='gray',
         line_alpha=0.3,
     )
-    #TODO(renan): check/show hash version is equal
+    
     fig.circle(
         'x',
         'y',
@@ -188,7 +188,6 @@ class PlotDynamics():
         return
 
     def update_callback(self,event):
-        #TODO: update all tooltips columns
         from .viewer import (
             get_complete,
             get_target_hash_version
