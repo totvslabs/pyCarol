@@ -2,7 +2,6 @@ import bokeh
 assert bokeh.__version__ == '1.2.0'
 from bokeh.models import (
     ColumnDataSource,
-    CDSView,
     BooleanFilter,
     HoverTool,
 )
@@ -18,6 +17,11 @@ from bokeh.transform import transform
 from bokeh.palettes import Category10
 from bokeh.models.mappers import CategoricalColorMapper
 
+# Annotation imports
+from typing import Type, List
+from pycarol.pipeline import Pipe, Task
+
+
 def _make_colormapper(data_source: dict, col_name: str):
     import numpy as np
     factors = list(set(data_source[col_name]))
@@ -26,14 +30,29 @@ def _make_colormapper(data_source: dict, col_name: str):
                                   palette=Category10[nb_factors])
 
 
+
 def _make_pipeline_plot(
-        nodes_data_source,
-        edges_data_source,
+        nodes_data_source: Type[ColumnDataSource],
+        edges_data_source: Type[ColumnDataSource],
 ):
+    def _update_incomplete(nodes_data_source,incomplete_nodes_data_source):
+        nodes_dict = nodes_data_source.data
+        incomplete_mask = [(not c) for c in nodes_dict['complete']]
+        incomplete_dict = {
+            'x': [x for i,x in enumerate(nodes_dict['x']) if incomplete_mask[i]],
+            'y': [x for i,x in enumerate(nodes_dict['y']) if incomplete_mask[i]]
+            }
+        incomplete_nodes_data_source.data = incomplete_dict
+
+    incomplete_nodes_data_source = ColumnDataSource()
+    _update_incomplete(nodes_data_source,incomplete_nodes_data_source)
+    nodes_data_source.on_change(
+        'data',
+        lambda attr,old,new: _update_incomplete(nodes_data_source,incomplete_nodes_data_source)
+        )
 
     family_color = _make_colormapper(nodes_data_source.data,'task_family')
-
-    pipeline_plot = figure(
+    fig = figure(
         title="Pipeline Debugger",
         x_range=(-1, max(nodes_data_source.data['x']) + 1),
         y_range=(-1, max(nodes_data_source.data['y']) + 1),
@@ -49,12 +68,21 @@ def _make_pipeline_plot(
         tooltips=[
             ('index', "$index"),
             ('task_id', '@task_id'),
+            ('task_family','@task_family'),
+            ('complete','@complete'),
+            ('target_hash_version','@target_hash_version'),
+            ('task_hash_version','@task_hash_version'),
         ],
         plot_width=900,
         plot_height=500,
     )
+    fig.xgrid.visible = False
+    fig.ygrid.visible = False
+    fig.xaxis.visible = False
+    fig.yaxis.visible = False
+    fig.background_fill_color = "#D3D3D3"
 
-    edges_glyph = pipeline_plot.segment(
+    edges_glyph = fig.segment(
         'x0',
         'y0',
         'x1',
@@ -63,8 +91,8 @@ def _make_pipeline_plot(
         color='gray',
         line_alpha=0.3,
     )
-
-    pipeline_plot.circle(
+    
+    fig.circle(
         'x',
         'y',
         source=nodes_data_source,
@@ -74,15 +102,15 @@ def _make_pipeline_plot(
         legend='task_family',
     )
 
-    # pipeline_plot.circle(
-    #     'x',
-    #     'y',
-    #     source=s2,
-    #     size=10,
-    #     color='white',
-    # )
-
-    pipeline_plot.text(
+    fig.circle(
+        'x',
+        'y',
+        source=incomplete_nodes_data_source,
+        size=10,
+        color='white',
+    )
+    
+    fig.text(
         x='x',
         y='y',
         text='task_name',
@@ -91,71 +119,97 @@ def _make_pipeline_plot(
     )
 
     edges_glyph.nonselection_glyph = None
-    return pipeline_plot
+    return fig
 
-#TODO: integrate with pipetools
+#TODO: WIP. make plotsdynamics abstract class with button decorator and so on
 class PlotDynamics():
     def __init__(
             self,
-            nodes_data_source,
-            edges_data_source,
+            nodes_data_source: Type[ColumnDataSource],
+            edges_data_source: Type[ColumnDataSource],
+            pipe: Type[Pipe],
     ):
-        nodes_data_source.selected.on_change(
-            'indices', self.select_callback
-        )
-
-        self.remove_button = Button(label='Remove Selected')
-        self.removeupstream_button = Button(label='Remove Upstream')
-        self.update_button = Button(label='Update')
-
-        self.remove_button.on_event(
-            ButtonClick,
-            self.remove_callback,
-        )
-        self.removeupstream_button.on_event(
-            ButtonClick,
-            self.removeupstream_callback,
-        )
-        self.update_button.on_event(
-            ButtonClick,
-            self.update_callback,
-        )
-
+        #  Note that, although we consider datasources to be instance attributes, a ColumnDataSource can always be externally modified
         self.nodes_data_source = nodes_data_source
         self.edges_data_source = edges_data_source
+        assert isinstance(pipe, Pipe)
+        self.pipe = pipe
         self.selected_nodes = []
+        
+        # === Dynamics ===
+        self.nodes_data_source.selected.on_change('indices', self.select_callback)
 
+        self.buttons = []
+        self.cb_fn_and_names = [
+            (self.remove_callback, "Remove Selected"),
+            (self.removeupstream_callback, "Remove Upstream"),
+            (self.run_callback, "Run"),
+            (self.update_callback, "Update"),
+            (self.close_callback, "Close"),
+        ]
+        for cb_fn, name in self.cb_fn_and_names:
+            button = Button(label = name)
+            button.on_event(ButtonClick,cb_fn)
+            self.buttons.append(button)
+
+
+    def get_selected_tasks(self) -> List[Type[Task]]:
+        task_id_column = self.nodes_data_source.data['task_id']
+        task_ids = [task_id_column[i] for i in self.selected_nodes]
+        selected_tasks = [self.pipe.get_task_by_id(id) for id in task_ids]
+        return selected_tasks
 
     def select_callback(self,attr, old, new):
         self.selected_nodes = new
-        # pre.text = self.tasklog[new[0]]
         print("selected {}".format(new))
 
-    def remove_callback(self,event):
-        return
 
-        # target_list = self.nodes_data_source.selected.indices
-        # for t in target_list:
-        #     print('removing', t)
-        #     task = self.
-        #     TaskViewer.nodes[t].remove()
+    def run_callback(self,event):
+        print("entered run callback")
+        for t in self.get_selected_tasks():
+            print(f"Running {t}")
+            t.run()
+
+    def remove_callback(self,event):
+        for t in self.get_selected_tasks():
+            print(f"Removing {t}")
+            t.remove()
+
+    def close_callback(self,event):
+        from tornado.ioloop import IOLoop
+        ioloop = IOLoop.current()
+        ioloop.stop()
 
     def removeupstream_callback(self,event):
+        for t in self.get_selected_tasks():
+            assert isinstance(t,Task), f"{t} should be instance of {Task}"
+            print(f"Removing upstream {t}")
+            self.pipe.remove_upstream([t])
         return
 
-    def update_callback(event):
-        # complete = self.update_complete()
-        # s2.data = {k: [vi for i, vi in enumerate(v) if not complete[i]] for
-        #            k, v in source_dict.items()}
-        return
-    def buttons(self):
-        return row([
-            self.remove_button,
-            self.update_button,
-            self.removeupstream_button,
-        ])
+    def update_callback(self,event):
+        from .viewer import (
+            get_complete,
+            get_target_hash_version
+        )
 
-def plot_pipeline(nodes_data,edges_data,pipe):
+        task_id_column = self.nodes_data_source.data['task_id']
+        task_gen = (self.pipe.get_task_by_id(task_id) for task_id in task_id_column)
+        update_data = dict(complete=[],target_hash_version=[])
+        for task in task_gen:
+            update_data['complete'].append(get_complete(task))
+            update_data['target_hash_version'].append(get_target_hash_version(task))
+    
+        self.nodes_data_source.data.update(update_data)
+        
+    def buttons_layout(self):
+        return row(self.buttons)
+
+def plot_pipeline(
+    nodes_data:dict,
+    edges_data:dict,
+    pipe: Type[Pipe],
+    ):
     """
     Receives data sources in dict format and returns dynamic plot
     Args:
@@ -166,29 +220,21 @@ def plot_pipeline(nodes_data,edges_data,pipe):
         final_layout:
 
     """
-
+    #TODO: get nodes_data and edges_data from pipe
     nodes_data_source = ColumnDataSource(data=nodes_data)
     edges_data_source = ColumnDataSource(data=edges_data)
 
-    # done_tasks_data_source = CDSView(
-    #     source=nodes_data_source,
-    #     filters=[BooleanFilter(complete)]
-    # )
-    # notdone_tasks_data_source = CDSView(
-    #     source=nodes_data_source,
-    #     filters=[BooleanFilter([not c for c in complete])]
-    # )
 
     pipeline_plot = _make_pipeline_plot(nodes_data_source, edges_data_source)
 
-    dynamics = PlotDynamics(nodes_data_source,edges_data_source)
+    dynamics = PlotDynamics(nodes_data_source,edges_data_source,pipe)
 
     ### Layout
     final_layout = layout(
         column(
             [
                 pipeline_plot,
-                row(dynamics.buttons()),
+                row(dynamics.buttons_layout()),
             ],
             sizing_mode='scale_width'
         ),
@@ -196,7 +242,7 @@ def plot_pipeline(nodes_data,edges_data,pipe):
     return final_layout
 
 
-def get_plot_from_pipeline(pipe):
+def get_plot_from_pipeline(pipe: Type[Pipe]):
     """
     Main module method. From a luigi task with defined parameters, generates a
     bokeh plot of the
@@ -221,9 +267,9 @@ def get_plot_from_pipeline(pipe):
     nodes_data_source = make_nodes_data_source(nodes_layout)
     edges_data_source = make_edges_data_source(edges_layout)
 
-    bokeh_layout = plot_pipeline(nodes_data_source, edges_data_source,pipe)
+    bokeh_layout = plot_pipeline(nodes_data_source, edges_data_source, pipe)
 
     return bokeh_layout
 
-
+#TODO: implement python bokeh server to make dev and tests easier: tried with tornado ioloop, but degbugger does not get into async process
 

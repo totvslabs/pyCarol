@@ -47,25 +47,26 @@ class CDSTarget(LocalTarget):
     def __init__(self, task, *args, **kwargs):
         super().__init__(task, *args, **kwargs)
 
-        self._is_cloud_target = task.is_cloud_target if task.is_cloud_target is not None else \
-            os.environ.get('CLOUD_TARGET', 'false').lower() == 'true'
-        
+        env_is_cloud_target = os.environ.get('CLOUD_TARGET', 'false').lower() == 'true'
+        self._is_cloud_target = task.is_cloud_target or env_is_cloud_target
+        env_tenant = os.environ.get('CAROLTENANT',None)
+        if hasattr(task,'tenant'):
+            tenant = task.tenant
+        else:
+            tenant = env_tenant
         if self._is_cloud_target:
-            from ...carol import Carol
-            from ...storage import Storage
+            from pycarol.carol import Carol
+            from pycarol.storage import Storage
 
             # We CANNOT cache the storage with GCP because the GCP API is not thread safe and would result in SSL errors
             # if luigi is using more than 1 worker
-            if (CDSTarget.login_cache) and (CDSTarget.tenant_cache == task.tenant):
+            #TODO: login_cache will not work in multiprocess mode. disable login_cache ?
+            if (CDSTarget.login_cache) and (CDSTarget.tenant_cache == tenant):
                 self.login = CDSTarget.login_cache
-                # self.storage = PyCarolTarget.storage_cache
             else:
                 self.login = Carol()
-                # self.storage = Storage(self.login)
                 CDSTarget.login_cache = self.login
-                # PyCarolTarget.storage_cache = self.storage
-                CDSTarget.tenant_cache = task.tenant #TODO: make cache more robust, not depending on task.tenant
-    
+                CDSTarget.tenant_cache = tenant 
             # Storage var needs to be always created per Target
             self.storage = Storage(self.login)
     
@@ -88,7 +89,7 @@ class CDSTarget(LocalTarget):
         """Should return a dict."""
         if self._is_cloud_target:
             metadata = self.storage.load(self.get_metadata_path(), format='joblib', cache=False)
-            assert isinstance(metadata,dict)
+            assert isinstance(metadata,dict), f"metadata is type {type(metadata)}"
             return metadata
         else:
             return super().load_metadata(*args,**kwargs)

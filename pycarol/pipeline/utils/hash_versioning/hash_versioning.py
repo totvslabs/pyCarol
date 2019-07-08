@@ -34,7 +34,7 @@ from pycarol.pipeline.utils import (
     enumerate_with_context
 )
 
-VERBOSE = True  # TODO: move this to env variable
+VERBOSE = False  # TODO: move this to env variable
 
 from pycarol.pipeline.utils.hash_versioning.inspect_bytecode import (
     get_name_and_code_of_MAKE_FUNCTION,
@@ -86,14 +86,9 @@ def process_op(
         defined_functions.update(
             get_name_and_code_of_MAKE_FUNCTION(*context))
 
-    if inst.opname == "IMPORT_NAME": #TODO: tests are failing for IMPORT_NAME
+    if inst.opname == "IMPORT_NAME": #TODO: strong tests are failing for IMPORT_NAME
         defined_functions.update(
             get_name_and_object_of_IMPORT_NAME(*context))
-
-    # if inst.opname == "LOAD_ATTR":
-    #     defined_functions.update(
-    #         get_name_and_object_of_LOAD_ATTR(*context)
-    #     )
 
     if "CALL_FUNCTION" in inst.opname:
         try:
@@ -208,6 +203,7 @@ def get_bytecode_tree(
 
 
 def get_function_hash(f: 'function', ignore_not_implemented=False) -> int:
+    #TODO: test deepdiff
     """
     Module main function. It returns a proper hash for the given function.
     Args:
