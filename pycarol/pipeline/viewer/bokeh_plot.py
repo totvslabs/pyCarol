@@ -52,7 +52,6 @@ def _make_pipeline_plot(
         )
 
     family_color = _make_colormapper(nodes_data_source.data,'task_family')
-    #TODO(renan): add more info to tooltips
     fig = figure(
         title="Pipeline Debugger",
         x_range=(-1, max(nodes_data_source.data['x']) + 1),
@@ -189,13 +188,20 @@ class PlotDynamics():
         return
 
     def update_callback(self,event):
+        #TODO: update all tooltips columns
+        from .viewer import (
+            get_complete,
+            get_target_hash_version
+        )
+
         task_id_column = self.nodes_data_source.data['task_id']
-        old_complete_column = self.nodes_data_source.data['complete']
-        new_complete = [self.pipe.get_task_by_id(id).complete() for id in task_id_column]
-        if old_complete_column == new_complete:
-            print("No changes detected in complete column.")
-        else:
-            self.nodes_data_source.data['complete'] = new_complete
+        task_gen = (self.pipe.get_task_by_id(task_id) for task_id in task_id_column)
+        update_data = dict(complete=[],target_hash_version=[])
+        for task in task_gen:
+            update_data['complete'].append(get_complete(task))
+            update_data['target_hash_version'].append(get_target_hash_version(task))
+    
+        self.nodes_data_source.data.update(update_data)
         
     def buttons_layout(self):
         return row(self.buttons)
