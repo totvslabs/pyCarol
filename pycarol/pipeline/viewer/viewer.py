@@ -44,30 +44,30 @@ def edges_layout(dag:dict, layout:dict) -> list:
             edges.append((layout[source_node],layout[target_node]),)
     return edges
 
-def _get_task_id(t):
+def get_task_id(t):
     return t.task_id
 
-def _get_task_family(t):
+def get_task_family(t):
     # returns task namespace
         if '.' in t.task_id:
             return t.task_id.split('.')[-2]
         else:
             return ""
 
-def _get_task_name(t):
+def get_task_name(t):
     return t.get_task_family() # name of the task class
 
-def _get_complete(t):
+def get_complete(t):
     return t.complete()
 
-def _get_target_hash_version(t):
+def get_target_hash_version(t):
     try:
         metadata = t.load_metadata()
     except:
         return ""
     return metadata.get('hash_version',"")
 
-def _get_task_hash_version(t):
+def get_task_hash_version(t):
     try:
         h = t.hash_version()
     except:
@@ -101,12 +101,12 @@ def make_nodes_data_source(nodes_layout) -> dict:
     for k,(x,y) in nodes_layout.items():
         data['x'].append(x)
         data['y'].append(y)
-        data['task_id'].append(_get_task_id(k))
-        data['task_family'].append(_get_task_family(k))
-        data['task_name'].append(_get_task_name(k))
-        data['complete'].append(_get_complete(k))
-        data['target_hash_version'].append(_get_target_hash_version(k))
-        data['task_hash_version'].append(_get_task_hash_version(k))
+        data['task_id'].append(get_task_id(k))
+        data['task_family'].append(get_task_family(k))
+        data['task_name'].append(get_task_name(k))
+        data['complete'].append(get_complete(k))
+        data['target_hash_version'].append(get_target_hash_version(k))
+        data['task_hash_version'].append(get_task_hash_version(k))
     
     v_gen = (v for v in data.values())
     first_v = next(v_gen)
