@@ -1,4 +1,19 @@
 import os
+
+from contextlib import contextmanager
+@contextmanager
+def dotenv_context():
+    """``with`` context to temporarily modify the environment variables"""
+    import os, dotenv
+    _environ = os.environ.copy()
+    try:
+        dotenv.load_dotenv()
+        yield
+    finally:
+        os.environ.clear()
+        os.environ.update(_environ)
+
+
 def assert_env_is_defined(needed_keys =[
     'CAROLTENANT',
     'CAROLAPPVERSION',

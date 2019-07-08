@@ -1,17 +1,8 @@
 from .task import *
-
-from contextlib import contextmanager
-@contextmanager
-def dotenv_context():
-    """``with`` context to temporarily modify the environment variables"""
-    import os, dotenv
-    _environ = os.environ.copy()
-    try:
-        dotenv.load_dotenv()
-        yield
-    finally:
-        os.environ.clear()
-        os.environ.update(_environ)
+from pycarol.utils.asserts import (
+    assert_env_is_defined,
+    dotenv_context,
+)
 
 def f1(x):
     return x+1
@@ -65,7 +56,6 @@ def test_if_tasks_has_different_hash_2():
     assert Task1().hash_version() != Task2().hash_version()
 
 def test_env_is_defined():
-    from  pycarol.utils.asserts import assert_env_is_defined
     with dotenv_context():
         assert_env_is_defined()
 
