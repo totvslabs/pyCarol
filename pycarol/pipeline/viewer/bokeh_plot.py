@@ -53,14 +53,6 @@ def _make_pipeline_plot(
 
     family_color = _make_colormapper(nodes_data_source.data,'task_family')
     #TODO(renan): add more info to tooltips
-        # x=[],
-        # y=[],
-        # task_id=[],
-        # task_family=[],
-        # task_name=[],
-        # complete=[],
-        # # tasklog=[],
-        # hash_version=[],
     fig = figure(
         title="Pipeline Debugger",
         x_range=(-1, max(nodes_data_source.data['x']) + 1),
@@ -79,7 +71,8 @@ def _make_pipeline_plot(
             ('task_id', '@task_id'),
             ('task_family','@task_family'),
             ('complete','@complete'),
-            ('hash_version','@hash_version'),
+            ('target_hash_version','@target_hash_version'),
+            ('task_hash_version','@task_hash_version'),
         ],
         plot_width=900,
         plot_height=500,
