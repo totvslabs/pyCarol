@@ -60,8 +60,12 @@ def _get_task_name(t):
 def _get_complete(t):
     return t.complete()
 
-def _get_hash_version(t):
-    return ""
+def _get_target_hash_version(t):
+    try:
+        metadata = t.load_metadata()
+    except:
+        return ""
+    return metadata.get('hash_version',"")
 
 
 def make_nodes_data_source(nodes_layout) -> dict:
@@ -98,7 +102,7 @@ def make_nodes_data_source(nodes_layout) -> dict:
         data['task_name'].append(_get_task_name(k))
         data['complete'].append(_get_complete(k))
         # data['tasklog'].append(_get_tasklog(k))
-        data['hash_version'].append(_get_hash_version(k))
+        data['hash_version'].append(_get_target_hash_version(k))
     
     v_gen = (v for v in data.values())
     first_v = next(v_gen)
