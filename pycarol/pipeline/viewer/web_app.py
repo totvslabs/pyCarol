@@ -1,4 +1,6 @@
 # bokeh serve --show web_app.py
+import dotenv
+dotenv.load_dotenv()
 
 from pycarol.pipeline.tools.pipeline_example import pipeline1
 
