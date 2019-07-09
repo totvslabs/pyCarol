@@ -2,12 +2,12 @@ from pycarol.pipeline.utils.hash_versioning.test_hash_versioning import (
     equal_functions_list, different_functions_list
 )
 
-function_set = set()
+function_list = []
 for a,b in equal_functions_list + different_functions_list:
-    function_set.add(a)
-    function_set.add(b)
-
-function_list = [f for f in function_set]
+    if a not in function_list:
+        function_list.append(a)
+    if b not in function_list:
+        function_list.append(b)
 
 from pycarol.pipeline.utils.hash_versioning import get_bytecode_tree, get_function_hash
 def get_hash(f):
@@ -26,7 +26,7 @@ def get_hash(f):
 
 
 def print_all():
-    for f in function_set:
+    for f in function_list:
         name, bytecode, h = get_hash(f)
         print(name,h)
 
