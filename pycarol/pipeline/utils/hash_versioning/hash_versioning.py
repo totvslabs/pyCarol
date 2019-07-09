@@ -217,7 +217,17 @@ def get_function_hash(f: 'function', ignore_not_implemented=False) -> int:
     """
     bytecode_nested_list = get_bytecode_tree(f, ignore_not_implemented)
     bytecode_flat_list = flat_list(bytecode_nested_list)
-    h = hash(tuple(bytecode_flat_list))
+    bytecode_flat_list = [
+        bytecode.encode()
+        if isinstance(bytecode,str)
+        else bytecode
+        for bytecode in bytecode_flat_list
+    ]
+    
+    from hashlib import sha256
+    hashable_bytecode = b''.join(bytecode_flat_list)
+    h = sha256(hashable_bytecode).hexdigest()
+    h = hash(hashable_bytecode)
     return h
 
 
