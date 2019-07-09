@@ -191,6 +191,10 @@ def get_bytecode_tree(
         bytecode_tree: nested lists of bytecode
 
     """
+    #=======
+    import dill
+    return [dill.dumps(lambda:top_function)]
+    #=======
     from functools import partial
     if isinstance(top_function,partial):
         top_function = top_function.func
@@ -227,7 +231,6 @@ def get_function_hash(f: 'function', ignore_not_implemented=False) -> int:
     from hashlib import sha256
     hashable_bytecode = b''.join(bytecode_flat_list)
     h = sha256(hashable_bytecode).hexdigest()
-    h = hash(hashable_bytecode)
     return h
 
 
