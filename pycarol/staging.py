@@ -149,8 +149,7 @@ class Staging:
                                                                                 extra_headers=extra_headers,
                                                                                 content_type=content_type,
                                                                                 max_workers=max_workers,
-                                                                                compress_gzip=self.gzip,
-                                                                                storage_only=storage_only))
+                                                                                compress_gzip=self.gzip))
             loop.run_until_complete(future)
 
         else:
