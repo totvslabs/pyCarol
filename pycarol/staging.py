@@ -33,8 +33,7 @@ class Staging:
     def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=500,
                   print_stats=True, gzip=True, auto_create_schema=False, crosswalk_auto_create=None,
                   flexible_schema=False, force=False,  max_workers=2,  dm_to_delete=None,
-                  async_send=False,
-                  carol_data_storage=False):
+                  async_send=False, carol_data_storage=False, storage_only=False):
         '''
         :param staging_name:  `str`,
             Staging name to send the data.
@@ -67,6 +66,8 @@ class Staging:
             To use async to send the data. This is much faster than a sequential send.
         :param carol_data_storage: `bool`, default `False`
             To use Carol Data Storage flow.
+        :param storage_only: `bool`, default `False`
+            Send data only to intake server.
         :return: None
         '''
 
@@ -132,7 +133,11 @@ class Staging:
         if dm_to_delete is not None:
             delete_golden(self.carol, dm_to_delete)
 
-        url = f'v2/staging/tables/{staging_name}?carolDataStorage={carol_data_storage}&returnData=false&connectorId={connector_id}'
+        if not storage_only:
+            #TODO: @bruno do we need this carolDataStorage flag for the normal intake?
+            url = f'v2/staging/tables/{staging_name}?carolDataStorage={carol_data_storage}&returnData=false&connectorId={connector_id}'
+        else:
+            url = f'v2/staging/intake/{staging_name}?returnData=false&connectorId={connector_id}'
         
         self.cont = 0
         if async_send:
@@ -144,7 +149,8 @@ class Staging:
                                                                                 extra_headers=extra_headers,
                                                                                 content_type=content_type,
                                                                                 max_workers=max_workers,
-                                                                                compress_gzip=self.gzip))
+                                                                                compress_gzip=self.gzip,
+                                                                                storage_only=storage_only))
             loop.run_until_complete(future)
 
         else:
