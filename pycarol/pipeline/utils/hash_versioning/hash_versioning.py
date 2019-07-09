@@ -203,7 +203,6 @@ def get_bytecode_tree(
 
 
 def get_function_hash(f: 'function', ignore_not_implemented=False) -> int:
-    #TODO: test deepdiff
     """
     Module main function. It returns a proper hash for the given function.
     Args:
