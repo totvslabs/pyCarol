@@ -192,9 +192,10 @@ def get_bytecode_tree(
 
     """
     #=======
-    import dill
-    return [dill.dumps(lambda:top_function)]
+    # import dill
+    # return [dill.dumps(lambda:top_function)]
     #=======
+    #TODO: nested, builtin, call_kwargs are failing interprocesses test
     from functools import partial
     if isinstance(top_function,partial):
         top_function = top_function.func
