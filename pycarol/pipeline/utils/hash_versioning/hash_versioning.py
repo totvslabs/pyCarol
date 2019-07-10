@@ -34,7 +34,7 @@ from pycarol.pipeline.utils import (
     enumerate_with_context
 )
 
-VERBOSE = False  # TODO: move this to env variable
+DEBUG_MODE = False  
 
 from pycarol.pipeline.utils.hash_versioning.inspect_bytecode import (
     get_name_and_code_of_MAKE_FUNCTION,
@@ -86,7 +86,7 @@ def process_op(
         defined_functions.update(
             get_name_and_code_of_MAKE_FUNCTION(*context))
 
-    if inst.opname == "IMPORT_NAME": #TODO: strong tests are failing for IMPORT_NAME
+    if inst.opname == "IMPORT_NAME": #TODO: some tests are failing for IMPORT_NAME
         defined_functions.update(
             get_name_and_object_of_IMPORT_NAME(*context))
 
@@ -206,7 +206,6 @@ def get_bytecode_tree(
 
     return bytecode_tree
 
-
 def get_function_hash(f: 'function', ignore_not_implemented=False) -> int:
     """
     Module main function. It returns a proper hash for the given function.
@@ -235,5 +234,3 @@ def get_function_hash(f: 'function', ignore_not_implemented=False) -> int:
     return h
 
 
-
-# TODO: production pipeline test case
