@@ -191,10 +191,6 @@ def get_bytecode_tree(
         bytecode_tree: nested lists of bytecode
 
     """
-    #=======
-    # import dill
-    # return [dill.dumps(lambda:top_function)]
-    #=======
     #TODO: nested, builtin, call_kwargs are failing interprocesses test
     from functools import partial
     if isinstance(top_function,partial):
