@@ -271,5 +271,6 @@ def get_plot_from_pipeline(pipe: Type[Pipe]):
 
     return bokeh_layout
 
-#TODO: implement python bokeh server to make dev and tests easier: tried with tornado ioloop, but degbugger does not get into async process
+#TODO: implement python bokeh server to make dev and tests easier: test debuggging tools with tornado 6.0
+
 

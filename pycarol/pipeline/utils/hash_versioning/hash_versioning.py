@@ -34,7 +34,7 @@ from pycarol.pipeline.utils import (
     enumerate_with_context
 )
 
-VERBOSE = False  # TODO: move this to env variable
+DEBUG_MODE = False  
 
 from pycarol.pipeline.utils.hash_versioning.inspect_bytecode import (
     get_name_and_code_of_MAKE_FUNCTION,
@@ -86,7 +86,7 @@ def process_op(
         defined_functions.update(
             get_name_and_code_of_MAKE_FUNCTION(*context))
 
-    if inst.opname == "IMPORT_NAME": #TODO: strong tests are failing for IMPORT_NAME
+    if inst.opname == "IMPORT_NAME": #TODO: some tests are failing for IMPORT_NAME
         defined_functions.update(
             get_name_and_object_of_IMPORT_NAME(*context))
 
@@ -191,6 +191,7 @@ def get_bytecode_tree(
         bytecode_tree: nested lists of bytecode
 
     """
+    #TODO: nested, builtin, call_kwargs are failing interprocesses test
     from functools import partial
     if isinstance(top_function,partial):
         top_function = top_function.func
@@ -201,9 +202,7 @@ def get_bytecode_tree(
 
     return bytecode_tree
 
-
 def get_function_hash(f: 'function', ignore_not_implemented=False) -> int:
-    #TODO: test deepdiff
     """
     Module main function. It returns a proper hash for the given function.
     Args:
@@ -218,9 +217,16 @@ def get_function_hash(f: 'function', ignore_not_implemented=False) -> int:
     """
     bytecode_nested_list = get_bytecode_tree(f, ignore_not_implemented)
     bytecode_flat_list = flat_list(bytecode_nested_list)
-    h = hash(tuple(bytecode_flat_list))
+    bytecode_flat_list = [
+        bytecode.encode()
+        if isinstance(bytecode,str)
+        else bytecode
+        for bytecode in bytecode_flat_list
+    ]
+    
+    from hashlib import sha256
+    hashable_bytecode = b''.join(bytecode_flat_list)
+    h = sha256(hashable_bytecode).hexdigest()
     return h
 
 
-
-# TODO: production pipeline test case

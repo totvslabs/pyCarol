@@ -2,7 +2,7 @@
 import importlib
 import builtins
 
-from pycarol.pipeline.utils.hash_versioning.hash_versioning import VERBOSE
+from pycarol.pipeline.utils.hash_versioning.hash_versioning import DEBUG_MODE
 
 
 def get_name_and_code_of_MAKE_FUNCTION(ix, inst, instructions):
@@ -113,7 +113,7 @@ def get_name_of_CALL_FUNCTION(ix, inst, instructions,parent_function):
     ix = ix - offset
     called_function_inst = instructions[ix]
 
-    if VERBOSE:
+    if DEBUG_MODE:
         print(called_function_inst)
         print("offset: ", offset)
 
@@ -121,7 +121,7 @@ def get_name_of_CALL_FUNCTION(ix, inst, instructions,parent_function):
         function_name = called_function_inst.argval
     elif called_function_inst.opname == 'LOAD_FAST':
         function_name = called_function_inst.argval
-    elif called_function_inst.opname == 'LOAD_ATTR': # TODO: change this
+    elif called_function_inst.opname == 'LOAD_ATTR': 
         function_name = get_name_and_object_of_LOAD_ATTR(ix,
                                                          called_function_inst,instructions,parent_function)
         # in this case, function_name is actually (name,object)

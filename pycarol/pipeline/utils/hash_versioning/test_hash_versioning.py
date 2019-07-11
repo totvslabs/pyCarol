@@ -1,5 +1,5 @@
 from pytest import mark
-from . import get_bytecode_tree
+from . import get_bytecode_tree, get_function_hash
 from pycarol.pipeline.utils.hash_versioning import get_name_of_CALL_FUNCTION
 
 
@@ -255,7 +255,6 @@ calling_functions_list = [
     call_ex_h,
 ]
 
-
 @mark.parametrize("func", calling_functions_list)
 def test_find_called_function(func):
     import dis
@@ -278,6 +277,39 @@ def test_equal_functions(f1, f2):
 def test_different_functions_robust(f1, f2):
     assert get_bytecode_tree(f1,ignore_not_implemented=True) != \
            get_bytecode_tree(f2,ignore_not_implemented=True)
+
+
+
+all_functions = set()
+for a,b in equal_functions_list + different_functions_list:
+    all_functions.add(a)
+    all_functions.add(b)
+all_functions = [f for f in all_functions]
+
+@mark.parametrize("f",all_functions)
+def test_generate_bytecode(f):
+    assert get_bytecode_tree(f,ignore_not_implemented=True)
+
+
+@mark.parametrize("f",all_functions)
+def test_generate_hash(f):
+    print(get_bytecode_tree(f,ignore_not_implemented=True))
+    assert get_function_hash(f,ignore_not_implemented=True)
+
+
+from joblib import Parallel, delayed
+
+def get_hash(f):
+    name = f.__name__
+    try:
+        bytecode = get_bytecode_tree(f)
+    except:
+        bytecode = "FAIL"
+    try:
+        h = get_function_hash(f)
+    except:
+        h = "FAIL"    
+    return([name, bytecode, h])
 
 
 TDD_tests = False
