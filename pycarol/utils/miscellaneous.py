@@ -115,3 +115,7 @@ def stream_data(data, step_size, compress_gzip):
             else:
                 yield data_to_send, cont
     return None, None
+
+class Hashabledict(dict):
+    def __hash__(self):
+        return hash(frozenset(self))
