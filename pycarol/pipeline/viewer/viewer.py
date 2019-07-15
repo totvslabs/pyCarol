@@ -18,12 +18,23 @@ def nodes_layout(dag:dict, align_on_leafs = True) -> dict:
 
     """
 
-    layout = {}
+    layout_x = {}
     if align_on_leafs:
         dag = get_reverse_dag(dag)
     for i, nodes in enumerate(breadth_first_search(dag)):
         for j, node in enumerate(nodes):
-            layout[node] = (i,j)
+            # overwrite previous levels and keep only last one
+            layout_x[node] = i
+
+    levels = sorted(v for v in layout_x.values())
+    layout = {}
+    for l in levels:
+        y = 0
+        for node, x in layout_x.items():
+            if x == l:
+                layout[node] = (x,y)
+                y += 1
+
     return layout
 
 def edges_layout(dag:dict, layout:dict) -> list:
@@ -55,7 +66,7 @@ def get_task_family(t):
             return ""
 
 def get_task_name(t):
-    return t.get_task_family() # name of the task class
+    return t.task_id.split('.')[-1].split('_')[0] # name of the task class
 
 def get_complete(t):
     return t.complete()

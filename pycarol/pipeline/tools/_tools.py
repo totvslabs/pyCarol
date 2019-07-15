@@ -15,6 +15,9 @@ def luigi_get_sons(task) -> list:
         l: list of luigi Task
 
     """
+    if isinstance(task,tuple):
+        # this case happens when we use local params in tasks require
+        task,params = task
     return task.requires_list
 
 
@@ -35,9 +38,18 @@ def get_instances_from_classes(dag:dict,params:dict):
     """Returns a dag of task instances, given a dag of task classes and pipeline params."""
     instances_dag = {}
     for k,v in dag.items():
-        instances_dag[k(**params)] = [
-            t(**params) for t in v
-        ]
+        task_params = params
+        if isinstance(k,tuple):
+            k,local_params = k
+            task_params.update(local_params)
+        task_list=[]
+        for t in v:
+            task_params = params
+            if isinstance(t,tuple):
+                t,local_params = t
+                task_params.update(local_params)
+            task_list.append(t(**task_params))
+        instances_dag[k(**params)] = task_list
     return instances_dag
 
 def downstream_complete(dag,top_nodes,downstream_complete_dict):
@@ -92,6 +104,7 @@ class Pipe(object):
         if _tasks_are_class(tasks):
             self.top_nodes = [t(**self.params) for t in self.top_nodes]
             self.dag = get_instances_from_classes(self.dag,self.params)
+
 
         self.rev_dag = get_reverse_dag(self.dag)
         self.leaf_nodes = find_root_in_dag(self.rev_dag) #  leaf nodes are root nodes of rev dag
