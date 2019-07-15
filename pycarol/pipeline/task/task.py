@@ -17,7 +17,7 @@ class Task(luigi.Task):
     requires_list = []
     requires_dict = {}
     #TODO (renan):  Remove support to requires_dict. ask me why...
-    resources = {'cpu': 1}  # default resource to be overridden or complemented
+    resources = None  # default resource to be overridden or complemented
     task_function = None
     metadata = {}
     
