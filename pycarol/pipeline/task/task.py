@@ -3,6 +3,7 @@ from luigi import parameter, six
 from luigi.task import flatten
 from luigi.parameter import ParameterVisibility
 from pycarol.pipeline.targets import PickleTarget
+from pycarol.utils.miscellaneous import Hashabledict
 import logging
 import warnings
 
@@ -255,6 +256,13 @@ class inherit_list(object):
 
     def __init__(self, *task_to_inherit_list):
         self.requires_list = list(task_to_inherit_list)
+        # next, we use hashable dict in local task params to support pipeline viewer
+        for i,v in enumerate(self.requires_list):
+            if isinstance(v,tuple):
+                task, params = v
+                assert issubclass(task,Task)
+                assert isinstance(params,dict)
+                self.requires_list[i] = ( task, Hashabledict(params) )
 
     def __call__(self, task_that_inherits):
         task_that_inherits.requires_list = self.requires_list
