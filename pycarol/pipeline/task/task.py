@@ -1,7 +1,9 @@
 import luigi
 from luigi import parameter, six
 from luigi.task import flatten
+from luigi.parameter import ParameterVisibility
 from pycarol.pipeline.targets import PickleTarget
+from pycarol.utils.miscellaneous import Hashabledict
 import logging
 import warnings
 
@@ -10,39 +12,21 @@ logger.setLevel(logging.INFO)
 
 
 class Task(luigi.Task):
-    TARGET_DIR = './luigi_targets/'  # this class attribute can be redefined somewhere else
-
-    TARGET = PickleTarget  # DEPRECATED!
+    TARGET_DIR = './TARGETS/'  # this class attribute can be redefined somewhere else
     target_type = PickleTarget
     is_cloud_target = None
-
-    persist_stdout = False
     requires_list = []
     requires_dict = {}
-    resources = {'cpu': 1}  # default resource to be overridden or complemented
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def visualize(self):
-        # override this method to provide a visualization for taskviewer
-        return None
-
+    #TODO (renan):  Remove support to requires_dict. ask me why...
+    task_function = None
+    metadata = {}
+    
     def buildme(self, local_scheduler=True, **kwargs):
         luigi.build([self, ], local_scheduler=local_scheduler, **kwargs)
-
-    def debug_task(self):
-        persist_stdout =self.persist_stdout
-        self.persist_stdout = False
-        self.run()
-        self.persist_stdout = persist_stdout
 
     def _file_id(self):
         # returns the output default file identifier
         return luigi.task.task_id_str(self.get_task_family(), self.to_str_params(only_significant=True))
-
-    def _txt_path(self):
-        return "{}.txt".format(self._file_id())
 
     def requires(self):
         if len(self.requires_list) > 0:
@@ -69,7 +53,7 @@ class Task(luigi.Task):
             return []
 
     def output(self):
-        if self.TARGET != PickleTarget:  # Check for deprecated use
+        if hasattr(self,'TARGET'):  # Check for deprecated use
             warnings.warn('TARGET is being replaced with target_type.', DeprecationWarning)
             return self.TARGET(self)
 
@@ -78,12 +62,16 @@ class Task(luigi.Task):
     def load(self, **kwargs):
         return self.output().load(**kwargs)
 
+    def load_metadata(self):
+        return self.output().load_metadata()
+
     def remove(self):
         self.output().remove()
-        self.output().removelog()
+        self.output().remove_metadata()
 
-    def loadlog(self):
-        return self.output().loadlog()
+    def save(self):
+        self.output().dump(self.function_output)
+        self.output().dump_metadata(self.metadata)
 
     def run(self):
 
@@ -95,42 +83,61 @@ class Task(luigi.Task):
                                    if self.load_input_params(input_i) else input_i.load())
                                for i, input_i in self.input().items()}
 
-
-        if hasattr(self.output(), '_is_cloud_target') and self.output()._is_cloud_target and self.persist_stdout:
-            try:
-                from contextlib import redirect_stdout
-                import io
-                f = io.StringIO()
-                with redirect_stdout(f):
-                    function_output = self._easy_run(function_inputs)
-            finally:
-                # self.output().persistlog(self._txt_path())
-                self.output().persistlog(f.getvalue())
-        else:
-            function_output = self._easy_run(function_inputs)
-
-        print("dumping task", self)
-
-        self.output().dump(function_output)
+        self.metadata['hash_version'] = self.hash_version()
+        self.metadata['params'] = self.get_execution_params(only_significant=False, only_public=True)
+        #TODO (renan): implement logger and metadata integration
+        #TODO (renan): save date, user, git-info, etc in metadata
+        self.function_output = self._easy_run(function_inputs)
+        self.save()
+        del self.function_output # after dump, free memory
 
     def _easy_run(self, inputs):
-        # Override this method to implement standard pre/post-processing
-        return self.easy_run(inputs)
+        if not (self.easy_run or self.task_function):
+            raise SyntaxError("Either easy_run or task_function should be defined")
+
+        if self.task_function:
+            if not isinstance(inputs,list):
+                raise NotImplementedError(
+                    f"In task_function mode, inputs should be list, not {type(inputs)}"
+                    )
+            params = self.get_params()
+            params = {k:v for (k,v) in params}
+            if hasattr(self.task_function,'__func__'):
+                f = self.task_function.__func__
+            else:
+                f = self.task_function
+            return f(*inputs,**params)            
+        else:
+            return self.easy_run(inputs)
 
     def easy_run(self, inputs):
         return None
 
-    #this method was changed from the original version to allow execution of a task
-    #with extra parameters. the original one, raises an exception. now, we print that exception
-    #in this version we do not raise neither print it.
+    def hash_version(self,):
+        """ Returns the hash of the task considering only function, not the parameters."""
+        from ..utils.hash_versioning import get_function_hash
+        if not self.task_function:
+            warnings.warn(
+                "hash versioning only works in task_function mode. "\
+                "It will return dummy hash code",SyntaxWarning
+                )
+            return 0
+        else:
+            return get_function_hash(self.task_function, ignore_not_implemented=True)
+
     @classmethod
     def get_param_values(cls, params, args, kwargs):
         """
+        This method was changed from the original version to allow execution of a task
+        with extra parameters. the original one, raises an exception. now, we print 
+        that exception in this version we do not raise neither print it.
+
         Get the values of the parameters from the args and kwargs.
         :param params: list of (param_name, Parameter).
         :param args: positional arguments
         :param kwargs: keyword arguments.
         :returns: list of `(name, value)` tuples, one for each parameter.
+        
         """
         result = {}
 
@@ -180,13 +187,24 @@ class Task(luigi.Task):
         # Sort it by the correct order and make a list
         return [(param_name, list_to_tuple(result[param_name])) for param_name, param_obj in params]
 
-    def get_execution_params(self):
-        params = {}
-        for param_name in dir(self.__class__):
-            param_obj = getattr(self, param_name)
-            params.update({param_name: param_obj})
+    def get_execution_params(self, only_significant=False, only_public=True):
+        """
+        Get params values.
 
-        return params
+
+        """
+        params_str = {}
+        params = dict(self.get_params())
+        for param_name, param_value in six.iteritems(self.param_kwargs):
+            if (((not only_significant) or params[param_name].significant)
+                    and ((not only_public) or params[param_name].visibility == ParameterVisibility.PUBLIC)
+                    and params[param_name].visibility != ParameterVisibility.PRIVATE):
+
+                #TODO: Should we save the :class: luigi.Parameter itself?
+                params_str[param_name] = param_value
+
+        return params_str
+
 
     def load_input_params(self, input_target):
         """
@@ -199,7 +217,7 @@ class Task(luigi.Task):
         """
         return {}
 
-
+#TODO: remove either WrapperTask or Dummy Target
 class WrapperTask(Task):
     """
     Use for tasks that only wrap other tasks and that by definition are done if all their requirements exist.
@@ -237,6 +255,13 @@ class inherit_list(object):
 
     def __init__(self, *task_to_inherit_list):
         self.requires_list = list(task_to_inherit_list)
+        # next, we use hashable dict in local task params to support pipeline viewer
+        for i,v in enumerate(self.requires_list):
+            if isinstance(v,tuple):
+                task, params = v
+                assert issubclass(task,Task)
+                assert isinstance(params,dict)
+                self.requires_list[i] = ( task, Hashabledict(params) )
 
     def __call__(self, task_that_inherits):
         task_that_inherits.requires_list = self.requires_list
@@ -248,6 +273,7 @@ class inherit_list(object):
 
 
 class inherit_dict(object):
+    #TODO: hash versioning is not compatible with inherit_dict
     def __init__(self, **task_to_inherit_dict):
         self.requires_dict = task_to_inherit_dict
 

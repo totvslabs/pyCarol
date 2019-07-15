@@ -40,7 +40,8 @@ install_requires = [
     'missingno==0.4.1',
     'deprecated',
     'pytest',
-    'bumpversion'
+    'bumpversion',
+    'python-dotenv',
 ]
 
 def read(*parts):
