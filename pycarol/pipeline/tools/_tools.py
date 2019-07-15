@@ -104,8 +104,7 @@ class Pipe(object):
         if _tasks_are_class(tasks):
             self.top_nodes = [t(**self.params) for t in self.top_nodes]
             self.dag = get_instances_from_classes(self.dag,self.params)
-        else:
-            raise NotImplementedError(f"Currently, we only support global params")
+
 
         self.rev_dag = get_reverse_dag(self.dag)
         self.leaf_nodes = find_root_in_dag(self.rev_dag) #  leaf nodes are root nodes of rev dag
