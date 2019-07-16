@@ -11,6 +11,7 @@ class StorageGCPCS:
         self.carolina = carolina
         self.client = None
         self.bucket_app_storage = None
+        self._init_if_needed()
 
     def _init_if_needed(self):
         if self.client is not None:
@@ -22,7 +23,6 @@ class StorageGCPCS:
             os.makedirs(__TEMP_STORAGE__)
 
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
-        self._init_if_needed()
         remote_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
         local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
 
@@ -57,7 +57,6 @@ class StorageGCPCS:
         os.utime(local_file_name, None)
 
     def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage', columns=None):
-        self._init_if_needed()
         if storage_space == 'app_storage':
             remote_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
             bucket = self.bucket_app_storage
@@ -116,7 +115,6 @@ class StorageGCPCS:
             return None
 
     def exists(self, name):
-        self._init_if_needed()
         remote_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
         print(remote_file_name)
 
@@ -124,7 +122,6 @@ class StorageGCPCS:
         return blob.exists()
 
     def delete(self, name):
-        self._init_if_needed()
         remote_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
 
         blob = self.bucket_app_storage.blob(remote_file_name)
@@ -144,7 +141,6 @@ class StorageGCPCS:
         return f'gcs://{self.carolina.get_bucket_name("view")}/{path}'
 
     def build_url_parquet_staging(self, staging_name, connector_id):
-        self._init_if_needed()
         path = self.carolina.get_path("staging", {'connector_id': connector_id, 'staging_type': staging_name})
         bucket_name = self.carolina.get_bucket_name("staging")
         bucket = self.client.bucket(bucket_name)
@@ -154,7 +150,6 @@ class StorageGCPCS:
         return f'gcs://{bucket_name}/{path}'
 
     def build_url_parquet_staging_master(self, staging_name, connector_id):
-        self._init_if_needed()
         path = self.carolina.get_path("staging_master", {'connector_id': connector_id, 'staging_type': staging_name})
         bucket_name = self.carolina.get_bucket_name("staging_master")
         bucket = self.client.bucket(bucket_name)
@@ -164,7 +159,6 @@ class StorageGCPCS:
         return f'gcs://{bucket_name}/{path}'
 
     def build_url_parquet_staging_rejected(self, staging_name, connector_id):
-        self._init_if_needed()
         path = self.carolina.get_path("staging_rejected", {'connector_id': connector_id, 'staging_type': staging_name})
         bucket_name = self.carolina.get_bucket_name("staging_rejected")
         bucket = self.client.bucket(bucket_name)
@@ -177,21 +171,18 @@ class StorageGCPCS:
         return {'token': self.carolina.token}
 
     def get_golden_file_paths(self, dm_name):
-        self._init_if_needed()
         bucket = self.client.bucket(self.carolina.get_bucket_name('golden'))
         path = self.carolina.get_path('golden', {'dm_name': dm_name})
         blobs = bucket.list_blobs(prefix=path, delimiter=None)
         return [{'storage_space': 'golden', 'name': i.name} for i in blobs if i.name.endswith('.parquet')]
 
     def get_view_file_paths(self, view_name):
-        self._init_if_needed()
         bucket = self.client.bucket(self.carolina.get_bucket_name('view'))
         path = self.carolina.get_path('view', {'relationship_view_name': view_name})
         blobs = bucket.list_blobs(prefix=path, delimiter=None)
         return [{'storage_space': 'golden', 'name': i.name} for i in blobs if i.name.endswith('.parquet')]
 
     def get_staging_file_paths(self, staging_name, connector_id):
-        self._init_if_needed()
 
         bucket_staging = self.client.bucket(self.carolina.get_bucket_name('staging'))
         path_staging = self.carolina.get_path("staging", {'connector_id': connector_id, 'staging_type': staging_name})
