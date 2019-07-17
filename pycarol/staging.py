@@ -286,7 +286,7 @@ class Staging:
         """
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
-    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',
+    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='pandas',
                       merge_records=True, return_dask_graph=False, columns=None, max_hits=None,
                       return_metadata=False, callback=None):
         """
