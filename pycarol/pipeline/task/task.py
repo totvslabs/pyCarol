@@ -19,6 +19,7 @@ class Task(luigi.Task):
     requires_dict = {}
     #TODO (renan):  Remove support to requires_dict. ask me why...
     task_function = None
+    version = '0.0.0'
     metadata = {}
     
     def buildme(self, local_scheduler=True, **kwargs):
@@ -84,9 +85,8 @@ class Task(luigi.Task):
                                for i, input_i in self.input().items()}
 
         self.metadata['hash_version'] = self.hash_version()
+        self.metadata['version'] = self.version
         self.metadata['params'] = self.get_execution_params(only_significant=False, only_public=True)
-        #TODO (renan): implement logger and metadata integration
-        #TODO (renan): save date, user, git-info, etc in metadata
         self.function_output = self._easy_run(function_inputs)
         self.save()
         del self.function_output # after dump, free memory

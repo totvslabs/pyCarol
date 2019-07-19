@@ -72,7 +72,8 @@ def _make_pipeline_plot(
             ('complete','@complete'),
             ('target_hash_version','@target_hash_version'),
             ('task_hash_version','@task_hash_version'),
-        ],
+            ('target_version', '@target_version'),
+            ('task_version', '@task_version'), ],
         plot_width=900,
         plot_height=500,
     )
@@ -190,7 +191,8 @@ class PlotDynamics():
     def update_callback(self,event):
         from .viewer import (
             get_complete,
-            get_target_hash_version
+            get_target_hash_version,
+            get_target_version,
         )
 
         task_id_column = self.nodes_data_source.data['task_id']
@@ -199,6 +201,7 @@ class PlotDynamics():
         for task in task_gen:
             update_data['complete'].append(get_complete(task))
             update_data['target_hash_version'].append(get_target_hash_version(task))
+            update_data['target_version'].append(get_target_version(task))
     
         self.nodes_data_source.data.update(update_data)
         

@@ -42,6 +42,7 @@ install_requires = [
     'pytest',
     'bumpversion',
     'python-dotenv',
+    'black',
 ]
 
 def read(*parts):
