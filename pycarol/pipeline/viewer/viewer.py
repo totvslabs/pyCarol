@@ -84,6 +84,20 @@ def get_task_hash_version(t):
     except:
         h = ""
     return h
+def get_task_version(t):
+    try:
+        h = t.version
+    except:
+        h = ""
+    return h
+
+def get_target_hash_version(t):
+    try:
+        metadata = t.load_metadata()
+    except:
+        return ""
+    return metadata.get('version',"")
+
 
 def make_nodes_data_source(nodes_layout) -> dict:
     """
@@ -108,6 +122,8 @@ def make_nodes_data_source(nodes_layout) -> dict:
         complete=[],
         task_hash_version=[],
         target_hash_version=[],
+        target_version=[],
+        task_version=[],
     )
     for k,(x,y) in nodes_layout.items():
         data['x'].append(x)
@@ -118,6 +134,9 @@ def make_nodes_data_source(nodes_layout) -> dict:
         data['complete'].append(get_complete(k))
         data['target_hash_version'].append(get_target_hash_version(k))
         data['task_hash_version'].append(get_task_hash_version(k))
+        data['target_version'].append(get_target_version(k))
+        data['task_version'].append(get_task_version(k))
+
     
     v_gen = (v for v in data.values())
     first_v = next(v_gen)
