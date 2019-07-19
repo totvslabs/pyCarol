@@ -91,7 +91,7 @@ def get_task_version(t):
         h = ""
     return h
 
-def get_target_hash_version(t):
+def get_target_version(t):
     try:
         metadata = t.load_metadata()
     except:
