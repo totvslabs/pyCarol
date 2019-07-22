@@ -197,7 +197,7 @@ class PlotDynamics():
 
         task_id_column = self.nodes_data_source.data['task_id']
         task_gen = (self.pipe.get_task_by_id(task_id) for task_id in task_id_column)
-        update_data = dict(complete=[],target_hash_version=[])
+        update_data = dict(complete=[],target_hash_version=[],target_version=[])
         for task in task_gen:
             update_data['complete'].append(get_complete(task))
             update_data['target_hash_version'].append(get_target_hash_version(task))
