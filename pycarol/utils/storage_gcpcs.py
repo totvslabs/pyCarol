@@ -116,7 +116,6 @@ class StorageGCPCS:
 
     def exists(self, name):
         remote_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
-        print(remote_file_name)
 
         blob = self.bucket_app_storage.blob(remote_file_name)
         return blob.exists()
