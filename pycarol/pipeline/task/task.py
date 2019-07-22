@@ -145,7 +145,10 @@ class Task(luigi.Task):
                 )
             return 0
         else:
-            return get_function_hash(self.task_function, ignore_not_implemented=True)
+            try:
+                return get_function_hash(self.task_function, ignore_not_implemented=True)
+            except:
+                return 0
 
     @classmethod
     def get_param_values(cls, params, args, kwargs):
