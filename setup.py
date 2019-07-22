@@ -43,6 +43,7 @@ install_requires = [
     'bumpversion',
     'python-dotenv',
     'black',
+    'papermill',
 ]
 
 def read(*parts):

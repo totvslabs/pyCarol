@@ -19,6 +19,7 @@ class Task(luigi.Task):
     requires_dict = {}
     #TODO (renan):  Remove support to requires_dict. ask me why...
     task_function = None
+    task_notebook = None
     version = '0.0.0'
     metadata = {}
 
@@ -92,14 +93,27 @@ class Task(luigi.Task):
         self.metadata['version'] = self.version
         self.metadata['params'] = self.get_execution_params(only_significant=False, only_public=True)
         self.function_output = self._easy_run(function_inputs)
-        self.save()
-        del self.function_output # after dump, free memory
+        if not self.task_notebook:
+            #in task_notebook mode, save is called inside the notebook
+            self.save()
+            del self.function_output # after dump, free memory
 
     def _easy_run(self, inputs):
-        if not (self.easy_run or self.task_function):
-            raise SyntaxError("Either easy_run or task_function should be defined")
+        if not (self.easy_run or self.task_function or self.task_notebook):
+            raise SyntaxError("One of [easy_run, task_function, task_notebook] "
+                              "should be defined")
 
-        if self.task_function:
+        if self.task_notebook:
+            import papermill as pm
+            pm.execute_notebook(
+                self.task_notebook,
+                f"executed_notebook/{self.task_notebook}",
+                parameters=dict(
+                    task_id=self.task_id
+                )
+            )
+            return None
+        elif self.task_function:
             if not isinstance(inputs,list):
                 raise NotImplementedError(
                     f"In task_function mode, inputs should be list, not {type(inputs)}"
@@ -109,7 +123,7 @@ class Task(luigi.Task):
                 f = self.task_function.__func__
             else:
                 f = self.task_function
-            return f(*inputs,**params)            
+            return f(*inputs,**params)
         else:
             return self.easy_run(inputs)
 
