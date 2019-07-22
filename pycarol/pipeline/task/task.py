@@ -118,12 +118,13 @@ class Task(luigi.Task):
                 raise NotImplementedError(
                     f"In task_function mode, inputs should be list, not {type(inputs)}"
                     )
-            params = self.get_execution_params(only_significant=True)
+            # params = self.get_execution_params(only_significant=True)
             if hasattr(self.task_function,'__func__'):
                 f = self.task_function.__func__
             else:
                 f = self.task_function
-            return f(*inputs,**params)
+            # return f(*inputs,**params)
+            return f(*inputs)
         else:
             return self.easy_run(inputs)
 
