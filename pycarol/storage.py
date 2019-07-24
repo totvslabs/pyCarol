@@ -8,7 +8,7 @@ class Storage:
         self._init_if_needed()
 
     def _init_if_needed(self):
-        if Storage.backend is not None:
+        if Storage.backend is not None and Carolina.token.get('tenant_name', '') == self.carol.tenant['mdmName']:
             return
 
         carolina = Carolina(self.carol)
