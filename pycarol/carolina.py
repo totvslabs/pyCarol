@@ -135,15 +135,15 @@ class Carolina:
         vars['tenant_id'] = self.carol.tenant['mdmId']
 
         if space == 'golden':
-            template = self.cds_golden_path['path']
+            template = self.cds_golden_path['path'] + '/'
         elif space == 'staging':
-            template = self.cds_staging_path['path']
+            template = self.cds_staging_path['path'] + '/'
         elif space == 'staging_master':
-            template = self.cds_staging_master_path['path']
+            template = self.cds_staging_master_path['path'] + '/'
         elif space == 'staging_rejected':
-            template = self.cds_staging_rejected_path['path']
+            template = self.cds_staging_rejected_path['path'] + '/'
         elif space == 'view':
-            template = self.cds_view_path['path']
+            template = self.cds_view_path['path'] + '/'
 
 
         name = Formatter().vformat(template, None, vars)
