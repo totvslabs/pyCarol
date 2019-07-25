@@ -31,7 +31,8 @@ class StorageGCPCS:
 
         if parquet:
             if not isinstance(obj, pd.DataFrame):
-                raise ValueError("Object to be saved as parquet must be a DataFrame")
+                raise ValueError(f"Object to be saved as parquet must be a "
+                                 f"DataFrame. Received a {type(obj)}")
             obj.to_parquet(local_file_name)
         elif format == 'joblib':
             import joblib
