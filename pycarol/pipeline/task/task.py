@@ -12,14 +12,15 @@ logger.setLevel(logging.INFO)
 
 
 class Task(luigi.Task):
-    TARGET_DIR = './TARGETS/'  # this class attribute can be redefined somewhere else
+    TARGET_DIR = './TARGETS/'
     target_type = PickleTarget
     is_cloud_target = None
     requires_list = []
     requires_dict = {}
-    #TODO (renan):  Remove support to requires_dict. ask me why...
+
     task_function = None
     task_notebook = None
+    easy_run = None
     version = '0.0.0'
     metadata = {}
 
@@ -84,11 +85,37 @@ class Task(luigi.Task):
 
     def run(self):
 
-        self.function_output = self._easy_run()
-        if not self.task_notebook:
-            #in task_notebook mode, save is called inside the notebook
+        if self.task_notebook:
+            import papermill
+            papermill.execute_notebook(
+                self.task_notebook,
+                f"executed_notebook/{self.task_notebook}",
+                parameters=dict(),
+            )
+            # self.save is called inside notebook
+
+        elif self.task_function:
+            inputs = self.function_inputs()
+            if not isinstance(inputs,list):
+                raise NotImplementedError(
+                    f"In task_function mode, inputs should be list, not {type(inputs)}"
+                    )
+            params = self.get_execution_params(only_significant=True)
+            assert hasattr(self.task_function,'__func__'), "We need unbound method"
+            f = self.task_function.__func__
+            self.function_output = f(*inputs,**params)
             self.save()
-            del self.function_output # after dump, free memory
+            del self.function_output  # after dump, free memory
+
+        elif self.easy_run:
+            inputs = self.function_inputs()
+            self.function_output = self.easy_run(inputs)
+            self.save()
+            del self.function_output  # after dump, free memory
+
+        else:
+            raise SyntaxError("One of [easy_run, task_function, task_notebook] "
+                              "should be defined")
 
     def function_inputs(self):
         if isinstance(self.input(), list):
@@ -100,46 +127,11 @@ class Task(luigi.Task):
                 **self.load_input_params(input_i)) if self.load_input_params(
                 input_i) else input_i.load()) for i, input_i in
                                self.input().items()}
+        else:
+            raise NotImplementedError(f"input should be either list or dict. "
+                                      f"received {type(self.input())}")
         return function_inputs
 
-    def _easy_run(self):
-        if not (self.easy_run or self.task_function or self.task_notebook):
-            raise SyntaxError("One of [easy_run, task_function, task_notebook] "
-                              "should be defined")
-
-        if self.task_notebook:
-            import papermill as pm
-            pm.execute_notebook(
-                self.task_notebook,
-                f"executed_notebook/{self.task_notebook}",
-                parameters=dict(
-                    task_id=self.task_id
-                )
-            )
-            return None
-        elif self.task_function:
-            inputs = self.function_inputs()
-            if not isinstance(inputs,list):
-                raise NotImplementedError(
-                    f"In task_function mode, inputs should be list, not {type(inputs)}"
-                    )
-            params = self.get_execution_params(only_significant=True)
-            print(params)
-            if hasattr(self.task_function,'__func__'):
-                f = self.task_function.__func__
-            else:
-                raise NotImplementedError(
-                    "Should not pass here. We need unbound method"
-                )
-                f = self.task_function
-            return f(*inputs,**params)
-
-        else:
-            inputs = self.function_inputs()
-            return self.easy_run(inputs)
-
-    def easy_run(self, inputs):
-        return None
 
     def hash_version(self,):
         """ Returns the hash of the task considering only function, not the parameters."""
