@@ -77,28 +77,32 @@ class Task(luigi.Task):
 
     def save(self):
         self.output().dump(self.function_output)
+        self.metadata['hash_version'] = self.hash_version()
+        self.metadata['version'] = self.version
+        self.metadata['params'] = self.get_execution_params(only_significant=False, only_public=True)
         self.output().dump_metadata(self.metadata)
 
     def run(self):
 
-        if isinstance(self.input(), list):
-            function_inputs = [input_i.load(**self.load_input_params(input_i)) if self.load_input_params(input_i)
-                               else input_i.load() for input_i in self.input()]
-        elif isinstance(self.input(), dict):
-            function_inputs = {i: (input_i.load(**self.load_input_params(input_i))
-                                   if self.load_input_params(input_i) else input_i.load())
-                               for i, input_i in self.input().items()}
-
-        self.metadata['hash_version'] = self.hash_version()
-        self.metadata['version'] = self.version
-        self.metadata['params'] = self.get_execution_params(only_significant=False, only_public=True)
-        self.function_output = self._easy_run(function_inputs)
+        self.function_output = self._easy_run()
         if not self.task_notebook:
             #in task_notebook mode, save is called inside the notebook
             self.save()
             del self.function_output # after dump, free memory
 
-    def _easy_run(self, inputs):
+    def function_inputs(self):
+        if isinstance(self.input(), list):
+            function_inputs = [input_i.load(
+                **self.load_input_params(input_i)) if self.load_input_params(
+                input_i) else input_i.load() for input_i in self.input()]
+        elif isinstance(self.input(), dict):
+            function_inputs = {i: (input_i.load(
+                **self.load_input_params(input_i)) if self.load_input_params(
+                input_i) else input_i.load()) for i, input_i in
+                               self.input().items()}
+        return function_inputs
+
+    def _easy_run(self):
         if not (self.easy_run or self.task_function or self.task_notebook):
             raise SyntaxError("One of [easy_run, task_function, task_notebook] "
                               "should be defined")
@@ -114,6 +118,7 @@ class Task(luigi.Task):
             )
             return None
         elif self.task_function:
+            inputs = self.function_inputs()
             if not isinstance(inputs,list):
                 raise NotImplementedError(
                     f"In task_function mode, inputs should be list, not {type(inputs)}"
@@ -130,6 +135,7 @@ class Task(luigi.Task):
             return f(*inputs,**params)
 
         else:
+            inputs = self.function_inputs()
             return self.easy_run(inputs)
 
     def easy_run(self, inputs):
