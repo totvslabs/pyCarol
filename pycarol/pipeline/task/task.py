@@ -77,11 +77,15 @@ class Task(luigi.Task):
         self.output().remove_metadata()
 
     def save(self):
-        self.output().dump(self.function_output)
-        self.metadata['hash_version'] = self.hash_version()
-        self.metadata['version'] = self.version
-        self.metadata['params'] = self.get_execution_params(only_significant=False, only_public=True)
-        self.output().dump_metadata(self.metadata)
+        self.output().dump(self.output_object)
+        self.output().dump_metadata(self.metadata())
+
+    def metadata(self):
+        metadata = dict()
+        metadata['hash_version'] = self.hash_version()
+        metadata['version'] = self.version
+        metadata['params'] = self.get_execution_params(only_significant=False, only_public=True)
+        return metadata
 
     def run(self):
 
@@ -103,15 +107,15 @@ class Task(luigi.Task):
             params = self.get_execution_params(only_significant=True)
             assert hasattr(self.task_function,'__func__'), "We need unbound method"
             f = self.task_function.__func__
-            self.function_output = f(*inputs,**params)
+            self.output_object = f(*inputs, **params)
             self.save()
-            del self.function_output  # after dump, free memory
+            del self.output_object  # after dump, free memory
 
         elif self.easy_run:
             inputs = self.function_inputs()
-            self.function_output = self.easy_run(inputs)
+            self.output_object = self.easy_run(inputs)
             self.save()
-            del self.function_output  # after dump, free memory
+            del self.output_object  # after dump, free memory
 
         else:
             raise SyntaxError("One of [easy_run, task_function, task_notebook] "
