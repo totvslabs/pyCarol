@@ -3,7 +3,8 @@ import pickle
 import gzip
 import pandas as pd
 from .. import __TEMP_STORAGE__
-
+from collections import defaultdict
+from ..utils.miscellaneous import prettify_path, _attach_path, _FILE_MARKER
 
 class StorageGCPCS:
     def __init__(self, carol, carolina):
@@ -203,6 +204,16 @@ class StorageGCPCS:
         ball = bs + bm + br
         return ball
 
-    def files_storage_list(self, app_name=None, all_apps=False,  print_paths=False):
-        print('')
-        raise NotImplementedError
+    def files_storage_list(self, prefix='pipeline/',  print_paths=False):
+        bucket_staging = self.client.bucket(self.carolina.cds_app_storage_path['bucket'])
+        path_app = self.carolina.get_path('app',{})
+
+        files = list(bucket_staging.list_blobs(prefix=path_app+prefix))
+        files = [ i.name.split(path_app)[-1] for i in files ]
+        if print_paths:
+            main_dict = defaultdict(dict, ((_FILE_MARKER, []),))
+            for line in files:
+                _attach_path(line, main_dict)
+            prettify_path(main_dict)
+
+        return files
