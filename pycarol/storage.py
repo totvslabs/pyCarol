@@ -27,22 +27,20 @@ class Storage:
         return Storage.backend.load(name=name, format=format, parquet=parquet, cache=cache, storage_space=storage_space,
                                  columns=columns)
 
-    def files_storage_list(self, app_name=None, all_apps=False, print_paths=False):
+    def files_storage_list(self, prefix='pipeline/',  print_paths=False):
         """
 
         It will return all files in Carol data Storage (CDS).
 
 
-        :param app_name: `str`, default `None`
-            app_name to filter output. If 'None' it will get value used to initialize `Carol()`
-        :param all_apps: `bool`, default `False`
-            Get all files in CDS. 
+        :param prefix: `str`, default `pipeline/`
+            prefix of the folder to filter the output.
         :param print_paths: `bool`, default `False`
             Print the tree structure of the files in CDS
         :return: list of files paths.
         """
 
-        return Storage.backend.files_storage_list(app_name=app_name, all_apps=all_apps, print_paths=print_paths)
+        return Storage.backend.files_storage_list(prefix=prefix, print_paths=print_paths)
 
     def exists(self, name):
         return Storage.backend.exists(name)
