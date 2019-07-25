@@ -187,8 +187,4 @@ class Pipe(object):
         matching_tasks = self.get_matching_tasks(task)
         return matching_tasks[0]
 
-    def get_task_params(self, task):
-        task_instance = self.get_task_instance(task)
-        params = task_instance.get_execution_params()
-        return params
 
