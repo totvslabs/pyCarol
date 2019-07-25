@@ -91,9 +91,11 @@ class Task(luigi.Task):
 
         if self.task_notebook:
             import papermill
+            #TODO: create output folder
             papermill.execute_notebook(
                 self.task_notebook,
-                f"executed_notebook/{self.task_notebook}",
+                # f"executed_notebook/{self.task_notebook}",
+                "/dev/null",
                 parameters=dict(),
             )
             # self.save is called inside notebook
