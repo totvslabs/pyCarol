@@ -171,7 +171,7 @@ class Pipe(object):
 
 
     def assert_task_is_unique(self,task):
-        matching_tasks = get_matching_tasks(task, self)
+        matching_tasks = self.get_matching_tasks(task)
         assert len(matching_tasks) > 0
         if len(matching_tasks) == 1:
             return None
@@ -183,13 +183,12 @@ class Pipe(object):
 
 
     def get_task_instance(self,task):
-        matching_tasks = get_matching_tasks(task, self)
+        self.assert_task_is_unique(task)
+        matching_tasks = self.get_matching_tasks(task)
         return matching_tasks[0]
 
-    def get_task_params(self,task):
-        self.assert_task_is_unique(task)
+    def get_task_params(self, task):
         task_instance = self.get_task_instance(task)
         params = task_instance.get_execution_params()
         return params
-
 
