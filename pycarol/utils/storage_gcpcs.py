@@ -32,7 +32,8 @@ class StorageGCPCS:
 
         if parquet:
             if not isinstance(obj, pd.DataFrame):
-                raise ValueError("Object to be saved as parquet must be a DataFrame")
+                raise ValueError(f"Object to be saved as parquet must be a "
+                                 f"DataFrame. Received a {type(obj)}")
             obj.to_parquet(local_file_name)
         elif format == 'joblib':
             import joblib
@@ -117,7 +118,6 @@ class StorageGCPCS:
 
     def exists(self, name):
         remote_file_name = f"{self.carolina.cds_app_storage_path['path']}/{name}"
-        print(remote_file_name)
 
         blob = self.bucket_app_storage.blob(remote_file_name)
         return blob.exists()

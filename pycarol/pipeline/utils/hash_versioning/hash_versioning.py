@@ -99,7 +99,7 @@ def process_op(
             )
         except AssertionError as error:
             if robust:
-                print(error)
+                # print(error)
                 return  # do not update code_set and called_functions
             else:
                 raise(error)
