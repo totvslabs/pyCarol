@@ -89,16 +89,11 @@ class Task(luigi.Task):
 
     def run(self):
 
-        if self.task_notebook:
-            import papermill
-            #TODO: create output folder
-            papermill.execute_notebook(
-                self.task_notebook,
-                # f"executed_notebook/{self.task_notebook}",
-                "/dev/null",
-                parameters=dict(),
-            )
-            # self.save is called inside notebook
+        if self.easy_run:
+            inputs = self.function_inputs()
+            self.output_object = self.easy_run(inputs)
+            self.save()
+            del self.output_object  # after dump, free memory
 
         elif self.task_function:
             inputs = self.function_inputs()
@@ -113,11 +108,16 @@ class Task(luigi.Task):
             self.save()
             del self.output_object  # after dump, free memory
 
-        elif self.easy_run:
-            inputs = self.function_inputs()
-            self.output_object = self.easy_run(inputs)
-            self.save()
-            del self.output_object  # after dump, free memory
+        elif self.task_notebook:
+            import papermill
+            #TODO: create output folder
+            papermill.execute_notebook(
+                self.task_notebook,
+                # f"executed_notebook/{self.task_notebook}",
+                "/dev/null",
+                parameters=dict(),
+            )
+            # self.save is called inside notebook
 
         else:
             raise SyntaxError("One of [easy_run, task_function, task_notebook] "
