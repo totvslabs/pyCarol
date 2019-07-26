@@ -127,6 +127,8 @@ class Carolina:
             template = self.cds_staging_rejected_path['bucket']
         elif space == 'view':
             template = self.cds_view_path['bucket']
+        elif space == 'app':
+            template = self.cds_app_storage_path['bucket']
 
         name = Formatter().vformat(template, None, {'tenant_id': self.carol.tenant['mdmId']})
         return name
@@ -135,15 +137,17 @@ class Carolina:
         vars['tenant_id'] = self.carol.tenant['mdmId']
 
         if space == 'golden':
-            template = self.cds_golden_path['path']
+            template = self.cds_golden_path['path'] + '/'
         elif space == 'staging':
-            template = self.cds_staging_path['path']
+            template = self.cds_staging_path['path'] + '/'
         elif space == 'staging_master':
-            template = self.cds_staging_master_path['path']
+            template = self.cds_staging_master_path['path'] + '/'
         elif space == 'staging_rejected':
-            template = self.cds_staging_rejected_path['path']
+            template = self.cds_staging_rejected_path['path'] + '/'
         elif space == 'view':
-            template = self.cds_view_path['path']
+            template = self.cds_view_path['path'] + '/'
+        elif space == 'app':
+            template = self.cds_app_storage_path['path'] + '/'
 
 
         name = Formatter().vformat(template, None, vars)
