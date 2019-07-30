@@ -11,6 +11,8 @@ class LocalTarget(luigi.LocalTarget):
     def __init__(self, task, path=None, *args, **kwargs):
         os.makedirs(task.TARGET_DIR, exist_ok=True)
         namespace = task.get_task_namespace()
+        self.task = task  # keeping task object in target object will make
+        # load_inputs_params easiers
         if path is None:
             file_id = task._file_id()
             ext = '.' + self.FILE_EXT

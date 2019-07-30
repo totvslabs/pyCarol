@@ -12,15 +12,22 @@ logger.setLevel(logging.INFO)
 
 
 class Task(luigi.Task):
-    TARGET_DIR = './TARGETS/'  # this class attribute can be redefined somewhere else
+    TARGET_DIR = './TARGETS/'
     target_type = PickleTarget
     is_cloud_target = None
     requires_list = []
     requires_dict = {}
-    #TODO (renan):  Remove support to requires_dict. ask me why...
+
     task_function = None
+    task_notebook = None
+    easy_run = None
+    version = '0.0.0'
     metadata = {}
-    
+
+    def __call__(self,*args):
+        """Alternative way to define pipeline"""
+        return inherit_list(*args)(self.__class__)
+
     def buildme(self, local_scheduler=True, **kwargs):
         luigi.build([self, ], local_scheduler=local_scheduler, **kwargs)
 
@@ -70,48 +77,67 @@ class Task(luigi.Task):
         self.output().remove_metadata()
 
     def save(self):
-        self.output().dump(self.function_output)
-        self.output().dump_metadata(self.metadata)
+        self.output().dump(self.output_object)
+        self.output().dump_metadata(self.metadata())
+
+    def metadata(self):
+        metadata = dict()
+        metadata['hash_version'] = self.hash_version()
+        metadata['version'] = self.version
+        metadata['params'] = self.get_execution_params(only_significant=False, only_public=True)
+        return metadata
 
     def run(self):
 
-        if isinstance(self.input(), list):
-            function_inputs = [input_i.load(**self.load_input_params(input_i)) if self.load_input_params(input_i)
-                               else input_i.load() for input_i in self.input()]
-        elif isinstance(self.input(), dict):
-            function_inputs = {i: (input_i.load(**self.load_input_params(input_i))
-                                   if self.load_input_params(input_i) else input_i.load())
-                               for i, input_i in self.input().items()}
+        if self.easy_run:
+            inputs = self.function_inputs()
+            self.output_object = self.easy_run(inputs)
+            self.save()
+            del self.output_object  # after dump, free memory
 
-        self.metadata['hash_version'] = self.hash_version()
-        self.metadata['params'] = self.get_execution_params(only_significant=False, only_public=True)
-        #TODO (renan): implement logger and metadata integration
-        #TODO (renan): save date, user, git-info, etc in metadata
-        self.function_output = self._easy_run(function_inputs)
-        self.save()
-        del self.function_output # after dump, free memory
-
-    def _easy_run(self, inputs):
-        if not (self.easy_run or self.task_function):
-            raise SyntaxError("Either easy_run or task_function should be defined")
-
-        if self.task_function:
+        elif self.task_function:
+            inputs = self.function_inputs()
             if not isinstance(inputs,list):
                 raise NotImplementedError(
                     f"In task_function mode, inputs should be list, not {type(inputs)}"
                     )
-            params = self.get_params()
-            params = {k:v for (k,v) in params}
-            if hasattr(self.task_function,'__func__'):
-                f = self.task_function.__func__
-            else:
-                f = self.task_function
-            return f(*inputs,**params)            
-        else:
-            return self.easy_run(inputs)
+            params = self.get_execution_params(only_significant=True)
+            assert hasattr(self.task_function,'__func__'), "We need unbound method"
+            f = self.task_function.__func__
+            self.output_object = f(*inputs, **params)
+            self.save()
+            del self.output_object  # after dump, free memory
 
-    def easy_run(self, inputs):
-        return None
+        elif self.task_notebook:
+            import papermill
+            #TODO: create output folder
+            papermill.execute_notebook(
+                self.task_notebook,
+                # f"executed_notebook/{self.task_notebook}",
+                "/dev/null",
+                parameters=dict(),
+            )
+            # self.save is called inside notebook
+
+        else:
+            raise SyntaxError("One of [easy_run, task_function, task_notebook] "
+                              "should be defined")
+
+    def function_inputs(self):
+        if isinstance(self.input(), list):
+            function_inputs = [input_i.load(
+                **self.load_input_params(input_i)) if self.load_input_params(
+                input_i) else input_i.load() for input_i in self.input()]
+        elif isinstance(self.input(), dict):
+            function_inputs = {i: (input_i.load(
+                **self.load_input_params(input_i)) if self.load_input_params(
+                input_i) else input_i.load()) for i, input_i in
+                               self.input().items()}
+        else:
+            raise NotImplementedError(f"input should be either list or dict. "
+                                      f"received {type(self.input())}")
+        return function_inputs
+
 
     def hash_version(self,):
         """ Returns the hash of the task considering only function, not the parameters."""
@@ -123,7 +149,10 @@ class Task(luigi.Task):
                 )
             return 0
         else:
-            return get_function_hash(self.task_function, ignore_not_implemented=True)
+            try:
+                return get_function_hash(self.task_function, ignore_not_implemented=True)
+            except:
+                return 0
 
     @classmethod
     def get_param_values(cls, params, args, kwargs):

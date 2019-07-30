@@ -161,4 +161,30 @@ class Pipe(object):
                 return t
         else:
             raise KeyError(f"{task_id} not found in this pipeline.")
-    
+
+
+    def get_matching_tasks(self,task):
+        matching_tasks = [isinstance(t, task) for t in self.all_tasks]
+        matching_tasks = [t for i, t in enumerate(self.all_tasks) if
+                          matching_tasks[i]]
+        return matching_tasks
+
+
+    def assert_task_is_unique(self,task):
+        matching_tasks = self.get_matching_tasks(task)
+        assert len(matching_tasks) > 0
+        if len(matching_tasks) == 1:
+            return None
+        params = matching_tasks[0].get_execution_params()
+        for t in matching_tasks[1:]:
+            params_i = t.get_execution_params()
+            assert params_i == params
+        return None
+
+
+    def get_task_instance(self,task):
+        self.assert_task_is_unique(task)
+        matching_tasks = self.get_matching_tasks(task)
+        return matching_tasks[0]
+
+

@@ -158,7 +158,7 @@ class Staging:
                                                compress_gzip=self.gzip):
 
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type,
-                                    status_forcelist=[502, 429, 502],
+                                    status_forcelist=[502, 429, 502, 524, 408, 504, 598],
                                     method_whitelist=frozenset(['POST'])
                                     )
                 if print_stats:
@@ -286,7 +286,7 @@ class Staging:
         """
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
-    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='dask',
+    def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='pandas',
                       merge_records=True, return_dask_graph=False, columns=None, max_hits=None,
                       return_metadata=False, callback=None):
         """

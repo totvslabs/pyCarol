@@ -30,7 +30,7 @@ install_requires = [
     'luigi',
     'numpy==1.16.3',
     'pandas==0.23.4',
-    'pyarrow==0.11.1',
+    'pyarrow==0.14.1',
     'redis==2.10.6',
     'requests',
     's3fs==0.1.6',
@@ -42,6 +42,8 @@ install_requires = [
     'pytest',
     'bumpversion',
     'python-dotenv',
+    'black',
+    'papermill',
 ]
 
 def read(*parts):
