@@ -42,10 +42,6 @@ class Carol:
 
         """
 
-
-        self.legacy_mode = False
-        self.legacy_bucket = 'carol-internal'
-
         settings = dict()
         if auth is None and domain is None:
 
