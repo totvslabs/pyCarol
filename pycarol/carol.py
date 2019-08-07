@@ -12,7 +12,8 @@ from . import __CONNECTOR_PYCAROL__
 
 class Carol:
 
-    def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False):
+    def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
+                 environment='carol.ai'):
         """
         This class handle all Carol`s API calls It will handle all API calls,
         for a given authentication method. :param domain: `str`.
@@ -31,6 +32,11 @@ class Carol:
                 Port to be used (when running locally it could change)
             verbose: `bool` , default `False`.
                 If True will print the header, method and URL of each API call.
+            environment: `str`, default `carol.ai`,
+                Which Carol's environment to use. There are three possible values today.
+                    1. 'carol.ai' for the production environment
+                    2. 'karol.ai' for the explore environment
+                    1. 'qarol.ai' for the QA environment
 
         OBS:
             In case all parameters are `None`, pycarol will try yo find their values in the environment variables.
@@ -41,10 +47,6 @@ class Carol:
                  4. `CAROLCONNECTORID` for connector_id
 
         """
-
-
-        self.legacy_mode = False
-        self.legacy_bucket = 'carol-internal'
 
         settings = dict()
         if auth is None and domain is None:
@@ -83,6 +85,8 @@ class Carol:
                              " OR CAROLUSER+CAROLPWD and " +
                              "CAROLCONNECTORID")
 
+
+        self.environment = os.getenv('ENV_DOMAIN', environment)
         self.domain = domain
         self.app_name = app_name
         self.port = port
@@ -188,7 +192,7 @@ class Carol:
         """
 
         extra_headers = extra_headers or {}
-        url = 'https://{}.carol.ai:{}/api/{}'.format(self.domain, self.port, path)
+        url = f'https://{self.domain}.{self.environment}:{self.port}/api/{path}'
 
         if method is None:
             if data is None:
