@@ -3,22 +3,31 @@ from collections import defaultdict
 
 
 class Connectors:
+    """
+
+    This class handle all APIs related to Carol connectors
+
+    Args:
+        carol: class: pycarol.Carol
+    """
+
     def __init__(self, carol):
         self.carol = carol
 
     def create(self, name, label=None, group_name="Others", overwrite=False):
+
         """
         Create a connector
-        :param name: name
-        :type name: str
-        :param label: label
-        :type label: str
-        :param group_name: Group name
-        :type group_name: str
-        :param overwrite: Overwrite if it already exists. It will delete the connector and create a new one.
-        :type overwrite: bool
-        :return: None
-        :rtype: None
+
+        Args:
+            name: 'str'
+                Connector name
+            label: 'str'
+                Connector label in UI
+            group_name: `str` default "Others"
+                Connector group name in UI
+            overwrite: `bool` default `False`
+                Overwrite if already exists.
         """
         if label is None:
             label = name
@@ -43,21 +52,37 @@ class Connectors:
     def get_by_name(self, name, errors='raise'):
         """
         Get connector information using the connector name
-        :param name:
-        :type name: str
-        :return: None
-        :rtype: None
+
+        Args:
+            name: 'str'
+                Connector Name
+            errors: {‘ignore’, ‘raise’}, default ‘raise’
+                If ‘raise’, then invalid request will raise an exception If ‘ignore’,
+                then invalid request will return the request response
+
+
+        Returns: `dict`
+            connector information.
+
         """
         resp = self.carol.call_api(f'v1/connectors/name/{name}', errors=errors)
         return resp
 
     def get_by_id(self, id, errors='raise'):
         """
-        Get connector information using the connector id
-        :param id:
-        :type id: str
-        :return: None
-        :rtype: None
+        Get connector information using the connector name
+
+        Args:
+            id: 'str'
+                Connector ID
+            errors: {‘ignore’, ‘raise’}, default ‘raise’
+                If ‘raise’, then invalid request will raise an exception If ‘ignore’,
+                then invalid request will return the request response
+
+
+        Returns: `dict`
+            connector information.
+
         """
         resp = self.carol.call_api(f'v1/connectors/{id}', errors=errors)
         return resp
@@ -211,7 +236,7 @@ class Connectors:
         set_param = True
         to_get = float('inf')
         count = 0
-        self.resp=[]
+        self.resp = []
         while count < to_get:
 
             resp = self.carol.call_api(url, method='GET', params=payload)
@@ -227,6 +252,5 @@ class Connectors:
 
             self.resp.extend(query)
             payload['offset'] = count
-
 
         return self.resp
