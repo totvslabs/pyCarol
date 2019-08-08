@@ -38,6 +38,10 @@ class Carolina:
         self.cds_staging_rejected_path = token['cdsStagingRejectedPath']
         self.cds_view_path = token['cdsViewPath']
 
+        #TODO @Wilian. We need this in the API.
+        self.cds_staging_cds_path = {'bucket' :  "labs1-carol-internal-{tenant_id}",
+                                     "path" : "staging-output/parquet/{connector_id}_{staging_type}"}
+
         if self.engine == 'GCP-CS':
             self._init_gcp(token)
         elif self.engine == 'AWS-S3':
@@ -80,6 +84,8 @@ class Carolina:
             template = self.cds_view_path['bucket']
         elif space == 'app':
             template = self.cds_app_storage_path['bucket']
+        elif space == 'staging_cds':
+            template = self.cds_staging_cds_path['bucket']
 
         name = Formatter().vformat(template, None, {'tenant_id': self.carol.tenant['mdmId']})
         return name

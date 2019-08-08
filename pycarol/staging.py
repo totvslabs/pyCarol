@@ -288,7 +288,7 @@ class Staging:
 
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='pandas',
                       merge_records=True, return_dask_graph=False, columns=None, max_hits=None,
-                      return_metadata=False, callback=None):
+                      return_metadata=False, callback=None, cds=False):
         """
 
         Fetch parquet from a staging table.
@@ -314,6 +314,8 @@ class Staging:
             To return or not the fields ['mdmId', 'mdmCounterForEntity']
         :param callback: `callable`, default `None`
             Function to be called each downloaded file.
+        :params cds: `bool`, default `False`
+            Get staging data from CDS.
         :return:
         """
 
@@ -325,6 +327,7 @@ class Staging:
             connector_id = self._connector_by_name(connector_name)
         else:
             assert connector_id
+
 
         if columns:
             mapping_columns = columns
@@ -340,29 +343,36 @@ class Staging:
             columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
             mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
 
+        # TODO: Validate the code bellow for cds param
         # validate export
-        stags = self._get_staging_export_stats()
-        if not stags.get(connector_id + '_' + staging_name):
-            raise Exception(f'"{staging_name}" is not set to export data, \n '
-                            f'use `dm = Staging(login).export(staging_name="{staging_name}",'
-                            f'connector_id="{connector_id}", sync_staging=True) to activate')
+        if not cds:
+            stags = self._get_staging_export_stats()
+            if not stags.get(connector_id + '_' + staging_name):
+                raise Exception(f'"{staging_name}" is not set to export data, \n '
+                                f'use `dm = Staging(login).export(staging_name="{staging_name}",'
+                                f'connector_id="{connector_id}", sync_staging=True) to activate')
 
-        if stags.get(connector_id + '_' + staging_name)['mdmConnectorId'] != connector_id:
-            raise Exception(
-                f'"Wrong connector Id {connector_id}. The connector Id associeted to this staging is  '
-                f'{stags.get(staging_name)["mdmConnectorId"]}"')
+            if stags.get(connector_id + '_' + staging_name)['mdmConnectorId'] != connector_id:
+                raise Exception(
+                    f'"Wrong connector Id {connector_id}. The connector Id associeted to this staging is  '
+                    f'{stags.get(staging_name)["mdmConnectorId"]}"')
+            import_type = 'staging'
+        else:
+            import_type = 'staging_cds'
+
 
         storage = Storage(self.carol)
+
         if backend == 'dask':
 
             d = _import_dask(storage=storage, connector_id=connector_id, staging_name=staging_name,
-                             merge_records=merge_records, import_type='staging', return_dask_graph=return_dask_graph,
+                             merge_records=merge_records, import_type=import_type, return_dask_graph=return_dask_graph,
                              mapping_columns=mapping_columns,
                              columns=columns, max_hits=max_hits)
 
         elif backend == 'pandas':
             d = _import_pandas(storage=storage, connector_id=connector_id,
-                               staging_name=staging_name, import_type='staging',  columns=columns,
+                               staging_name=staging_name, import_type=import_type,  columns=columns,
                                max_hits=max_hits, callback=callback, mapping_columns=mapping_columns)
 
             # TODO: Do the same for dask backend

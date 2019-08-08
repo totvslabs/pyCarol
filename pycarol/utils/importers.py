@@ -60,6 +60,8 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
         file_paths = storage.get_staging_file_paths(staging_name=staging_name, connector_id=connector_id)
     elif import_type == 'view':
         file_paths = storage.get_view_file_paths(view_name=view_name)
+    elif import_type == 'staging_cds':
+        file_paths = storage.get_staging_cds_file_paths(staging_name=staging_name, connector_id=connector_id)
     else:
         raise KeyError('import_type should be `golden`,`staging` or `view`')
 
