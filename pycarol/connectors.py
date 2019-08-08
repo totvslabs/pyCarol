@@ -70,11 +70,19 @@ class Connectors:
 
     def get_by_id(self, id, errors='raise'):
         """
-        Get connector information using the connector id
-        :param id:
-        :type id: str
-        :return: None
-        :rtype: None
+        Get connector information using the connector name
+
+        Args:
+            id: 'str'
+                Connector ID
+            errors: {‘ignore’, ‘raise’}, default ‘raise’
+                If ‘raise’, then invalid request will raise an exception If ‘ignore’,
+                then invalid request will return the request response
+
+
+        Returns: `dict`
+            connector information.
+
         """
         resp = self.carol.call_api(f'v1/connectors/{id}', errors=errors)
         return resp
