@@ -12,41 +12,43 @@ from . import __CONNECTOR_PYCAROL__
 
 class Carol:
 
+    """
+    This class handle all Carol`s API calls It will handle all API calls,
+    for a given authentication method. :param domain: `str`.
+
+
+    Args:
+        domain: `str`. default `None`.
+            Tenant name. e.x., domain.carol.ai
+        app_name: `str`. default `None`.
+            Carol app name.
+        auth: `PwdAuth` or `ApiKeyAuth`.
+            object Auth Carol object to handle authentication
+        connector_id: `str` , default `__CONNECTOR_PYCAROL__`.
+            Connector Id
+        port: `int` , default 443.
+            Port to be used (when running locally it could change)
+        verbose: `bool` , default `False`.
+            If True will print the header, method and URL of each API call.
+        environment: `str`, default `carol.ai`,
+            Which Carol's environment to use. There are three possible values today.
+                1. 'carol.ai' for the production environment
+                2. 'karol.ai' for the explore environment
+                1. 'qarol.ai' for the QA environment
+
+    OBS:
+        In case all parameters are `None`, pycarol will try yo find their values in the environment variables.
+        The values are:
+             1. `CAROLTENANT` for domain
+             2. `CAROLAPPNAME` for app_name
+             3. `CAROLAPPOAUTH` for auth
+             4. `CAROLCONNECTORID` for connector_id
+             4. `ENV_DOMAIN` for environment
+
+    """
+
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
                  environment='carol.ai'):
-        """
-        This class handle all Carol`s API calls It will handle all API calls,
-        for a given authentication method. :param domain: `str`.
-
-
-        Args:
-            domain: `str`. default `None`.
-                Tenant name. e.x., domain.carol.ai
-            app_name: `str`. default `None`.
-                Carol app name.
-            auth: `PwdAuth` or `ApiKeyAuth`.
-                object Auth Carol object to handle authentication
-            connector_id: `str` , default `__CONNECTOR_PYCAROL__`.
-                Connector Id
-            port: `int` , default 443.
-                Port to be used (when running locally it could change)
-            verbose: `bool` , default `False`.
-                If True will print the header, method and URL of each API call.
-            environment: `str`, default `carol.ai`,
-                Which Carol's environment to use. There are three possible values today.
-                    1. 'carol.ai' for the production environment
-                    2. 'karol.ai' for the explore environment
-                    1. 'qarol.ai' for the QA environment
-
-        OBS:
-            In case all parameters are `None`, pycarol will try yo find their values in the environment variables.
-            The values are:
-                 1. `CAROLTENANT` for domain
-                 2. `CAROLAPPNAME` for app_name
-                 3. `CAROLAPPOAUTH` for auth
-                 4. `CAROLCONNECTORID` for connector_id
-
-        """
 
         settings = dict()
         if auth is None and domain is None:
@@ -297,6 +299,8 @@ class Carol:
     def api_key_revoke(self, connector_id):
 
         """
+        Revoke API key for ta given connector_id
+
 
         Args:
             connector_id: `str`
@@ -313,6 +317,16 @@ class Carol:
         return resp
 
     def copy_token(self):
+
+        """
+        Copy token to clipboard
+
+        Args:
+            None
+        Returns: `dict`
+            None
+
+        """
         import pyperclip
         if isinstance(self.auth, PwdAuth):
             token = self.auth._token.access_token
