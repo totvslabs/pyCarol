@@ -51,7 +51,7 @@ async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
     """
     # based on https://hackernoon.com/how-to-run-asynchronous-web-requests-in-parallel-with-python-3-5-without-aiohttp-264dc0f8546
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        session = carol._retry_session(status_forcelist=[502, 429, 502, 524, 408, 504, 598],
+        session = carol._retry_session(status_forcelist=[502, 429, 502, 524, 408, 504, 598, 520],
                                        method_whitelist=frozenset(['POST']))
         # Set any session parameters here before calling `send_a`
         loop = asyncio.get_event_loop()
