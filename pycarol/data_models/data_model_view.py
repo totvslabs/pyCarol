@@ -13,9 +13,11 @@ class DataModelView:
     def __init__(self, carol):
         self.carol = carol
 
-
     def get_by_name(self, view_name):
         return self._get(view_name, by='name')
+
+    def get_by_id(self, view_id):
+        return self._get(view_id, by='id')
 
 
     def _get(self, id,  by='name'):
@@ -132,13 +134,13 @@ class DataModelView:
         else:
             status = 'PAUSED'
 
-        if view_name:
-            view_id = self.get_by_name(view_name)['mdmId']
+        if view_id:
+            view_name = self.get_by_id(view_id)['mdmName']
         else:
-            assert view_id
+            assert view_name
 
         query_params = {"status": status, "fullExport": full_export,
-                        'relationshipViewId':view_id, 'format':export_format,
+                        'viewName':view_name, 'format':export_format,
                         "deletePrevious": delete_previous}
 
         url = f'v1/goldenRecordView/exporter'
