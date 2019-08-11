@@ -261,6 +261,7 @@ class Carol:
             elif "Service Unavailable" in response.text:
                 __count += 1
                 if __count < 5:  # To avoid infinity loops
+                    print(f'Retry, {response.text}, {response.status_code}')
                     continue
                 else:
                     raise Exception('Too many retries "Service Unavailable".\n', response.text, response.status_code)
