@@ -257,6 +257,14 @@ class Carol:
                     continue
                 else:
                     raise Exception('Too many retries to refresh token.\n', response.text)
+            # TODO: temporary until fix deployment
+            elif "Service Unavailable" in response.text:
+                __count += 1
+                if __count < 5:  # To avoid infinity loops
+                    continue
+                else:
+                    raise Exception('Too many retries "Service Unavailable".\n', response.text)
+
             raise Exception(response.text)
 
     def issue_api_key(self):
