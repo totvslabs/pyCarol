@@ -142,7 +142,7 @@ class Carol:
         session.mount('https://', adapter)
         return session
 
-    def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json', retries=5,
+    def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json', retries=8,
                  session=None, backoff_factor=0.5, status_forcelist=(502, 503, 504, 524), downloadable=False,
                  method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']), errors='raise',
                  extra_headers=None,
@@ -257,14 +257,6 @@ class Carol:
                     continue
                 else:
                     raise Exception('Too many retries to refresh token.\n', response.text, response.status_code)
-            # TODO: temporary until fix deployment
-            elif "Service Unavailable" in response.text:
-                __count += 1
-                if __count < 5:  # To avoid infinity loops
-                    print(f'Retry, {response.text}, {response.status_code}')
-                    continue
-                else:
-                    raise Exception('Too many retries "Service Unavailable".\n', response.text, response.status_code)
 
             raise Exception(response.text, response.status_code)
 
