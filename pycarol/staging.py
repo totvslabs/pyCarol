@@ -293,30 +293,34 @@ class Staging:
 
         Fetch parquet from a staging table.
 
-        :param staging_name: `str`,
-            Staging name to fetch parquet of
-        :param connector_id: `str`, default `None`
-            Connector id to fetch parquet of
-        :param connector_name: `str`, default `None`
-            Connector name to fetch parquet of
-        :param backend: ['dask','pandas'], default `dask`
-            if to use either dask or pandas to fetch the data
-        :param merge_records: `bool`, default `True`
-            This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
-            one should keep only the last records.
-        :param return_dask_graph: `bool`, default `false`
-            If to return the dask graph or the dataframe.
-        :param columns: `list`, default `None`
-            List of columns to fetch.
-        :param max_hits: `int`, default `None`
-            Number of records to get. This only should be user for tests.
-        :param return_metadata: `bool`, default `False`
-            To return or not the fields ['mdmId', 'mdmCounterForEntity']
-        :param callback: `callable`, default `None`
-            Function to be called each downloaded file.
-        :params cds: `bool`, default `False`
-            Get staging data from CDS.
+        Args:
+            staging_name: `str`,
+                Staging name to fetch parquet of
+            connector_id: `str`, default `None`
+                Connector id to fetch parquet of
+            connector_name: `str`, default `None`
+                Connector name to fetch parquet of
+            backend: ['dask','pandas'], default `dask`
+                if to use either dask or pandas to fetch the data
+            merge_records: `bool`, default `True`
+                This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
+                one should keep only the last records.
+            return_dask_graph: `bool`, default `false`
+                If to return the dask graph or the dataframe.
+            columns: `list`, default `None`
+                List of columns to fetch.
+            max_hits: `int`, default `None`
+                Number of records to get. This only should be user for tests.
+            return_metadata: `bool`, default `False`
+                To return or not the fields ['mdmId', 'mdmCounterForEntity']
+            callback: `callable`, default `None`
+                Function to be called each downloaded file.
+            cds: `bool`, default `False`
+                Get staging data from CDS.
         :return:
+
+        Args:
+            cds:
         """
 
         assert backend == 'dask' or backend == 'pandas'
@@ -327,7 +331,6 @@ class Staging:
             connector_id = self._connector_by_name(connector_name)
         else:
             assert connector_id
-
 
         if columns:
             mapping_columns = columns
@@ -359,7 +362,6 @@ class Staging:
             import_type = 'staging'
         else:
             import_type = 'staging_cds'
-
 
         storage = Storage(self.carol)
 
