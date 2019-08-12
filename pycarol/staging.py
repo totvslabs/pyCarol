@@ -158,7 +158,7 @@ class Staging:
                                                compress_gzip=self.gzip):
 
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type,
-                                    status_forcelist=[502, 429, 502, 524, 408, 504, 598],
+                                    status_forcelist=[502, 429, 524, 408, 504, 598, 520, 503, 500],
                                     method_whitelist=frozenset(['POST'])
                                     )
                 if print_stats:
