@@ -25,6 +25,8 @@ _SCHEMA_TYPES_MAPPING = {
 }
 
 
+_CAROL_METADATA = ['mdmCounterForEntity', 'mdmId', 'mdmLastUpdated', 'mdmTenantId', 'mdmConnectorId', 'mdmEntityType']
+
 
 class Staging:
     def __init__(self, carol):
@@ -288,7 +290,7 @@ class Staging:
 
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='pandas',
                       merge_records=True, return_dask_graph=False, columns=None, max_hits=None,
-                      return_metadata=False, callback=None, cds=False):
+                      return_metadata=False, callback=None, cds=False, max_workers=None,):
         """
 
         Fetch parquet from a staging table.
@@ -317,12 +319,17 @@ class Staging:
                 Function to be called each downloaded file.
             cds: `bool`, default `False`
                 Get staging data from CDS.
+            max_workers: `int` default `None`
+                Number of workers to use when downloading parquet files with pandas back-end.
         :return:
 
         Args:
             cds:
         """
 
+        if callback:
+            assert callable(callback), \
+                f'"{callback}" is a {type(callback)} and is not callable.'
         assert backend == 'dask' or backend == 'pandas'
         if return_dask_graph:
             assert backend == 'dask'
@@ -357,23 +364,25 @@ class Staging:
 
             if stags.get(connector_id + '_' + staging_name)['mdmConnectorId'] != connector_id:
                 raise Exception(
-                    f'"Wrong connector Id {connector_id}. The connector Id associeted to this staging is  '
+                    f'"Wrong connector Id {connector_id}. The connector Id associated to this staging is  '
                     f'{stags.get(staging_name)["mdmConnectorId"]}"')
             import_type = 'staging'
         else:
             import_type = 'staging_cds'
 
         storage = Storage(self.carol)
+        token_carolina = storage.backend.carolina.token
+        storage_space = storage.backend.carolina.get_bucket_name(import_type)
 
         if backend == 'dask':
-
             d = _import_dask(storage=storage, connector_id=connector_id, staging_name=staging_name,
                              merge_records=merge_records, import_type=import_type, return_dask_graph=return_dask_graph,
                              mapping_columns=mapping_columns,
                              columns=columns, max_hits=max_hits)
 
         elif backend == 'pandas':
-            d = _import_pandas(storage=storage, connector_id=connector_id,
+            d = _import_pandas(storage=storage, connector_id=connector_id,max_workers=max_workers,
+                               token_carolina=token_carolina, storage_space=storage_space,
                                staging_name=staging_name, import_type=import_type,  columns=columns,
                                max_hits=max_hits, callback=callback, mapping_columns=mapping_columns)
 
