@@ -71,3 +71,6 @@ class Storage:
 
     def get_staging_file_paths(self, staging_name, connector_id):
         return self.backend.get_staging_file_paths(staging_name, connector_id)
+
+    def get_staging_cds_file_paths(self, staging_name, connector_id):
+        return self.backend.get_staging_cds_file_paths(staging_name, connector_id)

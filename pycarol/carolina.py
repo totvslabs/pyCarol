@@ -47,8 +47,12 @@ class Carolina:
         self.cds_view_path = token['cdsViewPath']
 
         #TODO @Wilian. We need this in the API.
-        self.cds_staging_cds_path = {'bucket' :  "labs1-carol-internal-{tenant_id}",
-                                     "path" : "staging-output/parquet/{connector_id}_{staging_type}"}
+        if self.carol.environment == 'karol.ai':
+            self.cds_staging_cds_path = {'bucket': "labs1-carol-internal-{tenant_id}",
+                                         "path": "staging-output/parquet/{connector_id}_{staging_type}"}
+        else:
+            self.cds_staging_cds_path = {'bucket' :  "prod1-carol-internal-{tenant_id}",
+                                         "path" : "staging-output/parquet/{connector_id}_{staging_type}"}
 
         if self.engine == 'GCP-CS':
             self._init_gcp(token)
@@ -193,6 +197,8 @@ class Carolina:
             template = self.cds_view_path['path'] + '/'
         elif space == 'app':
             template = self.cds_app_storage_path['path'] + '/'
+        elif space == 'staging_cds':
+            template = self.cds_staging_cds_path['path'] + '/'
 
         name = Formatter().vformat(template, None, vars)
         return name
