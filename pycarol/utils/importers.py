@@ -74,7 +74,7 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
 
 
     if max_workers is not None:
-        assert max_workers>0, f"max_workers must be greater than zero, yo u passed {max_workers}"
+        assert max_workers > 0, f"max_workers must be greater than zero, yo u passed {max_workers}"
     else:
         max_workers = 1
 

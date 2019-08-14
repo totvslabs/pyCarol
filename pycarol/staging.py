@@ -12,6 +12,7 @@ from .utils.importers import _import_dask, _import_pandas
 from .filter import Filter, TYPE_FILTER
 from .utils import async_helpers
 from .utils.miscellaneous import stream_data
+from . import _CAROL_METADATA
 
 _SCHEMA_TYPES_MAPPING = {
     "geopoint": str,
@@ -24,8 +25,6 @@ _SCHEMA_TYPES_MAPPING = {
     "boolean": bool
 }
 
-
-_CAROL_METADATA = ['mdmCounterForEntity', 'mdmId', 'mdmLastUpdated', 'mdmTenantId', 'mdmConnectorId', 'mdmEntityType']
 
 
 class Staging:
@@ -342,16 +341,15 @@ class Staging:
         if columns:
             mapping_columns = columns
             columns = [i.replace("-", "_") for i in columns]
-            columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
-            mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
         else:
             _staging = self.get_schema(staging_name=staging_name, connector_id=connector_id)
             if not _staging:
                 raise ValueError(f"{staging_name} does not exist for connector ID {connector_id}")
             mapping_columns = list(_staging['mdmStagingMapping']['properties'].keys())
             columns = [i.replace("-", "_") for i in mapping_columns]
-            columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
-            mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
+
+        columns.extend(_CAROL_METADATA)
+        mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
 
         # TODO: Validate the code bellow for cds param
         # validate export
@@ -395,10 +393,10 @@ class Staging:
                 cols_keys = [i.replace("-", "_") for i in cols_keys]
 
                 if return_metadata:
-                    cols_keys.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
+                    cols_keys.extend(_CAROL_METADATA)
 
                 elif columns:
-                    columns = [i for i in columns if i not in ['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated']]
+                    columns = [i for i in columns if i not in _CAROL_METADATA]
 
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in self.get_schema(staging_name=staging_name,
@@ -425,7 +423,7 @@ class Staging:
                     .reset_index(drop=True)
 
         if not return_metadata:
-            to_drop = set(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated']).intersection(set(d.columns))
+            to_drop = set(_CAROL_METADATA).intersection(set(d.columns))
             d = d.drop(labels=to_drop, axis=1)
 
         return d

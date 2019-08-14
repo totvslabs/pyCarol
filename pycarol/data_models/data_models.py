@@ -75,29 +75,33 @@ class DataModel:
         return resp
 
     def fetch_parquet(self, dm_name, merge_records=True, backend='pandas', return_dask_graph=False,
-                      columns=None, return_metadata=False, callback=None, max_hits=None):
+                      columns=None, return_metadata=False, callback=None, max_hits=None, max_workers=None,):
 
         """
+        Fetch parquet from Golden.
 
-        :param dm_name: `str`
-            Data model name to be imported
-        :param merge_records: `bool`, default `True`
-            This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
-            one should keep only the last records.
-        :param backend: ['dask','pandas'], default `dask`
-            if to use either dask or pandas to fetch the data
-        :param return_dask_graph: `bool`, default `false`
-            If to return the dask graph or the dataframe.
-        :param columns: `list`, default `None`
-            List of columns to fetch.
-        :param return_metadata: `bool`, default `False`
-            To return or not the fields ['mdmId', 'mdmCounterForEntity']
-        :param callback: `callable`, default `None`
-            Function to be called each downloaded file.
-        :param max_hits: `int`, default `None`
-            Number of records to get.
-        :return:
-        """
+        Args:
+            dm_name: `str`
+                Data model name to be imported
+            merge_records: `bool`, default `True`
+                This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
+                one should keep only the last records.
+            backend: ['dask','pandas'], default `dask`
+                if to use either dask or pandas to fetch the data
+            return_dask_graph: `bool`, default `false`
+                If to return the dask graph or the dataframe.
+            columns: `list`, default `None`
+                List of columns to fetch.
+            return_metadata: `bool`, default `False`
+                To return or not the fields ['mdmId', 'mdmCounterForEntity']
+            callback: `callable`, default `None`
+                Function to be called each downloaded file.
+            max_hits: `int`, default `None`
+                Number of records to get.
+            max_workers: `int` default `None`
+                Number of workers to use when downloading parquet files with pandas back-end.
+            :return:
+            """
 
         if not columns: #if an empty list was sent.
             columns = None
@@ -120,16 +124,20 @@ class DataModel:
         if columns:
             columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
 
+        import_type = 'golden'
         storage = Storage(self.carol)
+        token_carolina = storage.backend.carolina.token
+        storage_space = storage.backend.carolina.get_bucket_name(import_type)
+
         if backend == 'dask':
-            d = _import_dask(storage=storage, dm_name=dm_name, import_type='golden',
+            d = _import_dask(storage=storage, dm_name=dm_name, import_type=import_type,
                              merge_records=merge_records,  return_dask_graph=return_dask_graph,
                              columns=columns)
 
         elif backend == 'pandas':
-
             d = _import_pandas(storage=storage, dm_name=dm_name, import_type='golden', columns=columns, callback=callback,
-                               max_hits=max_hits)
+                               max_hits=max_hits, max_workers=max_workers, token_carolina=token_carolina,
+                               storage_space=storage_space,)
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
                 _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
