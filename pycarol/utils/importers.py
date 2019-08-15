@@ -66,6 +66,8 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
         file_paths = storage.get_view_file_paths(view_name=view_name)
     elif import_type == 'staging_cds':
         file_paths = storage.get_staging_cds_file_paths(staging_name=staging_name, connector_id=connector_id)
+    elif import_type == 'golden_cds':
+        file_paths = storage.get_golden_cds_file_paths(dm_name=dm_name)
     else:
         raise KeyError('import_type should be `golden`,`staging` or `view`')
 
@@ -79,7 +81,7 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
         max_workers = 1
 
     if max_workers > 1:
-        client = _load(token_carolina)
+        client = _load_client(token_carolina)
         if max_hits:
             warnings.warn("max_hits does not work when max_hits>1", DeprecationWarning)
         partial_download = functools.partial(_download_files, storage=client, storage_space=storage_space,
@@ -124,7 +126,7 @@ def _download_files(file, storage, storage_space, columns, mapping_columns, call
         result = callback(result)
     return result
 
-def _load(token):
+def _load_client(token):
     import gcsfs
     client = gcsfs.GCSFileSystem(token=token)
     return client

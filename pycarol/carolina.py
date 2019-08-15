@@ -46,13 +46,23 @@ class Carolina:
         self.cds_staging_rejected_path = token['cdsStagingRejectedPath']
         self.cds_view_path = token['cdsViewPath']
 
-        #TODO @Wilian. We need this in the API.
-        if self.carol.environment == 'karol.ai':
-            self.cds_staging_cds_path = {'bucket': "labs1-carol-internal-{tenant_id}",
-                                         "path": "staging-output/parquet/{connector_id}_{staging_type}"}
+        # TODO: Uncomment when live.
+        # self.cds_golden_intake_path = token['cdsIntakeGoldenPath']
+        # self.cds_staging_intake_path = token['cdsIntakeStagingPath']
+
+        if self.carol.environment == "karol.ai":
+            self.cds_staging_intake_path = {"bucket": "labs1-carol-internal-{tenant_id}",
+                                            "path": "staging-output/parquet/{connector_id}_{staging_type}"}
+
+            self.cds_golden_intake_path = {"bucket": "labs1-carol-internal-{tenant_id}",
+                                           "path": "golden-output/parquet/{dm_name}"}
+
         else:
-            self.cds_staging_cds_path = {'bucket' :  "prod1-carol-internal-{tenant_id}",
-                                         "path" : "staging-output/parquet/{connector_id}_{staging_type}"}
+            self.cds_staging_intake_path = {"bucket": "prod1-carol-internal-{tenant_id}",
+                                            "path": "staging-output/parquet/{connector_id}_{staging_type}"}
+
+            self.cds_golden_intake_path = {"bucket": "prod1-carol-internal-{tenant_id}",
+                                           "path": "golden-output/parquet/{dm_name}"}
 
         if self.engine == 'GCP-CS':
             self._init_gcp(token)
@@ -130,6 +140,8 @@ class Carolina:
                 "staging_rejected": Staging records from Rejected
                 "view": Data Model View records
                 "app": App  bucket
+                "golden_cds": CDS golden records
+                "staging_cds": Staging Intake.
 
         Returns:
             formatted bucket path
@@ -150,7 +162,9 @@ class Carolina:
         elif space == 'app':
             template = self.cds_app_storage_path['bucket']
         elif space == 'staging_cds':
-            template = self.cds_staging_cds_path['bucket']
+            template = self.cds_staging_intake_path['bucket']
+        elif space == 'golden_cds':
+            template = self.cds_golden_intake_path['bucket']
 
         name = Formatter().vformat(template, None, {'tenant_id': self.carol.tenant['mdmId']})
         return name
@@ -168,6 +182,8 @@ class Carolina:
                         "staging_rejected": Staging records from Rejected
                         "view": Data Model Relationship View records
                         "app": App  bucket
+                        "golden_cds": CDS golden records
+                        "staging_cds": Staging Intake.
                     vars: `dict`
                         Parameters needed to format the storage path. Possible keys:
                         "tenant_id": Tenant ID.
@@ -198,7 +214,12 @@ class Carolina:
         elif space == 'app':
             template = self.cds_app_storage_path['path'] + '/'
         elif space == 'staging_cds':
-            template = self.cds_staging_cds_path['path'] + '/'
+            template = self.cds_staging_intake_path['path'] + '/'
+        elif space == 'golden_cds':
+            template = self.cds_golden_intake_path['bucket'] + '/'
+        else:
+            raise ValueError
 
         name = Formatter().vformat(template, None, vars)
         return name
+

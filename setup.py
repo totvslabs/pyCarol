@@ -44,6 +44,7 @@ install_requires = [
     'python-dotenv',
     'black',
     'papermill',
+    "gcsfs",
 ]
 
 def read(*parts):
