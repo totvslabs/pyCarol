@@ -75,8 +75,10 @@ class DataModel:
         self.fields_dict.update({resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
 
-    def fetch_parquet(self, dm_name, merge_records=True, backend='pandas', return_dask_graph=False,
-                      columns=None, return_metadata=False, callback=None, max_hits=None, max_workers=None,):
+    def fetch_parquet(self, dm_name, merge_records=True, backend='pandas',
+                      return_dask_graph=False,
+                      columns=None, return_metadata=False, callback=None,
+                      max_hits=None, cds=False ,max_workers=None,):
 
         """
         Fetch parquet from Golden.
@@ -99,10 +101,17 @@ class DataModel:
                 Function to be called each downloaded file.
             max_hits: `int`, default `None`
                 Number of records to get.
+            cds: `bool`, default `False`
+                Get records from CDS.
             max_workers: `int` default `None`
                 Number of workers to use when downloading parquet files with pandas back-end.
+
             :return:
             """
+
+        if callback:
+            assert callable(callback), \
+                f'"{callback}" is a {type(callback)} and is not callable.'
 
         if not columns: #if an empty list was sent.
             columns = None
@@ -116,16 +125,21 @@ class DataModel:
             assert backend == 'dask'
 
         # validate export
-        dms = self._get_dm_export_stats()
-        if not dms.get(dm_name):
-            raise Exception(
-                f'"{dm_name}" is not set to export data, \n'
-                f'use `dm = DataModel(login).export(dm_name="{dm_name}", sync_dm=True) to activate')
+
+        if not cds:
+            dms = self._get_dm_export_stats()
+            if not dms.get(dm_name):
+                raise Exception(
+                    f'"{dm_name}" is not set to export data, \n'
+                    f'use `dm = DataModel(login).export(dm_name="{dm_name}",'
+                    f' sync_dm=True) to activate')
+            import_type = 'golden'
+        else:
+            import_type = 'golden_cds'
 
         if columns:
             columns.extend(_CAROL_METADATA)
 
-        import_type = 'golden'
         storage = Storage(self.carol)
         token_carolina = storage.backend.carolina.token
         storage_space = storage.backend.carolina.get_bucket_name(import_type)
@@ -136,8 +150,11 @@ class DataModel:
                              columns=columns)
 
         elif backend == 'pandas':
-            d = _import_pandas(storage=storage, dm_name=dm_name, import_type='golden', columns=columns, callback=callback,
-                               max_hits=max_hits, max_workers=max_workers, token_carolina=token_carolina,
+            d = _import_pandas(storage=storage, dm_name=dm_name,
+                               import_type=import_type, columns=columns,
+                               callback=callback,  max_hits=max_hits,
+                               max_workers=max_workers,
+                               token_carolina=token_carolina,
                                storage_space=storage_space,)
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
