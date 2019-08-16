@@ -145,8 +145,10 @@ class DataModel:
         storage_space = storage.backend.carolina.get_bucket_name(import_type)
 
         if backend == 'dask':
-            d = _import_dask(storage=storage, dm_name=dm_name, import_type=import_type,
-                             merge_records=merge_records,  return_dask_graph=return_dask_graph,
+            d = _import_dask(storage=storage, dm_name=dm_name,
+                             import_type=import_type,
+                             merge_records=merge_records,
+                             return_dask_graph=return_dask_graph,
                              columns=columns)
 
         elif backend == 'pandas':

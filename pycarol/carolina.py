@@ -216,7 +216,7 @@ class Carolina:
         elif space == 'staging_cds':
             template = self.cds_staging_intake_path['path'] + '/'
         elif space == 'golden_cds':
-            template = self.cds_golden_intake_path['bucket'] + '/'
+            template = self.cds_golden_intake_path['path'] + '/'
         else:
             raise ValueError
 
