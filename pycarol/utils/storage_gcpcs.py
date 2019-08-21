@@ -20,7 +20,7 @@ class StorageGCPCS:
             return
 
         self.client = self.carolina.get_client()
-        self.bucket_app_storage = self.client.bucket(self.carolina.cds_app_storage_path['bucket'])
+        self.bucket_app_storage = self.client.bucket(self.carolina.get_bucket_name("app"))
         if not os.path.exists(__TEMP_STORAGE__):
             os.makedirs(__TEMP_STORAGE__)
 
