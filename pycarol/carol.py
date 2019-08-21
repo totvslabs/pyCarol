@@ -48,7 +48,7 @@ class Carol:
     """
 
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
-                 environment='carol.ai'):
+                 organization=None, environment='carol.ai'):
 
         settings = dict()
         if auth is None and domain is None:
@@ -89,6 +89,7 @@ class Carol:
 
 
         self.environment = os.getenv('ENV_DOMAIN', environment)
+        self.organization = os.getenv('CAROLORGANIZATION', organization)
         self.domain = domain
         self.app_name = app_name
         self.port = port
