@@ -128,8 +128,8 @@ class DataModel:
 
         elif backend == 'pandas':
 
-            d = _import_pandas(storage=storage, dm_name=dm_name, import_type='golden', columns=columns, callback=callback,
-                               max_hits=max_hits)
+            d = _import_pandas(storage=storage, dm_name=dm_name, import_type='golden',
+                               columns=columns, callback=callback, max_hits=max_hits)
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
                 _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
@@ -142,6 +142,8 @@ class DataModel:
 
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in _field_types.items():
+                    if isinstance(value, dict):
+                        value = "STRING" #If nested we receive as a `STR`
                     d.loc[:, key] = d.loc[:, key].astype(_DATA_MODEL_TYPES_MAPPING.get(value.lower(), str), copy=False)
                 if columns:
                     columns = list(set(columns))
