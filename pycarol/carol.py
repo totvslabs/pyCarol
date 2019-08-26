@@ -89,8 +89,8 @@ class Carol:
                              " OR CAROLUSER+CAROLPWD and " +
                              "CAROLCONNECTORID")
 
-
-        self.environment = os.getenv('ENV_DOMAIN', environment)
+        # TODO Fixed to be compatible with the old `ENV_DOMAIN`. We could add a deprecated warning.
+        self.environment = os.getenv('ENV_DOMAIN', os.getenv('CAROL_DOMAIN', environment))
         self.organization = os.getenv('CAROLORGANIZATION', organization)
         self.domain = domain
         self.app_name = app_name
