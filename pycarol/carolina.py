@@ -46,6 +46,10 @@ class Carolina:
         self.cds_staging_rejected_path = token['cdsStagingRejectedPath']
         self.cds_view_path = token['cdsViewPath']
 
+        self.cds_golden_intake_path = token['cdsIntakeGoldenPath']
+        self.cds_staging_intake_path = token['cdsIntakeStagingPath']
+
+
         if self.engine == 'GCP-CS':
             self._init_gcp(token)
         elif self.engine == 'AWS-S3':
@@ -122,6 +126,8 @@ class Carolina:
                 "staging_rejected": Staging records from Rejected
                 "view": Data Model View records
                 "app": App  bucket
+                "golden_cds": CDS golden records
+                "staging_cds": Staging Intake.
 
         Returns:
             formatted bucket path
@@ -141,6 +147,10 @@ class Carolina:
             template = self.cds_view_path['bucket']
         elif space == 'app':
             template = self.cds_app_storage_path['bucket']
+        elif space == 'staging_cds':
+            template = self.cds_staging_intake_path['bucket']
+        elif space == 'golden_cds':
+            template = self.cds_golden_intake_path['bucket']
 
         name = Formatter().vformat(template, None, {'tenant_id': self.carol.tenant['mdmId']})
         return name
@@ -158,6 +168,8 @@ class Carolina:
                         "staging_rejected": Staging records from Rejected
                         "view": Data Model Relationship View records
                         "app": App  bucket
+                        "golden_cds": CDS golden records
+                        "staging_cds": Staging Intake.
                     vars: `dict`
                         Parameters needed to format the storage path. Possible keys:
                         "tenant_id": Tenant ID.
@@ -187,6 +199,13 @@ class Carolina:
             template = self.cds_view_path['path'] + '/'
         elif space == 'app':
             template = self.cds_app_storage_path['path'] + '/'
+        elif space == 'staging_cds':
+            template = self.cds_staging_intake_path['path'] + '/'
+        elif space == 'golden_cds':
+            template = self.cds_golden_intake_path['path'] + '/'
+        else:
+            raise ValueError
 
         name = Formatter().vformat(template, None, vars)
         return name
+

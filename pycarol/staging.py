@@ -12,6 +12,7 @@ from .utils.importers import _import_dask, _import_pandas
 from .filter import Filter, TYPE_FILTER
 from .utils import async_helpers
 from .utils.miscellaneous import stream_data
+from . import _CAROL_METADATA
 
 _SCHEMA_TYPES_MAPPING = {
     "geopoint": str,
@@ -288,35 +289,46 @@ class Staging:
 
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='pandas',
                       merge_records=True, return_dask_graph=False, columns=None, max_hits=None,
-                      return_metadata=False, callback=None):
+                      return_metadata=False, callback=None, cds=False, max_workers=None,):
         """
 
         Fetch parquet from a staging table.
 
-        :param staging_name: `str`,
-            Staging name to fetch parquet of
-        :param connector_id: `str`, default `None`
-            Connector id to fetch parquet of
-        :param connector_name: `str`, default `None`
-            Connector name to fetch parquet of
-        :param backend: ['dask','pandas'], default `dask`
-            if to use either dask or pandas to fetch the data
-        :param merge_records: `bool`, default `True`
-            This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
-            one should keep only the last records.
-        :param return_dask_graph: `bool`, default `false`
-            If to return the dask graph or the dataframe.
-        :param columns: `list`, default `None`
-            List of columns to fetch.
-        :param max_hits: `int`, default `None`
-            Number of records to get. This only should be user for tests.
-        :param return_metadata: `bool`, default `False`
-            To return or not the fields ['mdmId', 'mdmCounterForEntity']
-        :param callback: `callable`, default `None`
-            Function to be called each downloaded file.
+        Args:
+            staging_name: `str`,
+                Staging name to fetch parquet of
+            connector_id: `str`, default `None`
+                Connector id to fetch parquet of
+            connector_name: `str`, default `None`
+                Connector name to fetch parquet of
+            backend: ['dask','pandas'], default `dask`
+                if to use either dask or pandas to fetch the data
+            merge_records: `bool`, default `True`
+                This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
+                one should keep only the last records.
+            return_dask_graph: `bool`, default `false`
+                If to return the dask graph or the dataframe.
+            columns: `list`, default `None`
+                List of columns to fetch.
+            max_hits: `int`, default `None`
+                Number of records to get. This only should be user for tests.
+            return_metadata: `bool`, default `False`
+                To return or not the fields ['mdmId', 'mdmCounterForEntity']
+            callback: `callable`, default `None`
+                Function to be called each downloaded file.
+            cds: `bool`, default `False`
+                Get staging data from CDS.
+            max_workers: `int` default `None`
+                Number of workers to use when downloading parquet files with pandas back-end.
         :return:
+
+        Args:
+            cds:
         """
 
+        if callback:
+            assert callable(callback), \
+                f'"{callback}" is a {type(callback)} and is not callable.'
         assert backend == 'dask' or backend == 'pandas'
         if return_dask_graph:
             assert backend == 'dask'
@@ -329,40 +341,47 @@ class Staging:
         if columns:
             mapping_columns = columns
             columns = [i.replace("-", "_") for i in columns]
-            columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
-            mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
         else:
             _staging = self.get_schema(staging_name=staging_name, connector_id=connector_id)
             if not _staging:
                 raise ValueError(f"{staging_name} does not exist for connector ID {connector_id}")
             mapping_columns = list(_staging['mdmStagingMapping']['properties'].keys())
             columns = [i.replace("-", "_") for i in mapping_columns]
-            columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
-            mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
 
+        columns.extend(_CAROL_METADATA)
+        mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
+
+        # TODO: Validate the code bellow for cds param
         # validate export
-        stags = self._get_staging_export_stats()
-        if not stags.get(connector_id + '_' + staging_name):
-            raise Exception(f'"{staging_name}" is not set to export data, \n '
-                            f'use `dm = Staging(login).export(staging_name="{staging_name}",'
-                            f'connector_id="{connector_id}", sync_staging=True) to activate')
+        if not cds:
+            stags = self._get_staging_export_stats()
+            if not stags.get(connector_id + '_' + staging_name):
+                raise Exception(f'"{staging_name}" is not set to export data, \n '
+                                f'use `dm = Staging(login).export(staging_name="{staging_name}",'
+                                f'connector_id="{connector_id}", sync_staging=True) to activate')
 
-        if stags.get(connector_id + '_' + staging_name)['mdmConnectorId'] != connector_id:
-            raise Exception(
-                f'"Wrong connector Id {connector_id}. The connector Id associeted to this staging is  '
-                f'{stags.get(staging_name)["mdmConnectorId"]}"')
+            if stags.get(connector_id + '_' + staging_name)['mdmConnectorId'] != connector_id:
+                raise Exception(
+                    f'"Wrong connector Id {connector_id}. The connector Id associated to this staging is  '
+                    f'{stags.get(staging_name)["mdmConnectorId"]}"')
+            import_type = 'staging'
+        else:
+            import_type = 'staging_cds'
 
         storage = Storage(self.carol)
-        if backend == 'dask':
+        token_carolina = storage.backend.carolina.token
+        storage_space = storage.backend.carolina.get_bucket_name(import_type)
 
+        if backend == 'dask':
             d = _import_dask(storage=storage, connector_id=connector_id, staging_name=staging_name,
-                             merge_records=merge_records, import_type='staging', return_dask_graph=return_dask_graph,
+                             merge_records=merge_records, import_type=import_type, return_dask_graph=return_dask_graph,
                              mapping_columns=mapping_columns,
                              columns=columns, max_hits=max_hits)
 
         elif backend == 'pandas':
-            d = _import_pandas(storage=storage, connector_id=connector_id,
-                               staging_name=staging_name, import_type='staging',  columns=columns,
+            d = _import_pandas(storage=storage, connector_id=connector_id,max_workers=max_workers,
+                               token_carolina=token_carolina, storage_space=storage_space,
+                               staging_name=staging_name, import_type=import_type,  columns=columns,
                                max_hits=max_hits, callback=callback, mapping_columns=mapping_columns)
 
             # TODO: Do the same for dask backend
@@ -374,10 +393,10 @@ class Staging:
                 cols_keys = [i.replace("-", "_") for i in cols_keys]
 
                 if return_metadata:
-                    cols_keys.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
+                    cols_keys.extend(_CAROL_METADATA)
 
                 elif columns:
-                    columns = [i for i in columns if i not in ['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated']]
+                    columns = [i for i in columns if i not in _CAROL_METADATA]
 
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in self.get_schema(staging_name=staging_name,
@@ -404,7 +423,7 @@ class Staging:
                     .reset_index(drop=True)
 
         if not return_metadata:
-            to_drop = set(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated']).intersection(set(d.columns))
+            to_drop = set(_CAROL_METADATA).intersection(set(d.columns))
             d = d.drop(labels=to_drop, axis=1)
 
         return d

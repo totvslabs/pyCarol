@@ -35,7 +35,7 @@ install_requires = [
     'requests',
     's3fs==0.1.6',
     's3transfer==0.1.13',
-    'tqdm==4.28.1',
+    'tqdm',
     'urllib3',
     'missingno==0.4.1',
     'deprecated',
@@ -44,6 +44,7 @@ install_requires = [
     'python-dotenv',
     'black',
     'papermill',
+    "gcsfs",
 ]
 
 def read(*parts):
