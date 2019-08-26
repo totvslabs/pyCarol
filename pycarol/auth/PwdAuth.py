@@ -24,7 +24,8 @@ class PwdAuth:
             'password': self.password,
             'grant_type': 'password',
             'subdomain': carol.domain,
-            'connectorId': carol.connector_id
+            'connectorId': carol.connector_id,
+            'orgSubdomain': carol.organization
         }
         resp = self.carol.call_api('v2/oauth2/token', auth=False, data=data,
                                    content_type='application/x-www-form-urlencoded')

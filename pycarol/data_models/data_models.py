@@ -170,6 +170,8 @@ class DataModel:
 
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in _field_types.items():
+                    if isinstance(value, dict):
+                        value = "STRING" #If nested we receive as a `STR`
                     d.loc[:, key] = d.loc[:, key].astype(_DATA_MODEL_TYPES_MAPPING.get(value.lower(), str), copy=False)
                 if columns:
                     columns = list(set(columns))

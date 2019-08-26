@@ -30,6 +30,8 @@ class Carol:
             Port to be used (when running locally it could change)
         verbose: `bool` , default `False`.
             If True will print the header, method and URL of each API call.
+        organization: `str` , default `None`.
+            Organization domain. 
         environment: `str`, default `carol.ai`,
             Which Carol's environment to use. There are three possible values today.
                 1. 'carol.ai' for the production environment
@@ -48,7 +50,7 @@ class Carol:
     """
 
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
-                 environment='carol.ai'):
+                 organization=None, environment='carol.ai'):
 
         settings = dict()
         if auth is None and domain is None:
@@ -89,6 +91,7 @@ class Carol:
 
 
         self.environment = os.getenv('ENV_DOMAIN', environment)
+        self.organization = os.getenv('CAROLORGANIZATION', organization)
         self.domain = domain
         self.app_name = app_name
         self.port = port
