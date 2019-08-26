@@ -5,11 +5,15 @@
 import os
 import tempfile
 
-__version__ = '2.19.4'
+
+__version__ = '2.20.0'
 
 __TEMP_STORAGE__ = os.path.join(tempfile.gettempdir(), 'carolina/cache')
 
 __CONNECTOR_PYCAROL__ = 'f9953f6645f449baaccd16ab462f9b64'
+
+_CAROL_METADATA = ['mdmCounterForEntity', 'mdmId', 'mdmLastUpdated',
+                   'mdmConnectorId']
 
 
 from .carol import Carol

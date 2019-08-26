@@ -40,7 +40,7 @@ class Storage:
         :return: list of files paths.
         """
 
-        return Storage.backend.files_storage_list(prefix=prefix, print_paths=print_paths)
+        return self.backend.files_storage_list(prefix=prefix, print_paths=print_paths)
 
     def exists(self, name):
         return self.backend.exists(name)
@@ -71,3 +71,9 @@ class Storage:
 
     def get_staging_file_paths(self, staging_name, connector_id):
         return self.backend.get_staging_file_paths(staging_name, connector_id)
+
+    def get_staging_cds_file_paths(self, staging_name, connector_id):
+        return self.backend.get_staging_cds_file_paths(staging_name, connector_id)
+
+    def get_golden_cds_file_paths(self, dm_name):
+        return self.backend.get_golden_cds_file_paths(dm_name)
