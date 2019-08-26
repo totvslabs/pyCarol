@@ -46,23 +46,9 @@ class Carolina:
         self.cds_staging_rejected_path = token['cdsStagingRejectedPath']
         self.cds_view_path = token['cdsViewPath']
 
-        # TODO: Uncomment when live.
-        # self.cds_golden_intake_path = token['cdsIntakeGoldenPath']
-        # self.cds_staging_intake_path = token['cdsIntakeStagingPath']
+        self.cds_golden_intake_path = token['cdsIntakeGoldenPath']
+        self.cds_staging_intake_path = token['cdsIntakeStagingPath']
 
-        if self.carol.environment == "karol.ai":
-            self.cds_staging_intake_path = {"bucket": "labs1-carol-internal-{tenant_id}",
-                                            "path": "staging-output/parquet/{connector_id}_{staging_type}"}
-
-            self.cds_golden_intake_path = {"bucket": "labs1-carol-internal-{tenant_id}",
-                                           "path": "golden-output/parquet/{dm_name}"}
-
-        else:
-            self.cds_staging_intake_path = {"bucket": "prod1-carol-internal-{tenant_id}",
-                                            "path": "staging-output/parquet/{connector_id}_{staging_type}"}
-
-            self.cds_golden_intake_path = {"bucket": "prod1-carol-internal-{tenant_id}",
-                                           "path": "golden-output/parquet/{dm_name}"}
 
         if self.engine == 'GCP-CS':
             self._init_gcp(token)
