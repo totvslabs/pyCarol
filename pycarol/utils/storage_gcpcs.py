@@ -26,7 +26,7 @@ class StorageGCPCS:
 
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
 
-        remote_file_name = f"{self.carolina.get_path('app')}{name}"
+        remote_file_name = f"{self.carolina.get_path('app', {})}{name}"
         local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
 
         bucket = self.bucket_app_storage
@@ -62,7 +62,7 @@ class StorageGCPCS:
 
     def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage', columns=None):
         if storage_space == 'app_storage':
-            remote_file_name = f"{self.carolina.get_path(storage_space)}{name}"
+            remote_file_name = f"{self.carolina.get_path('app', {})}{name}"
             bucket = self.bucket_app_storage
         else:
             remote_file_name = name
@@ -119,13 +119,13 @@ class StorageGCPCS:
             return None
 
     def exists(self, name):
-        remote_file_name = f"{self.carolina.get_path('app')}{name}"
+        remote_file_name = f"{self.carolina.get_path('app', {})}{name}"
 
         blob = self.bucket_app_storage.blob(remote_file_name)
         return blob.exists()
 
     def delete(self, name):
-        remote_file_name = f"{self.carolina.get_path('app')}{name}"
+        remote_file_name = f"{self.carolina.get_path('app', {})}{name}"
 
         blob = self.bucket_app_storage.blob(remote_file_name)
         if blob.exists():
