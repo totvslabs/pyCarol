@@ -224,7 +224,8 @@ class StorageGCPCS:
         return ball
 
     def files_storage_list(self, prefix='pipeline/', print_paths=False):
-        bucket_staging = self.client.bucket(self.carolina.cds_app_storage_path['bucket'])
+
+        bucket_staging = self.client.bucket(self.carolina.get_bucket_name('app'))
         path_app = self.carolina.get_path('app', {})
 
         files = list(bucket_staging.list_blobs(prefix=path_app + prefix))
