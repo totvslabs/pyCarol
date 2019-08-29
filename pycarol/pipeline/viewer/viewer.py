@@ -1,6 +1,6 @@
 from ..utils import get_reverse_dag, breadth_first_search
 
-
+#TODO: improve nodes layout
 def nodes_layout(dag:dict, align_on_leafs = True) -> dict:
     """
     Builds basic graph plot layout. In this version, nodes are placed on x
