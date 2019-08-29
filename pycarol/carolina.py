@@ -162,6 +162,10 @@ class Carolina:
             template = self.cds_staging_intake_path['bucket']
         elif space == 'golden_cds':
             template = self.cds_golden_intake_path['bucket']
+        elif space == 'view_cds':
+            template = self.cds_view_intake_path['bucket']
+        else:
+            raise ValueError
 
         name = Formatter().vformat(template, None, {'tenant_id': self.carol.tenant['mdmId']})
         return name
@@ -214,6 +218,8 @@ class Carolina:
             template = self.cds_staging_intake_path['path'] + '/'
         elif space == 'golden_cds':
             template = self.cds_golden_intake_path['path'] + '/'
+        elif space == 'view_cds':
+            template = self.cds_view_intake_path['path'] + '/'
         else:
             raise ValueError
 
