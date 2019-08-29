@@ -8,6 +8,7 @@ from .auth.ApiKeyAuth import ApiKeyAuth
 from .auth.PwdAuth import PwdAuth
 from .tenant import Tenant
 from . import __CONNECTOR_PYCAROL__
+from . import __version__
 
 
 class Carol:
@@ -225,6 +226,8 @@ class Carol:
                 data = None
 
         headers.update(extra_headers)
+        headers.update({'User-Agent': f'pyCarol/{__version__}'})
+
         __count = 0
         while True:
             if session is None:
