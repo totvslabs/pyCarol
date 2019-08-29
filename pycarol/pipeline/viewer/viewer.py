@@ -132,8 +132,6 @@ def make_nodes_data_source(nodes_layout) -> dict:
         data['task_family'].append(get_task_family(k))
         data['task_name'].append(get_task_name(k))
         data['complete'].append(get_complete(k))
-        data['target_hash_version'].append(get_target_hash_version(k))
-        data['task_hash_version'].append(get_task_hash_version(k))
         data['target_version'].append(get_target_version(k))
         data['task_version'].append(get_task_version(k))
 

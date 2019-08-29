@@ -70,8 +70,6 @@ def _make_pipeline_plot(
             ('task_id', '@task_id'),
             ('task_family','@task_family'),
             ('complete','@complete'),
-            ('target_hash_version','@target_hash_version'),
-            ('task_hash_version','@task_hash_version'),
             ('target_version', '@target_version'),
             ('task_version', '@task_version'), ],
         plot_width=900,
