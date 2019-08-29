@@ -198,9 +198,9 @@ class DataModelView:
                 raise Exception(
                     f'"{view_name}" is not set to export data, \n'
                     f'use `dm = DataModelView(login).export(view_name="{view_name}", sync_dm=True) to activate')
-            import_type = 'staging'
+            import_type = 'view'
         else:
-            import_type = 'staging_cds'
+            import_type = 'view_cds'
         if columns:
             columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
 
@@ -212,30 +212,18 @@ class DataModelView:
         storage_space = storage.backend.carolina.get_bucket_name(import_type)
 
         if backend == 'dask':
-            d = _import_dask(storage=storage, view_name=view_name, import_type='view',
+            d = _import_dask(storage=storage, view_name=view_name, import_type=import_type,
                              merge_records=merge_records, return_dask_graph=return_dask_graph,
-                             columns=columns)
+                             columns=columns, )
 
         elif backend == 'pandas':
 
             d = _import_pandas(storage=storage, view_name=view_name, golden=True, columns=columns, callback=callback,
-                               max_hits=max_hits,import_type='view')
+                               max_hits=max_hits, import_type=import_type, max_workers=max_workers,
+                               token_carolina=token_carolina,
+                               )
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
-                _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
-                cols_keys = list(_field_types)
-                if return_metadata:
-                    cols_keys.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
-
-                elif columns:
-                    columns = [i for i in columns if i not in ['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated']]
-
-                d = pd.DataFrame(columns=cols_keys)
-                for key, value in _field_types.items():
-                    d.loc[:, key] = d.loc[:, key].astype(_DATA_MODEL_TYPES_MAPPING.get(value.lower(), str), copy=False)
-                if columns:
-                    columns = list(set(columns))
-                    d = d[list(set(columns))]
                 return d
 
         else:
