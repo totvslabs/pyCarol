@@ -162,7 +162,7 @@ class Pipe(object):
         else:
             raise KeyError(f"{task_id} not found in this pipeline.")
 
-
+#TODO: fix new syntax style and papemill incompatibility
     def get_matching_tasks(self,task):
         matching_tasks = [isinstance(t, task) for t in self.all_tasks]
         matching_tasks = [t for i, t in enumerate(self.all_tasks) if
