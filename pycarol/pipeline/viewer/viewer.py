@@ -120,8 +120,6 @@ def make_nodes_data_source(nodes_layout) -> dict:
         task_family=[],
         task_name=[],
         complete=[],
-        task_hash_version=[],
-        target_hash_version=[],
         target_version=[],
         task_version=[],
     )
