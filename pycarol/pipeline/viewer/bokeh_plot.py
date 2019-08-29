@@ -274,6 +274,5 @@ def get_plot_from_pipeline(pipe: Type[Pipe]):
 
     return bokeh_layout
 
-#TODO: implement python bokeh server to make dev and tests easier: test debuggging tools with tornado 6.0
 
 
