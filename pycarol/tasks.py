@@ -197,12 +197,3 @@ class Tasks:
             return False
 
 
-## Missing Implements
-# /api/v1/tasks/{id}/reprocess - Reprocess by Id
-# /api/v1/tasks/{id}/sync - Process Task Synchronously by Id
-# /api/v1/tasks/scheduled - Create Scheduled Task
-# /api/v1/tasks/{id}/schedule - Schedule Similar Task by Id
-# /api/v1/tasks/scheduled/{id} - Get Scheduled by Id
-# /api/v1/tasks/scheduled/{id}/delete - Delete Scheduled Task by Id
-# /api/v1/tasks/scheduled/{id}/pause - Cancel Scheduled Task by Id
-# /api/v1/tasks/scheduled/{id}/play - Play Scheduled Task by Id

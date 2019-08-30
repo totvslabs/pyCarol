@@ -89,20 +89,12 @@ carol.api_key_revoke(CONNECTORID)
 #### Filter queries
 
 ```python
-json_query = {
-          "mustList": [
-            {
-              "mdmFilterType": "TYPE_FILTER",
-              "mdmValue": "ratingsGolden"
-            },
-            {
-              "mdmFilterType": "TERM_FILTER",
-              "mdmKey": "mdmGoldenFieldAndValues.userid",
-              "mdmValue": 406
-            }
-          ]
-        }
-
+from pycarol.filter import TYPE_FILTER, TERM_FILTER, Filter
+from pycarol import Query
+json_query = Filter.Builder() \
+    .must(TYPE_FILTER(value='ratings' + "Golden")) \
+    .must(TERM_FILTER(key='mdmGoldenFieldAndValues.userid.raw',value='123'))\
+    .build().to_json()
 
 FIELDS_ITEMS = ['mdmGoldenFieldAndValues.mdmaddress.coordinates']
 query = Query(carol, page_size=10, print_status=True, only_hits=True,
@@ -119,27 +111,15 @@ The parameter `only_hits = True` will make sure that only records into the path 
 
 ```python
 from pycarol.query import Query
+from pycarol.filter import TYPE_FILTER, Filter, CARDINALITY
 
-jsons = {
-  "mustList": [
-    {
-      "mdmFilterType": "TYPE_FILTER",
-      "mdmValue": "datamodelGolden"
-    }
-  ],
-  "aggregationList": [
-    {
-      "type": "CARDINALITY",
-      "name": "campaign",
-      "params": [
-        f"mdmGoldenFieldAndValues.taxid"
-      ]
-    }
-  ]
-}
+json_query = Filter.Builder() \
+    .must(TYPE_FILTER(value='datamodelname' + "Golden")) \
+    .aggregation(CARDINALITY(name='cardinality', params = ["mdmGoldenFieldAndValues.taxid.raw"], size=40))\
+    .build().to_json()
 
-query = Query(carol, get_aggs=True, only_hits=False,page_size=0)
-query.query(jsons).go()
+query = Query(carol, get_aggs=True, only_hits=False)
+query.query(json_query).go()
 query.results
 
 ```
@@ -247,51 +227,39 @@ OBS: It is not possible to create a mapping using pycarol. The Mapping has to be
 ## Logging
 To log messages to Carol:
 ```python
-Tasks(carol).info('Hello world!')
-Tasks(carol).warn('Warning! Missing xyz')
-Tasks(carol).error('Cannot connect to ABC, aborting')
+from pycarol import Carol, CarolHandler
+import logging
+
+logger = logging.getLogger(__name__)
+carol = CarolHandler(Carol())
+carol.setLevel(logging.INFO)
+logger.addHandler(carol)
+
+logger.debug('This is a debug message') #This will not be logged in Carol. Level is set to INFO
+logger.info('This is an info message')
+logger.warning('This is a warning message')
+logger.error('This is an error message')
+logger.critical('This is a critical message')
 ```
 These methods will use the current long task id provided by Carol when running your application.
 For local environments you need to set that manually first on the beginning of your code:
 ```python
-Tasks(carol).create('MyApp', 'TaskGroup').set_as_current_task()
+import os
+os.environ['LONGTASKID'] = task_id
 ```
+We recommend to log only INFO+ information in Carol. 
 
 ## Settings
 We can use pyCarol to access the settings of your Carol App.
 ```python
-# To get a specific setting
-Settings(carol).get('setting_name')
 
-# To get all the settings
-print(Settings(carol).all())
+from pycarol.apps import Apps
+app = Apps(carol)
+settings = app.get_settings(app_name='my_app')
+print(settings)
+
 ```
-Using the all(), the settings will be returned as a dictionary where the keys are the parameter names and the values are
-the value for that parameter. To access the full settings as a dictionary, use the all_full() method, where the keys
-are the parameter names and the values are the full responses for that parameter.
+The settings will be returned as a dictionary where the keys are the parameter names and the values are
+the value for that parameter. Please note that your app must be created in Carol.
 
-Please note that your app must be created in Carol and its name be correctly setup during pyCarol initialization
-
-## Data Validation
-There are some built-in data validation in pyCarol that we can use to ensure the data is ok
-```python
-from pycarol.validator import Validator
-
-validator = Validator(carol)
-# To check that the field code on the data model products is at least 80% filled
-validator.assert_non_empty(data_model='products', field='code', threshold=0.8)
-
-# Or if we already have the datamodel loaded in a variable
-validator.assert_non_empty(data=data_model, field='code', threshold=0.8)
-
-# To check if there a minimum number of records in a data model:
-validator.assert_min_quantity(data_model='products', min_qty=1000)
-
-# Custom threshold validation
-value = some_calculation
-validator.assert_custom('MyValidation', value, min_req_value)
-
-# And at the end of the validations, to post all validation issues to Carol as a long task log:
-validator.post_results()
-```
 
