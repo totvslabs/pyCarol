@@ -12,8 +12,6 @@
 1. [Sending data](#sending-data)
 1. [Logging](#logging)
 1. [Settings](#settings)
-1. [Data Validation](#validation)
-2. [APIs Implemented](#apis-implemented)
 
 ## Initializing pyCarol
 
