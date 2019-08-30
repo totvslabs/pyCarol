@@ -69,7 +69,10 @@ def get_task_name(t):
     return t.task_id.split('.')[-1].split('_')[0] # name of the task class
 
 def get_complete(t):
-    return t.complete()
+    # return t.complete()
+    # make it dummy, because efficient get_complete needs pipeline object
+    return False
+
 
 def get_target_hash_version(t):
     try:

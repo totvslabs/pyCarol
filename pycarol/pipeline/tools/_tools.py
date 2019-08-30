@@ -147,6 +147,21 @@ class Pipe(object):
         """Remove all targets whose hash_versions do not match to current version"""
         return
 
+    def update_all_complete_status(self):
+        """ Updates a dictionary whose keys are task objects and values are
+        True if target was found."""
+        from pycarol import Carol, Storage
+        st = Storage(Carol())
+        target_files = st.files_storage_list(prefix='pipeline/')
+        self.all_complete_status = {t: t.output().path in target_files for t in
+                self.all_tasks}
+
+    def get_task_complete(self,task):
+        """ Returns True if task is complete accordingly to
+        self.all_complete_status dictionary"""
+        assert task in self.all_tasks, f"Task {task} not found in this pipeline"
+        return self.all_complete_status[task]
+
     def run(self):
         """Run the whole pipeline"""
         tasks = [t for t in self.top_nodes]
@@ -162,7 +177,6 @@ class Pipe(object):
         else:
             raise KeyError(f"{task_id} not found in this pipeline.")
 
-#TODO: fix new syntax style and papemill incompatibility
     def get_matching_tasks(self,task):
         matching_tasks = [isinstance(t, task) for t in self.all_tasks]
         matching_tasks = [t for i, t in enumerate(self.all_tasks) if
