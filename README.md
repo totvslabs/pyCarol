@@ -245,7 +245,7 @@ For local environments you need to set that manually first on the beginning of y
 import os
 os.environ['LONGTASKID'] = task_id
 ```
-We recommend to log only INFO+ information in Carol. 
+We recommend to log only INFO+ information in Carol. If no TASK ID is passed it works as a Console Handler. 
 
 ## Settings
 We can use pyCarol to access the settings of your Carol App.
