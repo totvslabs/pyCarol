@@ -1,41 +1,56 @@
 from ..utils import get_reverse_dag, breadth_first_search
 
-#TODO: improve nodes layout
-def nodes_layout(dag:dict, align_on_leafs = True) -> dict:
+
+def nodes_layout(
+        dag:dict,
+        align_on_leafs=True,
+        mode='force-directed',
+        **layout_params
+) -> dict:
     """
-    Builds basic graph plot layout. In this version, nodes are placed on x
-    axis accordingly to their depth in dag. Top levels are on left whereas
-    deeper nodes are placed on the right. If align on_leafs is set to true,
-    DAG is first reversed, so that the output of the pipeline is on the right
-    and inputs on the left.
+    Returns layout with x,y coordinates to plot DAG. Available modes are:
+      'force-directed': computed using fruchterman_reingold_layout method of
+      networkx library.
+      'levels-directed': x positions correspond to the level of the node in DAG.
+    If align on_leafs is set to true, DAG is first reversed, so that the
+    output of the pipeline is on the right and inputs on the left in
+    'levels-directed' mode.
     Args:
         dag: dict encoding a DAG structure
         align_on_leafs: layout boolean parameter
+        mode: string defining layout mode
 
     Returns:
         layout: a dict whose keys are DAG nodes an values are (x,y) of each
         node.
 
     """
+    if mode == "force-directed":
+        import networkx as nx
+        graph = nx.DiGraph()
+        graph_edges = [(k, vi) for k, v in dag.items() for vi in v]
+        graph.add_edges_from(graph_edges)
+        layout = nx.fruchterman_reingold_layout(graph,**layout_params)
+    else:  # mode == levels-directed
+        layout_x = {}
+        if align_on_leafs:
+            dag = get_reverse_dag(dag)
+        for i, nodes in enumerate(breadth_first_search(dag)):
+            for j, node in enumerate(nodes):
+                # overwrite previous levels and keep only last one
+                layout_x[node] = i
 
-    layout_x = {}
-    if align_on_leafs:
-        dag = get_reverse_dag(dag)
-    for i, nodes in enumerate(breadth_first_search(dag)):
-        for j, node in enumerate(nodes):
-            # overwrite previous levels and keep only last one
-            layout_x[node] = i
-
-    levels = sorted(v for v in layout_x.values())
-    layout = {}
-    for l in levels:
-        y = 0
-        for node, x in layout_x.items():
-            if x == l:
-                layout[node] = (x,y)
-                y += 1
+        levels = sorted(v for v in layout_x.values())
+        layout = {}
+        for l in levels:
+            y = 0
+            for node, x in layout_x.items():
+                if x == l:
+                    layout[node] = (x,y)
+                    y += 1
 
     return layout
+
 
 def edges_layout(dag:dict, layout:dict) -> list:
     """
