@@ -189,13 +189,12 @@ class PlotDynamics():
     def update_callback(self,event):
         print("start update")
         self.pipe.update_all_complete_status()
-        print("finish update")
         task_id_column = self.nodes_data_source.data['task_id']
         task_gen = (self.pipe.get_task_by_id(task_id) for task_id in task_id_column)
         update_data = dict(complete=[])
         for task in task_gen:
             update_data['complete'].append(self.pipe.get_task_complete(task))
-            print(update_data['complete'])
+        print("finish update")
 
         self.nodes_data_source.data.update(update_data)
         
