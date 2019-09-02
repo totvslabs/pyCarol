@@ -9,9 +9,10 @@ def nodes_layout(
 ) -> dict:
     """
     Returns layout with x,y coordinates to plot DAG. Available modes are:
+      'levels-directed': x positions correspond to the level of the node in DAG.
       'force-directed': computed using fruchterman_reingold_layout method of
       networkx library.
-      'levels-directed': x positions correspond to the level of the node in DAG.
+      'kamada-kawai': computed using networkx library
     If align on_leafs is set to true, DAG is first reversed, so that the
     output of the pipeline is on the right and inputs on the left in
     'levels-directed' mode.
@@ -25,29 +26,48 @@ def nodes_layout(
         node.
 
     """
+    layout_x = {}
+    if align_on_leafs:
+        dag = get_reverse_dag(dag)
+    for i, nodes in enumerate(breadth_first_search(dag)):
+        for j, node in enumerate(nodes):
+            # overwrite previous levels and keep only last one
+            layout_x[node] = i
+
+    levels = sorted(v for v in layout_x.values())
+    layout = {}
+    for l in levels:
+        y = 0
+        for node, x in layout_x.items():
+            if x == l:
+                layout[node] = (x, y)
+                y += 1
+
     if mode == "force-directed":
         import networkx as nx
         graph = nx.DiGraph()
         graph_edges = [(k, vi) for k, v in dag.items() for vi in v]
         graph.add_edges_from(graph_edges)
-        layout = nx.fruchterman_reingold_layout(graph,**layout_params)
-    else:  # mode == levels-directed
-        layout_x = {}
-        if align_on_leafs:
-            dag = get_reverse_dag(dag)
-        for i, nodes in enumerate(breadth_first_search(dag)):
-            for j, node in enumerate(nodes):
-                # overwrite previous levels and keep only last one
-                layout_x[node] = i
-
-        levels = sorted(v for v in layout_x.values())
-        layout = {}
-        for l in levels:
-            y = 0
-            for node, x in layout_x.items():
-                if x == l:
-                    layout[node] = (x,y)
-                    y += 1
+        default_layout = layout.copy()
+        from pycarol.pipeline.utils import find_root_in_dag, find_leaf_in_dag
+        root_nodes = find_root_in_dag(dag)
+        leaf_nodes = find_leaf_in_dag(dag)
+        fixed_nodes = root_nodes + leaf_nodes
+        layout = nx.fruchterman_reingold_layout(
+            graph,
+            pos=default_layout,  # we use levels layout as default position
+            fixed=fixed_nodes,
+            **layout_params
+        )
+    elif mode == "kamada-kawai":
+        import networkx as nx
+        graph = nx.DiGraph()
+        graph_edges = [(k, vi) for k, v in dag.items() for vi in v]
+        graph.add_edges_from(graph_edges)
+        layout = nx.kamada_kawai_layout(
+            graph,
+            **layout_params
+        )
 
     return layout
 
