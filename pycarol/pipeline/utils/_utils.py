@@ -89,6 +89,17 @@ def find_root_in_dag(dag: dict) -> list:
     root_nodes = candidates
     return root_nodes
 
+def find_leaf_in_dag(dag: dict) -> list:
+    """
+    Search in a direct acyclic graph all nodes without outcoming edges
+    Args:
+        dag: dictionary encoding a DAG
+
+    Returns:
+        root_nodes: list of root nodes
+    """
+    rev_dag = get_reverse_dag(dag)
+    return find_root_in_dag(rev_dag)
 
 def get_dag_node_level(dag: dict, ) -> dict:
     """
