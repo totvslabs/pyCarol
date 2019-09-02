@@ -42,9 +42,9 @@ install_requires = [
     'pytest',
     'bumpversion',
     'python-dotenv',
-    'black',
     'papermill',
-    "gcsfs",
+    'gcsfs',
+    'networkx',
 ]
 
 def read(*parts):
