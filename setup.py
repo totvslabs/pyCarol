@@ -9,7 +9,6 @@ import sys
 here = os.path.abspath(os.path.dirname(__file__))
 
 install_requires = [
-    'bokeh==1.2.0',
     'pykube',
     'boto3==1.9.16',
     'botocore==1.12.16',
@@ -44,7 +43,9 @@ install_requires = [
     'python-dotenv',
     'papermill',
     'gcsfs',
-    'networkx',
+    'dash',
+    'dash-cytoscape',
+    'colorcet',
 ]
 
 def read(*parts):
