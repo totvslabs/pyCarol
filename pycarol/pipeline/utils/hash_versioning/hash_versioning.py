@@ -34,7 +34,8 @@ from pycarol.pipeline.utils import (
     enumerate_with_context
 )
 
-DEBUG_MODE = False  
+#TODO: move this module to a dedicated repository
+DEBUG_MODE = False
 
 from pycarol.pipeline.utils.hash_versioning.inspect_bytecode import (
     get_name_and_code_of_MAKE_FUNCTION,

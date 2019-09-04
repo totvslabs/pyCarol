@@ -1,23 +1,31 @@
 from ..utils import get_reverse_dag, breadth_first_search
 
 
-def nodes_layout(dag:dict, align_on_leafs = True) -> dict:
+def nodes_layout(
+        dag:dict,
+        align_on_leafs=True,
+        mode='force-directed',
+        **layout_params
+) -> dict:
     """
-    Builds basic graph plot layout. In this version, nodes are placed on x
-    axis accordingly to their depth in dag. Top levels are on left whereas
-    deeper nodes are placed on the right. If align on_leafs is set to true,
-    DAG is first reversed, so that the output of the pipeline is on the right
-    and inputs on the left.
+    Returns layout with x,y coordinates to plot DAG. Available modes are:
+      'levels-directed': x positions correspond to the level of the node in DAG.
+      'force-directed': computed using fruchterman_reingold_layout method of
+      networkx library.
+      'kamada-kawai': computed using networkx library
+    If align on_leafs is set to true, DAG is first reversed, so that the
+    output of the pipeline is on the right and inputs on the left in
+    'levels-directed' mode.
     Args:
         dag: dict encoding a DAG structure
         align_on_leafs: layout boolean parameter
+        mode: string defining layout mode
 
     Returns:
         layout: a dict whose keys are DAG nodes an values are (x,y) of each
         node.
 
     """
-
     layout_x = {}
     if align_on_leafs:
         dag = get_reverse_dag(dag)
@@ -32,10 +40,37 @@ def nodes_layout(dag:dict, align_on_leafs = True) -> dict:
         y = 0
         for node, x in layout_x.items():
             if x == l:
-                layout[node] = (x,y)
+                layout[node] = (x, y)
                 y += 1
 
+    if mode == "force-directed":
+        import networkx as nx
+        graph = nx.DiGraph()
+        graph_edges = [(k, vi) for k, v in dag.items() for vi in v]
+        graph.add_edges_from(graph_edges)
+        default_layout = layout.copy()
+        from pycarol.pipeline.utils import find_root_in_dag, find_leaf_in_dag
+        root_nodes = find_root_in_dag(dag)
+        leaf_nodes = find_leaf_in_dag(dag)
+        fixed_nodes = root_nodes + leaf_nodes
+        layout = nx.fruchterman_reingold_layout(
+            graph,
+            pos=default_layout,  # we use levels layout as default position
+            fixed=fixed_nodes,
+            **layout_params
+        )
+    elif mode == "kamada-kawai":
+        import networkx as nx
+        graph = nx.DiGraph()
+        graph_edges = [(k, vi) for k, v in dag.items() for vi in v]
+        graph.add_edges_from(graph_edges)
+        layout = nx.kamada_kawai_layout(
+            graph,
+            **layout_params
+        )
+
     return layout
+
 
 def edges_layout(dag:dict, layout:dict) -> list:
     """
@@ -69,7 +104,10 @@ def get_task_name(t):
     return t.task_id.split('.')[-1].split('_')[0] # name of the task class
 
 def get_complete(t):
-    return t.complete()
+    # return t.complete()
+    # make it dummy, because efficient get_complete needs pipeline object
+    return False
+
 
 def get_target_hash_version(t):
     try:
@@ -98,7 +136,7 @@ def get_target_version(t):
         return ""
     return metadata.get('version',"")
 
-
+#TODO: implement dash viewer
 def make_nodes_data_source(nodes_layout) -> dict:
     """
     Creates a bokeh compatible data source encoding nodes plotting
@@ -120,8 +158,6 @@ def make_nodes_data_source(nodes_layout) -> dict:
         task_family=[],
         task_name=[],
         complete=[],
-        task_hash_version=[],
-        target_hash_version=[],
         target_version=[],
         task_version=[],
     )
@@ -132,8 +168,6 @@ def make_nodes_data_source(nodes_layout) -> dict:
         data['task_family'].append(get_task_family(k))
         data['task_name'].append(get_task_name(k))
         data['complete'].append(get_complete(k))
-        data['target_hash_version'].append(get_target_hash_version(k))
-        data['task_hash_version'].append(get_task_hash_version(k))
         data['target_version'].append(get_target_version(k))
         data['task_version'].append(get_task_version(k))
 
