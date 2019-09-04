@@ -13,6 +13,7 @@ from .filter import Filter, TYPE_FILTER
 from .utils import async_helpers
 from .utils.miscellaneous import stream_data
 from . import _CAROL_METADATA
+from .utils.miscellaneous import drop_duplicated_parquet
 
 _SCHEMA_TYPES_MAPPING = {
     "geopoint": str,
@@ -413,13 +414,9 @@ class Staging:
 
         if merge_records:
             if not return_dask_graph:
-                d.sort_values('mdmCounterForEntity', inplace=True)
-                d.reset_index(inplace=True, drop=True)
-                d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
-                if 'mdmDeleted' in d.columns:
-                    d = d[~d['mdmDeleted']]
-                d.reset_index(inplace=True, drop=True)
+                d = drop_duplicated_parquet(d)
             else:
+                # TODO: add mdmDeleted to dask.
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                     .drop_duplicates(subset='mdmId', keep='last') \
                     .reset_index(drop=True)
