@@ -6,7 +6,7 @@ from ..storage import Storage
 from ..query import Query
 from ..filter import TYPE_FILTER, Filter
 import itertools
-
+from ..utils.miscellaneous import drop_duplicated_parquet
 
 class DataModelView:
 
@@ -223,10 +223,7 @@ class DataModelView:
 
         if merge_records:
             if not return_dask_graph:
-                d.sort_values('mdmCounterForEntity', inplace=True)
-                d.reset_index(inplace=True, drop=True)
-                d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
-                d.reset_index(inplace=True, drop=True)
+                d = drop_duplicated_parquet(d)
             else:
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                     .drop_duplicates(subset='mdmId', keep='last') \
