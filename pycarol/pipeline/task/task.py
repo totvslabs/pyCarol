@@ -24,10 +24,6 @@ class Task(luigi.Task):
     version = '0.0.0'
     metadata = {}
 
-    def __call__(self,*args):
-        """Alternative way to define pipeline"""
-        return inherit_list(*args)(self.__class__)
-
     def buildme(self, local_scheduler=True, **kwargs):
         luigi.build([self, ], local_scheduler=local_scheduler, **kwargs)
 

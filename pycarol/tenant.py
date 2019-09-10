@@ -16,7 +16,7 @@ class Tenant:
         :return:
             dict with the information about the tenant.
         """
-        return self.carol.call_api('v2/tenants/domain/{}'.format(domain), auth=False)
+        return self.carol.call_api('v2/tenants/domain/{}'.format(domain), auth=False, status_forcelist=[], retries=0)
 
 
 

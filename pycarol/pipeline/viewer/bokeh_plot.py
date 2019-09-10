@@ -70,8 +70,6 @@ def _make_pipeline_plot(
             ('task_id', '@task_id'),
             ('task_family','@task_family'),
             ('complete','@complete'),
-            ('target_hash_version','@target_hash_version'),
-            ('task_hash_version','@task_hash_version'),
             ('target_version', '@target_version'),
             ('task_version', '@task_version'), ],
         plot_width=900,
@@ -189,20 +187,15 @@ class PlotDynamics():
         return
 
     def update_callback(self,event):
-        from .viewer import (
-            get_complete,
-            get_target_hash_version,
-            get_target_version,
-        )
-
+        print("start update")
+        self.pipe.update_all_complete_status()
         task_id_column = self.nodes_data_source.data['task_id']
         task_gen = (self.pipe.get_task_by_id(task_id) for task_id in task_id_column)
-        update_data = dict(complete=[],target_hash_version=[],target_version=[])
+        update_data = dict(complete=[])
         for task in task_gen:
-            update_data['complete'].append(get_complete(task))
-            update_data['target_hash_version'].append(get_target_hash_version(task))
-            update_data['target_version'].append(get_target_version(task))
-    
+            update_data['complete'].append(self.pipe.get_task_complete(task))
+        print("finish update")
+
         self.nodes_data_source.data.update(update_data)
         
     def buttons_layout(self):
@@ -231,7 +224,7 @@ def plot_pipeline(
     pipeline_plot = _make_pipeline_plot(nodes_data_source, edges_data_source)
 
     dynamics = PlotDynamics(nodes_data_source,edges_data_source,pipe)
-
+    dynamics.update_callback(None)
     ### Layout
     final_layout = layout(
         column(
@@ -274,6 +267,5 @@ def get_plot_from_pipeline(pipe: Type[Pipe]):
 
     return bokeh_layout
 
-#TODO: implement python bokeh server to make dev and tests easier: test debuggging tools with tornado 6.0
 
 
