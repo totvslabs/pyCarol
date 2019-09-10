@@ -40,7 +40,7 @@ class DataModelView:
 
     def reprocess(self, view_name=None, view_id=None, cds=False):
         """
-        Reprocess a the view records.
+        Reprocess the view records.
 
         Args:
             view_name: `str`, default `None`
