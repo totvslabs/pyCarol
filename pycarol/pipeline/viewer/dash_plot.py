@@ -102,7 +102,7 @@ def get_app_from_pipeline(pipe):
             name='dagre',
             # rankDir='RL',
             # ranker='longest-path',
-            padding=20,
+            padding=5,
             nodeDimensionsIncludeLabels=True,
             animate=True,
             animationDuration=2000,
@@ -161,14 +161,22 @@ def get_app_from_pipeline(pipe):
             return cb_i
 
     def cb_run(nodes):
-        return f"Run {nodes}"
+        return f"Fake Run {nodes}"
 
     def cb_goto(nodes):
         pass
+
     def cb_remove(nodes):
-        pass
+        for n in nodes:
+            task_id = n['id']
+            task = pipe.get_task_by_id(task_id)
+            task.remove()
+        return "remove\n" + json.dumps(nodes)
+
     def cb_remove_upstream(nodes):
-        pass
+        tasks = [pipe.get_task_by_id(n['id']) for n in nodes]
+        pipe.remove_upstream(tasks)
+        return "remove upstream\n" + json.dumps(nodes)
 
     def cb_dummy(*args,**kwargs):
         return "cb_dummy"
@@ -200,6 +208,7 @@ def get_app_from_pipeline(pipe):
     def print_nodes_id(nodes):
         if nodes:
             return json.dumps(nodes)
+
     @app.callback(
         Output(main_pipeline.id, 'elements'),
         [Input(update_button.id, 'n_clicks_timestamp')]
