@@ -38,7 +38,20 @@ class DataModelView:
             self.query_params = {"offset": self.offset, "pageSize": str(self.page_size), "sortOrder": self.sort_order,
                                  "sortBy": self.sort_by}
 
-    def reprocess(self, view_name=None, view_id=None):
+    def reprocess(self, view_name=None, view_id=None, cds=False):
+        """
+
+        Args:
+            view_name: `str`, default `None`
+                View name
+            view_id: `str`, default `None`
+                View ID
+            cds: `bool`, default `False`
+                Save view on CDS.
+
+        Returns:
+
+        """
 
         if view_name is not None:
             view_id = self.get_by_name(view_name=view_name)['mdmId']
@@ -47,7 +60,8 @@ class DataModelView:
 
         url_filter = "v1/goldenRecordView/reprocess"
 
-        query_params = {"relationshipViewId":view_id}
+        query_params = {"relationshipViewId" : view_id,
+                        "cds" : cds}
         return self.carol.call_api(url_filter, params=query_params,
                                    method='POST')
 
