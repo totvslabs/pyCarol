@@ -49,17 +49,7 @@ class Carolina:
         self.cds_golden_intake_path = token['cdsIntakeGoldenPath']
         self.cds_staging_intake_path = token['cdsIntakeStagingPath']
 
-        # TODO: Uncomment when live.
-        # self.cds_view_intake_path = token['cdsIntakeViewPath']
-
-        # TODO remove wehn live.
-        if self.carol.environment == 'karol.ai':
-            self.cds_view_intake_path = {"bucket": "labs1-carol-internal-{tenant_id}",
-                                         "path": "view-output/parquet/{view_name}"}
-        else:
-            self.cds_view_intake_path = {"bucket": "prod1-carol-internal-{tenant_id}",
-                                         "path": "view-output/parquet/{view_name}"}
-
+        self.cds_view_intake_path = token['cdsIntakeViewPath']
 
         if self.engine == 'GCP-CS':
             self._init_gcp(token)
