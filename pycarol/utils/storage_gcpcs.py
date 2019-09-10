@@ -186,6 +186,12 @@ class StorageGCPCS:
         blobs = bucket.list_blobs(prefix=path, delimiter=None)
         return [{'storage_space': 'golden_cds', 'name': i.name} for i in blobs if i.name.endswith('.parquet')]
 
+    def get_view_cds_file_paths(self, dm_name):
+        bucket = self.client.bucket(self.carolina.get_bucket_name('view_cds'))
+        path = self.carolina.get_path('view_cds', {'dm_name': dm_name})
+        blobs = bucket.list_blobs(prefix=path, delimiter=None)
+        return [{'storage_space': 'view_cds', 'name': i.name} for i in blobs if i.name.endswith('.parquet')]
+
     def get_view_file_paths(self, view_name):
         bucket = self.client.bucket(self.carolina.get_bucket_name('view'))
         path = self.carolina.get_path('view', {'relationship_view_name': view_name})

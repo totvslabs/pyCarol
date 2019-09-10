@@ -380,7 +380,7 @@ class Staging:
                              columns=columns, max_hits=max_hits)
 
         elif backend == 'pandas':
-            d = _import_pandas(storage=storage, connector_id=connector_id,max_workers=max_workers,
+            d = _import_pandas(storage=storage, connector_id=connector_id, max_workers=max_workers,
                                token_carolina=token_carolina, storage_space=storage_space,
                                staging_name=staging_name, import_type=import_type,  columns=columns,
                                max_hits=max_hits, callback=callback, mapping_columns=mapping_columns)
