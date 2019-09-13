@@ -79,16 +79,16 @@ class Carol:
 
                 auth = ApiKeyAuth(auth_token)
 
-
         if connector_id is None:
-            connector_id = __CONNECTOR_PYCAROL__
-
+            if auth.connector_id is None:
+                connector_id = __CONNECTOR_PYCAROL__
+            else:
+                connector_id = auth.connector_id
 
         if domain is None or app_name is None or auth is None:
-            raise ValueError("domain, app_name and auth must be specified as parameters, in the app_config.json file " +
-                             "or in the environment variables CAROLTENANT, CAROLAPPNAME, CAROLAPPOAUTH" +
-                             " OR CAROLUSER+CAROLPWD and " +
-                             "CAROLCONNECTORID")
+            raise ValueError("domain, app_name and auth must be specified as parameters, either " +
+                             "in the environment variables CAROLTENANT, CAROLAPPNAME, CAROLAPPOAUTH" +
+                             " or CAROLUSER+CAROLPWD and  CAROLCONNECTORID")
 
         # TODO Fixed to be compatible with the old `ENV_DOMAIN`. We could add a deprecated warning.
         self.environment = os.getenv('CAROL_DOMAIN', os.getenv('ENV_DOMAIN', environment))
