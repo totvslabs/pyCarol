@@ -9,6 +9,7 @@ class PwdAuth:
         self.password = password
         self._token = None
         self.carol = None
+        self.connector_id = None
 
     def set_connector_id(self, connector_id):
         self.connector_id = connector_id
