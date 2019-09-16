@@ -196,4 +196,21 @@ class Tasks:
         else:
             return False
 
+    def fail(self, task_id=None, message=''):
+        """
+        Fail the task
+        :param task_id: it's not necessary if self.mdm_id is defined
+        :param message: message to log
+        :return: boolean
+        """
 
+        if task_id is None:
+            task_id = self.task_id
+
+        querystring = {"message": message}
+
+        resp = self.carol.call_api('v1/tasks/{}/fail'.format(task_id), method="POST",params=querystring )
+        if resp['success']:
+            return True
+        else:
+            return False
