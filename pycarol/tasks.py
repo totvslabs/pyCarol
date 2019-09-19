@@ -147,7 +147,7 @@ class Tasks:
     def get_logs(self, task_id=None):
         """
         Get all logs
-        :param task_id: it's not necessary if self.mdm_id is defined
+        :param task_id: it's not necessary if self.task_id is defined
         :return: list of logs
         """
 
@@ -180,13 +180,20 @@ class Tasks:
     def cancel(self, task_id=None, force=False):
         """
         Cancel the task
-        :param task_id: it's not necessary if self.mdm_id is defined
-        :param force: Force cancel
-        :return: boolean
+
+        Args:
+            task_id: `str` default `None`
+                The task ID. it's not necessary if self.task_id is defined
+            force: `boll` default `False`
+                Force cancel
+
+        :return:
+            boolean
         """
 
         if task_id is None:
             task_id = self.task_id
+            assert task_id, "Task ID should be set"
 
         querystring = {"force": force}
 
@@ -199,13 +206,20 @@ class Tasks:
     def fail(self, task_id=None, message=''):
         """
         Fail the task
-        :param task_id: it's not necessary if self.mdm_id is defined
-        :param message: message to log
-        :return: boolean
+
+        Args:
+            task_id: `str` default `None`
+                The task Id. it's not necessary if self.task_id is defined
+            :param message: `str` default ``
+                message to log
+
+        :return:
+            boolean
         """
 
         if task_id is None:
             task_id = self.task_id
+            assert task_id, "Task ID should be set"
 
         querystring = {"message": message}
 
