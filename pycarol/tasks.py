@@ -130,8 +130,13 @@ class Tasks:
     def add_logs(self, logs, task_id=None):
         """
         Add more than one log
-        :param logs: list of logs objects [{"task_id":"", "log_message": "", "log_level": ""}]
-        :param task_id: it's not necessary if self.mdm_id is defined
+
+        Args:
+        logs: `list`
+            list of logs objects [{"task_id":"", "log_message": "", "log_level": ""}]
+        task_id `str` default `None`
+                The task ID. it's not necessary if self.task_id is defined
+
         :return: Task
         """
 
@@ -147,8 +152,13 @@ class Tasks:
     def get_logs(self, task_id=None):
         """
         Get all logs
-        :param task_id: it's not necessary if self.task_id is defined
-        :return: list of logs
+
+        Args:
+           task_id `str` default `None`
+                The task ID. it's not necessary if self.task_id is defined
+
+        :return:
+            list of logs
         """
 
         if task_id is None:
@@ -160,10 +170,17 @@ class Tasks:
     def set_progress(self, progress, progress_data=None, task_id=None):
         """
         Set Task Progress
-        :param progress: Number relative to progress
-        :param progress_data: Json to storage as mdmTaskprogress_data
-        :param task_id: it's not necessary if self.mdm_id is defined
-        :return: Task
+
+        Args:
+            progress: `int`
+                Number relative to progress
+            progress_data: 'dict` default `None`
+                Json payload to be sent to Carol
+            task_id `str` default `None`
+                The task ID. it's not necessary if self.task_id is defined
+
+        :return:
+            Task response.
         """
 
         if progress_data is None:
