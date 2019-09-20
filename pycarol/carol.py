@@ -38,6 +38,11 @@ class Carol:
                 1. 'carol.ai' for the production environment
                 2. 'karol.ai' for the explore environment
                 1. 'qarol.ai' for the QA environment
+        host: `str` default `None`
+            This will overwrite the host used. Today the host is:
+                if organization is None, host={domain}.{environment}
+                else host={organization}.{environment}
+            See Carol._set_host.
 
     OBS:
         In case all parameters are `None`, pycarol will try yo find their values in the environment variables.
@@ -109,6 +114,26 @@ class Carol:
 
     @staticmethod
     def _set_host(domain, organization, environment, host):
+        """
+        Set the host to be used.
+
+        Args:
+            domain: `str`
+                Former tenant name.
+                e.x., domain.carol.ai
+            organization: `str`
+                Organization domain.
+            environment: `str`
+                Which Carol's environment to use. There are three possible values today.
+                1. 'carol.ai' for the production environment
+                2. 'karol.ai' for the explore environment
+                1. 'qarol.ai' for the QA environment
+            host: `str`
+                Host to be used. It overwrite the default one.
+
+        Returns: `str`
+            host
+        """
         if host is not None:
             return host
         elif organization is not None:
