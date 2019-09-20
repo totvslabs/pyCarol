@@ -51,7 +51,7 @@ class Carol:
     """
 
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
-                 organization=None, environment='carol.ai'):
+                 organization=None, environment='carol.ai', host=None):
 
         settings = dict()
         if auth is None and domain is None:
@@ -97,6 +97,8 @@ class Carol:
         self.app_name = app_name
         self.port = port
         self.verbose = verbose
+        self.host = self._set_host(domain=self.domain, organization=self.organization,
+                                   environment=self.environment, host=host)
         self.tenant = Tenant(self).get_tenant_by_domain(domain)
         self.connector_id = connector_id
         self.auth = auth
@@ -104,6 +106,16 @@ class Carol:
         self.auth.login(self)
         self.response = None
 
+
+    @staticmethod
+    def _set_host(domain, organization, environment, host):
+        if host is not None:
+            return host
+        elif organization is not None:
+            return f"{organization}.{environment}"
+        else:
+            return f"{domain}.{environment}"
+        pass
 
     @staticmethod
     def _retry_session(retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524),
@@ -181,7 +193,7 @@ class Carol:
                 A retry is initiated if the request method is in method_whitelist and the response status code is in
                 status_forcelist.
             downloadable: `bool` default `False`.
-                If the request will return a file to donwload.
+                If the request will return a file to download.
             method_whitelist: `iterable` , default frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']))
                 Set of uppercased HTTP method verbs that we should retry on.
             errors: {‘ignore’, ‘raise’}, default ‘raise’
@@ -189,7 +201,7 @@ class Carol:
                 then invalid request will return the request response
             extra_headers: `dict` default `None`
                 extra headers to be sent.
-            kwds: `dixt` default `None`
+            kwds: `dict` default `None`
                 Extra parameters to be sent to :class: `requests.request`
 
         Rerturn:
@@ -198,7 +210,7 @@ class Carol:
         """
 
         extra_headers = extra_headers or {}
-        url = f'https://{self.domain}.{self.environment}:{self.port}/api/{path}'
+        url = f'https://{self.host}:{self.port}/api/{path}'
 
         if method is None:
             if data is None:
