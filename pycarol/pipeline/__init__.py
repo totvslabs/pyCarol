@@ -6,7 +6,6 @@ This module defines a framework for building and managing data pipelines. It was
 has it as a backend for the implementation of the pipeline execution.
 
 """
-#TODO(renan): "from pycarol.luigi_extension.targets import *" is not working
 from .task import (
     Task,
     WrapperTask,

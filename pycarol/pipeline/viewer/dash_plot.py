@@ -1,45 +1,52 @@
 import dash
 import dash_core_components as dcc
+from dash.dependencies import Input,Output,State
 import dash_html_components as html
+from dash_html_components import Button, Div
 import dash_cytoscape as cyto
+import json
 cyto.load_extra_layouts()
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 def get_app_from_pipeline(pipe):
-    from pycarol.pipeline.viewer.viewer import (nodes_layout, edges_layout, )
-
     app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-    root_tasks = pipe.top_nodes
     dag = pipe.get_dag()
 
-    nodes_elements = [
-        {
-            'data': {
-                'id': k.task_id,
-                'label': k.get_task_family().split('.')[-1],
-            },
-            'classes': k.get_task_family().split('.')[-2],
-        }
-        for i,k in enumerate(dag.keys())
-    ]
-
-    edges_elements =[
-        {
-            'data': {
-                'source': source.task_id,
-                'target': target.task_id,
+    def get_nodes_elements():
+        pipe.update_all_complete_status()
+        return [
+            {
+                'data': {
+                    'id': k.task_id,
+                    'label': k.get_task_family().split('.')[-1],
+                    'complete': pipe.get_task_complete(k),
+                    'i': i,
+                },
+                'classes': k.get_task_family().split('.')[-2],
             }
-        }
-        for i,source in enumerate(dag.keys()) for target in dag[source]
-    ]
+            for i,k in enumerate(dag.keys())
+        ]
+    def get_edges_elements():
+        return [
+            {'data': {'source': source.task_id, 'target': target.task_id, }} for
+            i, source in enumerate(dag.keys()) for target in dag[source]
+        ]
+
+
+    nodes_elements = get_nodes_elements()
+    edges_elements = get_edges_elements()
 
     group_selectors = [
         {
             'selector': 'node',
             'style': {
-                'font-size': '12px',
+                'font-size': '18',
                 'content': 'data(label)',
-                'shape': 'oval',
+                'shape': 'ellipse',
+                'opacity': 1.0,
+                'border-style': 'solid',
+                'border-width': 5,
+
             }
         },
         {
@@ -48,7 +55,6 @@ def get_app_from_pipeline(pipe):
                 'curve-style': 'bezier',
                 'source-arrow-shape': 'vee',
                 'arrow-scale': 2,
-                # 'line-color': 'blue'
             }
         }
     ]
@@ -59,38 +65,157 @@ def get_app_from_pipeline(pipe):
             'selector': '.' + family,
             'style': {
                 'background-color': cc.glasbey_dark[i],
+                'border-color': cc.glasbey_dark[i],
+                'selectable': True,
             }
         }
         for i,family in enumerate(
             {t.get_task_family().split('.')[-2] for t in dag.keys()}
         )
     ]
-    my_stylesheet = group_selectors + class_selectors
+    complete_selector =[
+        {
+            'selector': "[!complete]",
+            'style': {
+                'background-color': 'white',
+                'shape': 'round-rectangle',
+            }
+        }
+    ]
+    default_stylesheet = group_selectors + class_selectors + complete_selector
 
 
+    def row(*children):
+        return html.Div(className='row',children=list(children))
+
+    def column(*children,size=12,**params):
+        class_name_dict = {
+            6: "six columns",
+            12: "twelve columns",
+        }
+        return html.Div(className=class_name_dict[size],children=list(
+            children),**params)
 
 
-    app.layout = html.Div(children=[
+    main_pipeline = cyto.Cytoscape(
+        id='main_pipeline',
+        layout=dict(
+            name='dagre',
+            # rankDir='RL',
+            # ranker='longest-path',
+            padding=5,
+            nodeDimensionsIncludeLabels=True,
+            animate=True,
+            animationDuration=2000,
+        ),
+        style={
+            'width':'100%',
+            'height':'600px',
+            'background-color': '#fdfd96',
+        },
+        stylesheet=default_stylesheet,
+        elements=nodes_elements + edges_elements,
+    )
 
-        html.H1(children='Pipeline viewer'),
+    tap_node_data = Div(
+        id='tap_node_data_div',
+        children=[
+            html.P(id="tap_node_header", children="Selected Nodes"),
+            html.P(id='tap_node_data'),
+        ],
+        style={'background-color': '#fdfd96'},
+    )
 
-        cyto.Cytoscape(
-            id='main-pipeline',
-            layout=dict(
-                name='dagre',
-                # rankDir='RL',
-                # ranker='longest-path',
-                padding=100,
-                nodeDimensionsIncludeLabels=True,
-                animate=True,
-                animationDuration=2000,
-            ),
-            style=dict(width='100%', height='600px'),
-            stylesheet=my_stylesheet,
-            elements=nodes_elements+edges_elements,
+    run_button = Button(id='run_button',children='Run')
+    goto_button = Button(id='goto_button',children='Go to Definition')
+    remove_button = Button(id='remove_button',children='Remove')
+    remove_upstream_button = Button(id='remove_upstream_button',
+                                    children='Remove Upstream')
+    update_button = Button(id='update_button',children='Update')
+    buttons_list = [update_button,run_button,goto_button,remove_button,
+                    remove_upstream_button]
 
-        )
+    buttons_output = html.P(
+        id='print_node_data',
+        style={'background-color': '#fdfd96'},
+    )
 
-    ])
+    app.layout = column(
+        row(main_pipeline),
+        row(
+            # tap_node_data,
+            row(*buttons_list),
+            buttons_output
+        ),
+    )
+    ### Dynamics ###
+    def select_callback(*ts_list):
+        max_ts = -1
+        print(ts_list)
+        for i,ts in enumerate(ts_list):
+            if ts and ts>max_ts:
+                max_ts = ts
+                cb_i = i
+        if max_ts == -1:
+            return None
+        else:
+            return cb_i
+
+    def cb_run(nodes):
+        return f"Fake Run {nodes}"
+
+    def cb_goto(nodes):
+        pass
+
+    def cb_remove(nodes):
+        for n in nodes:
+            task_id = n['id']
+            task = pipe.get_task_by_id(task_id)
+            task.remove()
+        return "remove\n" + json.dumps(nodes)
+
+    def cb_remove_upstream(nodes):
+        tasks = [pipe.get_task_by_id(n['id']) for n in nodes]
+        pipe.remove_upstream(tasks)
+        return "remove upstream\n" + json.dumps(nodes)
+
+    def cb_dummy(*args,**kwargs):
+        return "cb_dummy"
+
+    @app.callback(
+        Output(buttons_output.id, 'children'),
+        [
+            Input(b.id, 'n_clicks_timestamp')
+            for b in buttons_list
+        ],
+        [State(main_pipeline.id, 'selectedNodeData')],
+    )
+    def callback_buttons(*inputs):
+        callback_list = [cb_dummy,cb_run,cb_goto,cb_remove,cb_remove_upstream]
+        assert len(callback_list) == len(buttons_list)
+        ts_list = inputs[0:-1]
+        selected_nodes = inputs[-1]
+        cb_i = select_callback(*ts_list)
+        if cb_i is None:
+            return None
+        else:
+            return callback_list[cb_i](nodes=selected_nodes)
+
+
+    # @app.callback(
+    #     Output("tap_node_data", 'children'),
+    #     [Input(main_pipeline.id, 'selectedNodeData')]
+    # )
+    # def print_nodes_id(nodes):
+    #     if nodes:
+    #         return json.dumps(nodes)
+
+    @app.callback(
+        Output(main_pipeline.id, 'elements'),
+        [Input(update_button.id, 'n_clicks_timestamp')]
+    )
+    def cb_update(ts):
+        print("cb_update")
+        return get_nodes_elements() + get_edges_elements()
 
     return app
