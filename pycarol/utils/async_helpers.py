@@ -8,11 +8,17 @@ import threading
 class AtomicCounter:
     """An atomic, thread-safe incrementing counter.
 
+    Args:
+        initial: `int` default `0`
+            Initial value for the counter.
+        total: `int` default `None`
+            If exists, the max value that will be reached.
 
     """
 
     def __init__(self, initial=0, total=None):
-        """Initialize a new atomic counter to given initial value (default 0)."""
+        """Initialize a new atomic counter to given initial value.
+        """
         self.value = initial
         self.total = total
         self._lock = threading.Lock()
@@ -26,27 +32,27 @@ class AtomicCounter:
             return self.value
 
     def print(self):
-        print(f'{self.value}/{self.total} sent')
+        print(f'{self.value}/{self.total} sent', end='\r')
 
 
 def send_a(carol, session, url, data_json, extra_headers, content_type, counter):
     """
     Helper function to be used when sending data async.
 
-
-    :param carol: requests.Session
-        Carol object
-    :param session: `requests.Session`
-        Session object to handle multiple API calls.
-    :param url: `str`
-        end point to be called.
-    :param data_json: `dict`
-        The json to be send.
-    :param extra_headers: `dict`
-        Extra headers to be used in the API call
-    :param content_type: `dict`
-        Content type of the call.
-    :return: None
+    Args:
+        carol: requests.Session
+            Carol object
+        session: `requests.Session`
+            Session object to handle multiple API calls.
+        url: `str`
+            end point to be called.
+        data_json: `dict`
+            The json to be send.
+        extra_headers: `dict`
+            Extra headers to be used in the API call
+        content_type: `dict`
+            Content type of the call.
+        :return: None
     """
     carol.call_api(url, data=data_json, extra_headers=extra_headers,
                    content_type=content_type, session=session)
@@ -58,24 +64,26 @@ def send_a(carol, session, url, data_json, extra_headers, content_type, counter)
 async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
                                  content_type, max_workers, compress_gzip):
     """
+    Helper function to send data asynchronous.
 
-    :param carol: `pycarol.carol.Carol`.
-        Carol object
-    :param data: `pandas.DataFrame` or `list of dict`,
-        Data to be sent.
-    :param step_size: 'int'
-        Number of records per slice.
-    :param url: 'str'
-        API URI
-    :param extra_headers: `dict`
-        Extra headers to be used in the API call
-    :param content_type:  `dict`
-        Content type of the call.
-    :param max_workers:  `int`
-        Max number of workers of the async job
-    :param compress_gzip: 'bool'
-        If to compress the data to send
-    :return:
+    Args:
+        carol: `pycarol.carol.Carol`.
+            Carol object
+        data: `pandas.DataFrame` or `list of dict`,
+            Data to be sent.
+        step_size: 'int'
+            Number of records per slice.
+        url: 'str'
+            API URI
+        extra_headers: `dict`
+            Extra headers to be used in the API call
+        content_type:  `dict`
+            Content type of the call.
+        max_workers:  `int`
+            Max number of workers of the async job
+        compress_gzip: 'bool'
+            If to compress the data to send
+        :return:
     """
 
     counter = AtomicCounter(total=len(data))

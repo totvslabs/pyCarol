@@ -118,7 +118,7 @@ def stream_data(data, step_size, compress_gzip):
         else:
             data_to_send = data[i:i + step_size]
             cont += len(data_to_send)
-            print('Sending {}/{}'.format(cont, data_size), end='\r')
+            #print('Sending {}/{}'.format(cont, data_size), end='\r')
             if compress_gzip:
                 out = io.BytesIO()
                 with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
