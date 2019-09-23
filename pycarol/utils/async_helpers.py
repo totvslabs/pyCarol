@@ -25,6 +25,7 @@ def send_a(carol, session, url, data_json, extra_headers, content_type):
     """
     carol.call_api(url, data=data_json, extra_headers=extra_headers,
                    content_type=content_type, session=session)
+    return len(data_json)
 
 
 async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
@@ -63,8 +64,11 @@ async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
                 # Allows us to pass in multiple arguments to `send_a`
             )
             for data_json, _ in stream_data(data=data,
-                                            step_size=step_size,
-                                            compress_gzip=compress_gzip)
+                                                step_size=step_size,
+                                                compress_gzip=compress_gzip)
         ]
-        for _ in await asyncio.gather(*tasks):
-            pass
+        total_sent = 0
+        total_to_send = len(data)
+        for count in await asyncio.gather(*tasks):
+            total_sent+=count
+            print(f'{total_sent}/{total_to_send}')

@@ -106,7 +106,7 @@ def stream_data(data, step_size, compress_gzip):
         if is_df:
             data_to_send = data.iloc[i:i + step_size]
             cont += len(data_to_send)
-            print('Sending {}/{}'.format(cont, data_size), end='\r')
+            #print('Sending {}/{}'.format(cont, data_size), end='\r')
             data_to_send = data_to_send.to_json(orient='records', date_format='iso', lines=False)
             if compress_gzip:
                 out = io.BytesIO()
