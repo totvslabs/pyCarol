@@ -13,6 +13,7 @@ from .filter import Filter, TYPE_FILTER
 from .utils import async_helpers
 from .utils.miscellaneous import stream_data
 from . import _CAROL_METADATA
+from .utils.miscellaneous import drop_duplicated_parquet
 
 _SCHEMA_TYPES_MAPPING = {
     "geopoint": str,
@@ -379,7 +380,7 @@ class Staging:
                              columns=columns, max_hits=max_hits)
 
         elif backend == 'pandas':
-            d = _import_pandas(storage=storage, connector_id=connector_id,max_workers=max_workers,
+            d = _import_pandas(storage=storage, connector_id=connector_id, max_workers=max_workers,
                                token_carolina=token_carolina, storage_space=storage_space,
                                staging_name=staging_name, import_type=import_type,  columns=columns,
                                max_hits=max_hits, callback=callback, mapping_columns=mapping_columns)
@@ -413,11 +414,9 @@ class Staging:
 
         if merge_records:
             if not return_dask_graph:
-                d.sort_values('mdmCounterForEntity', inplace=True)
-                d.reset_index(inplace=True, drop=True)
-                d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
-                d.reset_index(inplace=True, drop=True)
+                d = drop_duplicated_parquet(d)
             else:
+                # TODO: add mdmDeleted to dask.
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                     .drop_duplicates(subset='mdmId', keep='last') \
                     .reset_index(drop=True)

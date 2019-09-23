@@ -130,8 +130,13 @@ class Tasks:
     def add_logs(self, logs, task_id=None):
         """
         Add more than one log
-        :param logs: list of logs objects [{"task_id":"", "log_message": "", "log_level": ""}]
-        :param task_id: it's not necessary if self.mdm_id is defined
+
+        Args:
+        logs: `list`
+            list of logs objects [{"task_id":"", "log_message": "", "log_level": ""}]
+        task_id `str` default `None`
+                The task ID. it's not necessary if self.task_id is defined
+
         :return: Task
         """
 
@@ -147,8 +152,13 @@ class Tasks:
     def get_logs(self, task_id=None):
         """
         Get all logs
-        :param task_id: it's not necessary if self.mdm_id is defined
-        :return: list of logs
+
+        Args:
+           task_id `str` default `None`
+                The task ID. it's not necessary if self.task_id is defined
+
+        :return:
+            list of logs
         """
 
         if task_id is None:
@@ -160,10 +170,17 @@ class Tasks:
     def set_progress(self, progress, progress_data=None, task_id=None):
         """
         Set Task Progress
-        :param progress: Number relative to progress
-        :param progress_data: Json to storage as mdmTaskprogress_data
-        :param task_id: it's not necessary if self.mdm_id is defined
-        :return: Task
+
+        Args:
+            progress: `int`
+                Number relative to progress
+            progress_data: 'dict` default `None`
+                Json payload to be sent to Carol
+            task_id `str` default `None`
+                The task ID. it's not necessary if self.task_id is defined
+
+        :return:
+            Task response.
         """
 
         if progress_data is None:
@@ -180,13 +197,20 @@ class Tasks:
     def cancel(self, task_id=None, force=False):
         """
         Cancel the task
-        :param task_id: it's not necessary if self.mdm_id is defined
-        :param force: Force cancel
-        :return: boolean
+
+        Args:
+            task_id: `str` default `None`
+                The task ID. it's not necessary if self.task_id is defined
+            force: `boll` default `False`
+                Force cancel
+
+        :return:
+            boolean
         """
 
         if task_id is None:
             task_id = self.task_id
+            assert task_id, "Task ID should be set"
 
         querystring = {"force": force}
 
@@ -196,13 +220,28 @@ class Tasks:
         else:
             return False
 
+    def fail(self, task_id=None, message=''):
+        """
+        Fail the task
 
-## Missing Implements
-# /api/v1/tasks/{id}/reprocess - Reprocess by Id
-# /api/v1/tasks/{id}/sync - Process Task Synchronously by Id
-# /api/v1/tasks/scheduled - Create Scheduled Task
-# /api/v1/tasks/{id}/schedule - Schedule Similar Task by Id
-# /api/v1/tasks/scheduled/{id} - Get Scheduled by Id
-# /api/v1/tasks/scheduled/{id}/delete - Delete Scheduled Task by Id
-# /api/v1/tasks/scheduled/{id}/pause - Cancel Scheduled Task by Id
-# /api/v1/tasks/scheduled/{id}/play - Play Scheduled Task by Id
+        Args:
+            task_id: `str` default `None`
+                The task Id. it's not necessary if self.task_id is defined
+            :param message: `str` default ``
+                message to log
+
+        :return:
+            boolean
+        """
+
+        if task_id is None:
+            task_id = self.task_id
+            assert task_id, "Task ID should be set"
+
+        querystring = {"message": message}
+
+        resp = self.carol.call_api('v1/tasks/{}/fail'.format(task_id), method="POST",params=querystring )
+        if resp['success']:
+            return True
+        else:
+            return False

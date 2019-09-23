@@ -18,16 +18,41 @@ _carol_levels = dict(
 
 
 class CarolHandler(logging.StreamHandler):
+    """
+    Carol logger handler.
+
+    This class can be used to log information in long tasks in Carol.
+
+    Args:
+    carol: Carol object
+        Carol object.
+
+    Usage:
+
+    >>>from pycarol import Carol, CarolHandler
+    >>>import logging
+    >>>logger = logging.getLogger(__name__)
+    >>>carol = CarolHandler(Carol())
+    >>>carol.setLevel(logging.INFO)
+    >>>logger.addHandler(carol)
+
+    >>>logger.debug('This is a debug message') #This will not be logged in Carol. Level is set to INFO
+    >>>logger.info('This is an info message')
+    >>>logger.warning('This is a warning message')
+    >>>logger.error('This is an error message')
+    >>>logger.critical('This is a critical message')
+
+    These methods will use the current long task id provided by Carol when running your application.
+    For local environments you need to set that manually first on the beginning of your code:
+
+    >>>import os
+    >>>os.environ['LONGTASKID'] = TASK_ID
+
+    If no TASK ID is passed it works as a Console Handler.
+    """
 
     def __init__(self, carol=None):
         """
-
-        Carol logger handler.
-
-        This class can be used to log informatio in long tasks in Carol.
-
-        :param carol: Carol object
-            Carol object.
 
         """
         super().__init__(stream=sys.stdout)
@@ -52,7 +77,7 @@ class CarolHandler(logging.StreamHandler):
         self._task = Tasks(self.carol)
         self.task_id = os.getenv('LONGTASKID', None)
         self._task.task_id = self.task_id
-        self._first_pending=True
+        self._first_pending = True
 
     def _log_carol(self, record):
         msg = self.format(record)
@@ -63,7 +88,6 @@ class CarolHandler(logging.StreamHandler):
         if record.name != 'luigi-interface':
             self._task.add_log(msg, log_level=log_level)
 
-
     def emit(self, record):
         if (self.task_id is None) or (self._use_console):
             super().emit(record)
@@ -71,6 +95,19 @@ class CarolHandler(logging.StreamHandler):
             self._log_carol(record)
 
     def _set_progress_task_luigi(self, msg, log_level):
+
+        """
+        Used to auto set the process bar in Carol when using Luigi.
+
+        Args:
+            msg: `str`
+                message to log
+            log_level:
+                log level.
+
+        Returns: None
+
+        """
 
         match = re.search(r'\d+.?\d*', msg)
         wrong_value = False
@@ -82,7 +119,7 @@ class CarolHandler(logging.StreamHandler):
 
         else:
             current_count = 100
-            wrong_value=True
+            wrong_value = True
             self._task.add_log('Something wrong with task counter', log_level='WARN')
 
         if (self._first_pending) and (not wrong_value):
@@ -91,10 +128,9 @@ class CarolHandler(logging.StreamHandler):
 
         if wrong_value:
             try:
-                current_percentage = 100 - 100*(current_count/self._total_number_of_tasks)
-                current_percentage = int(min(current_percentage,99))
+                current_percentage = 100 - 100 * (current_count / self._total_number_of_tasks)
+                current_percentage = int(min(current_percentage, 99))
                 self._task.set_progress(current_percentage)
             except:
                 pass
         self._task.add_log(msg, log_level='INFO')
-

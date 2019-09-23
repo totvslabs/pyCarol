@@ -77,3 +77,6 @@ class Storage:
 
     def get_golden_cds_file_paths(self, dm_name):
         return self.backend.get_golden_cds_file_paths(dm_name)
+
+    def get_view_cds_file_paths(self, dm_name):
+        return self.backend.get_view_cds_file_paths(dm_name)

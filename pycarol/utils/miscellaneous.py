@@ -7,6 +7,18 @@ import numpy as np
 _FILE_MARKER = '<files>'
 
 
+
+def drop_duplicated_parquet(d):
+
+    d.sort_values('mdmCounterForEntity', inplace=True)
+    d.reset_index(inplace=True, drop=True)
+    d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
+    if 'mdmDeleted' in d.columns:
+        d['mdmDeleted'] = d['mdmDeleted'].fillna(False)
+        d = d[~d['mdmDeleted']]
+    d.reset_index(inplace=True, drop=True)
+    return d
+
 class NumpyEncoder(json.JSONEncoder):
     """ Special json encoder for numpy types """
 
