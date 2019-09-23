@@ -40,7 +40,7 @@ def get_app_from_pipeline(pipe):
         {
             'selector': 'node',
             'style': {
-                'font-size': '12',
+                'font-size': '18',
                 'content': 'data(label)',
                 'shape': 'ellipse',
                 'opacity': 1.0,
@@ -88,9 +88,10 @@ def get_app_from_pipeline(pipe):
     def row(*children):
         return html.Div(className='row',children=list(children))
 
-    def column(*children,size=6,**params):
+    def column(*children,size=12,**params):
         class_name_dict = {
-            6: "six columns"
+            6: "six columns",
+            12: "twelve columns",
         }
         return html.Div(className=class_name_dict[size],children=list(
             children),**params)
@@ -144,7 +145,7 @@ def get_app_from_pipeline(pipe):
         row(
             # tap_node_data,
             row(*buttons_list),
-            # buttons_output
+            buttons_output
         ),
     )
     ### Dynamics ###
@@ -201,13 +202,13 @@ def get_app_from_pipeline(pipe):
             return callback_list[cb_i](nodes=selected_nodes)
 
 
-    @app.callback(
-        Output("tap_node_data", 'children'),
-        [Input(main_pipeline.id, 'selectedNodeData')]
-    )
-    def print_nodes_id(nodes):
-        if nodes:
-            return json.dumps(nodes)
+    # @app.callback(
+    #     Output("tap_node_data", 'children'),
+    #     [Input(main_pipeline.id, 'selectedNodeData')]
+    # )
+    # def print_nodes_id(nodes):
+    #     if nodes:
+    #         return json.dumps(nodes)
 
     @app.callback(
         Output(main_pipeline.id, 'elements'),
