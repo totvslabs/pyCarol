@@ -49,6 +49,7 @@ def get_app_from_pipeline(pipe):
 
             }
         },
+
         {
             'selector': 'edge',
             'style': {
