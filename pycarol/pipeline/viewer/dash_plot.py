@@ -139,12 +139,12 @@ def get_app_from_pipeline(pipe):
         style={'background-color': '#fdfd96'},
     )
 
-    app.layout = row(
-        column(main_pipeline),
-        column(
-            tap_node_data,
+    app.layout = column(
+        row(main_pipeline),
+        row(
+            # tap_node_data,
             row(*buttons_list),
-            buttons_output
+            # buttons_output
         ),
     )
     ### Dynamics ###
