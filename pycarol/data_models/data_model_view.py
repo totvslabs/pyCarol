@@ -6,7 +6,7 @@ from ..storage import Storage
 from ..query import Query
 from ..filter import TYPE_FILTER, Filter
 import itertools
-
+from ..utils.miscellaneous import drop_duplicated_parquet
 
 class DataModelView:
 
@@ -38,7 +38,22 @@ class DataModelView:
             self.query_params = {"offset": self.offset, "pageSize": str(self.page_size), "sortOrder": self.sort_order,
                                  "sortBy": self.sort_by}
 
-    def reprocess(self, view_name=None, view_id=None):
+    def reprocess(self, view_name=None, view_id=None, cds=False):
+        """
+        Reprocess the view records.
+
+        Args:
+            view_name: `str`, default `None`
+                View name
+            view_id: `str`, default `None`
+                View ID
+            cds: `bool`, default `False`
+                Save view on CDS.
+
+        Returns: `dict`
+            Task response.
+
+        """
 
         if view_name is not None:
             view_id = self.get_by_name(view_name=view_name)['mdmId']
@@ -47,7 +62,8 @@ class DataModelView:
 
         url_filter = "v1/goldenRecordView/reprocess"
 
-        query_params = {"relationshipViewId":view_id}
+        query_params = {"relationshipViewId" : view_id,
+                        "cds" : cds}
         return self.carol.call_api(url_filter, params=query_params,
                                    method='POST')
 
@@ -148,29 +164,39 @@ class DataModelView:
 
 
     def fetch_parquet(self, view_name, merge_records=True, backend='pandas', return_dask_graph=False,
-                      columns=None, return_metadata=False, callback=None, max_hits=None):
+                      columns=None, return_metadata=False, callback=None, max_hits=None,
+                      cds=False, max_workers=None,):
 
         """
 
-        :param view_name: `str`
-            View name to be imported
-        :param merge_records: `bool`, default `True`
-            This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
-            one should keep only the last records.
-        :param backend: ['dask','pandas'], default `dask`
-            if to use either dask or pandas to fetch the data
-        :param return_dask_graph: `bool`, default `false`
-            If to return the dask graph or the dataframe.
-        :param columns: `list`, default `None`
-            List of columns to fetch.
-        :param return_metadata: `bool`, default `False`
-            To return or not the fields ['mdmId', 'mdmCounterForEntity']
-        :param callback: `callable`, default `None`
-            Function to be called each downloaded file.
-        :param max_hits: `int`, default `None`
-            Number of records to get.
+        Args:
+            view_name: `str`
+                View name to be imported
+            merge_records: `bool`, default `True`
+                This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
+                one should keep only the last records.
+            backend: ['dask','pandas'], default `dask`
+                if to use either dask or pandas to fetch the data
+            return_dask_graph: `bool`, default `false`
+                If to return the dask graph or the dataframe.
+            columns: `list`, default `None`
+                List of columns to fetch.
+            return_metadata: `bool`, default `False`
+                To return or not the fields ['mdmId', 'mdmCounterForEntity']
+            callback: `callable`, default `None`
+                Function to be called each downloaded file.
+            max_hits: `int`, default `None`
+                Number of records to get.
+            cds: `bool`, default `False`
+                    Get view data from CDS.
+            max_workers: `int` default `None`
+                Number of workers to use when downloading parquet files with pandas back-end.
         :return:
         """
+
+        if callback:
+            assert callable(callback), \
+                f'"{callback}" is a {type(callback)} and is not callable.'
 
         if isinstance(columns, str):
             columns = [columns]
@@ -182,40 +208,38 @@ class DataModelView:
 
 
         dms = self._get_view_export_stats()
-        if not dms.get(view_name):
-            raise Exception(
-                f'"{view_name}" is not set to export data, \n'
-                f'use `dm = DataModelView(login).export(view_name="{view_name}", sync_dm=True) to activate')
 
+        if not cds:
+            if not dms.get(view_name):
+                raise Exception(
+                    f'"{view_name}" is not set to export data, \n'
+                    f'use `dm = DataModelView(login).export(view_name="{view_name}", sync_dm=True) to activate')
+            import_type = 'view'
+        else:
+            import_type = 'view_cds'
         if columns:
             columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
 
+
+
+
         storage = Storage(self.carol)
+        token_carolina = storage.backend.carolina.token
+        storage_space = storage.backend.carolina.get_bucket_name(import_type)
+
         if backend == 'dask':
-            d = _import_dask(storage=storage, view_name=view_name, import_type='view',
+            d = _import_dask(storage=storage, view_name=view_name, import_type=import_type,
                              merge_records=merge_records, return_dask_graph=return_dask_graph,
-                             columns=columns)
+                             columns=columns, )
 
         elif backend == 'pandas':
 
             d = _import_pandas(storage=storage, view_name=view_name, golden=True, columns=columns, callback=callback,
-                               max_hits=max_hits,import_type='view')
+                               max_hits=max_hits, import_type=import_type, max_workers=max_workers,
+                               token_carolina=token_carolina,
+                               )
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
-                _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
-                cols_keys = list(_field_types)
-                if return_metadata:
-                    cols_keys.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
-
-                elif columns:
-                    columns = [i for i in columns if i not in ['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated']]
-
-                d = pd.DataFrame(columns=cols_keys)
-                for key, value in _field_types.items():
-                    d.loc[:, key] = d.loc[:, key].astype(_DATA_MODEL_TYPES_MAPPING.get(value.lower(), str), copy=False)
-                if columns:
-                    columns = list(set(columns))
-                    d = d[list(set(columns))]
                 return d
 
         else:
@@ -223,10 +247,7 @@ class DataModelView:
 
         if merge_records:
             if not return_dask_graph:
-                d.sort_values('mdmCounterForEntity', inplace=True)
-                d.reset_index(inplace=True, drop=True)
-                d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
-                d.reset_index(inplace=True, drop=True)
+                d = drop_duplicated_parquet(d)
             else:
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                     .drop_duplicates(subset='mdmId', keep='last') \
