@@ -2,9 +2,34 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 from .miscellaneous import stream_data
+import threading
 
 
-def send_a(carol, session, url, data_json, extra_headers, content_type):
+class AtomicCounter:
+    """An atomic, thread-safe incrementing counter.
+
+
+    """
+
+    def __init__(self, initial=0, total=None):
+        """Initialize a new atomic counter to given initial value (default 0)."""
+        self.value = initial
+        self.total = total
+        self._lock = threading.Lock()
+
+    def increment(self, num=1):
+        """Atomically increment the counter by num (default 1) and return the
+        new value.
+        """
+        with self._lock:
+            self.value += num
+            return self.value
+
+    def print(self):
+        print(f'{self.value}/{self.total} sent')
+
+
+def send_a(carol, session, url, data_json, extra_headers, content_type, counter):
     """
     Helper function to be used when sending data async.
 
@@ -25,7 +50,9 @@ def send_a(carol, session, url, data_json, extra_headers, content_type):
     """
     carol.call_api(url, data=data_json, extra_headers=extra_headers,
                    content_type=content_type, session=session)
-    return len(data_json)
+
+    counter.increment(len(data_json))
+    counter.print()
 
 
 async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
@@ -50,7 +77,8 @@ async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
         If to compress the data to send
     :return:
     """
-    # based on https://hackernoon.com/how-to-run-asynchronous-web-requests-in-parallel-with-python-3-5-without-aiohttp-264dc0f8546
+
+    counter = AtomicCounter(total=len(data))
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         session = carol._retry_session(status_forcelist=[502, 429, 524, 408, 504, 598, 520, 503, 500],
                                        method_whitelist=frozenset(['POST']))
@@ -60,15 +88,13 @@ async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
             loop.run_in_executor(
                 executor,
                 send_a,
-                *(carol, session, url, data_json, extra_headers, content_type)
+                *(carol, session, url, data_json, extra_headers, content_type, counter)
                 # Allows us to pass in multiple arguments to `send_a`
             )
             for data_json, _ in stream_data(data=data,
-                                                step_size=step_size,
-                                                compress_gzip=compress_gzip)
+                                            step_size=step_size,
+                                            compress_gzip=compress_gzip)
         ]
-        total_sent = 0
-        total_to_send = len(data)
-        for count in await asyncio.gather(*tasks):
-            total_sent+=count
-            print(f'{total_sent}/{total_to_send}')
+
+        for _ in await asyncio.gather(*tasks):
+            pass
