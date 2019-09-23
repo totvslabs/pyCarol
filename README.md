@@ -229,6 +229,7 @@ from pycarol import Carol, CarolHandler
 import logging
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 carol = CarolHandler(Carol())
 carol.setLevel(logging.INFO)
 logger.addHandler(carol)

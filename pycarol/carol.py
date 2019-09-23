@@ -38,6 +38,11 @@ class Carol:
                 1. 'carol.ai' for the production environment
                 2. 'karol.ai' for the explore environment
                 1. 'qarol.ai' for the QA environment
+        host: `str` default `None`
+            This will overwrite the host used. Today the host is:
+                if organization is None, host={domain}.{environment}
+                else host={organization}.{environment}
+            See Carol._set_host.
 
     OBS:
         In case all parameters are `None`, pycarol will try yo find their values in the environment variables.
@@ -51,7 +56,7 @@ class Carol:
     """
 
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
-                 organization=None, environment='carol.ai'):
+                 organization=None, environment='carol.ai', host=None):
 
         settings = dict()
         if auth is None and domain is None:
@@ -79,16 +84,16 @@ class Carol:
 
                 auth = ApiKeyAuth(auth_token)
 
-
         if connector_id is None:
-            connector_id = __CONNECTOR_PYCAROL__
-
+            if auth.connector_id is None:
+                connector_id = __CONNECTOR_PYCAROL__
+            else:
+                connector_id = auth.connector_id
 
         if domain is None or app_name is None or auth is None:
-            raise ValueError("domain, app_name and auth must be specified as parameters, in the app_config.json file " +
-                             "or in the environment variables CAROLTENANT, CAROLAPPNAME, CAROLAPPOAUTH" +
-                             " OR CAROLUSER+CAROLPWD and " +
-                             "CAROLCONNECTORID")
+            raise ValueError("domain, app_name and auth must be specified as parameters, either " +
+                             "in the environment variables CAROLTENANT, CAROLAPPNAME, CAROLAPPOAUTH" +
+                             " or CAROLUSER+CAROLPWD and  CAROLCONNECTORID")
 
         # TODO Fixed to be compatible with the old `ENV_DOMAIN`. We could add a deprecated warning.
         self.environment = os.getenv('CAROL_DOMAIN', os.getenv('ENV_DOMAIN', environment))
@@ -97,6 +102,8 @@ class Carol:
         self.app_name = app_name
         self.port = port
         self.verbose = verbose
+        self.host = self._set_host(domain=self.domain, organization=self.organization,
+                                   environment=self.environment, host=host)
         self.tenant = Tenant(self).get_tenant_by_domain(domain)
         self.connector_id = connector_id
         self.auth = auth
@@ -104,6 +111,36 @@ class Carol:
         self.auth.login(self)
         self.response = None
 
+
+    @staticmethod
+    def _set_host(domain, organization, environment, host):
+        """
+        Set the host to be used.
+
+        Args:
+            domain: `str`
+                Former tenant name.
+                e.x., domain.carol.ai
+            organization: `str`
+                Organization domain.
+            environment: `str`
+                Which Carol's environment to use. There are three possible values today.
+                1. 'carol.ai' for the production environment
+                2. 'karol.ai' for the explore environment
+                1. 'qarol.ai' for the QA environment
+            host: `str`
+                Host to be used. It overwrite the default one.
+
+        Returns: `str`
+            host
+        """
+        if host is not None:
+            return host
+        elif organization is not None:
+            return f"{organization}.{environment}"
+        else:
+            return f"{domain}.{environment}"
+        pass
 
     @staticmethod
     def _retry_session(retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524),
@@ -181,7 +218,7 @@ class Carol:
                 A retry is initiated if the request method is in method_whitelist and the response status code is in
                 status_forcelist.
             downloadable: `bool` default `False`.
-                If the request will return a file to donwload.
+                If the request will return a file to download.
             method_whitelist: `iterable` , default frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']))
                 Set of uppercased HTTP method verbs that we should retry on.
             errors: {‘ignore’, ‘raise’}, default ‘raise’
@@ -189,7 +226,7 @@ class Carol:
                 then invalid request will return the request response
             extra_headers: `dict` default `None`
                 extra headers to be sent.
-            kwds: `dixt` default `None`
+            kwds: `dict` default `None`
                 Extra parameters to be sent to :class: `requests.request`
 
         Rerturn:
@@ -198,7 +235,7 @@ class Carol:
         """
 
         extra_headers = extra_headers or {}
-        url = f'https://{self.domain}.{self.environment}:{self.port}/api/{path}'
+        url = f'https://{self.host}:{self.port}/api/{path}'
 
         if method is None:
             if data is None:
