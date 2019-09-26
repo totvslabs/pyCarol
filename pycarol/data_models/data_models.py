@@ -842,7 +842,10 @@ class CreateDataModel(object):
                   label_map=None, description_map=None, ignore_field_type=False):
 
         if publish:
-            assert profile_title in json_sample
+            assert profile_title is not None, "To publish the data model, `profile_title` has to be set."
+            if isinstance(profile_title, str):
+                profile_title = [profile_title]
+            assert all([i in json_sample for i in profile_title]), "all profile title values should be in `json_sample`"
 
         self.label_map = label_map
         self.description_map = description_map
