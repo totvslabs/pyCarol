@@ -79,9 +79,12 @@ class DataModelGenerator(object):
         """
 
         if publish:
-            assert profile_title is not None, "To publish the data model, `profile_title` has to be set."
+            if profile_title is None:
+                raise ValueError('To publish the data model, `profile_title` has to be set. Use `publish=False`')
             if isinstance(profile_title, str):
                 profile_title = [profile_title]
+            elif not isinstance(profile_title, list):
+                raise ValueError('`profile_title` has to be a list of values.')
             assert all([i in json_sample for i in profile_title]), "all profile title values should be in `json_sample`"
 
         if ((vertical_names is None) and (vertical_ids is None)):
