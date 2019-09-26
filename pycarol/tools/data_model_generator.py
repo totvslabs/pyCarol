@@ -44,7 +44,7 @@ class DataModelGenerator(object):
     def start(self, json_sample, dm_name, publish=True, profile_title=None, overwrite=True, vertical_ids=None,
               vertical_names='retail', entity_template_type_ids=None,
               entity_template_type_names='product', dm_label=None,
-              group_name='Others', transaction_dm=False):
+              group_name='Others', transaction_dm=False, ignore_field_type=False):
 
         """
 
@@ -83,5 +83,6 @@ class DataModelGenerator(object):
 
         dm_id = tDM.template_dict[dm_name]['mdmId']
 
-        tDM.from_json(json_sample, profile_title=profile_title, publish=publish, dm_id=dm_id)
+        tDM.from_json(json_sample, profile_title=profile_title, publish=publish, dm_id=dm_id,
+                      ignore_field_type=ignore_field_type, )
         print('Done!')
