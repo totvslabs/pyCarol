@@ -36,35 +36,56 @@ class DataModelGenerator(object):
     def __init__(self, carol):
         """
 
-        :param carol: Carol object
-            Carol object.
         """
         self.carol = carol
 
-    def start(self, json_sample, dm_name, publish=True, profile_title=None, overwrite=True, vertical_ids=None,
+    def start(self, json_sample, dm_name, publish=True, profile_title=None, overwrite=False, vertical_ids=None,
               vertical_names='retail', entity_template_type_ids=None,
               entity_template_type_names='product', dm_label=None,
-              group_name='Others', transaction_dm=False):
-
+              group_name='Others', transaction_dm=False, ignore_field_type=False):
         """
 
-        :param json_sample:
-        :param dm_name:
-        :param publish:
-        :param profile_title:
-        :param overwrite:
-        :param vertical_ids:
-        :param vertical_names:
-        :param entity_template_type_ids:
-        :param entity_template_type_names:
-        :param dm_label:
-        :param group_name:
-        :param transaction_dm:
-        :return:
+        Args:
+            json_sample: `dict`
+                Dictionary with key and values to be used as template for the data model
+            dm_name: `str`
+                Data model name
+            publish: `bool` default `True`
+                Publish the data model at the end.
+            profile_title: `list` default `None`
+                Carol's Profile title. It should be an field in json_sample
+            overwrite: `bool` default `False`
+                Overwrite if the data model already exists
+            vertical_ids: `str` default `None`
+                Vertical ID for the data model. either `vertical_ids`
+            vertical_names: `str` default `retail`
+                Vertical Name for the data model. either `vertical_ids`
+            entity_template_type_ids: `str` default `None`
+                Data model template type id
+            entity_template_type_names: `str` default `product`
+                Data model template type name
+            dm_label: `str` default `None`
+                Label for the data model
+            group_name: `str` default `Others`
+                Group name for the data model
+            transaction_dm: `bool` default `False`
+                Transaction Data model
+            ignore_field_type: `bool` default `False`
+                Ignore filed type when creating the data model. It means that any type conflict will be ignored. pycarol
+                will use the one that already exists.
+
+        Returns:
+
         """
 
         if publish:
-            assert profile_title in json_sample
+            if profile_title is None:
+                raise ValueError('To publish the data model, `profile_title` has to be set. Use `publish=False`')
+            if isinstance(profile_title, str):
+                profile_title = [profile_title]
+            elif not isinstance(profile_title, list):
+                raise ValueError('`profile_title` has to be a list of values.')
+            assert all([i in json_sample for i in profile_title]), "all profile title values should be in `json_sample`"
 
         if ((vertical_names is None) and (vertical_ids is None)):
             self.verticals_dict = Verticals(self.carol).all()
@@ -83,5 +104,6 @@ class DataModelGenerator(object):
 
         dm_id = tDM.template_dict[dm_name]['mdmId']
 
-        tDM.from_json(json_sample, profile_title=profile_title, publish=publish, dm_id=dm_id)
+        tDM.from_json(json_sample, profile_title=profile_title, publish=publish, dm_id=dm_id,
+                      ignore_field_type=ignore_field_type, )
         print('Done!')
