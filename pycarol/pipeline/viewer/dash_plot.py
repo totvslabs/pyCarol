@@ -228,8 +228,8 @@ def get_app_from_pipeline(pipe):
             return "No task selected."
         for n in nodes:
             task_id = n['id']
-            # task = pipe.get_task_by_id(task_id)
-            output.append(f"{task_id}\n")
+            task = pipe.get_task_by_id(task_id)
+            output.append(f"{task.get_task_address()}\n")
         return output
 
     @app.callback(
