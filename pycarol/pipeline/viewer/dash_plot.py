@@ -133,6 +133,8 @@ def get_app_from_pipeline(pipe):
     remove_upstream_button = Button(id='remove_upstream_button',
                                     children='Remove Upstream')
     update_button = Button(id='update_button',children='Update')
+
+
     buttons_list = [update_button,run_button,goto_button,remove_button,
                     remove_upstream_button]
 
@@ -141,14 +143,21 @@ def get_app_from_pipeline(pipe):
         style={'background-color': '#fdfd96'},
     )
 
+    selected_output = html.P(
+        id='selected_output',
+        style={'background-color': '#fdfd96'},
+    )
+
+
     app.layout = column(
         row(main_pipeline),
+        row(*buttons_list),
         row(
-            # tap_node_data,
-            row(*buttons_list),
-            buttons_output
+            column(buttons_output,size=6),
+            column(selected_output,size=6)
         ),
     )
+
     ### Dynamics ###
     def select_callback(*ts_list):
         max_ts = -1
@@ -163,7 +172,14 @@ def get_app_from_pipeline(pipe):
             return cb_i
 
     def cb_run(nodes):
-        return f"Fake Run {nodes}"
+        if len(nodes) == 0:
+            return "No task selected."
+        if len(nodes) > 1:
+            return "Please, select only one task to run."
+        task_id = nodes[0]['id']
+        task = pipe.get_task_by_id(task_id)
+        # task.run()
+        return f"Fake Run {task_id}"
 
     def cb_goto(nodes):
         pass
@@ -173,15 +189,15 @@ def get_app_from_pipeline(pipe):
             task_id = n['id']
             task = pipe.get_task_by_id(task_id)
             task.remove()
-        return "remove\n" + json.dumps(nodes)
+        return "Removing:\n" + json.dumps(nodes)
 
     def cb_remove_upstream(nodes):
         tasks = [pipe.get_task_by_id(n['id']) for n in nodes]
         pipe.remove_upstream(tasks)
-        return "remove upstream\n" + json.dumps(nodes)
+        return "Removing upstream from:\n" + json.dumps(nodes)
 
     def cb_dummy(*args,**kwargs):
-        return "cb_dummy"
+        return "Updating complete targets."
 
     @app.callback(
         Output(buttons_output.id, 'children'),
@@ -202,14 +218,19 @@ def get_app_from_pipeline(pipe):
         else:
             return callback_list[cb_i](nodes=selected_nodes)
 
-
-    # @app.callback(
-    #     Output("tap_node_data", 'children'),
-    #     [Input(main_pipeline.id, 'selectedNodeData')]
-    # )
-    # def print_nodes_id(nodes):
-    #     if nodes:
-    #         return json.dumps(nodes)
+    @app.callback(
+        Output(selected_output.id, 'children'),
+        [Input(main_pipeline.id, 'selectedNodeData')],
+    )
+    def cd_select_node(nodes):
+        output = []
+        if not nodes:
+            return "No task selected."
+        for n in nodes:
+            task_id = n['id']
+            # task = pipe.get_task_by_id(task_id)
+            output.append(f"{task_id}\n")
+        return output
 
     @app.callback(
         Output(main_pipeline.id, 'elements'),
