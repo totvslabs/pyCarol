@@ -13,9 +13,9 @@ class DataModelFields(object):
         self.fields_dict = {}
         self.fields_data = []
 
-        self.all(admin = True, print_status=False, save_file=False)
+        self.all(admin=True, print_status=False, save_file=False)
 
-    def possible_types(self,admin=True):
+    def possible_types(self, admin=True):
 
         if not admin:
             url_filter = "v1/fields/possibleTypes"
@@ -25,16 +25,14 @@ class DataModelFields(object):
         result = self.carol.call_api(url_filter)
         self._possible_types = result
 
-
     def _build_query_params(self):
         if self.sort_by is None:
             self.query_params = {"offset": self.offset, "pageSize": str(self.page_size), "sortOrder": self.sort_order}
         else:
             self.query_params = {"offset": self.offset, "pageSize": str(self.page_size), "sortOrder": self.sort_order,
-                                "sortBy": self.sort_by}
+                                 "sortBy": self.sort_by}
 
-
-    def all(self, admin = False, offset=0, page_size=100, sort_order='ASC', sort_by=None, print_status=True,
+    def all(self, admin=False, offset=0, page_size=100, sort_order='ASC', sort_by=None, print_status=True,
             save_file=False, filename='data/fields.json'):
 
         self.offset = offset
@@ -71,7 +69,7 @@ class DataModelFields(object):
             self.fields_dict.update({i['mdmName']: i for i in query})
             self.query_params['offset'] = count
             if print_status:
-                print('{}/{}'.format(count, self.total_hits), end ='\r')
+                print('{}/{}'.format(count, self.total_hits), end='\r')
             if save_file:
                 file.write(json.dumps(query, ensure_ascii=False))
                 file.write('\n')
@@ -86,9 +84,9 @@ class DataModelFields(object):
 
         self.fields_data = []
 
-        if isinstance(fields_ids,str):
+        if isinstance(fields_ids, str):
             fields_ids = [fields_ids]
-        assert isinstance(fields_ids,list)
+        assert isinstance(fields_ids, list)
 
         if save_file:
             file = open(filename, 'w', encoding='utf8')
@@ -111,26 +109,27 @@ class DataModelFields(object):
         if save_file:
             file.close()
 
-    def create(self,mdm_name, mdm_mpping_data_type, mdm_field_type, mdm_label,
-               mdm_description):
+    def create(self, mdm_name, mdm_mpping_data_type, mdm_field_type, mdm_label,
+               mdm_description, admin=False):
         '''
         :param mdm_name:
         :param mdm_mpping_data_type: string,  double, long, stc
         :param mdm_field_type: PRIMITIVE or NESTED
         :param mdm_label:
         :param mdm_description:
+        :param admin
         :return:
         '''
 
-        url = "v1/fields"
+        if admin:
+            url = "v1/admin/fields"
+        else:
+            url = "v1/fields"
+
         payload = {"mdmName": mdm_name, "mdmMappingDataType": mdm_mpping_data_type,
                    "mdmFieldType": mdm_field_type,
                    "mdmLabel": {"en-US": mdm_label}, "mdmDescription": {"en-US": mdm_description}}
         assert not mdm_name in self.fields_dict.keys()
-        query = self.carol.call_api(method='POST', path= url, data=payload)
+        query = self.carol.call_api(method='POST', path=url, data=payload)
 
         self.fields_dict.update({mdm_name: query})
-
-
-
-

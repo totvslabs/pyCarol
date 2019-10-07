@@ -24,16 +24,16 @@ from .. import _CAROL_METADATA
 from ..utils.miscellaneous import drop_duplicated_parquet
 
 _DATA_MODEL_TYPES_MAPPING = {
-  "boolean": bool,
-  "date": str, # TODO should it be pd.datetime?
-  "long": int,
-  "double": float,
-  "nested": str,
-  "string": str,
-  "binary": str,
-  "enum": str,
-  "object": str,
-  "geopoint": str
+    "boolean": bool,
+    "date": str,  # TODO should it be pd.datetime?
+    "long": int,
+    "double": float,
+    "nested": str,
+    "string": str,
+    "binary": str,
+    "enum": str,
+    "object": str,
+    "geopoint": str
 }
 
 
@@ -78,7 +78,7 @@ class DataModel:
     def fetch_parquet(self, dm_name, merge_records=True, backend='pandas',
                       return_dask_graph=False,
                       columns=None, return_metadata=False, callback=None,
-                      max_hits=None, cds=False ,max_workers=None,):
+                      max_hits=None, cds=False, max_workers=None, ):
 
         """
         Fetch parquet from Golden.
@@ -113,7 +113,7 @@ class DataModel:
             assert callable(callback), \
                 f'"{callback}" is a {type(callback)} and is not callable.'
 
-        if not columns: #if an empty list was sent.
+        if not columns:  # if an empty list was sent.
             columns = None
 
         if isinstance(columns, str):
@@ -154,10 +154,10 @@ class DataModel:
         elif backend == 'pandas':
             d = _import_pandas(storage=storage, dm_name=dm_name,
                                import_type=import_type, columns=columns,
-                               callback=callback,  max_hits=max_hits,
+                               callback=callback, max_hits=max_hits,
                                max_workers=max_workers,
                                token_carolina=token_carolina,
-                               storage_space=storage_space,)
+                               storage_space=storage_space, )
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
                 _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
@@ -171,7 +171,7 @@ class DataModel:
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in _field_types.items():
                     if isinstance(value, dict):
-                        value = "STRING" #If nested we receive as a `STR`
+                        value = "STRING"  # If nested we receive as a `STR`
                     d.loc[:, key] = d.loc[:, key].astype(_DATA_MODEL_TYPES_MAPPING.get(value.lower(), str), copy=False)
                 if columns:
                     columns = list(set(columns))
@@ -247,7 +247,6 @@ class DataModel:
             file.close()
         return self
 
-
     def get_by_name(self, name):
         return self._get(name, by='name')
 
@@ -321,7 +320,8 @@ class DataModel:
                 self.export(dm_id=dm_id, sync_dm=sync_dm, full_export=full_export,
                             delete_previous=delete_previous)
             else:
-                print(f'Data Model `{_name}` is only in draft, and cannot be exported. Publish the Data Model to export it.')
+                print(
+                    f'Data Model `{_name}` is only in draft, and cannot be exported. Publish the Data Model to export it.')
 
     def delete(self, dm_id=None, dm_name=None, entity_space='WORKING'):
         # TODO: Check Possible entity_spaces
@@ -368,7 +368,7 @@ class DataModel:
         dm = {i['mdmId']: i['mdmName'] for i in dm}
 
         if dm_results is not None:
-            return {dm.get(i['mdmEntityTemplateId'], i['mdmEntityTemplateId']+'_NOT_FOUND' ): i for i in dm_results}
+            return {dm.get(i['mdmEntityTemplateId'], i['mdmEntityTemplateId'] + '_NOT_FOUND'): i for i in dm_results}
 
         return dm_results
 
@@ -651,14 +651,13 @@ class CreateDataModel(object):
 
     def from_snapshot(self, snapshot, publish=False, overwrite=False):
 
-        _count=0
+        _count = 0
 
         while True:
             url = 'v1/entities/templates/snapshot'
             resp = self.carol.call_api(path=url, method='POST', data=snapshot, errors='ignore')
 
-
-            if ('already exists' in resp.get('errorMessage','asdf')) and (overwrite):
+            if ('already exists' in resp.get('errorMessage', 'asdf')) and (overwrite):
                 del_DM = DataModel(self.carol)
                 del_DM.get_by_name(snapshot['entityTemplateName'])
                 dm_id = del_DM.entity_template_.get(snapshot['entityTemplateName']).get('mdmId', None)
@@ -667,8 +666,8 @@ class CreateDataModel(object):
                 entity_space = del_DM.entity_template_.get(snapshot['entityTemplateName'])['mdmEntitySpace']
                 del_DM.delete(dm_id=dm_id, entity_space=entity_space)
                 time.sleep(0.5)  # waint for deletion
-                _count+=1
-                if _count>5:
+                _count += 1
+                if _count > 5:
                     print(f"Something wrong coping {snapshot['entityTemplateName']}")
                     print(f"Data model was not copied: {resp}")
                     return
@@ -840,10 +839,13 @@ class CreateDataModel(object):
         return label, description
 
     def from_json(self, json_sample, profile_title=None, publish=False, dm_id=None,
-                  label_map=None, description_map=None):
+                  label_map=None, description_map=None, ignore_field_type=False):
 
         if publish:
-            assert profile_title in json_sample
+            assert profile_title is not None, "To publish the data model, `profile_title` has to be set."
+            if isinstance(profile_title, str):
+                profile_title = [profile_title]
+            assert all([i in json_sample for i in profile_title]), "all profile title values should be in `json_sample`"
 
         self.label_map = label_map
         self.description_map = description_map
@@ -871,7 +873,7 @@ class CreateDataModel(object):
                     ent_.pop('mdmCreated')
                     ent_.pop('mdmLastUpdated')
                     ent_.pop('mdmTenantId')
-                    if (ent_['mdmMappingDataType'].lower() == entity_type.ent_type):
+                    if (ent_['mdmMappingDataType'].lower() == entity_type.ent_type) or (ignore_field_type):
                         self.add_field(prop, parent_field_id="")
                     else:
                         print('problem, {} not created, field name matches with an already'
@@ -883,7 +885,7 @@ class CreateDataModel(object):
 
                     current_label, current_description = self._labels_and_desc(prop)
                     self.fields.create(mdm_name=prop, mdm_mpping_data_type=entity_type.ent_type,
-                                       mdm_field_type='PRIMITIVE',
+                                       mdm_field_type='PRIMITIVE', admin=True,
                                        mdm_label=current_label, mdm_description=current_description)
                     self.all_possible_fields = self.fields.fields_dict
                     self.add_field(prop, parent_field_id="")
