@@ -28,7 +28,7 @@ class Task(luigi.Task):
         if self.task_notebook:
             return self.task_notebook
         else:
-            return "not_implemented_yet"
+            return None
 
     def buildme(self, local_scheduler=True, **kwargs):
         luigi.build([self, ], local_scheduler=local_scheduler, **kwargs)

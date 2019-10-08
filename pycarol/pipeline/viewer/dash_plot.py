@@ -128,33 +128,46 @@ def get_app_from_pipeline(pipe):
     )
 
     run_button = Button(id='run_button',children='Run')
-    goto_button = Button(id='goto_button',children='Go to Definition')
     remove_button = Button(id='remove_button',children='Remove')
     remove_upstream_button = Button(id='remove_upstream_button',
                                     children='Remove Upstream')
     update_button = Button(id='update_button',children='Update')
 
 
-    buttons_list = [update_button,run_button,goto_button,remove_button,
+    buttons_list = [update_button,run_button,remove_button,
                     remove_upstream_button]
 
-    buttons_output = html.P(
-        id='print_node_data',
-        style={'background-color': '#fdfd96'},
-    )
+    buttons_output = [
+        html.H3(
+            id='buttons_output_header',
+            children='Buttons Output',
+        ),
+        html.P(
+            id='buttons_output',
+        )
+        ]
 
-    selected_output = html.P(
-        id='selected_output',
-        style={'background-color': '#fdfd96'},
-    )
+    selected_output = [
+        html.H3(
+            id='selected_output_header',
+            children='Selected Nodes',
+        ),
+        html.P(
+            id='selected_output',
+        ),
+        ]
 
 
     app.layout = column(
         row(main_pipeline),
-        row(*buttons_list),
         row(
-            column(buttons_output,size=6),
-            column(selected_output,size=6)
+            column(
+                row(*buttons_list),
+                column(*buttons_output, size=6,),
+                size=6,
+                style={'background-color': '#fdfd96'},
+            ),
+            column(*selected_output,size=6,style={'background-color': '#fdfd96'},)
         ),
     )
 
@@ -200,7 +213,7 @@ def get_app_from_pipeline(pipe):
         return "Updating complete targets."
 
     @app.callback(
-        Output(buttons_output.id, 'children'),
+        Output('buttons_output', 'children'),
         [
             Input(b.id, 'n_clicks_timestamp')
             for b in buttons_list
@@ -208,7 +221,7 @@ def get_app_from_pipeline(pipe):
         [State(main_pipeline.id, 'selectedNodeData')],
     )
     def callback_buttons(*inputs):
-        callback_list = [cb_dummy,cb_run,cb_goto,cb_remove,cb_remove_upstream]
+        callback_list = [cb_dummy,cb_run,cb_remove,cb_remove_upstream]
         assert len(callback_list) == len(buttons_list)
         ts_list = inputs[0:-1]
         selected_nodes = inputs[-1]
@@ -219,7 +232,7 @@ def get_app_from_pipeline(pipe):
             return callback_list[cb_i](nodes=selected_nodes)
 
     @app.callback(
-        Output(selected_output.id, 'children'),
+        Output('selected_output', 'children'),
         [Input(main_pipeline.id, 'selectedNodeData')],
     )
     def cd_select_node(nodes):
@@ -229,7 +242,17 @@ def get_app_from_pipeline(pipe):
         for n in nodes:
             task_id = n['id']
             task = pipe.get_task_by_id(task_id)
-            output.append(f"{task.get_task_address()}\n")
+            task_address = task.get_task_address()
+            if task_address is None:
+                output.append(task.get_task_family())
+            else:
+                output.append(
+                    dcc.Link(
+                        task.get_task_family(),
+                        href='/tree/' + task_address,
+                    )
+                )
+            output.append(" ")
         return output
 
     @app.callback(
