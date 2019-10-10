@@ -7,6 +7,6 @@ order to initialize a Pipe object, we need to define a list of output tasks
 and a dictionary containing the pipeline parameters. These parameters are
 similar to the parameters one pass to luigi.build, however, in this case,
 we use a list of non instantiated tasks.
-In file test_tools.py there are some basic tests for this module
+In file test_tools.py there are some basic tests for this module.
 """
 from pycarol.pipeline.tools._tools import Pipe
