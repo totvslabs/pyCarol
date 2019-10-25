@@ -53,8 +53,6 @@ class Carolina:
 
         if self.engine == 'GCP-CS':
             self._init_gcp(token)
-        elif self.engine == 'AWS-S3':
-            self._init_aws(token)
 
     def _init_gcp(self, token):
         """
@@ -80,35 +78,6 @@ class Carolina:
         self.token = token['token']
         gcp_credentials = service_account.Credentials.from_service_account_info(token['token'])
         self.client = storage.Client(credentials=gcp_credentials, project=token['token']['project_id'])
-
-    def _init_aws(self, token):
-        """
-                Initialize AWS back-end
-
-                Args:
-                    token: `dict`
-                        AWS token:
-                        {
-                            "aiAccessKeyId": aws_access_key_id,
-                            "aiSecretKey": aws_secret_access_key,
-                            "aiAccessToken": aws_session_token,
-                        }
-
-                Returns:
-                    None
-
-                """
-        import boto3
-
-        self.token = token
-        ai_access_key_id = token['aiAccessKeyId']
-        ai_secret_key = token['aiSecretKey']
-        ai_access_token = token['aiAccessToken']
-        ai_token_expiration_date = token['aiTokenExpirationDate']
-
-        boto3.setup_default_session(aws_access_key_id=ai_access_key_id, aws_secret_access_key=ai_secret_key,
-                                    aws_session_token=ai_access_token)
-        self.client = boto3.resource('s3')
 
     def get_client(self):
         self.init_if_needed()

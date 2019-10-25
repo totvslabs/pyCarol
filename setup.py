@@ -10,8 +10,6 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 install_requires = [
     'pykube',
-    'boto3==1.9.16',
-    'botocore==1.12.16',
     'click==7.0',
     'dask[complete]==0.19.3',
     'toolz',
@@ -32,11 +30,8 @@ install_requires = [
     'pyarrow==0.13.0',
     'redis==2.10.6',
     'requests',
-    's3fs==0.1.6',
-    's3transfer==0.1.13',
     'tqdm',
     'urllib3',
-    'missingno==0.4.1',
     'deprecated',
     'pytest',
     'bumpversion',
