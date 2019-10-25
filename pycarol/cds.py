@@ -1,0 +1,69 @@
+from .connectors import Connectors
+
+_MACHINE_FLAVORS = [
+    None
+]
+
+
+class CDSStaging:
+    def __init__(self, carol):
+        self.carol = carol
+
+    def process_data(self, staging_name, connector_id=None, connector_name=None,
+                     worker_type='n1-standard-4', max_number_workers=-1, number_shards=-1, num_records=-1,
+                     delete_target_folder=False, enable_realtime=False, delete_realtime_records=False,
+                     send_realtime=False, file_pattern='*', filter_query=None):
+
+        """
+
+        Process staging CDS data.
+
+        Args:
+            staging_name: `str`,
+                Staging name.
+            connector_id: `str`, default `None`
+                Connector id.
+            connector_name: `str`, default `None`
+                Connector name.
+            worker_type: `str`, default `n1-standard-4`
+                Machine flavor to be used.
+            max_number_workers: `int`, default `-1`
+                Max number of workers to be used during the process. '-1' means all the available.
+            number_shards: `int`, default `-1`
+                Number of shards.
+            num_records: `int`, default `-1`
+                Number of records to be processed. '-1' means all the records.
+            delete_target_folder: `bool`, default `False`
+                If delete the previous processed records.
+            enable_realtime: `bool`, default `False`
+                Enable this staging table to send the processed data to realtime layer.
+            delete_realtime_records: `bool`, default `False`
+                Delete previous processed data in realtime.
+            send_realtime: `bool`, default `False`
+                Send the processed data to realtime layer.
+            file_pattern: `str`, default `*`
+                File pattern of the files in CDS to be processed. The pattern in  `YYYY-MM-DDTHH_mm_ss*.parquet`.
+                One can use this to filter data in CDS received in a given date.
+            filter_query: `dict`, default `None`
+                Query to be used to filter the data to be processed.
+
+        :return: None
+        """
+
+        filter_query = filter_query if filter_query else {}
+
+        if connector_name:
+            connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
+        else:
+            if connector_id is None:
+                raise ValueError(f'connector_id or connector_name should be set.')
+
+        query_params = {"connectorId": connector_id, "stagingType": staging_name, "workerType": worker_type,
+                        "maxNumberOfWorkers": max_number_workers, "numberOfShards": number_shards,
+                        "numRecords": num_records,
+                        "deleteTargetFolder": delete_target_folder, "enableStagingRealtime": enable_realtime,
+                        "deleteRealtimeRecords": delete_realtime_records,
+                        "sendToRealtime": send_realtime, "filePattern": file_pattern}
+
+        return self.carol.call_api(path='v1/cds/staging/processData', method='POST', params=query_params,
+                                   data=filter_query)
