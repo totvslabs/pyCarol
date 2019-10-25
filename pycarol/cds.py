@@ -1,7 +1,21 @@
 from .connectors import Connectors
 
 _MACHINE_FLAVORS = [
-    None
+    'n1-standard-1',
+    'n1-standard-2',
+    'n1-standard-4',
+    'n1-standard-8',
+    'n1-standard-16',
+    'n1-standard-32',
+    'n1-standard-64',
+    'n1-standard-96',
+    'n1-highmem-2',
+    'n1-highmem-4',
+    'n1-highmem-8',
+    'n1-highmem-16',
+    'n1-highmem-32',
+    'n1-highmem-64',
+    'n1-highmem-96',
 ]
 
 
@@ -49,6 +63,9 @@ class CDSStaging:
 
         :return: None
         """
+
+        if worker_type not in _MACHINE_FLAVORS:
+            raise ValueError(f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
 
         filter_query = filter_query if filter_query else {}
 
@@ -137,6 +154,9 @@ class CDSStaging:
         :return: None
         """
 
+        if worker_type not in _MACHINE_FLAVORS:
+            raise ValueError(f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
+
         if connector_name:
             connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
         else:
@@ -144,7 +164,8 @@ class CDSStaging:
                 raise ValueError(f'connector_id or connector_name should be set.')
 
         query_params = {"connectorId": connector_id, "stagingType": staging_name,
-                        "workerType": worker_type, "maxNumberOfWorkers": max_number_workers, "numberOfShards": number_shards}
+                        "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
+                        "numberOfShards": number_shards}
 
         return self.carol.call_api(path='v1/cds/staging/consolidate', method='POST', params=query_params)
 
