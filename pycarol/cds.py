@@ -74,7 +74,7 @@ class CDSStaging:
             connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
         else:
             if connector_id is None:
-                raise ValueError(f'connector_id or connector_name should be set.')
+                raise ValueError('connector_id or connector_name should be set.')
 
         query_params = {"connectorId": connector_id, "stagingType": staging_name, "workerType": worker_type,
                         "maxNumberOfWorkers": max_number_workers, "numberOfShards": number_shards,
@@ -122,7 +122,7 @@ class CDSStaging:
             connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
         else:
             if connector_id is None:
-                raise ValueError(f'connector_id or connector_name should be set.')
+                raise ValueError('connector_id or connector_name should be set.')
 
         query_params = {"connectorId": connector_id, "stagingType": staging_name,
                         "numRecords": num_records, "enableStagingRealtime": enable_realtime,
@@ -162,7 +162,7 @@ class CDSStaging:
             connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
         else:
             if connector_id is None:
-                raise ValueError(f'connector_id or connector_name should be set.')
+                raise ValueError('connector_id or connector_name should be set.')
 
         query_params = {"connectorId": connector_id, "stagingType": staging_name,
                         "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
@@ -191,7 +191,7 @@ class CDSStaging:
             connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
         else:
             if connector_id is None:
-                raise ValueError(f'connector_id or connector_name should be set.')
+                raise ValueError('connector_id or connector_name should be set.')
 
         query_params = {"connectorId": connector_id, "stagingType": staging_name}
 
@@ -219,7 +219,7 @@ class CDSStaging:
             connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
         else:
             if connector_id is None:
-                raise ValueError(f'connector_id or connector_name should be set.')
+                raise ValueError('connector_id or connector_name should be set.')
 
         query_params = {"connectorId": connector_id, "stagingType": staging_name}
         return self.carol.call_api(path='v1/cds/staging/fetchCount', method='POST', params=query_params).get('count')
@@ -257,7 +257,7 @@ class CDSGolden:
             dm_id = DataModel(self.carol).get_by_name(dm_name)['mdmId']
         else:
             if dm_id is None:
-                raise ValueError(f'dm_name or dm_id should be set.')
+                raise ValueError('dm_name or dm_id should be set.')
 
         query_params = {"entityTemplateId": dm_id, "numRecords": num_records, "filePattern": file_pattern}
 
@@ -283,7 +283,7 @@ class CDSGolden:
             dm_id = DataModel(self.carol).get_by_name(dm_name)['mdmId']
         else:
             if dm_id is None:
-                raise ValueError(f'dm_name or dm_id should be set.')
+                raise ValueError('dm_name or dm_id should be set.')
 
         query_params = {"entityTemplateId": dm_id}
 
@@ -309,7 +309,7 @@ class CDSGolden:
             dm_id = DataModel(self.carol).get_by_name(dm_name)['mdmId']
         else:
             if dm_id is None:
-                raise ValueError(f'dm_name or dm_id should be set.')
+                raise ValueError('dm_name or dm_id should be set.')
 
         query_params = {"entityTemplateId": dm_id}
         return self.carol.call_api(path='v1/cds/golden/fetchCount', method='POST', params=query_params).get('count')
