@@ -1,4 +1,5 @@
 from .connectors import Connectors
+from .data_models import DataModel
 
 _MACHINE_FLAVORS = [
     'n1-standard-1',
@@ -222,3 +223,93 @@ class CDSStaging:
 
         query_params = {"connectorId": connector_id, "stagingType": staging_name}
         return self.carol.call_api(path='v1/cds/staging/fetchCount', method='POST', params=query_params).get('count')
+
+
+class CDSGolden:
+    def __init__(self, carol):
+        self.carol = carol
+
+    def sync_data(self, dm_name, dm_id=None, num_records=-1, file_pattern='*', filter_query=None):
+
+        """
+
+        Sync data to realtime layer.
+
+        Args:
+            dm_name: `str`,
+                Data model name.
+            dm_id: `str`, default `None`
+                Data model id.
+            num_records: `int`, default `-1`
+                Number of records to be processed. '-1' means all the records.
+            file_pattern: `str`, default `*`
+                File pattern of the files in CDS to be processed. The pattern in  `YYYY-MM-DDTHH_mm_ss*.parquet`.
+                One can use this to filter data in CDS received in a given date.
+            filter_query: `dict`, default `None`
+                Query to be used to filter the data to be processed.
+
+        :return: None
+        """
+
+        filter_query = filter_query if filter_query else {}
+
+        if dm_name:
+            dm_id = DataModel(self.carol).get_by_name(dm_name)['mdmId']
+        else:
+            if dm_id is None:
+                raise ValueError(f'dm_name or dm_id should be set.')
+
+        query_params = {"entityTemplateId": dm_id, "numRecords": num_records, "filePattern": file_pattern}
+
+        return self.carol.call_api(path='v1/cds/staging/fetchData', method='POST', params=query_params,
+                                   data=filter_query)
+
+    def delete(self, dm_name=None, dm_id=None):
+
+        """
+
+        Delete all CDS data model data.
+
+        Args:
+            dm_name: `str`,
+                Data Model name.
+            dm_id: `str`, default `None`
+                Data Model id.
+
+        :return: None
+        """
+
+        if dm_name:
+            dm_id = DataModel(self.carol).get_by_name(dm_name)['mdmId']
+        else:
+            if dm_id is None:
+                raise ValueError(f'dm_name or dm_id should be set.')
+
+        query_params = {"entityTemplateId": dm_id}
+
+        return self.carol.call_api(path='v1/cds/golden/clearData', method='POST', params=query_params)
+
+    def count(self, dm_name=None, dm_id=None):
+
+        """
+
+        Count number of messages in CDS.
+
+        Args:
+            dm_name: `str`,
+                Data Model name.
+            dm_id: `str`, default `None`
+                Data Model id.
+
+        :return: `int`
+            Count
+        """
+
+        if dm_name:
+            dm_id = DataModel(self.carol).get_by_name(dm_name)['mdmId']
+        else:
+            if dm_id is None:
+                raise ValueError(f'dm_name or dm_id should be set.')
+
+        query_params = {"entityTemplateId": dm_id}
+        return self.carol.call_api(path='v1/cds/golden/fetchCount', method='POST', params=query_params).get('count')
