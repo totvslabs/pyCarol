@@ -313,3 +313,40 @@ class CDSGolden:
 
         query_params = {"entityTemplateId": dm_id}
         return self.carol.call_api(path='v1/cds/golden/fetchCount', method='POST', params=query_params).get('count')
+
+    def consolidate(self, dm_name=None, dm_id=None,
+                    worker_type='n1-standard-4', max_number_workers=-1, number_shards=-1):
+
+        """
+
+        Process staging CDS data.
+
+        Args:
+            dm_name: `str`,
+                Data Model name.
+            dm_id: `str`, default `None`
+                Data Model id.
+            worker_type: `str`, default `n1-standard-4`
+                Machine flavor to be used.
+            max_number_workers: `int`, default `-1`
+                Max number of workers to be used during the process. '-1' means all the available.
+            number_shards: `int`, default `-1`
+                Number of shards.
+
+        :return: None
+        """
+
+        if dm_name:
+            dm_id = DataModel(self.carol).get_by_name(dm_name)['mdmId']
+        else:
+            if dm_id is None:
+                raise ValueError('dm_name or dm_id should be set.')
+
+        if worker_type not in _MACHINE_FLAVORS:
+            raise ValueError(f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
+
+        query_params = {"entityTemplateId": dm_id,
+                        "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
+                        "numberOfShards": number_shards}
+
+        return self.carol.call_api(path='v1/cds/golden/consolidate', method='POST', params=query_params)
