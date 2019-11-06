@@ -16,9 +16,6 @@ class Storage:
         if carolina.engine == 'GCP-CS':
             from .utils.storage_gcpcs import StorageGCPCS
             self.backend = StorageGCPCS(self.carol, carolina)
-        elif carolina.engine == 'AWS-S3':
-            from .utils.storage_awss3 import StorageAWSS3
-            self.backend = StorageAWSS3(self.carol, carolina)
 
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
         self.backend.save(name, obj, format, parquet, cache)

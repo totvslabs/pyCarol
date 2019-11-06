@@ -1,7 +1,4 @@
-"""
-This module contains generic methods that operates on native python types and do
-not depend on external libraries.
-"""
+
 import builtins
 
 def int_to_bytes(i: int) -> bytes:

@@ -1,87 +1,11 @@
-from pycarol.pipeline import Task
-from pycarol.pipeline.utils import build_dag
-from pycarol.pipeline.utils import breadth_first_search, get_reverse_dag, find_root_in_dag
-import warnings
-
 import luigi
-
-def luigi_get_sons(task) -> list:
-    """
-    Returns a list of required tasks. This is used in build_dag
-    Args:
-        task: luigi Task
-
-    Returns:
-        l: list of luigi Task
-
-    """
-    if isinstance(task,tuple):
-        # this case happens when we use local params in tasks require
-        task,params = task
-    return task.requires_list
-
-
-def get_dag_from_task(task:list) -> dict:
-    """
-    Wrapper around generic build_dag.
-    Args:
-        task: list of proper luigi tasks
-
-    Returns:
-        dag: dict encoding a DAG
-
-    """
-    dag = build_dag(task,luigi_get_sons)
-    return dag
-
-def get_instances_from_classes(dag:dict,params:dict):
-    """Returns a dag of task instances, given a dag of task classes and pipeline params."""
-    instances_dag = {}
-    for k,v in dag.items():
-        task_params = params
-        if isinstance(k,tuple):
-            k,local_params = k
-            task_params.update(local_params)
-        task_list=[]
-        for t in v:
-            task_params = params
-            if isinstance(t,tuple):
-                t,local_params = t
-                task_params.update(local_params)
-            task_list.append(t(**task_params))
-        instances_dag[k(**params)] = task_list
-    return instances_dag
-
-def downstream_complete(dag,top_nodes,downstream_complete_dict):
-    """Recursively traverses dag starting from top_nodes to update downstream_complet_dict"""
-    #TODO: reimplement using breadth_first_search
-    for task in top_nodes:
-        if task in downstream_complete_dict:
-            continue
-        sons = dag[task]
-        if sons: # recursion step
-            downstream_complete_dict[task] = task.complete() and \
-                all([
-                    downstream_complete(dag,[t],downstream_complete_dict) 
-                    for t in sons
-                    ])
-        else: # stop recursion step
-            downstream_complete_dict[task] = task.complete()
-
-def _tasks_are_class(tasks):
-    for t in tasks:
-        if not issubclass(t,Task):
-            return False
-    else:
-        return True
-
-def _tasks_are_instance(tasks):
-    for t in tasks:
-        if not isinstance(t,Task):
-            return False
-    else:
-        return True
-
+from pycarol.pipeline import Task
+from pycarol.pipeline.utils import (
+    build_dag,
+    breadth_first_search,
+    get_reverse_dag,
+    find_root_in_dag,
+)
 
 
 class Pipe(object):
@@ -92,20 +16,15 @@ class Pipe(object):
     def __init__(self, tasks: list, params:dict):
         assert isinstance(tasks,list)
         assert params is None or isinstance(params,dict)
-        assert _tasks_are_instance(tasks) or _tasks_are_class(tasks)
+        assert _tasks_are_class(tasks)
+        if _tasks_are_instance(tasks):
+            raise NotImplementedError(f"Currently, we cannot create Pipe objects from instantiated tasks.")
 
         self.params = params
         self.top_nodes = tasks # top nodes are root nodes
-        self.dag = get_dag_from_task(tasks)
-        if _tasks_are_instance(tasks):
-            raise NotImplementedError(f"Currently, we cannot create Pipe objects from instantiated tasks.")
-        if _tasks_are_instance(tasks) and params is not None:
-            warnings.warn("params will not be used because tasks are already initialized")
-        if _tasks_are_class(tasks):
-            self.top_nodes = [t(**self.params) for t in self.top_nodes]
-            self.dag = get_instances_from_classes(self.dag,self.params)
-
-
+        self.dag = _get_dag_from_task(tasks)
+        self.top_nodes = [t(**self.params) for t in self.top_nodes]
+        self.dag = _get_instances_from_classes(self.dag, self.params)
         self.rev_dag = get_reverse_dag(self.dag)
         self.leaf_nodes = find_root_in_dag(self.rev_dag) #  leaf nodes are root nodes of rev dag
         self.all_tasks = [k for k in self.dag]
@@ -134,7 +53,7 @@ class Pipe(object):
         """Remove all targets for which respective downstream targets are not complete"""
 
         downstream_complete_dict = {}
-        downstream_complete(self.dag,self.top_nodes,downstream_complete_dict)
+        _downstream_complete(self.dag, self.top_nodes, downstream_complete_dict)
 
         for t, is_downstream_complete in downstream_complete_dict.items():
             if  not is_downstream_complete:
@@ -158,7 +77,9 @@ class Pipe(object):
 
     def get_task_complete(self,task):
         """ Returns True if task is complete accordingly to
-        self.all_complete_status dictionary"""
+        self.all_complete_status dictionary.
+        When updating many tasks simultaneously, this method is faster the
+        standard luigi method."""
         assert task in self.all_tasks, f"Task {task} not found in this pipeline"
         return self.all_complete_status[task]
 
@@ -171,6 +92,11 @@ class Pipe(object):
         return self.dag
 
     def get_task_by_id(self,task_id):
+        """
+        Returns the task object given a string task_id.
+        This method should be used to implement run_task command line script,
+        which will be used in docker tasks and related architectures.
+        """
         for t in self.all_tasks:
             if task_id == t.task_id:
                 return t
@@ -178,6 +104,10 @@ class Pipe(object):
             raise KeyError(f"{task_id} not found in this pipeline.")
 
     def get_matching_tasks(self,task):
+        """
+        Given a non instantiated task, retrieves all instantiated tasks in this pipeline.
+        It is used in manual assert in notebook tasks.
+        """
         matching_tasks = [isinstance(t, task) for t in self.all_tasks]
         matching_tasks = [t for i, t in enumerate(self.all_tasks) if
                           matching_tasks[i]]
@@ -185,20 +115,108 @@ class Pipe(object):
 
 
     def assert_task_is_unique(self,task):
+        """
+        If more than one instance of a class task exist in this pipeline,
+        the use of task notebook will be tricky. This assert should be used
+        in notebook tasks to warn the user about this situation.
+        """
         matching_tasks = self.get_matching_tasks(task)
-        assert len(matching_tasks) > 0
-        if len(matching_tasks) == 1:
-            return None
-        params = matching_tasks[0].get_execution_params()
-        for t in matching_tasks[1:]:
-            params_i = t.get_execution_params()
-            assert params_i == params
-        return None
-
+        assert len(matching_tasks) > 0, \
+            f"task {task} not found in this pipeline"
+        assert len(matching_tasks) ==1, \
+            f"task {task} found multiple times in this pipeline"
+        return
 
     def get_task_instance(self,task):
+        """
+        This is the method which allows task notebook feature. Given a task
+        class it returns corresponding task object in pipeline
+        """
         self.assert_task_is_unique(task)
         matching_tasks = self.get_matching_tasks(task)
         return matching_tasks[0]
+
+
+
+### Auxiliary functions ###
+
+
+def _luigi_get_sons(task) -> list:
+    """
+    Returns a list of required tasks. This is used in build_dag
+    Args:
+        task: luigi Task
+
+    Returns:
+        l: list of luigi Task
+
+    """
+    if isinstance(task,tuple):
+        # this case happens when we use local params in tasks require
+        task, params = task
+    return task.requires_list
+
+
+def _get_dag_from_task(task:list) -> dict:
+    """
+    Wrapper around generic build_dag.
+    Args:
+        task: list of proper luigi tasks
+
+    Returns:
+        dag: dict encoding a DAG
+
+    """
+    dag = build_dag(task, _luigi_get_sons)
+    return dag
+
+def _get_instances_from_classes(dag:dict, params:dict):
+    """Returns a dag of task instances, given a dag of task classes and pipeline params."""
+    instances_dag = {}
+    for k,v in dag.items():
+        task_params = params
+        if isinstance(k,tuple):
+            k,local_params = k
+            task_params.update(local_params)
+        task_list=[]
+        for t in v:
+            task_params = params
+            if isinstance(t,tuple):
+                t,local_params = t
+                task_params.update(local_params)
+            task_list.append(t(**task_params))
+        instances_dag[k(**params)] = task_list
+    return instances_dag
+
+def _downstream_complete(dag, top_nodes, downstream_complete_dict):
+    """Recursively traverses dag starting from top_nodes to update downstream_complet_dict"""
+    #TODO: reimplement using breadth_first_search
+    for task in top_nodes:
+        if task in downstream_complete_dict:
+            continue
+        sons = dag[task]
+        if sons: # recursion step
+            downstream_complete_dict[task] = task.complete() and \
+                all([
+                    _downstream_complete(dag, [t], downstream_complete_dict)
+                    for t in sons
+                    ])
+        else: # stop recursion step
+            downstream_complete_dict[task] = task.complete()
+
+def _tasks_are_class(tasks):
+    for t in tasks:
+        if not issubclass(t,Task):
+            return False
+    else:
+        return True
+
+def _tasks_are_instance(tasks):
+    for t in tasks:
+        if not isinstance(t,Task):
+            return False
+    else:
+        return True
+
 
 

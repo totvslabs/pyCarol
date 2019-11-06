@@ -24,6 +24,12 @@ class Task(luigi.Task):
     version = '0.0.0'
     metadata = {}
 
+    def get_task_address(self):
+        if self.task_notebook:
+            return self.task_notebook
+        else:
+            return None
+
     def buildme(self, local_scheduler=True, **kwargs):
         luigi.build([self, ], local_scheduler=local_scheduler, **kwargs)
 

@@ -72,9 +72,6 @@ def test_get_task_by_id_raises():
         return # success
     raise Exception("Key error waas not triggered")
 
-def test_import_bokeh_plot():
-    import pycarol.pipeline.viewer.bokeh_plot
-
 
 # def test_remove_obsolete():
 #     # need to implement metadata in targets
