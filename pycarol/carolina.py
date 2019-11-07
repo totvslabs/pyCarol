@@ -45,7 +45,7 @@ class Carolina:
         token = Carolina.token
         self.engine = token['engine']
 
-        if token['expirationTimestamp'] is not None:
+        if token.get('expirationTimestamp', None) is not None:
             self.expiresAt = datetime.fromtimestamp(token['expirationTimestamp']/1000.0)
 
         self.cds_app_storage_path = token['cdsAppStoragePath']
