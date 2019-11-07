@@ -1,5 +1,6 @@
 from string import Formatter
-
+from datetime import datetime
+from datetime import timedelta
 
 class Carolina:
     """
@@ -12,11 +13,11 @@ class Carolina:
     token = None
 
     def __init__(self, carol):
-
         self.carol = carol
         self.client = None
         self.engine = None
         self.token = None
+        self.expiresAt = None
         self.cds_app_storage_path = None
         self.cds_golden_path = None
         self.cds_staging_path = None
@@ -24,10 +25,15 @@ class Carolina:
         self.cds_staging_rejected_path = None
 
     def init_if_needed(self):
+        expired = False
         if self.client:
-            return
+            # Check if the token is not expired for at least another minute.. we do a little margin to avoid time difference issues
+            if self.expiresAt is None or datetime.now() + timedelta(minutes=1) < self.expiresAt:
+                return
+            else:
+                expired = True
 
-        if Carolina.token is None:
+        if Carolina.token is None or expired:
             token = self.carol.call_api('v1/storage/storage/token', params={'carolAppName': self.carol.app_name})
             token['tenant_name'] = self.carol.tenant['mdmName']
             Carolina.token = token
@@ -38,6 +44,9 @@ class Carolina:
 
         token = Carolina.token
         self.engine = token['engine']
+
+        if token['expirationTimestamp'] is not None:
+            self.expiresAt = datetime.fromtimestamp(token['expirationTimestamp']/1000.0)
 
         self.cds_app_storage_path = token['cdsAppStoragePath']
         self.cds_golden_path = token['cdsGoldenPath']

@@ -6,16 +6,17 @@ class Storage:
     def __init__(self, carol):
         self.carol = carol
         self._init_if_needed()
+        self.carolina = None
 
     def _init_if_needed(self):
         if Storage.backend is not None and Carolina.token.get('tenant_name', '') == self.carol.tenant['mdmName']:
             return
 
-        carolina = Carolina(self.carol)
-        carolina.init_if_needed()
-        if carolina.engine == 'GCP-CS':
+        self.carolina = Carolina(self.carol)
+        self.carolina.init_if_needed()
+        if self.carolina.engine == 'GCP-CS':
             from .utils.storage_gcpcs import StorageGCPCS
-            self.backend = StorageGCPCS(self.carol, carolina)
+            self.backend = StorageGCPCS(self.carol, self.carolina)
 
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
         self.backend.save(name, obj, format, parquet, cache)
