@@ -83,10 +83,10 @@ class Pipe(object):
         assert task in self.all_tasks, f"Task {task} not found in this pipeline"
         return self.all_complete_status[task]
 
-    def run(self):
+    def run(self, local_scheduler=True, workers=1):
         """Run the whole pipeline"""
         tasks = [t for t in self.top_nodes]
-        luigi.build(tasks,local_scheduler = True)
+        luigi.build(tasks, local_scheduler=local_scheduler, workers=workers)
 
     def get_dag(self):
         return self.dag
