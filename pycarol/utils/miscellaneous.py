@@ -80,7 +80,6 @@ def ranges(min_v, max_v, nb):
     return step
 
 
-# TODO: reused from staging. Should I put in utils/?
 def stream_data(data, step_size, compress_gzip):
     """
 
