@@ -20,7 +20,7 @@ from ..filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
 from ..utils.miscellaneous import ranges
 from ..utils import async_helpers
 from ..utils.miscellaneous import stream_data
-from .. import _CAROL_METADATA
+from .. import _CAROL_METADATA_GOLDEN
 from ..utils.miscellaneous import drop_duplicated_parquet
 
 _DATA_MODEL_TYPES_MAPPING = {
@@ -138,7 +138,7 @@ class DataModel:
             import_type = 'golden_cds'
 
         if columns:
-            columns.extend(_CAROL_METADATA)
+            columns.extend(_CAROL_METADATA_GOLDEN)
 
         storage = Storage(self.carol)
         token_carolina = storage.backend.carolina.token
@@ -163,10 +163,10 @@ class DataModel:
                 _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
                 cols_keys = list(_field_types)
                 if return_metadata:
-                    cols_keys.extend(_CAROL_METADATA)
+                    cols_keys.extend(_CAROL_METADATA_GOLDEN)
 
                 elif columns:
-                    columns = [i for i in columns if i not in _CAROL_METADATA]
+                    columns = [i for i in columns if i not in _CAROL_METADATA_GOLDEN]
 
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in _field_types.items():
@@ -190,7 +190,7 @@ class DataModel:
                     .reset_index(drop=True)
 
         if not return_metadata:
-            to_drop = set(_CAROL_METADATA).intersection(set(d.columns))
+            to_drop = set(_CAROL_METADATA_GOLDEN).intersection(set(d.columns))
             d = d.drop(labels=to_drop, axis=1)
 
         return d
