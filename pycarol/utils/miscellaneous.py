@@ -7,8 +7,17 @@ import numpy as np
 _FILE_MARKER = '<files>'
 
 
-
 def drop_duplicated_parquet(d):
+    """
+    Merge updates and delete records from the parquet files in CDS.
+
+    Args:
+        d: pd.DataFrame
+
+    Returns:
+        pd.DataFrame
+
+    """
 
     d.sort_values('mdmCounterForEntity', inplace=True)
     d.reset_index(inplace=True, drop=True)
@@ -18,6 +27,7 @@ def drop_duplicated_parquet(d):
         d = d[~d['mdmDeleted']]
     d.reset_index(inplace=True, drop=True)
     return d
+
 
 class NumpyEncoder(json.JSONEncoder):
     """ Special json encoder for numpy types """
@@ -48,6 +58,7 @@ def _attach_path(branch, trunk):
             trunk[node] = defaultdict(dict, ((_FILE_MARKER, []),))
         _attach_path(others, trunk[node])
 
+
 def prettify_path(d, indent=0):
     '''
     Print the file tree structure with proper indentation.
@@ -64,7 +75,7 @@ def prettify_path(d, indent=0):
         else:
             print('  ' * indent + str(key))
             if isinstance(value, dict):
-                prettify_path(value, indent+1)
+                prettify_path(value, indent + 1)
 
 
 def ranges(min_v, max_v, nb):
@@ -76,7 +87,7 @@ def ranges(min_v, max_v, nb):
         step.append(max_v)
     step = [[step[i], step[i + 1] - 1] for i in range(len(step) - 1)]
     step.append([max_v, None])
-    step = [[None, min_v-1]] + step
+    step = [[None, min_v - 1]] + step
     return step
 
 
@@ -105,7 +116,7 @@ def stream_data(data, step_size, compress_gzip):
         if is_df:
             data_to_send = data.iloc[i:i + step_size]
             cont += len(data_to_send)
-            #print('Sending {}/{}'.format(cont, data_size), end='\r')
+            # print('Sending {}/{}'.format(cont, data_size), end='\r')
             data_to_send = data_to_send.to_json(orient='records', date_format='iso', lines=False)
             if compress_gzip:
                 out = io.BytesIO()
@@ -117,15 +128,16 @@ def stream_data(data, step_size, compress_gzip):
         else:
             data_to_send = data[i:i + step_size]
             cont += len(data_to_send)
-            #print('Sending {}/{}'.format(cont, data_size), end='\r')
+            # print('Sending {}/{}'.format(cont, data_size), end='\r')
             if compress_gzip:
                 out = io.BytesIO()
                 with gzip.GzipFile(fileobj=out, mode="w", compresslevel=9) as f:
-                    f.write(json.dumps(data_to_send,  cls=NumpyEncoder).encode('utf-8'))
+                    f.write(json.dumps(data_to_send, cls=NumpyEncoder).encode('utf-8'))
                 yield out.getvalue(), cont
             else:
                 yield data_to_send, cont
     return None, None
+
 
 class Hashabledict(dict):
     def __hash__(self):
