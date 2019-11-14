@@ -205,11 +205,11 @@ class NESTED(FilterType):
 
 class NESTED_TERM_FILTER(FilterType):
     def __init__(self, key, value, path, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_TERM_FILTERM, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
+        super().__init__(filter_type = FT.NESTED_TERM_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_TERMS_FILTER(FilterType):
     def __init__(self, key, value, path, values_field = None, values_query = None):
-        super().__init__(filter_type = FT.NESTED_TERMS_FILTERM, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
+        super().__init__(filter_type = FT.NESTED_TERMS_FILTER, key=key, value=value, path=path, values_field=values_field, values_query=values_query)
 
 class NESTED_RANGE_FILTER(FilterType):
     def __init__(self, key, value, path, values_field = None, values_query = None):
