@@ -78,7 +78,7 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
 
 
     if max_workers is not None:
-        assert max_workers > 0, f"max_workers must be greater than zero, yo u passed {max_workers}"
+        assert max_workers > 0, f"max_workers must be greater than zero, you passed {max_workers}"
     else:
         max_workers = 1
 
@@ -97,7 +97,8 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
             result = pd.read_parquet(buffer, columns=columns)
 
             if mapping_columns is not None:
-                result.rename(columns=mapping_columns, inplace=True) #fix columns names (we replace `-` for `_` due to parquet limitations.
+                # fix columns names (we replace `-` for `_` due to parquet limitations.
+                result.rename(columns=mapping_columns, inplace=True)
             if callback:
                 assert callable(callback), \
                     f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function/class.'

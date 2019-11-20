@@ -12,7 +12,7 @@ from .utils.importers import _import_dask, _import_pandas
 from .filter import Filter, TYPE_FILTER
 from .utils import async_helpers
 from .utils.miscellaneous import stream_data
-from . import _CAROL_METADATA
+from . import _CAROL_METADATA_STAGING
 from .utils.miscellaneous import drop_duplicated_parquet
 
 _SCHEMA_TYPES_MAPPING = {
@@ -349,7 +349,7 @@ class Staging:
             mapping_columns = list(_staging['mdmStagingMapping']['properties'].keys())
             columns = [i.replace("-", "_") for i in mapping_columns]
 
-        columns.extend(_CAROL_METADATA)
+        columns.extend(_CAROL_METADATA_STAGING)
         mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
 
         # TODO: Validate the code bellow for cds param
@@ -394,10 +394,10 @@ class Staging:
                 cols_keys = [i.replace("-", "_") for i in cols_keys]
 
                 if return_metadata:
-                    cols_keys.extend(_CAROL_METADATA)
+                    cols_keys.extend(_CAROL_METADATA_STAGING)
 
                 elif columns:
-                    columns = [i for i in columns if i not in _CAROL_METADATA]
+                    columns = [i for i in columns if i not in _CAROL_METADATA_STAGING]
 
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in self.get_schema(staging_name=staging_name,
@@ -422,7 +422,7 @@ class Staging:
                     .reset_index(drop=True)
 
         if not return_metadata:
-            to_drop = set(_CAROL_METADATA).intersection(set(d.columns))
+            to_drop = set(_CAROL_METADATA_STAGING).intersection(set(d.columns))
             d = d.drop(labels=to_drop, axis=1)
 
         return d
