@@ -78,7 +78,7 @@ class DataModel:
     def fetch_parquet(self, dm_name, merge_records=True, backend='pandas',
                       return_dask_graph=False,
                       columns=None, return_metadata=False, callback=None,
-                      max_hits=None, cds=False, max_workers=None, ):
+                      max_hits=None, cds=False, max_workers=None, file_pattern=None):
 
         """
         Fetch parquet from Golden.
@@ -105,6 +105,9 @@ class DataModel:
                 Get records from CDS.
             max_workers: `int` default `None`
                 Number of workers to use when downloading parquet files with pandas back-end.
+            file_pattern: `str` default `None`
+                File pattern to filter data when fetching from CDS. e.g.
+                file_pattern='2019-11-25' will fetch only CDS files that start with `2019-11-25`.
 
             :return:
             """
@@ -157,7 +160,7 @@ class DataModel:
                                callback=callback, max_hits=max_hits,
                                max_workers=max_workers,
                                token_carolina=token_carolina,
-                               storage_space=storage_space, )
+                               storage_space=storage_space, file_pattern=file_pattern)
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
                 _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
