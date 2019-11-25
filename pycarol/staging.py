@@ -290,7 +290,7 @@ class Staging:
 
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='pandas',
                       merge_records=True, return_dask_graph=False, columns=None, max_hits=None,
-                      return_metadata=False, callback=None, cds=False, max_workers=None,):
+                      return_metadata=False, callback=None, cds=False, max_workers=None, file_pattern=None):
         """
 
         Fetch parquet from a staging table.
@@ -321,6 +321,9 @@ class Staging:
                 Get staging data from CDS.
             max_workers: `int` default `None`
                 Number of workers to use when downloading parquet files with pandas back-end.
+            file_pattern: `str` default `None`
+                File pattern to filter data when fetching from CDS. e.g.
+                file_pattern='2019-11-25' will fetch only CDS files that start with `2019-11-25`.
         :return:
 
         Args:
@@ -383,7 +386,8 @@ class Staging:
             d = _import_pandas(storage=storage, connector_id=connector_id, max_workers=max_workers,
                                token_carolina=token_carolina, storage_space=storage_space,
                                staging_name=staging_name, import_type=import_type,  columns=columns,
-                               max_hits=max_hits, callback=callback, mapping_columns=mapping_columns)
+                               max_hits=max_hits, callback=callback, mapping_columns=mapping_columns,
+                               file_pattern=file_pattern)
 
             # TODO: Do the same for dask backend
             if d is None:

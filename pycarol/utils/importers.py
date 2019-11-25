@@ -52,7 +52,7 @@ def _import_dask(storage, merge_records=False,
 
 def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mapping_columns=None, max_workers=None,
                    staging_name=None, view_name=None, import_type='staging', golden=False, max_hits=None, callback=None,
-                   token_carolina=None, storage_space=None):
+                   token_carolina=None, storage_space=None,  file_pattern=None):
     if columns:
         columns = list(set(columns))
         columns += __DM_FIELDS
@@ -65,9 +65,11 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
     elif import_type == 'view':
         file_paths = storage.get_view_file_paths(view_name=view_name)
     elif import_type == 'staging_cds':
-        file_paths = storage.get_staging_cds_file_paths(staging_name=staging_name, connector_id=connector_id)
+        file_paths = storage.get_staging_cds_file_paths(staging_name=staging_name, connector_id=connector_id,
+                                                        file_pattern=file_pattern)
     elif import_type == 'golden_cds':
-        file_paths = storage.get_golden_cds_file_paths(dm_name=dm_name)
+        file_paths = storage.get_golden_cds_file_paths(dm_name=dm_name,
+                                                       file_pattern=file_pattern)
     elif import_type == 'view_cds':
         file_paths = storage.get_view_cds_file_paths(dm_name=view_name)
     else:
@@ -133,16 +135,3 @@ def _load_client(token):
     import gcsfs
     client = gcsfs.GCSFileSystem(token=token)
     return client
-
-
-def _download_files2(file, storage, columns, mapping_columns, callback):
-    filename, storage_space = file['name'], file['storage_space']
-    buffer = storage.load(filename, format='raw', cache=False, storage_space=storage_space)
-    result = pd.read_parquet(buffer, columns=columns)
-
-    if mapping_columns is not None:
-        result.rename(columns=mapping_columns, inplace=True)
-
-    if callback:
-        result = callback(result)
-    return result
