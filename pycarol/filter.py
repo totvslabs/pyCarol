@@ -114,7 +114,7 @@ class FilterType:
         json = {'mdmFilterType': self.filter_type.value}
         if self.key:
             json['mdmKey'] = self.key
-        if self.value:
+        if self.value is not None:
             json['mdmValue'] = self.value
         if self.path:
             json['mdmPath'] = self.path
@@ -124,13 +124,13 @@ class FilterType:
             json['mdmValuesField'] = self.values_field
         if self.mdm_format:
             json['mdmFormat'] = self.mdm_format
-        if self.flags:
+        if self.flags is not None:
             json['mdmFlags'] = self.flags
-        if self.range_start:
+        if self.range_start is not None:
             json['mdmRangeStart'] = self.range_start
-        if self.range_end:
+        if self.range_end is not None:
             json['mdmRangeEnd'] = self.range_end
-        if self.values_query:
+        if self.values_query is not None:
             json['mdmValuesQuery'] = self.values_query.to_json()
 
         return json
@@ -280,7 +280,7 @@ class Aggregation:
             json['size'] = self.size
         if self.shard_size:
             json['shardSize'] = self.shard_size
-        if self.min_doc_count:
+        if self.min_doc_count is not None:
             json['minDocCount'] = self.min_doc_count
         if self.sort_by:
             json['sortBy'] = self.sort_by
@@ -288,7 +288,7 @@ class Aggregation:
             json['sortOrder'] = self.sort_order
         if self.sub_aggregations:
             json['subAggregations'] = [agg.to_json() for agg in self.sub_aggregations]
-        if self.query_param:
+        if self.query_param is not None:
             json['queryParam'] = self.query_param.to_json()
 
         return json
