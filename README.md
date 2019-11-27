@@ -5,7 +5,7 @@
 # Table of Contents
 1. [Initializing pyCarol](#using-pyCarol)
    1. [Using API Key](#using-api-key)
-   1. [Running on a local Machine](#running-on-a-local-machine)
+   1. [Good practice using token](#good-practice-using-token)
 1. [Queries](#queries)
    1. [Filter queries](#processing-filter-queries)
    1. [Named queries](#processing-named-queries)
@@ -67,7 +67,7 @@ carol.api_key_revoke(CONNECTORID)
 ```
 
 
-#### Good practice using token. 
+#### Good practice using token
 Never write in plain text your password/API token in your application. Use environment variables. pyCarol can use 
 environment variables automatically. When none parameter is passed to the Carol constructor pycarol will look for:
 
