@@ -50,8 +50,11 @@ class Carol:
              1. `CAROLTENANT` for domain
              2. `CAROLAPPNAME` for app_name
              3. `CAROLAPPOAUTH` for auth
+             4. `CAROLORGANIZATION` for organization
              4. `CAROLCONNECTORID` for connector_id
-             4. `CAROL_DOMAIN` for environment
+             5. `CAROL_DOMAIN` for environment
+             6. `CAROLUSER` for carol user email
+             7. `CAROLPWD` for user password.
 
     """
 
