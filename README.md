@@ -89,7 +89,7 @@ CAROLORGANIZATION=myOrganization
 CAROLAPPOAUTH=myAPIKey
 CAROLCONNECTORID=myConnector
 ```
- and them
+ and then
  
  ```python
 from pycarol import Carol
