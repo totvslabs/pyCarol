@@ -391,7 +391,7 @@ class Staging:
                                token_carolina=token_carolina, storage_space=storage_space,
                                staging_name=staging_name, import_type=import_type,  columns=columns,
                                max_hits=max_hits, callback=callback, mapping_columns=mapping_columns,
-                               file_pattern=file_pattern, return_callback_result=return_callback_result)
+                               file_pattern=file_pattern)
 
             # TODO: Do the same for dask backend
             if d is None:
