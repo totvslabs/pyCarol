@@ -420,7 +420,7 @@ class Staging:
         else:
             raise ValueError(f'backend should be either "dask" or "pandas" you entered {backend}')
 
-        if return_callback_result:
+        if (return_callback_result) and (callback is not None):
             return d
 
         if merge_records:
