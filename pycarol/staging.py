@@ -290,7 +290,8 @@ class Staging:
 
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='pandas',
                       merge_records=True, return_dask_graph=False, columns=None, max_hits=None,
-                      return_metadata=False, callback=None, cds=False, max_workers=None, file_pattern=None):
+                      return_metadata=False, callback=None, cds=False, max_workers=None, file_pattern=None,
+                      return_callback_result=False):
         """
 
         Fetch parquet from a staging table.
@@ -324,6 +325,9 @@ class Staging:
             file_pattern: `str` default `None`
                 File pattern to filter data when fetching from CDS. e.g.
                 file_pattern='2019-11-25' will fetch only CDS files that start with `2019-11-25`.
+            return_callback_result `bool` default `False`
+                If a callback is used, it will return the result of the response of the callback. This will skip all the
+                operation to merge records and return selected columns.
         :return:
 
         Args:
@@ -387,7 +391,7 @@ class Staging:
                                token_carolina=token_carolina, storage_space=storage_space,
                                staging_name=staging_name, import_type=import_type,  columns=columns,
                                max_hits=max_hits, callback=callback, mapping_columns=mapping_columns,
-                               file_pattern=file_pattern)
+                               file_pattern=file_pattern, return_callback_result=return_callback_result)
 
             # TODO: Do the same for dask backend
             if d is None:
@@ -415,6 +419,9 @@ class Staging:
                 return d.rename(columns=mapping_columns)
         else:
             raise ValueError(f'backend should be either "dask" or "pandas" you entered {backend}')
+
+        if return_callback_result:
+            return d
 
         if merge_records:
             if not return_dask_graph:
