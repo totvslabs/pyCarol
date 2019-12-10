@@ -5,7 +5,7 @@
 # Table of Contents
 1. [Initializing pyCarol](#using-pyCarol)
    1. [Using API Key](#using-api-key)
-   1. [Running on a local Machine](#running-on-a-local-machine)
+   1. [Good practice using token](#good-practice-using-token)
 1. [Queries](#queries)
    1. [Filter queries](#processing-filter-queries)
    1. [Named queries](#processing-named-queries)
@@ -15,71 +15,87 @@
 
 ## Initializing pyCarol
 
-Carol is the main object to access pyCarol and all APIs need it.
+Carol is the main object to access pyCarol and all Carol's APIs.
 ```python
-from pycarol.auth.PwdAuth import PwdAuth
-from pycarol.carol import Carol
+from pycarol import PwdAuth, Carol
 
-carol = Carol(domain=TENANT_NAME, app_name=APP_NAME,
-              auth=PwdAuth(USERNAME, PASSWORD), connector_id=CONNECTOR)
-
+carol = Carol(domain=TENANT_NAME, app_name=APP_NAME, 
+              auth=PwdAuth(USERNAME, PASSWORD), organization=ORGANIZATION)
 ```
-where `domain` is the tenant name, `app_name` is the app name one is using to access, if any,
-is the authentication method to be used (using user/password in this case) and `connector_id` is the connector
-one wants to connect.
-####  Running on a local Machine
-
-If you are running the application on a local machine you need to enter the port you are using:
-
-```python
-from pycarol.auth.PwdAuth import PwdAuth
-from pycarol.carol import Carol
-
-carol = Carol(domain=TENANT_NAME, app_name=APP_NAME,
-              auth=PwdAuth(USERNAME, PASSWORD), connector_id=CONNECTOR,
-              port=8888)
-
-```
+where `domain` is the tenant name, `app_name` is the Carol's app name, if any, `auth`
+is the authentication method to be used (using user/password in this case) and `organization` is the organization 
+one wants to connect. Carols's URL is build as www.ORGANIZATION.carol.ai/TENANT_NAME
 
 #### Using API Key
 To use API keys instead of username and password:
 
 ```python
-from pycarol.auth.ApiKeyAuth import ApiKeyAuth
-from pycarol.carol import Carol
+from pycarol import ApiKeyAuth, Carol
 
 carol = Carol(domain=DOMAIN,
               app_name=APP_NAME,
               auth=ApiKeyAuth(api_key=X_AUTH_KEY),
-              connector_id=CONNECTOR)
+              connector_id=CONNECTOR, organization=ORGANIZATION)
 
 ```
+In this case one changes the authentication method to `ApiKeyAuth`. Noticed that one needs to pass the `connector_id`
+too. An API key is always associated to a connector ID. 
 
-To generate an API key
+It is possible to use pyCarol to generate an API key
 
 ```python
-from pycarol.auth.PwdAuth import PwdAuth
-from pycarol.auth.ApiKeyAuth import ApiKeyAuth
-from pycarol.carol import Carol
+from pycarol import PwdAuth, ApiKeyAuth, Carol
 
-api_key = Carol(domain=TENANT_NAME, app_name=APP_NAME,
-              auth=PwdAuth(USERNAME, PASSWORD), connector_id=CONNECTOR).issue_api_key()
-
+carol = Carol(domain=TENANT_NAME, app_name=APP_NAME, organization=ORGANIZATION,
+              auth=PwdAuth(USERNAME, PASSWORD), connector_id=CONNECTOR)
+api_key = carol.issue_api_key()
 
 print(f"This is a API key {api_key['X-Auth-Key']}")
 print(f"This is the connector Id {api_key['X-Auth-ConnectorId']}")
 ```
 
-To be able of getting the details of the API key you can do:
+To get the details of the API key you can do:
 
 ```python
-details = carol.api_key_details(APIKEY,CONNECTORID)
+details = carol.api_key_details(APIKEY, CONNECTORID)
 ```
 
 Finally, to revoke an API key:
 
 ```python
 carol.api_key_revoke(CONNECTORID)
+```
+
+
+#### Good practice using token
+Never write in plain text your password/API token in your application. Use environment variables. pyCarol can use 
+environment variables automatically. When none parameter is passed to the Carol constructor pycarol will look for:
+
+ 1. `CAROLTENANT` for domain
+ 2. `CAROLAPPNAME` for app_name
+ 3. `CAROL_DOMAIN` for environment
+ 4. `CAROLORGANIZATION` for organization
+ 4. `CAROLAPPOAUTH` for auth
+ 5. `CAROLCONNECTORID` for connector_id
+ 6. `CAROLUSER` for carol user email
+ 7. `CAROLPWD` for user password.  
+ 
+ e.g., one can create a `.env` file like this:
+ 
+ ```.env
+CAROLAPPNAME=myApp
+CAROLTENANT=myTenant
+CAROLORGANIZATION=myOrganization
+CAROLAPPOAUTH=myAPIKey
+CAROLCONNECTORID=myConnector
+```
+ and then
+ 
+ ```python
+from pycarol import Carol
+from dotenv import load_dotenv
+load_dotenv(".env") #this will import these env variables to your execution. 
+carol = Carol()
 ```
 
 ## Queries

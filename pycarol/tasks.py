@@ -33,7 +33,6 @@ class Tasks:
         self.mdm_task_status = json_task['mdmTaskStatus']
         self.mdm_task_owner = json_task['mdmTaskOwner']
         self.mdm_task_progress = json_task['mdmTaskProgress']
-        self.mdm_process_after = json_task['mdmProcessAfter']
         self.mdm_distribution_value = json_task['mdmDistributionValue']
         self.mdm_task_priority = json_task.get('mdmTaskPreference')
         self.mdm_number_of_steps = json_task['mdmNumberOfSteps']
@@ -43,10 +42,11 @@ class Tasks:
         self.mdm_last_updated = json_task['mdmLastUpdated']
         self.mdm_tenant_id = json_task['mdmTenantId']
 
-        if 'mdmData' in json_task:
-            self.mdm_data = json_task['mdmData']
+        self.mdm_process_after = json_task.get('mdmProcessAfter')
+        self.mdm_data = json_task.get('mdmData')
 
-    def create(self, task_type, task_group, data={}):
+
+    def create(self, task_type, task_group, data=None):
         """
         Create a new task
         :param task_type: type of task
@@ -54,6 +54,8 @@ class Tasks:
         :param data: data used in the task
         :return: Task
         """
+
+        data = data if data else []
         dataJson = {
             "mdmTaskType": task_type,
             "mdmTaskGroup": task_group,

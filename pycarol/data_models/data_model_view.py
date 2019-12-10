@@ -165,7 +165,7 @@ class DataModelView:
 
     def fetch_parquet(self, view_name, merge_records=True, backend='pandas', return_dask_graph=False,
                       columns=None, return_metadata=False, callback=None, max_hits=None,
-                      cds=False, max_workers=None,):
+                      cds=False, max_workers=None, return_callback_result=False):
 
         """
 
@@ -191,6 +191,9 @@ class DataModelView:
                     Get view data from CDS.
             max_workers: `int` default `None`
                 Number of workers to use when downloading parquet files with pandas back-end.
+            return_callback_result `bool` default `False`
+                If a callback is used, it will return the result of the response of the callback. This will skip all the
+                operation to merge records and return selected columns.
         :return:
         """
 
@@ -244,6 +247,9 @@ class DataModelView:
 
         else:
             raise ValueError(f'backend should be either "dask" or "pandas" you entered {backend}')
+
+        if (return_callback_result) and (callback is not None):
+            return d
 
         if merge_records:
             if not return_dask_graph:
