@@ -115,7 +115,7 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
                     break
     if not df_list:
         return None
-    return pd.concat(df_list, ignore_index=True)
+    return pd.concat(df_list, ignore_index=True, sort=True)
 
 
 
