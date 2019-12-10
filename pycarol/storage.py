@@ -1,16 +1,19 @@
 from .carolina import Carolina
-
+from datetime import datetime, timedelta
 
 class Storage:
-    backend = None
+    backend = None #this is not being used anymore.
     def __init__(self, carol):
         self.carol = carol
         self._init_if_needed()
         self.carolina = None
 
     def _init_if_needed(self):
-        if Storage.backend is not None and Carolina.token.get('tenant_name', '') == self.carol.tenant['mdmName']:
+        if (Carolina.token is not None) and (Carolina.token.get('tenant_name', '') == self.carol.tenant['mdmName']) and \
+           (datetime.utcnow() + timedelta(minutes=1) > datetime.fromtimestamp(Carolina.token.get('expirationTimestamp', 1)/1000.0)):
             return
+        else:
+            Carolina.token = None
 
         self.carolina = Carolina(self.carol)
         self.carolina.init_if_needed()

@@ -17,7 +17,7 @@ class Carolina:
         self.client = None
         self.engine = None
         self.token = None
-        self.expiresAt = None
+        self.expires_at = None
         self.cds_app_storage_path = None
         self.cds_golden_path = None
         self.cds_staging_path = None
@@ -28,7 +28,7 @@ class Carolina:
         expired = False
         if self.client:
             # Check if the token is not expired for at least another minute.. we do a little margin to avoid time difference issues
-            if self.expiresAt is None or datetime.now() + timedelta(minutes=1) < self.expiresAt:
+            if self.expires_at is None or datetime.utcnow() + timedelta(minutes=1) < self.expires_at:
                 return
             else:
                 expired = True
@@ -46,7 +46,7 @@ class Carolina:
         self.engine = token['engine']
 
         if token.get('expirationTimestamp', None) is not None:
-            self.expiresAt = datetime.fromtimestamp(token['expirationTimestamp']/1000.0)
+            self.expires_at = datetime.fromtimestamp(token['expirationTimestamp'] / 1000.0)
 
         self.cds_app_storage_path = token['cdsAppStoragePath']
         self.cds_golden_path = token['cdsGoldenPath']
