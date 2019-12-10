@@ -1,6 +1,5 @@
 from string import Formatter
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 class Carolina:
     """
