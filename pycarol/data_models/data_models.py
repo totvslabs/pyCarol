@@ -78,7 +78,8 @@ class DataModel:
     def fetch_parquet(self, dm_name, merge_records=True, backend='pandas',
                       return_dask_graph=False,
                       columns=None, return_metadata=False, callback=None,
-                      max_hits=None, cds=False, max_workers=None, file_pattern=None):
+                      max_hits=None, cds=False, max_workers=None, file_pattern=None,
+                      return_callback_result=False):
 
         """
         Fetch parquet from Golden.
@@ -108,7 +109,9 @@ class DataModel:
             file_pattern: `str` default `None`
                 File pattern to filter data when fetching from CDS. e.g.
                 file_pattern='2019-11-25' will fetch only CDS files that start with `2019-11-25`.
-
+            return_callback_result `bool` default `False`
+                If a callback is used, it will return the result of the response of the callback. This will skip all the
+                operation to merge records and return selected columns.
             :return:
             """
 
@@ -183,6 +186,9 @@ class DataModel:
 
         else:
             raise ValueError(f'backend should be either "dask" or "pandas" you entered {backend}')
+
+        if (return_callback_result) and (callback is not None):
+            return d
 
         if merge_records:
             if not return_dask_graph:

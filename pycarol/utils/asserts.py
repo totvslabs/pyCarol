@@ -1,6 +1,7 @@
 import os
-
 from contextlib import contextmanager
+
+
 @contextmanager
 def dotenv_context():
     """``with`` context to temporarily modify the environment variables"""
@@ -14,13 +15,9 @@ def dotenv_context():
         os.environ.update(_environ)
 
 
-def assert_env_is_defined(needed_keys =[
-    'CAROLTENANT',
-    'CAROLAPPVERSION',
-    'CAROLAPPNAME',
-    'CAROLAPPOAUTH',
-    'CAROLCONNECTORID',
-    ]):
+def assert_env_is_defined(needed_keys=frozenset(['CAROLTENANT', 'CAROLAPPVERSION', 'CAROLAPPNAME',
+                                                 'CAROLAPPOAUTH', 'CAROLCONNECTORID'])
+                          ):
     """Raises KeyError if obligatory env variables were not found"""
     key_exists = {k: False for k in needed_keys}
     for k in needed_keys:
