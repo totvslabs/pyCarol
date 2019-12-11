@@ -23,7 +23,7 @@ install_requires = [
     'luigi',
     'numpy==1.16.3',
     'pandas==0.23.4',
-    'pyarrow>=0.15',
+    'pyarrow>=0.15.1',
     'redis==2.10.6',
     'requests',
     'tqdm',
