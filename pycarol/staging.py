@@ -105,7 +105,7 @@ class Staging:
             data = [data]
             data_size = len(data)
 
-        elif auto_create_schema:
+        if auto_create_schema:
             schema = self.get_schema(staging_name, connector_id=connector_id)
             if not schema:
                 overwrite = False
