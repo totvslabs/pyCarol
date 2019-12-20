@@ -125,7 +125,7 @@ class Staging:
                 _crosswalk = list(_crosswalk)[0]
                 print('fetched crosswalk ', _crosswalk)
 
-            if data.duplicated(subset=_crosswalk).sum() == 0>=1:
+            if data.duplicated(subset=_crosswalk).sum() >= 1:
                 raise Exception("crosswalk is not unique on data frame. set force=True to send it anyway.")
 
         if not storage_only:
