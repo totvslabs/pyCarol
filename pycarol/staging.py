@@ -106,13 +106,15 @@ class Staging:
             data_size = len(data)
 
         if auto_create_schema:
+
+            if crosswalk_auto_create is None:
+                raise ValueError("You should provide a crosswalk. Use `crosswalk_auto_create` parameter.")
+
             schema = self.get_schema(staging_name, connector_id=connector_id)
             if not schema:
                 overwrite = False
             else:
                 overwrite = True
-            if crosswalk_auto_create is None:
-                raise ValueError("You should provide a crosswalk. Use `crosswalk_auto_create` parameter.")
             self.create_schema(_sample_json, staging_name, connector_id=connector_id, export_data=carol_data_storage,
                                crosswalk_list=crosswalk_auto_create, overwrite=overwrite, mdm_flexible=flexible_schema)
             _crosswalk = crosswalk_auto_create
