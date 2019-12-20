@@ -135,7 +135,8 @@ class Apps:
             manifest: `dict`
                 Dictionary with the manifest
 
-        Returns:
+        Returns: `dict`
+            {"success": True}
 
         """
 
