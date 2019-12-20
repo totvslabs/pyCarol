@@ -1,5 +1,6 @@
 import zipfile, io
 
+
 class Apps:
     def __init__(self, carol):
         self.carol = carol
@@ -92,13 +93,12 @@ class Apps:
             query = [query]
         for query_list in query:
             self.app_settings.update({i['mdmName']: i.get('mdmParameterValue')
-                                     for i in query_list.get('mdmTenantAppSettingValues')})
+                                      for i in query_list.get('mdmTenantAppSettingValues')})
             self.full_settings.update({i['mdmName']: i for i in query_list.get('mdmTenantAppSettingValues')})
 
         return self.app_settings
 
-
-    def download_app(self,carolappname, carolappversion, file_path, extract=False):
+    def download_app(self, carolappname, carolappversion, file_path, extract=False):
 
         url = f'v1/carolApps/download/{carolappname}/version/{carolappversion}'
 
@@ -111,3 +111,36 @@ class Apps:
             with open(file_path, 'wb') as out:  ## Open temporary file as bytes
                 out.write(io.BytesIO(r.content).read())
 
+    def get_manifest(self, app_name):
+        """
+
+        Args: `str`
+            app_name: Carol app name
+
+        Returns: `dict`
+            Dictionary with the manifest file.
+
+        """
+        url = f'v1/tenantApps/manifest/{app_name}'
+
+        r = self.carol.call_api(url, method='GET')
+        return r
+
+    def edit_manifest(self, app_name, manifest):
+        """
+
+        Args:
+            app_name: `str`
+                Carol app name
+            manifest: `dict`
+                Dictionary with the manifest
+
+        Returns: `dict`
+            {"success": True}
+
+        """
+
+        url = f'v1/tenantApps/manifest/{app_name}'
+
+        r = self.carol.call_api(url, method='PUT', data=manifest)
+        return r
