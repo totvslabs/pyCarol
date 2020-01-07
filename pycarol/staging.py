@@ -87,9 +87,8 @@ class Staging:
             if connector_id is None:
                 connector_id = self.carol.connector_id
 
-        schema = self.get_schema(staging_name, connector_id=connector_id)
-
         is_df = False
+        _crosswalk = None
         if isinstance(data, pd.DataFrame):
             is_df = True
             data_size = data.shape[0]
@@ -106,34 +105,30 @@ class Staging:
             data = [data]
             data_size = len(data)
 
-        if (not schema) and auto_create_schema:
-            assert crosswalk_auto_create, "You should provide a crosswalk"
+        if auto_create_schema:
+
+            if crosswalk_auto_create is None:
+                raise ValueError("You should provide a crosswalk. Use `crosswalk_auto_create` parameter.")
+
+            schema = self.get_schema(staging_name, connector_id=connector_id)
+            if not schema:
+                overwrite = False
+            else:
+                overwrite = True
             self.create_schema(_sample_json, staging_name, connector_id=connector_id, export_data=carol_data_storage,
-                               crosswalk_list=crosswalk_auto_create, mdm_flexible=flexible_schema)
-            print('created schema...')
+                               crosswalk_list=crosswalk_auto_create, overwrite=overwrite, mdm_flexible=flexible_schema)
             _crosswalk = crosswalk_auto_create
             print('provided crosswalk ', _crosswalk)
-        elif auto_create_schema:
-            assert crosswalk_auto_create, "You should provide a crosswalk"
-            self.create_schema(_sample_json, staging_name, connector_id=connector_id, export_data=carol_data_storage,
-                               crosswalk_list=crosswalk_auto_create, overwrite=True, mdm_flexible=flexible_schema)
-            _crosswalk = crosswalk_auto_create
-            print('provided crosswalk ', _crosswalk)
-        else:
-            if schema is None:
-                raise Exception(f"No schema found for `staging_name={staging_name}`. \n"
-                                f"Use `auto_create_schema=True`"
-                                f" to create schema automaticly ")
-            _crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
-            _crosswalk = list(_crosswalk)[0]
-            print('fetched crosswalk ', _crosswalk)
 
         if is_df and not force:
-            assert data.duplicated(subset=_crosswalk).sum() == 0, \
-                "crosswalk is not unique on data frame. set force=True to send it anyway."
+            if _crosswalk is None:
+                schema = self.get_schema(staging_name, connector_id=connector_id)
+                _crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
+                _crosswalk = list(_crosswalk)[0]
+                print('fetched crosswalk ', _crosswalk)
 
-        if dm_to_delete is not None:
-            delete_golden(self.carol, dm_to_delete)
+            if data.duplicated(subset=_crosswalk).sum() >= 1:
+                raise Exception("crosswalk is not unique on data frame. set force=True to send it anyway.")
 
         if not storage_only:
             #TODO: @bruno do we need this carolDataStorage flag for the normal intake?
