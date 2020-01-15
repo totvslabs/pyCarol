@@ -24,10 +24,7 @@ class HealthCheckOnline():
 
     def carol_auth(self):
         try:
-            carol = Carol(domain=self.domain,
-                    app_name=self.app_name,
-                    auth=ApiKeyAuth(api_key=self.app_oauth),
-                    connector_id=self.connector_id)
+            carol = Carol()
             # pyCarol should return a error if the credentials
             # are invalid, so for now we try to validate if
             # those are valid by another method
