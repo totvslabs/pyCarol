@@ -100,7 +100,7 @@ class Carol:
 
         # TODO Fixed to be compatible with the old `ENV_DOMAIN`. We could add a deprecated warning.
         self.environment = os.getenv('CAROL_DOMAIN', os.getenv('ENV_DOMAIN', environment))
-        self.organization = os.getenv('CAROLORGANIZATION', organization)
+        self.organization = os.getenv('CAROLORGANIZATION',  os.getenv('API_SUBDOMAIN', organization))
         self.domain = domain
         self.app_name = app_name
         self.port = port
@@ -338,8 +338,7 @@ class Carol:
         """
 
         resp = self.call_api('v2/apiKey/details',
-                             params = {"apiKey": api_key,
-                                            "connectorId": connector_id})
+                             params = {"apiKey": api_key, "connectorId": connector_id})
 
         return resp
 
