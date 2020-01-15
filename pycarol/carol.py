@@ -338,8 +338,7 @@ class Carol:
         """
 
         resp = self.call_api('v2/apiKey/details',
-                             params = {"apiKey": api_key,
-                                            "connectorId": connector_id})
+                             params = {"apiKey": api_key, "connectorId": connector_id})
 
         return resp
 
