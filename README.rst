@@ -1,8 +1,11 @@
+=======
 PyCarol
-===============
+=======
 
 .. image:: https://badge.buildkite.com/b92ca1611add8d61063f61c92b9798fe81e859d468aae36463.svg
     :target: https://buildkite.com/totvslabs/pycarol
+
+.. contents::
 
 Getting Started
 ---------------
@@ -24,7 +27,7 @@ Carol is the main object to access pyCarol and all Carol's APIs.
 
 where ``domain`` is the tenant name, ``app_name`` is the Carol's app name, if any, ``auth``
 is the authentication method to be used (using user/password in this case) and ``organization`` is the organization
-one wants to connect. Carols's URL is build as www.ORGANIZATION.carol.ai/TENANT_NAME
+one wants to connect. Carols's URL is build as ``www.ORGANIZATION.carol.ai/TENANT_NAME``
 
 Using API Key
 --------------
@@ -135,7 +138,7 @@ If one wants all the response use ``only_hits = False``. Also, if your filter ha
 
 .. code:: python
 
-    from pycarol.query import Query
+    from pycarol import Query
     from pycarol.filter import TYPE_FILTER, Filter, CARDINALITY
 
     json_query = Filter.Builder() \
@@ -154,7 +157,7 @@ Named queries
 
 .. code:: python
 
-    from pycarol.query import Query
+    from pycarol import Query
 
     named_query = 'revenueHist'  # named query name
     params = {"bin":"1d","cnpj":"24386434000130"}  #query parameters to send.
@@ -191,7 +194,7 @@ a sample of the data we want to send.
 
 .. code:: python
 
-    from pycarol.staging import Staging
+    from pycarol import Staging
 
     json_ex = {"name":'Rafael',"email": {"type": "email", "email": 'rafael@totvs.com.br'} }
 
@@ -240,7 +243,7 @@ To send the data  (assuming we have a json with the data we want to send).
 
 .. code:: python
 
-    from pycarol.staging import Staging
+    from pycarol import Staging
 
     json_ex = [{"name":'Rafael',"email": {"type": "email", "email": 'rafael@totvs.com.br'}   },
                {"name":'Leandro',"email": {"type": "email", "email": 'Leandro@totvs.com.br'}   },

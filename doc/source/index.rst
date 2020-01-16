@@ -7,7 +7,4 @@
 .. toctree::
     :maxdepth: 1
 
-    quickstart
     pycarol/pyCarol
-
-.. include:: installation.rst
