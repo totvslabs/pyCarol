@@ -10,7 +10,6 @@ PyCarol
     app
     auth
     data_models
-    luigi_extension
     nlp
     pipeline
     tools

@@ -12,6 +12,26 @@ logger.setLevel(logging.INFO)
 
 
 class Task(luigi.Task):
+    """
+    This is the base class of all pipelines.
+
+    This Task is an extension of :py:class:`luigi.Task` task. We added some functionalities to it:
+        1. No need to define the method 'output` and manually save the output`. Just return the object to be saved
+        in the `easy_run` method.
+        2. No need to define the requirements using the `require` method. It is possible to use
+        :py:class:`pycarol.pipeline.inherit_list` and :py:class:`pycarol.pipeline.inherit_dict` decorators.
+        3. No need to load manually the input task. `easy_run` method will receive a list of all the requirements loaded
+        in the same order they were defined in :py:class:`pycarol.pipeline.inherit_list` or the dictionary if it was used
+        :py:class:`pycarol.pipeline.inherit_dict`
+
+
+    There are to ways to execute the computation of a task.
+        1. Implementing the method: * :py:meth:`easy_run`
+        2. Defining either the class variable `task_function` or `task_notebook`. Refer to main documentation
+        for more details.
+
+
+    """
     TARGET_DIR = './TARGETS/'
     target_type = PickleTarget
     is_cloud_target = None
