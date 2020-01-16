@@ -1,3 +1,7 @@
+"""
+This submodule has all the classes to query data from RT layer in Carol.
+
+"""
 import json
 import itertools
 from joblib import Parallel, delayed
@@ -29,14 +33,16 @@ def delete_golden(carol, dm_name, now=None):
     Usage:
     To delete:
 
-    >>>from pycarol.query import delete_golden
-    >>>from pycarol.auth.PwdAuth import PwdAuth
-    >>>from pycarol.carol import Carol
-    >>>login = Carol()
-    >>>delete_golden(login, dm_name=my_dm)
+    .. code:: python
 
-    To delate based on a date.
-    >>>delete_golden(login, dm_name=my_dm, now='2018-11-16')
+        from pycarol.query import delete_golden
+        from pycarol.auth.PwdAuth import PwdAuth
+        from pycarol.carol import Carol
+        login = Carol()
+        delete_golden(login, dm_name=my_dm)
+
+        #To delete based on a date.
+        delete_golden(login, dm_name=my_dm, now='2018-11-16')
     """
 
     if now is None:
