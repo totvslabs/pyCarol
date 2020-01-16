@@ -21,7 +21,7 @@ import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
 project = 'pyCarol'
-copyright = '2019, TOTVS Labs'
+copyright = '2020, TOTVS Labs'
 author = 'Rafael Rui'
 
 # The short X.Y version

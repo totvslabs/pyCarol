@@ -9,4 +9,3 @@
     pycarol.pipeline.viewer
     pycarol.pipeline.tools
     pycarol.pipeline.utils
-    pycarol.pipeline.test

@@ -76,6 +76,8 @@ a second task.
     task = [DataProcess(connector_name='new_connector', staging_name='iris')]
     luigi.build(task, local_scheduler=True)
 
+
+
 """
 
 from .task import (
