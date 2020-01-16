@@ -166,8 +166,9 @@ Query(carol).named_query_params(named_query)
  The first step to send data to Carol is to create a connector.
 
  ```python
-conn = Connectors(carol).create(connectorName='my_conector', connectorLabel="conector_label", groupName="GroupName")
-connectorId = conn.connectorId  # this is the just created connector Id
+from pycarol import Connectors
+connector_id = Connectors(carol).create(name='my_conector', label="conector_label", group_name="GroupName")
+print(f"This is the connector id: {connector_id}")
 
 ```
 With the connector Id on hands we can create the staging schema and then create the staging table. Assuming we have
