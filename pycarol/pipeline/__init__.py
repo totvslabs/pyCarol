@@ -30,6 +30,51 @@ Finally, submodule viewer implements a dash web app to visualize an object Pipe
 and, thus, visualize a given pipeline. This web app has also a jupyter
 version to be used inside jupyter lab.
 
+Example
+-------
+
+This is a very simplified case when we will create a task that will fetch data from carol in one task and process in
+a second task.
+
+.. code:: python
+
+    from dotenv import load_dotenv
+    load_dotenv(override=True) #load env variable to create the Carol instance
+    from pycarol import Carol, Staging
+    from pycarol.pipeline import inherit_list, Task
+    import luigi
+
+    @inherit_list(
+    )
+    class Ingestion(Task):
+
+        connector_name = luigi.Parameter()
+        staging_name = luigi.Parameter()
+
+        def easy_run(self, inputs):
+            staging_name = self.staging_name
+            connector_name = self.connector_name
+            stag  = Staging(Carol())
+            cds=True
+            df = stag.fetch_parquet(staging_name=staging_name, connector_name=connector_name,cds=cds )
+            return df
+
+
+    @inherit_list(
+        Ingestion,
+    )
+    class DataProcess(Task):
+
+        connector_name = luigi.Parameter()
+        staging_name = luigi.Parameter()
+
+        def easy_run(self, inputs):
+            df = inputs[0] #since there is only one requirement.
+            ... #any processing
+            return df
+
+    task = [DataProcess(connector_name='new_connector', staging_name='iris')]
+    luigi.build(task, local_scheduler=True)
 
 """
 
