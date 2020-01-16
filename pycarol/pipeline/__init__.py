@@ -1,6 +1,6 @@
 """
 PyCarol Pipeline
-=================================
+================
 
 This module defines a framework for building and managing data pipelines. It was
 inspired in Luigi's architecture and has it as a backend for the
@@ -10,7 +10,7 @@ In submodule targets, luigi targets classes are implemented. Some of these
 targets, make use of Carol Data Storage and are a key feature for running the
 pipeline in the cloud.
 
-In submodule tasks, we found Carol extension to luigi Task class. This new
+In submodule tasks, we found Carol's extension to luigi.Task class. This new
 class, combined with some decorators, allows a more efficient description of
 the pipeline. It is also in this submodule, that we implement the notebook
 task feature, which allows to write task definitions directly in jupyter
@@ -28,7 +28,9 @@ with the pipeline, like running, removing targets and related actions.
 
 Finally, submodule viewer implements a dash web app to visualize an object Pipe
 and, thus, visualize a given pipeline. This web app has also a jupyter
-version to be used inside Carol jupyter
+version to be used inside jupyter lab.
+
+
 """
 
 from .task import (
