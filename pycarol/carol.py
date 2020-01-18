@@ -37,11 +37,13 @@ class Carol:
             Which Carol's environment to use. There are three possible values today.
                 1. 'carol.ai' for the production environment
                 2. 'karol.ai' for the explore environment
-                1. 'qarol.ai' for the QA environment
+                3. 'qarol.ai' for the QA environment
+
         host: `str` default `None`
             This will overwrite the host used. Today the host is:
-                if organization is None, host={domain}.{environment}
-                else host={organization}.{environment}
+                1. if organization is None, host={domain}.{environment}
+                2. else host={organization}.{environment}
+
             See Carol._set_host.
 
     OBS:
@@ -51,10 +53,11 @@ class Carol:
              2. `CAROLAPPNAME` for app_name
              3. `CAROLAPPOAUTH` for auth
              4. `CAROLORGANIZATION` for organization
-             4. `CAROLCONNECTORID` for connector_id
-             5. `CAROL_DOMAIN` for environment
-             6. `CAROLUSER` for carol user email
-             7. `CAROLPWD` for user password.
+             5. `CAROLCONNECTORID` for connector_id
+             6. `CAROL_DOMAIN` for environment
+             7. `CAROLUSER` for carol user email
+             8. `CAROLPWD` for user password.
+
 
     """
 
@@ -384,5 +387,3 @@ class Carol:
             print("Copied API Key to clipboard: " + token)
         else:
             raise Exception("Auth object not set. Can't fetch token.")
-
-
