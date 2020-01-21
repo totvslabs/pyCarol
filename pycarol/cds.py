@@ -25,7 +25,7 @@ class CDSStaging:
         self.carol = carol
 
     def process_data(self, staging_name, connector_id=None, connector_name=None,
-                     worker_type='n1-standard-4', max_number_workers=-1, number_shards=-1, num_records=-1,
+                     worker_type=None, max_number_workers=-1, number_shards=-1, num_records=-1,
                      delete_target_folder=False, enable_realtime=False, delete_realtime_records=False,
                      send_realtime=False, file_pattern='*', filter_query=None):
 
@@ -40,8 +40,8 @@ class CDSStaging:
                 Connector id.
             connector_name: `str`, default `None`
                 Connector name.
-            worker_type: `str`, default `n1-standard-4`
-                Machine flavor to be used.
+            worker_type: `str`, default None
+                Machine flavor to be used. If `None` Carol will decide the machine to use.
             max_number_workers: `int`, default `-1`
                 Max number of workers to be used during the process. '-1' means all the available.
             number_shards: `int`, default `-1`
@@ -65,7 +65,7 @@ class CDSStaging:
         :return: None
         """
 
-        if worker_type not in _MACHINE_FLAVORS:
+        if worker_type not in _MACHINE_FLAVORS and worker_type is not None:
             raise ValueError(f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
 
         filter_query = filter_query if filter_query else {}
@@ -132,7 +132,7 @@ class CDSStaging:
                                    data=filter_query)
 
     def consolidate(self, staging_name, connector_id=None, connector_name=None,
-                    worker_type='n1-standard-4', max_number_workers=-1, number_shards=-1):
+                    worker_type=None, max_number_workers=-1, number_shards=-1):
 
         """
 
@@ -145,8 +145,8 @@ class CDSStaging:
                 Connector id.
             connector_name: `str`, default `None`
                 Connector name.
-            worker_type: `str`, default `n1-standard-4`
-                Machine flavor to be used.
+            worker_type: `str`, default `None`
+                Machine flavor to be used. If `None` Carol will decide the machine to use.
             max_number_workers: `int`, default `-1`
                 Max number of workers to be used during the process. '-1' means all the available.
             number_shards: `int`, default `-1`
@@ -155,7 +155,7 @@ class CDSStaging:
         :return: None
         """
 
-        if worker_type not in _MACHINE_FLAVORS:
+        if worker_type not in _MACHINE_FLAVORS and worker_type is not None:
             raise ValueError(f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
 
         if connector_name:
@@ -315,7 +315,7 @@ class CDSGolden:
         return self.carol.call_api(path='v1/cds/golden/fetchCount', method='POST', params=query_params).get('count')
 
     def consolidate(self, dm_name=None, dm_id=None,
-                    worker_type='n1-standard-4', max_number_workers=-1, number_shards=-1):
+                    worker_type=None, max_number_workers=-1, number_shards=-1):
 
         """
 
@@ -326,8 +326,8 @@ class CDSGolden:
                 Data Model name.
             dm_id: `str`, default `None`
                 Data Model id.
-            worker_type: `str`, default `n1-standard-4`
-                Machine flavor to be used.
+            worker_type: `str`, default `None`
+                Machine flavor to be used. If `None` Carol will decide the machine to use.
             max_number_workers: `int`, default `-1`
                 Max number of workers to be used during the process. '-1' means all the available.
             number_shards: `int`, default `-1`
@@ -342,7 +342,7 @@ class CDSGolden:
             if dm_id is None:
                 raise ValueError('dm_name or dm_id should be set.')
 
-        if worker_type not in _MACHINE_FLAVORS:
+        if worker_type not in _MACHINE_FLAVORS and worker_type is not None:
             raise ValueError(f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
 
         query_params = {"entityTemplateId": dm_id,
