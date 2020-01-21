@@ -19,7 +19,6 @@ _MACHINE_FLAVORS = [
     'n1-highmem-96',
 ]
 
-
 class CDSStaging:
     def __init__(self, carol):
         self.carol = carol
