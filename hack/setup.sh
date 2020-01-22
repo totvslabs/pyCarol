@@ -21,14 +21,9 @@ if ! command -v pip3 >/dev/null 2>&1; then
 	python3 /tmp/get-pip.py
 fi
 
-export PYTHON
-PYTHON=$(command -v python3)
-export PIP
-PIP=$(command -v pip3)
-
-"${PIP}" install -r requirements.txt
+pip3 install -r requirements.txt
 # TODO(amalucelli): bump the versions of each dependency
-"${PIP}" install nose coverage nose-cover3 twine
+pip3 install nose coverage nose-cover3 twine
 
 mkdir -p bin
 
