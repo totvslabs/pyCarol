@@ -1,8 +1,8 @@
-pycarol.tools.validator
+pycarol.pipeline.viewer
 =======================
 
 .. contents::
     :local:
 
-.. automodule:: pycarol.tools.validator
+.. automodule:: pycarol.pipeline.viewer
     :members:

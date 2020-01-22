@@ -11,24 +11,24 @@ class DataModelGenerator(object):
     This class will create a Datamodel from a python dictionary. Today, it is not allowed nested fileds in the dictionary.
 
     Ex:
-    ```python
-    from pycarol.auth.PwdAuth import PwdAuth
-    from pycarol.auth.ApiKeyAuth import ApiKeyAuth
-    from pycarol.carol import Carol
 
-    from pycarol.utils.data_model_generator import DataModelGenerator
+    .. code-block:: python
 
-    json_sample = {'atende_sus': 'Sim',
-                   'estabelecimento': 'Hospital Raimundo Chaar',
-                   'existente': '42',
-                   'tipo_do_estabelecimento': '05 - Hospital Geral',
-                   'tipo_do_estabelecimento_resumo': 'Hospitais',
-                   'uf': 'AC'}
+        from pycarol import PwdAuth
+        from pycarol.carol import Carol
+        from pycarol.utils.data_model_generator import DataModelGenerator
 
-    login = Carol('foo_tenant, 'foo', auth=PwdAuth('foo@totvs.com.br', 'foo123'))
-    la = DataModelGenerator(login)
-    la.start(json_sample, dm_name='hfair', profile_title='estabelecimento', publish=True, overwrite=True)
-    ```
+        json_sample = {'atende_sus': 'Sim',
+                       'estabelecimento': 'Hospital Raimundo Chaar',
+                       'existente': '42',
+                       'tipo_do_estabelecimento': '05 - Hospital Geral',
+                       'tipo_do_estabelecimento_resumo': 'Hospitais',
+                       'uf': 'AC'}
+
+        login = Carol('foo_tenant, 'foo', auth=PwdAuth('foo@totvs.com.br', 'foo123'))
+        la = DataModelGenerator(login)
+        la.start(json_sample, dm_name='hfair', profile_title='estabelecimento', publish=True, overwrite=True)
+
 
     """
 

@@ -30,3 +30,4 @@ from .logger import CarolHandler
 from .auth.PwdAuth import PwdAuth
 from .auth.ApiKeyAuth import ApiKeyAuth
 from .cds import CDSGolden, CDSStaging
+from .apps import Apps

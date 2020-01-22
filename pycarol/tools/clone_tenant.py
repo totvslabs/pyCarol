@@ -93,6 +93,7 @@ class CloneTenant(object):
     def copy_connectors(self, conectors_map, map_type='name', overwrite_connector=False, add_to_connector=True,
                         change_name_dict=None, copy_mapping=True, overwrite_schema=False):
         """
+
         Args:
             conectors_map: `dict`
                 dictionary mapping the connector and stagings to be copied.
@@ -114,6 +115,7 @@ class CloneTenant(object):
                 Copy staging mappings.
             overwrite_schema: `bool` default `False`
                 overwrite if the mapping already exists.
+
         """
 
         if map_type == 'connector_id':

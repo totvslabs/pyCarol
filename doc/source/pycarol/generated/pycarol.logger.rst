@@ -1,8 +1,8 @@
-pycarol.server
+pycarol.logger
 ==============
 
 .. contents::
     :local:
 
-.. automodule:: pycarol.server
+.. automodule:: pycarol.logger
     :members:

@@ -24,29 +24,32 @@ class CarolHandler(logging.StreamHandler):
     This class can be used to log information in long tasks in Carol.
 
     Args:
-    carol: Carol object
-        Carol object.
+
+        carol: Carol object
+            Carol object.
 
     Usage:
 
-    >>>from pycarol import Carol, CarolHandler
-    >>>import logging
-    >>>logger = logging.getLogger(__name__)
-    >>>carol = CarolHandler(Carol())
-    >>>carol.setLevel(logging.INFO)
-    >>>logger.addHandler(carol)
+    .. code:: python
 
-    >>>logger.debug('This is a debug message') #This will not be logged in Carol. Level is set to INFO
-    >>>logger.info('This is an info message')
-    >>>logger.warning('This is a warning message')
-    >>>logger.error('This is an error message')
-    >>>logger.critical('This is a critical message')
+        from pycarol import Carol, CarolHandler
+        import logging
+        logger = logging.getLogger(__name__)
+        carol = CarolHandler(Carol())
+        carol.setLevel(logging.INFO)
+        logger.addHandler(carol)
 
-    These methods will use the current long task id provided by Carol when running your application.
-    For local environments you need to set that manually first on the beginning of your code:
+        logger.debug('This is a debug message') #This will not be logged in Carol. Level is set to INFO
+        logger.info('This is an info message')
+        logger.warning('This is a warning message')
+        logger.error('This is an error message')
+        logger.critical('This is a critical message')
 
-    >>>import os
-    >>>os.environ['LONGTASKID'] = TASK_ID
+        #These methods will use the current long task id provided by Carol when running your application.
+        #For local environments you need to set that manually first on the beginning of your code:
+
+        import os
+        os.environ['LONGTASKID'] = TASK_ID
 
     If no TASK ID is passed it works as a Console Handler.
     """

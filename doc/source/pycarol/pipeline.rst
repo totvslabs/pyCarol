@@ -1,3 +1,6 @@
+Data Pipeline
+======================================
+
 .. automodule:: pycarol.pipeline
    :members:
 
@@ -9,4 +12,3 @@
     pycarol.pipeline.viewer
     pycarol.pipeline.tools
     pycarol.pipeline.utils
-    pycarol.pipeline.test
