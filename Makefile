@@ -3,6 +3,8 @@
 PATH := $(CURDIR)/bin:$(CURDIR)/bin/sonar-scanner/bin:$(PATH)
 PYCAROL_VERSION ?= $(shell grep current_version .bumpversion.cfg | sed -E 's/.*=//g;s/ //g')
 TAG ?= $(PYCAROL_VERSION)
+PYTHON := $(shell command -v python3)
+PIP := $(shell command -v pip3)
 
 help:
 	@echo "This project assumes that an active Python virtualenv is present."
@@ -35,14 +37,14 @@ clean:
 	rm -rf dist/*
 
 dev:
-	pip install -e .
+	$(PIP) install -e .
 
 docs:
 	$(MAKE) -C docs html
 
 package:
-	python setup.py sdist
-	python setup.py bdist_wheel
+	$(PYTHON) setup.py sdist
+	$(PYTHON) setup.py bdist_wheel
 
 deploy:
 	twine upload dist/*.tar.gz

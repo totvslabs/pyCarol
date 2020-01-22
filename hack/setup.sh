@@ -3,10 +3,24 @@ set -e
 
 export OSNAME
 OSNAME="$(uname | tr '[:upper:]' '[:lower:]')"
+export PYTHON
+PYTHON=$(command -v python3)
+export PIP
+PIP=$(command -v pip3)
 
-pip install -r requirements.txt
+if ! command -v pip3 >/dev/null 2>&1; then
+	test "${OSNAME}" = "linux" && {
+		sudo apt-get update
+		sudo apt-get install -y python3-distutils
+	}
+	curl -fL "https://bootstrap.pypa.io/get-pip.py" \
+		-o /tmp/get-pip.py
+	python3 /tmp/get-pip.py
+fi
+
+"${PIP}" install -r requirements.txt
 # TODO(amalucelli): bump the versions of each dependency
-pip install nose coverage nose-cover3 twine
+"${PIP}" install nose coverage nose-cover3 twine
 
 mkdir -p bin
 
