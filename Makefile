@@ -54,7 +54,7 @@ test:
 	nosetests --with-coverage3 --collect-only
 
 sonar: test
-	sonar-scanner \
+	@sonar-scanner \
 		-Dsonar.projectKey=pyCarol \
 		-Dsonar.sources=. \
 		-Dsonar.host.url=https://sonar.ops.carol.ai \
