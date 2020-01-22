@@ -6,5 +6,5 @@ test -n "${BUILDKITE_TAG}" && {
 	git fetch origin
 	git fetch origin --tags
 	git checkout "tags/${BUILDKITE_TAG}"
-	make -e TAG="${BUILDKITE_TAG}" docker_build docker_push
+	make -e TAG="${BUILDKITE_TAG}" deploy docker hub
 }
