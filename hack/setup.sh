@@ -19,3 +19,27 @@ if ! command -v sonar-scanner >/dev/null 2>&1; then
 	unzip /tmp/sonar-scanner.zip -d /tmp
 	mv /tmp/sonar-scanner-* ./bin/sonar-scanner
 fi
+
+test -f ~/.pypirc || {
+	test -z "${PYPI_USERNAME}" && {
+		echo "Please inform the PyPI username:" >&2
+		read -r PYPI_USERNAME
+	}
+	test -z "${PYPI_USERNAME}" && {
+		echo "ERROR: PYPI_USERNAME variable is missing." >&2
+		exit 1
+	}
+	test -z "${PYPI_PASSWORD}" && {
+		echo "Please inform the PyPI password:" >&2
+		read -r PYPI_PASSWORD
+	}
+	test -z "${PYPI_PASSWORD}" && {
+		echo "ERROR: PYPI_PASSWORD variable is missing." >&2
+		exit 1
+	}
+	cat <<-EOF > ~/.pypirc
+		[pypi]
+		username = ${PYPI_USERNAME}
+		password = ${PYPI_PASSWORD}
+	EOF
+}

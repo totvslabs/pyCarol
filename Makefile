@@ -1,4 +1,4 @@
-.PHONY: help clean dev docs package test deploy setup_pypi ci docker setup hub
+.PHONY: help clean dev docs package test deploy ci docker setup hub sonar
 
 PATH := $(CURDIR)/bin:$(CURDIR)/bin/sonar-scanner/bin:$(PATH)
 PYCAROL_VERSION ?= $(shell grep current_version .bumpversion.cfg | sed -E 's/.*=//g;s/ //g')
@@ -11,7 +11,7 @@ help:
 	@echo "  docs	create pydocs for all relveant modules"
 	@echo "	 test	run all tests with coverage"
 
-ci: setup clean package setup_pypi code_scan
+ci: setup clean package sonar
 
 setup:
 	@./hack/setup.sh
@@ -47,17 +47,12 @@ package:
 deploy:
 	twine upload dist/*.tar.gz
 
-setup_pypi:
-	echo "[pypi]" > ~/.pypirc
-	echo "username = $(PYPI_USERNAME)" >> ~/.pypirc
-	echo "password = $(PYPI_PASSWORD)" >> ~/.pypirc
-
 test:
 	# coverage --collect-only run -m unittest discover
 	echo "This is a temporary step. CHECK THOSES TESTS"
 	nosetests --with-coverage3 --collect-only
 
-code_scan: test
+sonar: test
 	sonar-scanner \
 		-Dsonar.projectKey=pyCarol \
 		-Dsonar.sources=. \
