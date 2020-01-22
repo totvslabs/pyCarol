@@ -19,8 +19,8 @@ agent_name=$(buildkite-agent meta-data get name)
 
 cat << EOF
 steps:
-    - label: ":docker: Build"
-      command: docker build --build-arg pypi_user=${PYPI_USERNAME} --build-arg pypi_pass=${PYPI_PASSWORD} -f Dockerfile.buildkite -t pycarolci .
+    - label: ":buildkite: Build Image"
+      command: make docker_ci
       agents:
         name: "${agent_name}"
 
@@ -35,7 +35,15 @@ steps:
 
     - label: ":shipit: Deploy"
       command: docker run --rm -it pycarolci make deploy
-      branches: "master"
+      branches: "*.*.*"
+      agents:
+        name: "${agent_name}"
+
+    - wait: ~
+
+    - label: ":docker: pyCarol Image"
+      command: make docker
+      branches: "*.*.*"
       agents:
         name: "${agent_name}"
 
