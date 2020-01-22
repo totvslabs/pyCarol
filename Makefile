@@ -36,14 +36,14 @@ clean:
 	@rm -rf dist/*
 
 dev:
-	pip3 install -e .
+	@pip3 --quiet install -e .
 
 docs:
 	$(MAKE) -C docs html
 
 package:
-	python3 setup.py sdist
-	python3 setup.py bdist_wheel
+	@python3 setup.py sdist
+	@python3 setup.py bdist_wheel
 
 deploy:
 	twine upload dist/*.tar.gz

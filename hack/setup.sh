@@ -21,9 +21,9 @@ if ! command -v pip3 >/dev/null 2>&1; then
 	python3 /tmp/get-pip.py
 fi
 
-pip3 install -r requirements.txt
+pip3 --quiet install -r requirements.txt
 # TODO(amalucelli): bump the versions of each dependency
-pip3 install nose coverage nose-cover3 twine
+pip3 --quiet install nose coverage nose-cover3 twine
 
 mkdir -p bin
 
