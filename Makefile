@@ -1,10 +1,9 @@
 .PHONY: help clean dev docs package test deploy ci docker setup hub sonar
 
 PATH := $(CURDIR)/bin:$(CURDIR)/bin/sonar-scanner/bin:$(PATH)
+# TODO(amalucelli): probably there's a better way, but idk, sorry
 PYCAROL_VERSION ?= $(shell grep current_version .bumpversion.cfg | sed -E 's/.*=//g;s/ //g')
 TAG ?= $(PYCAROL_VERSION)
-PYTHON ?= $(shell command -v python3)
-PIP ?= $(shell command -v pip3)
 
 help:
 	@echo "This project assumes that an active Python virtualenv is present."
@@ -34,17 +33,17 @@ hub:
 	@docker push totvslabs/pycarol:$(TAG)
 
 clean:
-	rm -rf dist/*
+	@rm -rf dist/*
 
 dev:
-	$(PIP) install -e .
+	$(shell command -v pip3) install -e .
 
 docs:
 	$(MAKE) -C docs html
 
 package:
-	$(PYTHON) setup.py sdist
-	$(PYTHON) setup.py bdist_wheel
+	$(shell command -v python3) setup.py sdist
+	$(shell command -v python3) setup.py bdist_wheel
 
 deploy:
 	twine upload dist/*.tar.gz
