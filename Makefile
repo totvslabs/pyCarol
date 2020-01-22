@@ -3,8 +3,8 @@
 PATH := $(CURDIR)/bin:$(CURDIR)/bin/sonar-scanner/bin:$(PATH)
 PYCAROL_VERSION ?= $(shell grep current_version .bumpversion.cfg | sed -E 's/.*=//g;s/ //g')
 TAG ?= $(PYCAROL_VERSION)
-PYTHON := $(shell command -v python3)
-PIP := $(shell command -v pip3)
+PYTHON ?= $(shell command -v python3)
+PIP ?= $(shell command -v pip3)
 
 help:
 	@echo "This project assumes that an active Python virtualenv is present."
