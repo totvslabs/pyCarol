@@ -1,5 +1,6 @@
-.PHONY: help clean dev docs package test deploy setup_pypi ci docker_ci docker docker_build docker_push
+.PHONY: help clean dev docs package test deploy setup_pypi ci docker setup hub
 
+PATH := $(CURDIR)/bin:$(CURDIR)/bin/sonar-scanner/bin:$(PATH)
 PYCAROL_VERSION ?= $(shell grep current_version .bumpversion.cfg | sed -E 's/.*=//g;s/ //g')
 TAG ?= $(PYCAROL_VERSION)
 
@@ -10,24 +11,22 @@ help:
 	@echo "  docs	create pydocs for all relveant modules"
 	@echo "	 test	run all tests with coverage"
 
-docker_ci:
-	@docker build \
-		--build-arg pypi_user=$(PYPI_USERNAME) \
-		--build-arg pypi_pass=$(PYPI_PASSWORD) \
-		--file Dockerfile.buildkite \
-		--tag pycarolci .
+ci: setup clean package setup_pypi code_scan
+
+setup:
+	@./hack/setup.sh
+
+release:
+	@./hack/release.sh
 
 docker:
-	@./hack/docker.sh
-
-docker_build:
 	@echo "~~~ Building Docker Image"
 	@docker build \
 		--build-arg PYCAROL_VERSION=$(PYCAROL_VERSION) \
 		--file Dockerfile \
 		--tag pycarol:$(TAG) .
 
-docker_push:
+hub:
 	@echo "~~~ Pushing to Docker Hub"
 	@docker tag pycarol:$(TAG) totvslabs/pycarol:$(TAG)
 	@docker push totvslabs/pycarol:$(TAG)
@@ -50,8 +49,8 @@ deploy:
 
 setup_pypi:
 	echo "[pypi]" > ~/.pypirc
-	echo "username = ${PYPI_USERNAME}" >> ~/.pypirc
-	echo "password = ${PYPI_PASSWORD}" >> ~/.pypirc
+	echo "username = $(PYPI_USERNAME)" >> ~/.pypirc
+	echo "password = $(PYPI_PASSWORD)" >> ~/.pypirc
 
 test:
 	# coverage --collect-only run -m unittest discover
@@ -71,5 +70,3 @@ bump_patch:
 
 bump_minor:
 	bumpversion minor
-
-ci: clean package setup_pypi
