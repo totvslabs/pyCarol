@@ -46,12 +46,13 @@ package:
 	@python3 setup.py bdist_wheel
 
 deploy:
-	twine upload dist/*.tar.gz
+	@echo "~~~ Publishing pyCarol on PyPI"
+	@twine upload dist/*.tar.gz
 
 test:
 	# coverage --collect-only run -m unittest discover
-	echo "This is a temporary step. CHECK THOSES TESTS"
-	nosetests --with-coverage3 --collect-only
+	@echo "This is a temporary step. CHECK THOSES TESTS"
+	@nosetests --with-coverage3 --collect-only
 
 sonar: test
 	@sonar-scanner \
@@ -62,7 +63,7 @@ sonar: test
 		-Dsonar.branch.name=$(BUILDKITE_BRANCH)
 
 bump_patch:
-	bumpversion patch
+	@bumpversion patch
 
 bump_minor:
-	bumpversion minor
+	@bumpversion minor

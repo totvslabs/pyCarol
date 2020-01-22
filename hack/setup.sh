@@ -6,6 +6,7 @@ OSNAME="$(uname | tr '[:upper:]' '[:lower:]')"
 
 test "${OSNAME}" = "linux" && {
 	dpkg -l | grep -q python3-dev || {
+		echo "~~~ Installing missing package python3-dev"
 		sudo apt-get update
 		sudo apt-get install -y python3-dev
 	}
@@ -13,14 +14,17 @@ test "${OSNAME}" = "linux" && {
 
 if ! command -v pip3 >/dev/null 2>&1; then
 	test "${OSNAME}" = "linux" && {
+		echo "~~~ Installing missing package python3-distutils"
 		sudo apt-get update
 		sudo apt-get install -y python3-distutils
 	}
+	echo "~~~ Installing missing package pip3"
 	curl -fL "https://bootstrap.pypa.io/get-pip.py" \
 		-o /tmp/get-pip.py
 	python3 /tmp/get-pip.py
 fi
 
+echo "~~~ Installing dependencies from pyCarol"
 pip3 --quiet install -r requirements.txt
 # TODO(amalucelli): bump the versions of each dependency
 pip3 --quiet install nose coverage nose-cover3 twine
@@ -28,6 +32,7 @@ pip3 --quiet install nose coverage nose-cover3 twine
 mkdir -p bin
 
 if ! command -v sonar-scanner >/dev/null 2>&1; then
+	echo "~~~ Installing missing package sonar-scanner"
 	test "${OSNAME}" = "darwin" && {
 		OSNAME="macosx"
 	}
@@ -38,6 +43,7 @@ if ! command -v sonar-scanner >/dev/null 2>&1; then
 fi
 
 test -f ~/.pypirc || {
+	echo "~~~ Configuring PyPi"
 	test -z "${PYPI_USERNAME}" && {
 		echo "Please inform the PyPI username:" >&2
 		read -r PYPI_USERNAME
