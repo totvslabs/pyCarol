@@ -1,10 +1,10 @@
 # Dockerfile to build public pycarol image
 FROM python:3.6
 
-ENV DEBIAN_FRONTEND "noninteractive" \
-    LANG "en_US.UTF-8" \
-    LANGUAGE "en_US.UTF-8" \
-    LC_ALL "en_US.UTF-8"
+ENV DEBIAN_FRONTEND="noninteractive" \
+    LANG="en_US.UTF-8" \
+    LANGUAGE="en_US.UTF-8" \
+    LC_ALL="en_US.UTF-8"
 
 ARG PYCAROL_VERSION
 
