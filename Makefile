@@ -42,6 +42,7 @@ docs:
 	$(MAKE) -C docs html
 
 package:
+	@echo "~~~ Packaging pyCarol"
 	@python3 setup.py sdist
 	@python3 setup.py bdist_wheel
 
@@ -50,11 +51,13 @@ deploy:
 	@twine upload dist/*.tar.gz
 
 test:
+	@echo "~~~ Testing pyCarol"
 	# coverage --collect-only run -m unittest discover
 	@echo "This is a temporary step. CHECK THOSES TESTS"
 	@nosetests --with-coverage3 --collect-only
 
 sonar: test
+	@echo "~~~ Scanning Code of pyCarol"
 	@sonar-scanner \
 		-Dsonar.projectKey=pyCarol \
 		-Dsonar.sources=. \
