@@ -14,5 +14,5 @@ steps:
     branches: "*.*.*"
     agents:
       queue: "default"
-    timeout_in_minutes: 10
+    timeout_in_minutes: 15
 EOF

@@ -44,7 +44,7 @@ fi
 
 test -f ~/.pypirc && exit 0
 
-echo "~~~ Configuring PyPi"
+echo "~~~ Configuring PyPI"
 test -z "${PYPI_USERNAME}" && {
 	echo "Please inform the PyPI username:" >&2
 	read -r PYPI_USERNAME
