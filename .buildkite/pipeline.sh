@@ -3,13 +3,13 @@ set -e
 
 cat <<EOF
 steps:
-  - label: ":python: Configuring, Packaging, Testing and Scanning"
+  - label: ":python: build"
     command: make ci
     agents:
       queue: "default"
     timeout_in_minutes: 10
   - wait: ~
-  - label: ":python: Releasing the Package and Image"
+  - label: ":python: release"
     command: make release
     branches: "*.*.*"
     agents:
