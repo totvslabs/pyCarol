@@ -5,7 +5,7 @@
 import os
 import tempfile
 
-__version__ = '2.28.0'
+__version__ = '2.28.1'
 
 __TEMP_STORAGE__ = os.path.join(tempfile.gettempdir(), 'carolina/cache')
 
@@ -30,3 +30,4 @@ from .logger import CarolHandler
 from .auth.PwdAuth import PwdAuth
 from .auth.ApiKeyAuth import ApiKeyAuth
 from .cds import CDSGolden, CDSStaging
+from .apps import Apps

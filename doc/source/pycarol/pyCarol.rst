@@ -1,5 +1,6 @@
-PyCarol
-======================================
+========
+pyCarol
+========
 
 .. automodule:: pycarol
    :members:
@@ -7,32 +8,23 @@ PyCarol
 .. toctree::
     :maxdepth: 1
 
-    app
-    auth
     data_models
-    luigi_extension
-    nlp
     pipeline
     tools
-    utils
 
 .. autosummary::
     :toctree: generated
 
     pycarol.apps
-    pycarol.cache
     pycarol.carol
-    pycarol.carol_cloner
     pycarol.carolina
+    pycarol.cds
     pycarol.connectors
     pycarol.filter
+    pycarol.logger
     pycarol.named_query
     pycarol.query
-    pycarol.schema_generator
-    pycarol.server
-    pycarol.settings
     pycarol.staging
     pycarol.storage
     pycarol.tasks
     pycarol.tenant
-    pycarol.verticals

@@ -1,8 +1,8 @@
-pycarol.app.online_api
+pycarol.pipeline.tools
 ======================
 
 .. contents::
     :local:
 
-.. automodule:: pycarol.app.online_api
+.. automodule:: pycarol.pipeline.tools
     :members:

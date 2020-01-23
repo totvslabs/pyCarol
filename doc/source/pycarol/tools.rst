@@ -9,4 +9,3 @@ Tools
 
     pycarol.tools.clone_tenant
     pycarol.tools.data_model_generator
-    pycarol.tools.validator

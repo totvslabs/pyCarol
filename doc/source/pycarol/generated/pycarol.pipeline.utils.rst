@@ -1,8 +1,8 @@
-pycarol.pipeline.model
+pycarol.pipeline.utils
 ======================
 
 .. contents::
     :local:
 
-.. automodule:: pycarol.pipeline.model
+.. automodule:: pycarol.pipeline.utils
     :members:

@@ -1,8 +1,8 @@
-pycarol.schema_generator
+pycarol.pipeline.targets
 ========================
 
 .. contents::
     :local:
 
-.. automodule:: pycarol.schema_generator
+.. automodule:: pycarol.pipeline.targets
     :members:

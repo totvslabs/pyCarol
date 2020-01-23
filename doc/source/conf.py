@@ -15,21 +15,13 @@
 import os
 import sys
 import pycarol
-import pycarol.app
-import pycarol.data_models
-import pycarol.pipeline
-import pycarol.nlp
-import pycarol.auth
-import pycarol.utils
-import pycarol.tools
-
 
 sys.path.insert(0, os.path.abspath('../..'))
 import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
 project = 'pyCarol'
-copyright = '2019, TOTVS Labs'
+copyright = '2020, TOTVS Labs'
 author = 'Rafael Rui'
 
 # The short X.Y version
