@@ -126,3 +126,4 @@ app_config.json
 .vscode
 query_result.json
 cov.xml
+bin
