@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+test -z "$DEBUG" || set -x
+
 export OSNAME
 OSNAME="$(uname | tr '[:upper:]' '[:lower:]')"
 
