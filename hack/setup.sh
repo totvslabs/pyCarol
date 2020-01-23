@@ -5,6 +5,8 @@ test -z "$DEBUG" || set -x
 
 export OSNAME
 OSNAME="$(uname | tr '[:upper:]' '[:lower:]')"
+export SS_VERSION
+SS_VERSION="4.2.0.1873"
 
 test "${OSNAME}" = "linux" && {
 	dpkg -l | grep -q python3-dev || {
@@ -38,10 +40,15 @@ if ! command -v sonar-scanner >/dev/null 2>&1; then
 	test "${OSNAME}" = "darwin" && {
 		OSNAME="macosx"
 	}
-	curl -fL "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.2.0.1873-${OSNAME}.zip" \
-		-o /tmp/sonar-scanner.zip
-	unzip -q /tmp/sonar-scanner.zip -d /tmp
-	mv /tmp/sonar-scanner-* ./bin/sonar-scanner
+	test -f /tmp/sonar-scanner-${SS_VERSION}-${OSNAME}.zip || {
+		curl -sfL "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SS_VERSION}-${OSNAME}.zip" \
+			-o /tmp/sonar-scanner-${SS_VERSION}-${OSNAME}.zip
+	}
+	test -d /tmp/sonar-scanner-${SS_VERSION}-${OSNAME} || {
+		unzip -q /tmp/sonar-scanner-${SS_VERSION}-${OSNAME}.zip -d /tmp
+	}
+	rm -rf ./bin/sonar-scanner
+	mv /tmp/sonar-scanner-${SS_VERSION}-${OSNAME} ./bin/sonar-scanner
 fi
 
 test -f ~/.pypirc && exit 0
