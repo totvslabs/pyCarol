@@ -37,16 +37,12 @@ mkdir -p bin
 
 if ! command -v sonar-scanner >/dev/null 2>&1; then
 	echo "~~~ Installing missing package sonar-scanner"
-	test "${OSNAME}" = "darwin" && {
-		OSNAME="macosx"
-	}
-	test -f /tmp/sonar-scanner-${SS_VERSION}-${OSNAME}.zip || {
+	test "${OSNAME}" = "darwin" && OSNAME="macosx"
+	test -f /tmp/sonar-scanner-${SS_VERSION}-${OSNAME}.zip ||
 		curl -sfL "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SS_VERSION}-${OSNAME}.zip" \
 			-o /tmp/sonar-scanner-${SS_VERSION}-${OSNAME}.zip
-	}
-	test -d /tmp/sonar-scanner-${SS_VERSION}-${OSNAME} || {
+	test -d /tmp/sonar-scanner-${SS_VERSION}-${OSNAME} ||
 		unzip -q /tmp/sonar-scanner-${SS_VERSION}-${OSNAME}.zip -d /tmp
-	}
 	rm -rf ./bin/sonar-scanner
 	mv /tmp/sonar-scanner-${SS_VERSION}-${OSNAME} ./bin/sonar-scanner
 fi
