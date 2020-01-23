@@ -12,7 +12,7 @@ help:
 	@echo "  docs	create pydocs for all relveant modules"
 	@echo "	 test	run all tests with coverage"
 
-ci: setup clean package sonar
+ci: setup sonar
 
 setup:
 	@./hack/setup.sh
@@ -41,7 +41,7 @@ dev:
 docs:
 	$(MAKE) -C docs html
 
-package:
+package: clean
 	@echo "~~~ Packaging pyCarol"
 	@python3 setup.py sdist
 	@python3 setup.py bdist_wheel
