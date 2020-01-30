@@ -1,4 +1,5 @@
 import luigi
+import copy
 from pycarol.pipeline import Task
 from pycarol.pipeline.utils import (
     build_dag,
@@ -20,7 +21,7 @@ class Pipe(object):
         if _tasks_are_instance(tasks):
             raise NotImplementedError(f"Currently, we cannot create Pipe objects from instantiated tasks.")
 
-        self.params = params
+        self.params = copy.deepcopy(params)
         self.top_nodes = tasks # top nodes are root nodes
         self.dag = _get_dag_from_task(tasks)
         self.top_nodes = [t(**self.params) for t in self.top_nodes]
