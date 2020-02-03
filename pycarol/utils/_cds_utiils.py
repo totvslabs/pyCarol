@@ -1,6 +1,6 @@
 from google.resumable_media import DataCorruption
 import functools
-from itertools import count
+
 
 def retry_check_sum(func):
     """
