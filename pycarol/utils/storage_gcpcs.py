@@ -5,6 +5,7 @@ import pandas as pd
 from .. import __TEMP_STORAGE__
 from collections import defaultdict
 from ..utils.miscellaneous import prettify_path, _attach_path, _FILE_MARKER
+from ._cds_utiils import retry_check_sum
 
 
 class StorageGCPCS:
@@ -14,7 +15,7 @@ class StorageGCPCS:
 
         if not os.path.exists(__TEMP_STORAGE__):
             os.makedirs(__TEMP_STORAGE__)
-            
+
     def _get_app_storage_bucket(self):
         return self.carolina.get_client().bucket(self.carolina.get_bucket_name("app"))
 
@@ -54,6 +55,7 @@ class StorageGCPCS:
         blob.upload_from_filename(filename=local_file_name)
         os.utime(local_file_name, None)
 
+    @retry_check_sum
     def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage', columns=None):
         if storage_space == 'app_storage':
             remote_file_name = f"{self.carolina.get_path('app', {})}{name}"
