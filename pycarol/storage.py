@@ -21,6 +21,9 @@ class Storage:
         if self.carolina.engine == 'GCP-CS':
             from .utils.storage_gcpcs import StorageGCPCS
             self.backend = StorageGCPCS(self.carol, self.carolina)
+        else:
+            raise NotImplemented(f"Only 'GCP-CS' backend implemented in this version. "
+                                 f"You are trying to use {self.carolina.engine }")
 
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
         self.backend.save(name, obj, format, parquet, cache)
