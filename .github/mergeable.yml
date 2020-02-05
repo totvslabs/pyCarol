@@ -1,0 +1,45 @@
+version: 2
+mergeable:
+  - when: pull_request.*
+    validate:
+      - do: description
+        no_empty:
+          enabled: true
+          message: "Description should not be empty. Provide detail with what was changed, why it was changed, or how it was changed."
+        must_exclude:
+          regex: '\[ \]'
+          message: "Description has incomplete tasks."
+      - do: title
+        must_exclude:
+          regex: "WIP|wip"
+      - do: label
+        must_include:
+          regex: "kind|difficulty|priority"
+          message: "This pull request should be labeled at least with `kind`, `difficulty` and `priority` labels."
+      - do: assignee
+        min:
+          count: 1
+          message: "Assign who is working on this pull request (usually yourself)."
+      - do: size
+        lines:
+          total:
+            count: 500
+            message: "This pull request seems quite big. Consider adding two approvals instead of a usual one, or splitting in smaller pull requests."
+  - when: issues.opened
+    validate:
+      - do: label
+        must_include:
+          regex: "kind|priority"
+    fail:
+      - do: comment
+        payload:
+          body: "This issue should be labeled at least with `kind` and `priority` labels."
+  - when: schedule.repository
+    validate:
+      - do: stale
+        days: 20
+        type: pull_request
+    pass:
+      - do: comment
+        payload:
+          body: "This is old. Is it still relevant/required?"
