@@ -10,6 +10,7 @@ class Storage:
 
     def _init_if_needed(self):
         if (Carolina.token is not None) and (Carolina.token.get('tenant_name', '') == self.carol.tenant['mdmName']) and \
+           (Carolina.token.get('app_name', '') == self.carol.app_name) and \
            (datetime.utcnow() + timedelta(minutes=1) > datetime.fromtimestamp(Carolina.token.get('expirationTimestamp', 1)/1000.0)):
             return
         else:
@@ -20,6 +21,9 @@ class Storage:
         if self.carolina.engine == 'GCP-CS':
             from .utils.storage_gcpcs import StorageGCPCS
             self.backend = StorageGCPCS(self.carol, self.carolina)
+        else:
+            raise NotImplemented(f"Only 'GCP-CS' backend implemented in this version. "
+                                 f"You are trying to use {self.carolina.engine }")
 
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
         self.backend.save(name, obj, format, parquet, cache)
