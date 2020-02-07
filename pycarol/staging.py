@@ -267,6 +267,42 @@ class Staging:
         resp = self.carol.call_api('v2/staging/tables/{}/schema'.format(staging_name), data=schema, method=method,
                                    params=query_string)
 
+    def drop_staging(self, staging_name=None, connector_id=None, connector_name=None,
+                     reject_on_no_schema=False, reject_on_etl_existence=False, reject_on_mapping_existence=False
+                     ):
+        """
+
+        Args:
+            :param staging_name:  `str`,
+                Staging name.
+            :param connector_name: `str`, default `None`
+                Connector name.
+            :param connector_id: `str`, default `None`
+                Connector Id.
+            reject_on_no_schema: `bool` default `False`
+                Do not drop if no schema found.
+            reject_on_etl_existence: `bool` default `False`
+                Raise an error if there exists a ETL for this staging table
+            reject_on_mapping_existence: `bool` default `False`
+                Raise an error if there exists a mapping for this staging table
+
+        Returns:
+            Carol response
+        """
+
+        if connector_name:
+            connector_id = self._connector_by_name(connector_name)
+        elif connector_id is None:
+            raise ValueError("Either `connector_id` or `connector_name` should be set")
+
+        query_string = {"connectorId" : connector_id,
+                        "rejectOnNoSchema" : reject_on_no_schema,
+                        "rejectOnETLExistence" : reject_on_etl_existence,
+                        "rejectOnMappingExistence" : reject_on_mapping_existence}
+
+        resp = self.carol.call_api(f'v2/staging/tables/{staging_name}/drop', method='DELETE', params=query_string)
+        return resp
+
     def _check_crosswalk_in_data(self, schema, _sample_json):
         crosswalk = schema["mdmCrosswalkTemplate"]["mdmCrossreference"].values()
         if all(name in _sample_json for name in crosswalk):
