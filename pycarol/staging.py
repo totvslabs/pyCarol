@@ -295,7 +295,7 @@ class Staging:
             overwrite: `bool`, default `False`
                 if already exists, overwrite current schema
 
-        Returns:
+        Returns: `None`
 
         """
 
@@ -377,8 +377,8 @@ class Staging:
                 If a callback is used, it will return the result of the response of the callback. This will skip all the
                 operation to merge records and return selected columns.
 
-        Returns:
-
+        Returns: `pandas.DataFrame`
+            DataFrame with the staging data.
 
         """
 
@@ -490,44 +490,51 @@ class Staging:
                delete_previous=False):
         """
 
-        Export Staging to s3
+        Export Staging from RT to CDS
 
         This method will trigger or pause the export of the data in the staging to
-        s3.
+        CDS.
 
-        :param staging_name: `str`, default `None`
-            Staging Name
-        :param sync_staging: `bool`, default `True`
-            Sync the data model
-        :param connector_name: `str`
-            Connector name
-        :param connector_id: `str`
-            Connector id
-        :param full_export: `bool`, default `True`
-            Do a resync of the data model
-        :param delete_previous: `bool`, default `False`
-            Delete previous exported files.
-        :return: None
+        Args:
+            staging_name: `str`, default `None`
+                Staging name to send the data. If empty it will get from the `schema`
+            connector_id: `str`, default `None`
+                Connector name. If empty it will get from the `schema`
+            connector_name: `str`, default `None`
+                Connector name. If empty it will get from the `schema`
+            sync_staging: `bool` default `True`
+                Start export for this staging
+            full_export: `bool` default `False`
+                Full export sync for this staging
+            delete_previous: `bool` default `False`
+                Delete previous data.
+
+        Returns: `None`
 
 
         Usage:
         To trigger the export the first time:
 
-        >>>from pycarol.staging import Staging
-        >>>from pycarol.auth.PwdAuth import PwdAuth
-        >>>from pycarol.carol import Carol
-        >>>login = Carol()
-        >>>stag  = Staging(login)
-        >>>stag.export(staging, connector_name=connector_name,sync_staging=True)
+        .. code:: python
 
-        To do a resync, that is, start the sync from the begining without delete old data
-        >>>stag.export(staging, connector_name=connector_name,sync_staging=True, full_export=True)
 
-        To delete the old data:
-        >>>stag.export(staging, connector_name=connector_name,sync_staging=True, full_export=True, delete_previous=True)
+            from pycarol.staging import Staging
+            from pycarol.auth.PwdAuth import PwdAuth
+            from pycarol.carol import Carol
+            login = Carol()
+            stag  = Staging(login)
+            stag.export(staging, connector_name=connector_name,sync_staging=True)
 
-        To Pause a sync:
-        >>>stag.export(staging, connector_name=connector_name,sync_staging=False)
+            #To do a resync, that is, start the sync from the begining without delete old data
+            stag.export(staging, connector_name=connector_name,sync_staging=True, full_export=True)
+
+            #To delete the old data:
+            stag.export(staging, connector_name=connector_name,sync_staging=True, full_export=True, delete_previous=True)
+
+            #To Pause a sync:
+            stag.export(staging, connector_name=connector_name,sync_staging=False)
+
+
         """
 
         if sync_staging:
