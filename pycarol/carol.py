@@ -370,11 +370,6 @@ class Carol:
         """
         Copy token to clipboard
 
-        Args:
-            None
-        Returns: `dict`
-            None
-
         """
         import pyperclip
         if isinstance(self.auth, PwdAuth):
