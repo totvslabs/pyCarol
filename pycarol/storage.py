@@ -26,6 +26,85 @@ class Storage:
                                  f"You are trying to use {self.carolina.engine }")
 
     def save(self, name, obj, format='pickle', parquet=False, cache=True):
+        """
+
+        Args:
+            name: `str`.
+                Filename to be used when saving the `obj`
+            obj: `obj`
+                It depends on the `format` parameter.
+            format: `str`
+                Possible values:
+                    1. `pickle`: It uses `pickle.dump` to save the binary file.
+                    2. `joblib`: It uses `joblib.dump` to save the binary file.
+                    3. `file`: It saves a local file sending it directly to Carol.
+            parquet: `bool` default `False`
+                It uses `pandas.DataFrame.to_parquet` to save. `obj` should be a pandas DataFrame
+            cache: `bool` default `True`
+                Cache the file saved in the temp directory.
+
+        Usage:
+
+        Saving a local file in CDS.
+        .. code:: python
+
+            from pycarol import Carol, Storage
+            import pandas as pd
+            login = Carol()
+            stg = Storage(login)
+
+            stg.save(name='myfile.csv', obj='/local/file/.csv',  format='file')
+            # to load the file use:
+            path = stg.load(name='teste.zip',  format='file')
+            pd.read_csv(path)
+
+            Saving an object.
+
+        .. code:: python
+
+            my_dict = {"a":1, "b":2}
+
+            from pycarol import Carol, Storage
+            login = Carol()
+            stg = Storage(login)
+
+            stg.save(name='myfile.json', obj=my_dict,  format='pickle')
+            # to load the file use:
+            my_dict = stg.load(name='myfile.json',  format='pickle')
+
+        It works for `format=joblib` as well,
+
+        .. code:: python
+
+            my_dict = {"a":1, "b":2}
+
+            from pycarol import Carol, Storage
+            login = Carol()
+            stg = Storage(login)
+
+            stg.save(name='myfile.json', obj=my_dict,  format='joblib')
+            # to load the file use:
+            my_dict = stg.load(name='myfile.json',  format='joblib')
+
+        Saving a pandas DataFrame
+
+        .. code:: python
+
+            import pandas as pd
+            from pycarol import Carol, Storage
+
+            d = {'col1': [1, 2], 'col2': [3, 4]}
+            df = pd.DataFrame(data=d)
+
+            login = Carol()
+            stg = Storage(login)
+
+            stg.save(name='myfile.parquet', obj=my_dict,  parquet=True)
+            # to load the file use:
+            df = stg.load(name='myfile.parquet', parquet=True)
+
+
+        """
         self.backend.save(name, obj, format, parquet, cache)
 
     def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage', columns=None):

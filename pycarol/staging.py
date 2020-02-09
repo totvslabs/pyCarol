@@ -29,6 +29,12 @@ _SCHEMA_TYPES_MAPPING = {
 
 
 class Staging:
+
+    """
+
+    Class to send data to Carol.
+
+    """
     def __init__(self, carol):
         self.carol = carol
 
@@ -36,42 +42,51 @@ class Staging:
                   print_stats=True, gzip=True, auto_create_schema=False, crosswalk_auto_create=None,
                   flexible_schema=False, force=False,  max_workers=2,  dm_to_delete=None,
                   async_send=False, carol_data_storage=False, storage_only=False):
-        '''
-        :param staging_name:  `str`,
-            Staging name to send the data.
-        :param data: pandas data frame, json. default `None`
-            Data to be send to Carol
-        :param connector_name: `str`, default `None`
-            Connector name where the staging should be.
-        :param connector_id: `str`, default `None`
-            Connector Id where the staging should be.
-        :param step_size: `int`, default `500`
-            Number of records to be sent in each iteration. Max size for each batch is 10MB
-        :param print_stats: `bool`, default `True`
-            If print the status
-        :param gzip: `bool`, default `True`
-            If send each batch as a gzip file.
-        :param auto_create_schema: `bool`, default `False`
-            If to auto create the schema for the data being sent.
-        :param crosswalk_auto_create: `list`, default `None`
-            If `auto_create_schema=True`, crosswalk list of fields.
-        :param flexible_schema: `bool`, default `False`
-            If `auto_create_schema=True`, to use a flexible schema.
-        :param force: `bool`, default `False`
-            If `force=True` it will not check for repeated records according to crosswalk. If `False` it will check for
-            duplicates and raise an error if so.
-        :param max_workers: `int`, default `2`
-            To be used with `async_send=True`. Number of threads to use when sending.
-        :param dm_to_delete: `str`, default `None`
-            Name of the data model to be erased before send the data.
-        :param async_send: `bool`, default `False`
-            To use async to send the data. This is much faster than a sequential send.
-        :param carol_data_storage: `bool`, default `False`
-            To use Carol Data Storage flow.
-        :param storage_only: `bool`, default `False`
-            Send data only to intake server.
-        :return: None
-        '''
+        """
+
+        Args:
+            staging_name:  `str`,
+                Staging name to send the data.
+            data: pandas data frame, json. default `None`
+                Data to be send to Carol
+            connector_name: `str`, default `None`
+                Connector name where the staging should be. Either `connector_name` or `connector_id` need to be set.
+            connector_id: `str`, default `None`
+                Connector Id where the staging should be. Either `connector_name` or `connector_id` need to be set.
+            step_size: `int`, default `500`
+                Number of records to be sent in each iteration. Max size for each batch is 10MB.
+            print_stats:`bool`, default `True`
+                If print the number of records sent
+            gzip:`bool`, default `True`
+                If send each batch as a gzip file.
+            auto_create_schema:`bool`, default `False`
+                If to auto create the schema for the data being sent.
+            crosswalk_auto_create: `list`, default `None`
+                If `auto_create_schema=True`, crosswalk list of fields.
+            flexible_schema: `bool`, default `False`
+                If `auto_create_schema=True`, to use a flexible schema.
+            force: `bool`, default `False`
+                pycarol will check for duplicated values given the crosswalk.
+                If `force=True` it will not check. If `False` it will check for duplicates and raise an error.
+            max_workers: `int`, default `2`
+                To be used with `async_send=True`. Number of threads to use when sending.
+            dm_to_delete: `str`, default `None`
+                Name of the data model to be erased before send the data.
+            async_send: `bool`, default `False`
+                To use async to send the data. This is much faster than a sequential send.
+                It can conflict with jupyter notebooks process. To run this inside a jupyter notebook, use
+                .. code:: python
+
+
+                    import nest_asyncio
+                    nest_asyncio.apply()
+
+            carol_data_storage: `bool`, default `False`
+                Deprecated, Use `storage_only`
+            storage_only: `bool`, default `False`
+                Send data only to CDS.
+
+        """
 
         self.gzip = gzip
         extra_headers = {}
@@ -163,6 +178,23 @@ class Staging:
 
     def get_schema(self, staging_name, connector_name=None, connector_id=None):
 
+        """
+
+        Return the staging table schema.
+
+        Args:
+            staging_name:  `str`,
+                Staging name
+            connector_name: `str`, default `None`
+                Connector name. Either `connector_name` or `connector_id` need to be set.
+            connector_id: `str`, default `None`
+                Connector Id. Either `connector_name` or `connector_id` need to be set.
+
+        Returns: `dict`
+            Staging table schema
+
+        """
+
         query_string = None
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
@@ -180,29 +212,30 @@ class Staging:
                       export_data=False, data=None):
         """
 
-        :param fields_dict: `json`, `list of dicts`, `pandas.DataFrame`, default `None`
-            Data to create schema from. `fields_dict` will be removed in the future. Use `data`
-        :param staging_name:  `str`,
-            Staging name to send the data.
-        :param connector_name: `str`, default `None`
-            Connector name where the staging should be.
-        :param connector_id: `str`, default `None`
-            Connector Id where the staging should be.
-        :param mdm_flexible: `bool`, default `False`
-            If flexible schema.
-        :param crosswalk_name: `None`, default `staging_name`
-            Crosswalk name in the Schema.
-        :param crosswalk_list: `list`, default `None`
-            Crosswalk list of fields.
-        :param overwrite: `bool`, default `False`
-            Overwrite current schema
-        :param auto_send: `bool`, default `True`
-            Send the schema after creating.
-        :param export_data: `bool`, default `False`
-            Export data to CDS for this staging.
-        :param data: `json`, `list of dicts`, `pandas.DataFrame`, default `None`
-            Data to create schema from.
-        :return:
+        Args:
+            fields_dict: `dict`, `list of dicts`, `pandas.DataFrame`, default `None`
+                Data to create schema from. `fields_dict` will be removed in the future. Use parameter `data`
+            staging_name: `str`,
+                Staging name to send the data.
+            connector_id: `str`, default `None`
+                Connector name where the staging should be.
+            connector_name: `str`, default `None`
+                Connector name where the staging should be.
+            mdm_flexible:  `bool`, default `False`
+                If flexible schema.
+            crosswalk_name: `None`, default `staging_name`
+                Crosswalk name. Most of the time it should be the staging name.
+            crosswalk_list: `list`, default `None`
+                Crosswalk list of fields.
+            overwrite: `bool`, default `False`
+                if already exists, overwrite current schema
+            auto_send: `bool`, default `True`
+                Send the schema after creating.
+            export_data: `bool`, default `False`
+                Export data to CDS for this staging. This is a manual export.
+            data: `json`, `list of dicts`, `pandas.DataFrame`, default `None`
+                Data to create schema from.
+
         """
 
         assert staging_name is not None, 'staging_name must be set.'
@@ -245,6 +278,26 @@ class Staging:
 
     def send_schema(self, schema, staging_name=None, connector_id=None, connector_name=None,
                     overwrite=False):
+
+        """
+
+        Send schema to Carol
+
+        Args:
+            schema: `dict`
+                Dictianary with the schema to be sent
+            staging_name: `str`, default `None`
+                Staging name to send the data. If empty it will get from the `schema`
+            connector_id: `str`, default `None`
+                Connector name. If empty it will get from the `schema`
+            connector_name: `str`, default `None`
+                Connector name. If empty it will get from the `schema`
+            overwrite: `bool`, default `False`
+                if already exists, overwrite current schema
+
+        Returns: `None`
+
+        """
 
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
@@ -359,10 +412,10 @@ class Staging:
             return_callback_result `bool` default `False`
                 If a callback is used, it will return the result of the response of the callback. This will skip all the
                 operation to merge records and return selected columns.
-        :return:
 
-        Args:
-            cds:
+        Returns: `pandas.DataFrame`
+            DataFrame with the staging data.
+
         """
 
         if callback:
@@ -473,44 +526,51 @@ class Staging:
                delete_previous=False):
         """
 
-        Export Staging to s3
+        Export Staging from RT to CDS
 
         This method will trigger or pause the export of the data in the staging to
-        s3.
+        CDS.
 
-        :param staging_name: `str`, default `None`
-            Staging Name
-        :param sync_staging: `bool`, default `True`
-            Sync the data model
-        :param connector_name: `str`
-            Connector name
-        :param connector_id: `str`
-            Connector id
-        :param full_export: `bool`, default `True`
-            Do a resync of the data model
-        :param delete_previous: `bool`, default `False`
-            Delete previous exported files.
-        :return: None
+        Args:
+            staging_name: `str`, default `None`
+                Staging name to send the data. If empty it will get from the `schema`
+            connector_id: `str`, default `None`
+                Connector name. If empty it will get from the `schema`
+            connector_name: `str`, default `None`
+                Connector name. If empty it will get from the `schema`
+            sync_staging: `bool` default `True`
+                Start export for this staging
+            full_export: `bool` default `False`
+                Full export sync for this staging
+            delete_previous: `bool` default `False`
+                Delete previous data.
+
+        Returns: `None`
 
 
         Usage:
         To trigger the export the first time:
 
-        >>>from pycarol.staging import Staging
-        >>>from pycarol.auth.PwdAuth import PwdAuth
-        >>>from pycarol.carol import Carol
-        >>>login = Carol()
-        >>>stag  = Staging(login)
-        >>>stag.export(staging, connector_name=connector_name,sync_staging=True)
+        .. code:: python
 
-        To do a resync, that is, start the sync from the begining without delete old data
-        >>>stag.export(staging, connector_name=connector_name,sync_staging=True, full_export=True)
 
-        To delete the old data:
-        >>>stag.export(staging, connector_name=connector_name,sync_staging=True, full_export=True, delete_previous=True)
+            from pycarol.staging import Staging
+            from pycarol.auth.PwdAuth import PwdAuth
+            from pycarol.carol import Carol
+            login = Carol()
+            stag  = Staging(login)
+            stag.export(staging, connector_name=connector_name,sync_staging=True)
 
-        To Pause a sync:
-        >>>stag.export(staging, connector_name=connector_name,sync_staging=False)
+            #To do a resync, that is, start the sync from the begining without delete old data
+            stag.export(staging, connector_name=connector_name,sync_staging=True, full_export=True)
+
+            #To delete the old data:
+            stag.export(staging, connector_name=connector_name,sync_staging=True, full_export=True, delete_previous=True)
+
+            #To Pause a sync:
+            stag.export(staging, connector_name=connector_name,sync_staging=False)
+
+
         """
 
         if sync_staging:

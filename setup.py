@@ -66,7 +66,7 @@ setup(
     author='TotvsLabs',
     maintainer='TOTVS Labs',
     author_email='ops@totvslabs.com',
-    url='https://www.carol.ai/',
+    url='https://github.com/totvslabs/pyCarol',
     keywords=['Totvs', 'Carol.ai', 'AI'],
     install_requires=install_requires,
     classifiers=[

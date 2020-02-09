@@ -1,3 +1,11 @@
+"""
+The main Carol's storage is called CDS (Carol Data Storage). Any data received or created in Carol is sent to CDS.
+Inside CDS one can have three kinds of data. Data coming from the
+Staging Area, data processed and mapped to a DataModel (Golden Record), and any other file that the user could send.
+The `pycarol.cds.CDSStaging` and
+the `pycarol.cds.CDSGolden` classes are used to manipulate the data inside the first two cases.
+
+"""
 from .connectors import Connectors
 from .data_models import DataModel
 
@@ -20,6 +28,11 @@ _MACHINE_FLAVORS = [
 ]
 
 class CDSStaging:
+    """
+
+    Class to handle all CDS Staging iterations.
+
+    """
     def __init__(self, carol):
         self.carol = carol
 
@@ -29,7 +42,6 @@ class CDSStaging:
                      send_realtime=False, file_pattern='*', filter_query=None):
 
         """
-
         Process CDS staging data.
 
         Args:
@@ -225,6 +237,9 @@ class CDSStaging:
 
 
 class CDSGolden:
+    """
+    Class to handle all CDS Staging iterations.
+    """
     def __init__(self, carol):
         self.carol = carol
 

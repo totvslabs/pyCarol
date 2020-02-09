@@ -18,20 +18,20 @@ import copy
 
 def delete_golden(carol, dm_name, now=None):
     """
-
     Delete Golden records.
 
     It Will delete all golden records of a given data model based on lastUpdate.
 
-    :param carol: `pycarol.carol.Carol`
-        Carol instance
-    :param dm_name: `str`
-        Data model name
-    :param now: `str`
-        Delete records where last update is less the `now`. Any date time ISO format is accepted.
+    Args:
+
+        carol: `pycarol.carol.Carol`
+            Carol instance
+        dm_name: `str`
+            Data model name
+        now: `str`
+            Delete records where last update is less the `now`. Any date time ISO format is accepted.
 
     Usage:
-    To delete:
 
     .. code:: python
 
@@ -43,6 +43,12 @@ def delete_golden(carol, dm_name, now=None):
 
         #To delete based on a date.
         delete_golden(login, dm_name=my_dm, now='2018-11-16')
+
+    Attention:
+
+        This API will delete all data in the DataModel, and if there is a DataModel View related to this DataModel
+        one needs to reprocess it.
+
     """
 
     if now is None:
@@ -73,58 +79,58 @@ def delete_golden(carol, dm_name, now=None):
 
 
 class Query:
+    """
+    Class to query data from Carol.
+
+    This class can be used to query data from data models and stagings tables, query using named queries and delete
+    records.
+
+    Args:
+
+        carol: carol: Carol object
+            Carol object.
+        max_hits:  `int`, default float('inf')
+            Number of records that will be downloaded.
+        offset: `int`, default 0
+            Offset for pagination. Only used when `scrollable=False`
+        page_size: `int`, default 100
+            Number of records downloaded in each pagination. The maximum value is 1000
+        sort_order: `str`, default 'ASC'
+            Sort ascending ('ASC') vs. descending ('DESC').
+        sort_by: `str`,  default `None`
+            Name to sort by.
+        scrollable: `bool`, default True
+            Use scroll for pagination. This should be the main way of doing, unless you are querying few data.
+        index_type: `str`, default 'MASTER'
+            Query data from 'MASTER', 'STAGING'
+        only_hits: `bool`, default 'True'
+            Return only results in the response path $hits.mdmGoldenFieldAndValues
+        fields: `list`, default `None`
+            Fields to return in response. e.g., ["mdmGoldenFieldAndValues.mdmtaxid", "mdmGoldenFieldAndValues.date"]
+        get_aggs: `bool`, default `False`
+            To be used if the query/named query has aggravations
+        save_results: `bool`, default `False`
+            If save the result of the query in the file specified in `filename`
+        filename: `str`, default `query_result.json`
+            File path to save the response.
+        print_status: `bool`, default `True`
+            Print the number of records in each interaction.
+        safe_check: `bool`, default `False`
+            To be used if there are repeated records (same mdmId)
+        get_errors: `bool`, default `False`
+            To get the errors in the goldenRecords, if any.
+        flush_result: `bool`, default `False`
+            To be used with save_results, it will not copy the result to memory, only to the file.
+        use_stream: `bool`, default `False`
+            Use the stram of data.
+        get_times: `bool`, default `False`
+            It will create a list of times that each pagination took.
+
+    """
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=100, sort_order='ASC', sort_by=None,
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
                  save_results=False, filename='query_result.json', print_status=True, safe_check=False,
                  get_errors=False, flush_result=False, use_stream=False, get_times=False):
-
-        """
-
-        Class to query data from Carol.
-
-        This class can be used to query data from data models and stagings tables, query using named queries and delete
-        records.
-
-        :param carol: Carol object
-            Carol object.
-        :param max_hits: `int`, default float('inf')
-            number of records that will be downloaded.
-        :param offset: `int`, default 0
-            offset for pagination. Only used when `scrollable=False`
-        :param page_size: `int`, default 100
-            number of records downloaded in each pagination. The maximum value is 1000
-        :param sort_order: `str`, default 'ASC'
-            Sort ascending ('ASC') vs. descending ('DESC').
-        :param sort_by: `str`,  default `None`
-            Name to sort by.
-        :param scrollable: `bool`, default True
-            Use scroll for pagination. This should be the main way of doing, unless you are querying few data.
-        :param index_type: `str`, default 'MASTER'
-            Query data from 'MASTER', 'STAGING'
-        :param only_hits: `bool`, default 'True'
-            Return only results in the response path $hits.mdmGoldenFieldAndValues
-        :param fields: `list`, default `None`
-            Fields to return in response. e.g., ["mdmGoldenFieldAndValues.mdmtaxid", "mdmGoldenFieldAndValues.date"]
-        :param get_aggs: `bool`, default `False`
-            To be used if the query/named query has aggravations
-        :param save_results: `bool`, default `False`
-            If save the result of the query in the file specified in `filename`
-        :param filename: `str`, default `query_result.json`
-            File path to save the response.
-        :param print_status: `bool`, default `True`
-            Print the numer of records in each interaction.
-        :param safe_check:  `bool`, default `False`
-            To be used if there are repeated records (same mdmId)
-        :param get_errors: `bool`, default `False`
-            To get the errors in the goldenRecords, if any.
-        :param flush_result: `bool`, default `False`
-            To be used with save_results, it will not copy the result to memory, only to the file.
-        :param use_stream: `bool`, default `False`
-            Use the stram of data.
-        :param get_times: `bool`, default `False`
-            It will create a list of times that each pagination took.
-
-        """
 
         self.carol = carol
         self.max_hits = max_hits
@@ -183,6 +189,12 @@ class Query:
 
     def go(self, callback=None):
         """
+
+        Args:
+            callback: `callable` object
+                This function will receive the current batch of records from the filter made.
+        Returns: `None`
+
         """
         self.results = []
         if self.json_query is None:
@@ -361,7 +373,6 @@ class Query:
 
 
 class ParQuery:
-
     def __init__(self, carol, backend='dask', return_df=True, verbose=50, n_jobs=4):
         """
 
