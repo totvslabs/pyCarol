@@ -1,4 +1,5 @@
 """
+
 This submodule has all the classes to query data from RT layer in Carol.
 
 """
@@ -191,11 +192,13 @@ class Query:
         """
 
         Args:
+
             callback: `callable` object
                 This function will receive the current batch of records from the filter made.
         Returns: `None`
 
         """
+
         self.results = []
         if self.json_query is None:
             raise ValueError("You must call all() or filter() or named() before calling go()")

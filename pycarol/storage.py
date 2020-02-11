@@ -2,8 +2,25 @@ from .carolina import Carolina
 from datetime import datetime, timedelta
 
 class Storage:
+
+    """
+    Handle all Carol storage interactions.
+
+
+    Args:
+            carol: `class: pycarol.Carol`
+
+    """
+
     backend = None #this is not being used anymore.
     def __init__(self, carol):
+        """
+
+        Args:
+
+            carol: `class: pycraol.Carol`
+        """
+
         self.carol = carol
         self._init_if_needed()
         self.carolina = None
@@ -29,15 +46,18 @@ class Storage:
         """
 
         Args:
+
             name: `str`.
                 Filename to be used when saving the `obj`
             obj: `obj`
                 It depends on the `format` parameter.
             format: `str`
                 Possible values:
+
                     1. `pickle`: It uses `pickle.dump` to save the binary file.
                     2. `joblib`: It uses `joblib.dump` to save the binary file.
                     3. `file`: It saves a local file sending it directly to Carol.
+
             parquet: `bool` default `False`
                 It uses `pandas.DataFrame.to_parquet` to save. `obj` should be a pandas DataFrame
             cache: `bool` default `True`
@@ -46,6 +66,7 @@ class Storage:
         Usage:
 
         Saving a local file in CDS.
+
         .. code:: python
 
             from pycarol import Carol, Storage
@@ -113,23 +134,49 @@ class Storage:
 
     def files_storage_list(self, prefix='pipeline/',  print_paths=False):
         """
-
         It will return all files in Carol data Storage (CDS).
 
+        Args:
 
-        :param prefix: `str`, default `pipeline/`
-            prefix of the folder to filter the output.
-        :param print_paths: `bool`, default `False`
-            Print the tree structure of the files in CDS
-        :return: list of files paths.
+            prefix: `str`, default `pipeline/`
+                prefix of the folder to filter the output.
+            print_paths: `bool`, default `False`
+                Print the tree structure of the files in CDS
+
+        Returns: list of files paths.
+
         """
 
         return self.backend.files_storage_list(prefix=prefix, print_paths=print_paths)
 
     def exists(self, name):
+        """
+
+        Check if files exists in Carol Storage.
+
+        Args:
+
+            name: `str`
+                Filename
+
+        Returns: `bool`
+
+        """
         return self.backend.exists(name)
 
     def delete(self, name):
+        """
+
+        Delete a file in Carol Storage.
+
+        Args:
+
+            name: `str`
+                Filename to be deleted.
+
+        Returns:
+
+        """
         self.backend.delete(name)
 
     def build_url_parquet_golden(self, dm_name):

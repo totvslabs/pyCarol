@@ -45,6 +45,7 @@ class CDSStaging:
         Process CDS staging data.
 
         Args:
+
             staging_name: `str`,
                 Staging name.
             connector_id: `str`, default `None`
@@ -106,6 +107,7 @@ class CDSStaging:
         Sync data to realtime layer.
 
         Args:
+
             staging_name: `str`,
                 Staging name.
             connector_id: `str`, default `None`
@@ -150,6 +152,7 @@ class CDSStaging:
         Process staging CDS data.
 
         Args:
+
             staging_name: `str`,
                 Staging name.
             connector_id: `str`, default `None`
@@ -188,6 +191,7 @@ class CDSStaging:
         Delete all CDS staging data.
 
         Args:
+
             staging_name: `str`,
                 Staging name.
             connector_id: `str`, default `None`
@@ -215,6 +219,7 @@ class CDSStaging:
         Count number of messages in CDS.
 
         Args:
+
             staging_name: `str`,
                 Staging name.
             connector_id: `str`, default `None`
@@ -250,6 +255,7 @@ class CDSGolden:
         Sync data to realtime layer.
 
         Args:
+
             dm_name: `str`,
                 Data model name.
             dm_id: `str`, default `None`
@@ -285,6 +291,7 @@ class CDSGolden:
         Delete all CDS data model data.
 
         Args:
+
             dm_name: `str`,
                 Data Model name.
             dm_id: `str`, default `None`
@@ -310,6 +317,7 @@ class CDSGolden:
         Count number of messages in CDS.
 
         Args:
+
             dm_name: `str`,
                 Data Model name.
             dm_id: `str`, default `None`
@@ -336,6 +344,7 @@ class CDSGolden:
         Process staging CDS data.
 
         Args:
+
             dm_name: `str`,
                 Data Model name.
             dm_id: `str`, default `None`

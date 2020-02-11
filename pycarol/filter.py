@@ -1,7 +1,108 @@
 from enum import Enum
 
 class Filter:
+    """
+
+    Class responsible for creating the json queries to be used in `pycarol.Query`
+
+    Usage:
+
+    .. code:: python
+
+        from pycarol.filter import TYPE_FILTER, Filter, TERM_FILTER
+        json_query = Filter.Builder()\\
+            .must(TYPE_FILTER(value='medicalform' + "Golden"))\\
+            .must(TERM_FILTER(key='mdmGoldenFieldAndValues.status.raw',value='pending'))\\
+            .must_not(TERM_FILTER(key='mdmGoldenFieldAndValues.auditedbycarol',value=True))\\
+            .build().to_json()
+
+    This will create the following json query.
+
+    .. code:: json
+
+        {
+          'mustList': [
+            {
+              'mdmFilterType': 'TYPE_FILTER',
+              'mdmValue': 'medicalformGolden'
+            },
+            {
+              'mdmFilterType': 'TERM_FILTER',
+              'mdmKey': 'mdmGoldenFieldAndValues.status.raw',
+              'mdmValue': 'pending'
+            }
+          ],
+          'mustNotList': [
+            {
+              'mdmFilterType': 'TERM_FILTER',
+              'mdmKey': 'mdmGoldenFieldAndValues.auditedbycarol',
+              'mdmValue': True
+            }
+          ],
+          'shouldList': [
+
+          ],
+          'aggregationList': [
+
+          ],
+          'minimumShouldMatch': 1
+        }
+
+    Using with Aggregations:
+
+    .. code:: python
+
+        from pycarol.filter import MINIMUM, MAXIMUM, TYPE_FILTER, Filter, TERM_FILTER
+        json_query = Filter.Builder() \\
+                            .type('datamodel') \\
+                            .aggregation_list([MINIMUM(name='MINIMUM', params='mdm_key'),
+                                               MAXIMUM(name='MAXIMUM', params='mdm_key')]) \\
+                            .build().to_json()
+
+    .. code:: json
+
+        {
+          'mustList': [
+            {
+              'mdmFilterType': 'TYPE_FILTER',
+              'mdmValue': 'datamodel'
+            }
+          ],
+          'mustNotList': [
+
+          ],
+          'shouldList': [
+
+          ],
+          'aggregationList': [
+            {
+              'type': 'MINIMUM',
+              'name': 'MINIMUM',
+              'params': 'mdm_key',
+              'size': 10,
+              'shardSize': 10,
+              'minDocCount': 0
+            },
+            {
+              'type': 'MAXIMUM',
+              'name': 'MAXIMUM',
+              'params': 'mdm_key',
+              'size': 10,
+              'shardSize': 10,
+              'minDocCount': 0
+            }
+          ],
+          'minimumShouldMatch': 1
+        }
+
+
+    """
     def __init__(self, builder):
+        """
+
+        Args:
+            builder:
+        """
         self.must_list = builder._must_list
         self.must_not_list = builder._must_not_list
         self.should_list = builder._should_list
@@ -19,6 +120,12 @@ class Filter:
         return json
 
     class Builder:
+
+        """
+
+        SubClass to build the Queries.
+
+        """
         def __init__(self, key_prefix=""):
             self._minimum_should_match = 1
             self._must_list = []

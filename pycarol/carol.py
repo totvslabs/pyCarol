@@ -35,12 +35,14 @@ class Carol:
             Organization domain. 
         environment: `str`, default `carol.ai`,
             Which Carol's environment to use. There are three possible values today.
+
                 1. 'carol.ai' for the production environment
                 2. 'karol.ai' for the explore environment
                 3. 'qarol.ai' for the QA environment
 
         host: `str` default `None`
             This will overwrite the host used. Today the host is:
+
                 1. if organization is None, host={domain}.{environment}
                 2. else host={organization}.{environment}
 
@@ -49,6 +51,7 @@ class Carol:
     OBS:
         In case all parameters are `None`, pycarol will try yo find their values in the environment variables.
         The values are:
+
              1. `CAROLTENANT` for domain
              2. `CAROLAPPNAME` for app_name
              3. `CAROLAPPOAUTH` for auth
@@ -131,9 +134,11 @@ class Carol:
                 Organization domain.
             environment: `str`
                 Which Carol's environment to use. There are three possible values today.
+
                 1. 'carol.ai' for the production environment
                 2. 'karol.ai' for the explore environment
-                1. 'qarol.ai' for the QA environment
+                3. 'qarol.ai' for the QA environment
+
             host: `str`
                 Host to be used. It overwrite the default one.
 
