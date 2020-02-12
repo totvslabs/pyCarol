@@ -6,6 +6,7 @@ class Carolina:
     This class is used to handle any iteration with Carol data storage (CDS).
 
     Args:
+
         carol: class: pycarol.Carol
     """
 
@@ -93,16 +94,18 @@ class Carolina:
         Format the bucket path for each possible space.
 
         Args:
+
             space:  `str`,
                 Which bucket to get. Possible values:
-                "golden": Data Model golden records.
-                "staging": Staging records path
-                "staging_master": Staging records from Master
-                "staging_rejected": Staging records from Rejected
-                "view": Data Model View records
-                "app": App  bucket
-                "golden_cds": CDS golden records
-                "staging_cds": Staging Intake.
+
+                    1. "golden": Data Model golden records.
+                    2. "staging": Staging records path
+                    3. "staging_master": Staging records from Master
+                    4. "staging_rejected": Staging records from Rejected
+                    5. "view": Data Model View records
+                    6. "app": App  bucket
+                    7. "golden_cds": CDS golden records
+                    8. "staging_cds": Staging Intake.
 
         Returns:
             formatted bucket path
@@ -139,24 +142,27 @@ class Carolina:
                 Format the bucket path for each possible space.
 
                 Args:
+
                     space:  `str`,
                         Which bucket to get. Possible values:
-                        "golden": Data Model golden records.
-                        "staging": Staging records path
-                        "staging_master": Staging records from Master
-                        "staging_rejected": Staging records from Rejected
-                        "view": Data Model Relationship View records
-                        "app": App  bucket
-                        "golden_cds": CDS golden records
-                        "staging_cds": Staging Intake.
+
+                        1. "golden": Data Model golden records.
+                        2. "staging": Staging records path
+                        3. "staging_master": Staging records from Master
+                        4. "staging_rejected": Staging records from Rejected
+                        5. "view": Data Model Relationship View records
+                        6. "app": App  bucket
+                        7. "golden_cds": CDS golden records
+                        8. "staging_cds": Staging Intake.
                     vars: `dict`
                         Parameters needed to format the storage path. Possible keys:
-                        "tenant_id": Tenant ID.
-                        "connector_id": Connector ID
-                        "staging_type": Staging Name
-                        "dm_name": Data model Name
-                        "relationship_view_name": Relationship view name
-                        "app_name": App  name
+
+                        1. "tenant_id": Tenant ID.
+                        2. "connector_id": Connector ID
+                        3. "staging_type": Staging Name
+                        4. "dm_name": Data model Name
+                        5. "relationship_view_name": Relationship view name
+                        6. "app_name": App  name
 
 
                 Returns:

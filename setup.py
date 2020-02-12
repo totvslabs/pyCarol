@@ -45,6 +45,15 @@ def read(*parts):
     with codecs.open(os.path.join(here, *parts), 'r') as fp:
         return fp.read()
 
+readme_note = """\
+.. note::
+   For the latest source, discussion, etc, please visit the
+   `GitHub repository <https://github.com/totvslabs/pyCarol>`_\n\n
+"""
+
+with open('README.rst') as fobj:
+    long_description = readme_note + fobj.read()
+
 def find_version(*file_paths):
     version_file = read(*file_paths)
     version_match = re.search(
@@ -63,6 +72,7 @@ setup(
     version=find_version("pycarol", "__init__.py"),
     license='TOTVS',
     description='Carol Python API and Tools',
+    long_description=long_description,
     author='TotvsLabs',
     maintainer='TOTVS Labs',
     author_email='ops@totvslabs.com',
