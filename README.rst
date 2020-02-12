@@ -11,7 +11,7 @@ Getting Started
 ---------------
 Run ``pip install pycarol`` to install the latest stable version from `PyPI
 <https://pypi.python.org/pypi/pycarol>`_. `Documentation for the latest release
-<https://totvslabs-pycarol.readthedocs-hosted.com/en/latest/>`__ is hosted on readthedocs.
+<http://pycarol.readthedocs.io/>`__ is hosted on readthedocs.
 
 Initializing pyCarol
 --------------------
