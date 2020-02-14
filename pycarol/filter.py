@@ -18,7 +18,7 @@ class Filter:
 
     This will create the following json query.
 
-    .. code:: json
+    .. code::
 
         {
           'mustList': [
@@ -59,7 +59,7 @@ class Filter:
                                                MAXIMUM(name='MAXIMUM', params='mdm_key')]) \\
                             .build().to_json()
 
-    .. code:: json
+    .. code::
 
         {
           'mustList': [

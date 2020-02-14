@@ -1,3 +1,9 @@
+"""
+
+Allow to copy DataModels, NamedQueries, Connectors, Staging and mappingns from one tenant to another.
+
+"""
+
 from ..data_models.data_models import DataModel, CreateDataModel
 from ..named_query import NamedQuery
 from ..connectors import Connectors
@@ -6,23 +12,37 @@ from collections import defaultdict
 
 
 class CloneTenant(object):
+    """
+
+    Clone entities from one tenant to a second tenant.
+
+    Args:
+
+        carol_from: `pycarol.Carol`
+            `pycarol.Carol` instance to copy from
+        carol_to: `pycarol.Carol`
+            `pycarol.Carol` instance to copy to
+
+    """
+
     def __init__(self, carol_from, carol_to):
-        """
-        Args:
-            carol_from:
-            carol_to:
-        """
+
         self.carol_from = carol_from
         self.carol_to = carol_to
 
     def copy_named_query(self, named_query_list=None, copy_all=False, overwrite=False):
 
         """
+
+        Copy named queries.
+
         Args:
             named_query_list:
             copy_all:
             overwrite:
+
         """
+
         named = NamedQuery(self.carol_from)
         all_named = named.get_all()
 
@@ -55,12 +75,21 @@ class CloneTenant(object):
     def copy_data_models(self, dm_list=None, publish=True, overwrite=False, copy_all=False):
 
         """
+        Copy DataModels
+
         Args:
-            dm_list:
-            publish:
-            overwrite:
-            copy_all:
+
+            dm_list: `list` default `None`
+                List of DataModels to copy
+            publish: `bool` default `True`
+                Publish copied DataModels
+            overwrite: `bool` default `False`
+                Overwrite if already exists.
+            copy_all: `bool` default `False`
+                Copy all DataModels. If no list passes, use this to copy all DataModels.
+
         """
+
         DMsTenant = DataModel(self.carol_from)
 
         if copy_all:
@@ -89,12 +118,13 @@ class CloneTenant(object):
 
         return self
 
-
     def copy_connectors(self, conectors_map, map_type='name', overwrite_connector=False, add_to_connector=True,
                         change_name_dict=None, copy_mapping=True, overwrite_schema=False):
         """
+        Copy Connectors, Stagings and mappings.
 
         Args:
+
             conectors_map: `dict`
                 dictionary mapping the connector and stagings to be copied.
                 If `map_type = name`
@@ -103,6 +133,7 @@ class CloneTenant(object):
                 If `map_type = connector_id`
                     dictionary of {connector_id_1 : [staging_name_1, staging_name_2, staging_name_3 ...],
                                    connector_id_2 : [staging_name_1, staging_name_2, staging_name_3 ...] }
+
             map_type: 'str' default `name`
                 Type of mapping. Possible values: `name` and `connector_id`
             overwrite_connector: `bool` default `False`
@@ -188,8 +219,7 @@ class CloneTenant(object):
                 stg_to.send_schema(schema=aux_schema, connector_id=conn_id.get(connector_name),
                                    overwrite=overwrite_schema)
 
-
-                #TODO mappings should be copied after copied all stagings.
+                # TODO mappings should be copied after copied all stagings.
                 # Need t0 find how to copy ETLs.
                 if copy_mapping:
 
@@ -202,7 +232,7 @@ class CloneTenant(object):
                         mapping_fields.pop('mdmLastUpdated')
                         connector_id = mapping_fields.pop('mdmConnectorId')
 
-                        mappings_to_get = stag.get_mapping_snapshot(connector_id=connector_id,mapping_id=mapping_id,
+                        mappings_to_get = stag.get_mapping_snapshot(connector_id=connector_id, mapping_id=mapping_id,
                                                                     entity_space=entity_space)
                         _, aux_map = mappings_to_get.popitem()
                         stg_to.mapping_from_snapshot(mapping_snapshot=aux_map, connector_id=conn_id.get(connector_name),
