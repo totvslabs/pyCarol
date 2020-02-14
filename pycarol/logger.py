@@ -1,3 +1,8 @@
+"""
+Logger Handler integrated with Carol.
+
+"""
+
 from . import Tasks, Carol
 import os
 import logging
@@ -92,6 +97,17 @@ class CarolHandler(logging.StreamHandler):
             self._task.add_log(msg, log_level=log_level)
 
     def emit(self, record):
+        """
+         Log the message.
+
+        Args:
+            record: `str`
+                Message to log.
+
+        Returns: None
+
+        """
+
         if (self.task_id is None) or (self._use_console):
             super().emit(record)
         else:
@@ -104,11 +120,11 @@ class CarolHandler(logging.StreamHandler):
 
         Args:
             msg: `str`
-                message to log
+                Message to log
             log_level:
                 log level.
 
-        Returns: None
+        Returns: `None`
 
         """
 

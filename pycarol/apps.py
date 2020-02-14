@@ -1,8 +1,33 @@
+"""
+Carol app funtionalities.
+
+
+"""
+
+
 import zipfile, io
 
 
 class Apps:
+    """
+    Carol App intance.
+
+        Args:
+
+            carol: `pycarol.Carol`
+                Carol() instance
+
+
+    """
     def __init__(self, carol):
+        """
+        Initialize Class
+
+        Args:
+
+            carol: `pycarol.Carol`
+                Carol() instance
+        """
         self.carol = carol
 
     def _build_query_params(self, entity_space="PRODUCTION", offset=0, page_size=100, sort_by=None, sort_order=None):
@@ -18,14 +43,30 @@ class Apps:
         self.current_app = {self.current_app_name: query}
 
     def all(self, entity_space='PRODUCTION', page_size=50, offset=0, sort_order='ASC', sort_by=None):
-        '''
-        :param entity_space:
-        :param page_size:
-        :param offset:
-        :param sort_order:
-        :param sort_by:
-        :return:
-        '''
+        """
+
+        Args:
+
+            entity_space: `str` default `PRODUCTION`
+                Space to get the app from. Possible values
+
+                    1. PRODUCTION: For production
+                    2. WORKING: For Draft apps.
+
+        offset: `int`, default 0
+            Offset for pagination. Only used when `scrollable=False`
+        page_size: `int`, default 100
+            Number of records downloaded in each pagination. The maximum value is 1000
+        sort_order: `str`, default 'ASC'
+            Sort ascending ('ASC') vs. descending ('DESC').
+        sort_by: `str`,  default `None`
+            Name to sort by.
+
+        Returns: List of Dicts.
+            All apps json definition
+
+        """
+
 
         query_string = self._build_query_params(offset=offset, page_size=page_size, entity_space=entity_space,
                                                 sort_by=sort_by, sort_order=sort_order)
@@ -36,12 +77,17 @@ class Apps:
         return self.all_apps
 
     def get_by_name(self, app_name, entity_space='PRODUCTION'):
-        '''
+        """
 
-        :param app_name:
-        :param entity_space:
-        :return:
-        '''
+        Args:
+
+            app_name:
+            entity_space:
+
+        Returns:
+
+        """
+
         query_string = {"entitySpace": entity_space}
         query = self.carol.call_api(f'v1/tenantApps/name/{app_name}', method='GET', params=query_string)
 
@@ -50,12 +96,17 @@ class Apps:
         return query
 
     def get_by_id(self, app_id, entity_space='PRODUCTION'):
-        '''
+        """
 
-        :param app_id:
-        :param entity_space:
-        :return:
-        '''
+        Args:
+
+            app_id:
+            entity_space:
+
+        Returns:
+
+        """
+
         query_string = {"entitySpace": entity_space}
         query = self.carol.call_api(f'v1/tenantApps/{app_id}', method='GET', params=query_string)
 
@@ -64,14 +115,19 @@ class Apps:
         return query
 
     def get_settings(self, app_name=None, app_id=None, entity_space='PRODUCTION', check_all_spaces=False):
-        '''
+        """
 
-        :param app_name:
-        :param app_id:
-        :param entity_space:
-        :param check_all_spaces:
-        :return:
-        '''
+        Args:
+
+            app_name:
+            app_id:
+            entity_space:
+            check_all_spaces:
+
+        Returns:
+
+        """
+
         assert app_name or app_id or self.carol.app_name
 
         if app_id is not None:
@@ -99,6 +155,18 @@ class Apps:
         return self.app_settings
 
     def download_app(self, carolappname, carolappversion, file_path, extract=False):
+        """
+
+        Args:
+
+            carolappname:
+            carolappversion:
+            file_path:
+            extract:
+
+        Returns:
+
+        """
 
         url = f'v1/carolApps/download/{carolappname}/version/{carolappversion}'
 
@@ -121,6 +189,7 @@ class Apps:
             Dictionary with the manifest file.
 
         """
+
         url = f'v1/tenantApps/manifest/{app_name}'
 
         r = self.carol.call_api(url, method='GET')
