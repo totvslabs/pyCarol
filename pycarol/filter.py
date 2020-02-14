@@ -18,7 +18,7 @@ class Filter:
 
     This will create the following json query.
 
-    .. code::
+    .. code:: json
 
         {
           'mustList': [
@@ -59,7 +59,7 @@ class Filter:
                                                MAXIMUM(name='MAXIMUM', params='mdm_key')]) \\
                             .build().to_json()
 
-    .. code::
+    .. code:: json
 
         {
           'mustList': [
@@ -98,11 +98,6 @@ class Filter:
 
     """
     def __init__(self, builder):
-        """
-
-        Args:
-            builder:
-        """
         self.must_list = builder._must_list
         self.must_not_list = builder._must_not_list
         self.should_list = builder._should_list
@@ -120,12 +115,6 @@ class Filter:
         return json
 
     class Builder:
-
-        """
-
-        SubClass to build the Queries.
-
-        """
         def __init__(self, key_prefix=""):
             self._minimum_should_match = 1
             self._must_list = []
