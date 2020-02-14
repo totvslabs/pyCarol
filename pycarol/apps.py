@@ -78,13 +78,20 @@ class Apps:
 
     def get_by_name(self, app_name, entity_space='PRODUCTION'):
         """
+        Get app information by app name
 
         Args:
 
-            app_name:
-            entity_space:
+            app_name: `str`
+                App name.
+            entity_space: `str` default `PRODUCTION`
+                Space to get the app information from. Possible values
 
-        Returns:
+                    1. PRODUCTION: For production
+                    2. WORKING: For Draft apps.
+
+        Returns: `dict`
+            App info json definition.
 
         """
 
@@ -97,13 +104,20 @@ class Apps:
 
     def get_by_id(self, app_id, entity_space='PRODUCTION'):
         """
+        Get app information by ID
 
         Args:
 
-            app_id:
-            entity_space:
+            app_id: `str`
+                App id.
+            entity_space: `str` default `PRODUCTION`
+                Space to get the app information from. Possible values
 
-        Returns:
+                    1. PRODUCTION: For production
+                    2. WORKING: For Draft apps.
+
+        Returns: `dict`
+            App info json definition.
 
         """
 
@@ -116,16 +130,27 @@ class Apps:
 
     def get_settings(self, app_name=None, app_id=None, entity_space='PRODUCTION', check_all_spaces=False):
         """
+        Get settings from app
+
+        Settings are the settings available in Carol's UI.
 
         Args:
 
-            app_name:
-            app_id:
-            entity_space:
-            check_all_spaces:
+            app_name: `str` default `None`
+                App name, if None will get from  `app_id`
+            app_id: `str` default `None`
+                App id. Either app_name or app_id must be set.
+            entity_space: `str` default `PRODUCTION`
+                Space to get the app settings from. Possible values
 
-        Returns:
+                    1. PRODUCTION: For production
+                    2. WORKING: For Draft apps.
 
+            check_all_spaces: `bool` default `False`
+                Check all entity spaces.
+
+        Returns: `dict`
+            Dictionary with the settings
         """
 
         assert app_name or app_id or self.carol.app_name
@@ -156,15 +181,20 @@ class Apps:
 
     def download_app(self, carolappname, carolappversion, file_path, extract=False):
         """
+        Download App artifacts.
 
         Args:
 
-            carolappname:
-            carolappversion:
-            file_path:
-            extract:
+            carolappname: `str`
+                App Name.
+            carolappversion: `str`
+                App Version
+            file_path:  `os.PathLike`
+                Path to save the zip file.
+            extract: `bool` default `False`
+                Either extract the zip files or not.
 
-        Returns:
+        Returns: None
 
         """
 
