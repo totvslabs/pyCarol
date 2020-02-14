@@ -10,7 +10,7 @@ import zipfile, io
 
 class Apps:
     """
-    Carol App intance.
+    Carol App instance.
 
         Args:
 
@@ -44,6 +44,7 @@ class Apps:
 
     def all(self, entity_space='PRODUCTION', page_size=50, offset=0, sort_order='ASC', sort_by=None):
         """
+        Get all app information in this environment.
 
         Args:
 
