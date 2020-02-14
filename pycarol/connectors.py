@@ -4,11 +4,12 @@ from collections import defaultdict
 
 class Connectors:
     """
-
     This class handle all APIs related to Carol connectors
 
     Args:
+
         carol: class: pycarol.Carol
+
     """
 
     def __init__(self, carol):
@@ -20,6 +21,7 @@ class Connectors:
         Create a connector
 
         Args:
+
             name: 'str'
                 Connector name
             label: 'str'
@@ -29,6 +31,7 @@ class Connectors:
             overwrite: `bool` default `False`
                 Overwrite if already exists.
         """
+
         if label is None:
             label = name
 
@@ -54,6 +57,7 @@ class Connectors:
         Get connector information using the connector name
 
         Args:
+
             name: 'str'
                 Connector Name
             errors: {‘ignore’, ‘raise’}, default ‘raise’
@@ -65,6 +69,7 @@ class Connectors:
             connector information.
 
         """
+
         resp = self.carol.call_api(f'v1/connectors/name/{name}', errors=errors)
         return resp
 
@@ -73,6 +78,7 @@ class Connectors:
         Get connector information using the connector name
 
         Args:
+
             id: 'str'
                 Connector ID
             errors: {‘ignore’, ‘raise’}, default ‘raise’
@@ -84,19 +90,78 @@ class Connectors:
             connector information.
 
         """
+
         resp = self.carol.call_api(f'v1/connectors/{id}', errors=errors)
         return resp
 
     def delete_by_name(self, name, force_deletion=True):
+        """
+        Delete connector by name
+
+        Args:
+
+            name: `str`
+                Connector name
+            force_deletion: `bool` default `True`
+                Force the deletion
+
+        Returns: None
+
+        """
+
         mdm_id = self.get_by_name(name)['mdmId']
         self.delete_by_id(mdm_id, force_deletion)
 
     def delete_by_id(self, mdm_id, force_deletion=True):
+        """
+        Delete Connector by ID
+
+        Args:
+
+            mdm_id: `str`` #TODO: Rename to connector_id
+                Connector ID
+            force_deletion: `bool` default `True`
+                Force the deletion
+
+        Returns: None
+
+        """
+
         self.carol.call_api('v1/connectors/{}?forceDeletion={}'.format(mdm_id, force_deletion), method='DELETE')
 
     def get_all(self, offset=0, page_size=-1, sort_order='ASC', sort_by=None, include_connectors=False,
                 include_mappings=False, include_consumption=False, print_status=True, save_results=False,
                 filename='connectors.json'):
+        """
+        Get all connectors.
+
+        Args:
+
+            offset: `int`, default `0`
+                Offset for the response.
+            page_size: `int`, default `1000`
+                Number of records in each call.
+            sort_by: `str` default `None`
+                Field to sort by
+            sort_order: `str`, default `ASC`
+                Sort Order. Possible values "ASC" and "DESC"
+            include_connectors: `bool` default `False`
+                Include connector information
+            include_mappings: `bool` default `False`
+                Include mapping information
+            include_consumption: `bool` default `False`
+                Include consumption information
+            print_status: `bool` default `True`
+                Print status of the request.
+            save_results: `bool` default `False`
+                If save json with the results.
+            filename: `str` default `None`
+                Filename to save
+
+        Returns: `dict`
+            Connector information
+
+        """
 
         params = {"offset": offset, "pageSize": str(page_size), "sortOrder": sort_order,
                   "includeMappings": include_mappings, "includeConsumption": include_consumption,
@@ -135,6 +200,22 @@ class Connectors:
         return connectors
 
     def stats(self, connector_id=None, connector_name=None, all_connectors=False):
+        """
+        Get connector stats
+
+        Args:
+
+            connector_id: `str`, default `None`
+                Connector Id
+            connector_name: `str`, default `None`
+                Connectot name
+            all_connectors: `bool` default `False`
+                Get from all connectors.
+
+        Returns: `dict`
+            Dict with the status of the connectors.
+
+        """
 
         if all_connectors:
             response = self.carol.call_api('v1/connectors/stats/all')
@@ -150,6 +231,14 @@ class Connectors:
         return {key: list(value['stagingEntityStats'].keys()) for key, value in self._conn_stats.items()}
 
     def staging_to_connectors_map(self):
+        """
+        Create a dictionary where the mapping of connectors and stagings.
+
+        Returns: `dict`
+            Dict
+
+        """
+
         d = defaultdict(list)
         connectors = self.get_all(print_status=False)
         for connector in connectors:
@@ -161,6 +250,19 @@ class Connectors:
         return d
 
     def find_by_staging(self, staging_name=None):
+        """
+        Find connector given a staging table
+
+        Args:
+
+            staging_name: `str` default `None`
+                Staging table name
+
+        Returns: `dict`
+            Connector information
+
+        """
+
         d = self.staging_to_connectors_map()
 
         if staging_name:
@@ -178,30 +280,36 @@ class Connectors:
         """
         Get data models mappings information.
 
-        :param connector_id: `str`, default `None`
-            Connector Id
-        :param connector_name: `str`, default `None`
-            Connectot name
-        :param staging_name: `str`, default `None`
-            Staging name
-        :param dm_id:  `str`, default `None`
-            Data model Id
-        :param dm_name: `str`, default `None`
-            Data model name
-        :param reverse_mapping: `bool`, default `False`
-            If to return the reverse mapping.
-        :param offset: `int`, default `0`
-            Offset for the response.
-        :param page_size: `int`, default `1000`
-            number of records in each call.
-        :param sort_by: `str`, default `None`
-            Sort response by
-        :param sort_order: `str`, default `ASC`
-            Sort Order. Possible values "ASC" and "DESC"
-        :param all_connectors: `bool`, default `False`
-            It will return all the mapping for all connectors/stagings
-        :return:
+        Args:
+
+            connector_id: `str`, default `None`
+                Connector Id
+            connector_name: `str`, default `None`
+                Connectot name
+            staging_name: `str`, default `None`
+                Staging name
+            dm_id: `str`, default `None`
+                Data model Id
+            dm_name: `str`, default `None`
+                Data model name
+            reverse_mapping: `bool`, default `False`
+                If to return the reverse mapping.
+            offset: `int`, default `0`
+                Offset for the response.
+            page_size: `int`, default `1000`
+                Number of records in each call.
+            sort_by: `str` default `None`
+                Field to sort by
+            sort_order: `str`, default `ASC`
+                Sort Order. Possible values "ASC" and "DESC"
+            all_connectors: `bool`, default `False`
+                It will return all the mapping for all connectors/stagings
+
+        Returns: `dict`
+            Mapping json definition
+
         """
+
 
         if all_connectors:
             payload = {

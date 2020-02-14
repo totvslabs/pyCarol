@@ -27,12 +27,13 @@ _MACHINE_FLAVORS = [
     'n1-highmem-96',
 ]
 
+
 class CDSStaging:
     """
-
     Class to handle all CDS Staging iterations.
 
     """
+
     def __init__(self, carol):
         self.carol = carol
 
@@ -75,6 +76,7 @@ class CDSStaging:
                 Query to be used to filter the data to be processed.
 
         :return: None
+
         """
 
         if worker_type not in _MACHINE_FLAVORS and worker_type is not None:
@@ -103,7 +105,6 @@ class CDSStaging:
                   file_pattern='*', filter_query=None):
 
         """
-
         Sync data to realtime layer.
 
         Args:
@@ -148,7 +149,6 @@ class CDSStaging:
                     worker_type=None, max_number_workers=-1, number_shards=-1):
 
         """
-
         Process staging CDS data.
 
         Args:
@@ -167,6 +167,7 @@ class CDSStaging:
                 Number of shards.
 
         :return: None
+
         """
 
         if worker_type not in _MACHINE_FLAVORS and worker_type is not None:
@@ -187,7 +188,6 @@ class CDSStaging:
     def delete(self, staging_name, connector_id=None, connector_name=None):
 
         """
-
         Delete all CDS staging data.
 
         Args:
@@ -200,6 +200,7 @@ class CDSStaging:
                 Connector name
 
         :return: None
+
         """
 
         if connector_name:
@@ -229,6 +230,7 @@ class CDSStaging:
 
         :return: `int`
             Count
+
         """
 
         if connector_name:
@@ -244,14 +246,25 @@ class CDSStaging:
 class CDSGolden:
     """
     Class to handle all CDS Staging iterations.
+
+    Args:
+
+        carol: 'pycarol.Carol`
+            Carol() instance.
+
     """
+
     def __init__(self, carol):
+        """
+        Args:
+            carol:
+        """
+
         self.carol = carol
 
     def sync_data(self, dm_name, dm_id=None, num_records=-1, file_pattern='*', filter_query=None):
 
         """
-
         Sync data to realtime layer.
 
         Args:
@@ -269,6 +282,7 @@ class CDSGolden:
                 Query to be used to filter the data to be processed.
 
         :return: None
+
         """
 
         filter_query = filter_query if filter_query else {}
@@ -287,7 +301,6 @@ class CDSGolden:
     def delete(self, dm_name=None, dm_id=None):
 
         """
-
         Delete all CDS data model data.
 
         Args:
@@ -313,7 +326,6 @@ class CDSGolden:
     def count(self, dm_name=None, dm_id=None):
 
         """
-
         Count number of messages in CDS.
 
         Args:
