@@ -42,7 +42,7 @@ class Storage:
             raise NotImplemented(f"Only 'GCP-CS' backend implemented in this version. "
                                  f"You are trying to use {self.carolina.engine }")
 
-    def save(self, name, obj, format='pickle', parquet=False, cache=True):
+    def save(self, name, obj, format='pickle', parquet=False, cache=True, chunk_size=None):
         """
 
         Args:
@@ -62,6 +62,9 @@ class Storage:
                 It uses `pandas.DataFrame.to_parquet` to save. `obj` should be a pandas DataFrame
             cache: `bool` default `True`
                 Cache the file saved in the temp directory.
+            chunk_size: `int` default `None`
+                The size of a chunk of data whenever iterating (in bytes).
+                This must be a multiple of 256 KB per the API specification.
 
         Usage:
 
@@ -126,9 +129,10 @@ class Storage:
 
 
         """
-        self.backend.save(name, obj, format, parquet, cache)
+        self.backend.save(name, obj, format, parquet, cache, chunk_size)
 
-    def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage', columns=None):
+    def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage', columns=None,
+             chunk_size=None):
         """
 
         Args:
@@ -159,6 +163,9 @@ class Storage:
                     9. "staging_cds": Staging Intake.
             columns: `list` default `None`
                 Columns to fetch when using `parquet=True`
+            chunk_size: `int` default `None`
+                The size of a chunk of data whenever iterating (in bytes).
+                This must be a multiple of 256 KB per the API specification.
         Usage:
 
         Loading a local file in CDS.
@@ -207,7 +214,7 @@ class Storage:
 
         """
         return self.backend.load(name=name, format=format, parquet=parquet, cache=cache, storage_space=storage_space,
-                                 columns=columns)
+                                 columns=columns, chunk_size=chunk_size)
 
     def files_storage_list(self, prefix='pipeline/',  print_paths=False):
         """

@@ -19,13 +19,36 @@ class StorageGCPCS:
     def _get_app_storage_bucket(self):
         return self.carolina.get_client().bucket(self.carolina.get_bucket_name("app"))
 
-    def save(self, name, obj, format='pickle', parquet=False, cache=True):
+    def save(self, name, obj, format='pickle', parquet=False, cache=True, chunk_size=None):
+        """
+
+        Args:
+
+            name: `str`.
+                Filename to be used when saving the `obj`
+            obj: `obj`
+                It depends on the `format` parameter.
+            format: `str`
+                Possible values:
+
+                    1. `pickle`: It uses `pickle.dump` to save the binary file.
+                    2. `joblib`: It uses `joblib.dump` to save the binary file.
+                    3. `file`: It saves a local file sending it directly to Carol.
+
+            parquet: `bool` default `False`
+                It uses `pandas.DataFrame.to_parquet` to save. `obj` should be a pandas DataFrame
+            cache: `bool` default `True`
+                Cache the file saved in the temp directory.
+            chunk_size: `int` default `None`
+                The size of a chunk of data whenever iterating (in bytes).
+                This must be a multiple of 256 KB per the API specification.
+        """
 
         remote_file_name = f"{self.carolina.get_path('app', {})}{name}"
         local_file_name = os.path.join(__TEMP_STORAGE__, remote_file_name.replace("/", "-"))
 
         bucket = self._get_app_storage_bucket()
-        blob = bucket.blob(remote_file_name)
+        blob = bucket.blob(remote_file_name, chunk_size=chunk_size)
 
         if parquet:
             if not isinstance(obj, pd.DataFrame):
@@ -56,7 +79,44 @@ class StorageGCPCS:
         os.utime(local_file_name, None)
 
     @retry_check_sum
-    def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage', columns=None):
+    def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage', columns=None,
+             chunk_size=None):
+        """
+
+        Args:
+
+            name: `str`.
+                Filename to be load
+            format: `str`
+                Possible values:
+
+                    1. `pickle`: It uses `pickle.dump` to save the binary file.
+                    2. `joblib`: It uses `joblib.dump` to save the binary file.
+                    3. `file`: It saves a local file sending it directly to Carol.
+
+            parquet: `bool` default `False`
+                It uses `pandas.DataFrame.to_parquet` to save. `obj` should be a pandas DataFrame
+            cache: `bool` default `True`
+                Cache the file saved in the temp directory.
+            storage_space: `str` default `app_storage`
+                Internal Storage space.
+                    1. "app_storage": For raw storage.
+                    2. "golden": Data Model golden records.
+                    3. "staging": Staging records path
+                    4. "staging_master": Staging records from Master
+                    5. "staging_rejected": Staging records from Rejected
+                    6. "view": Data Model View records
+                    7. "app": App  bucket
+                    8. "golden_cds": CDS golden records
+                    9. "staging_cds": Staging Intake.
+            columns: `list` default `None`
+                Columns to fetch when using `parquet=True`
+            chunk_size: `int` default `None`
+                The size of a chunk of data whenever iterating (in bytes).
+                This must be a multiple of 256 KB per the API specification.
+
+        """
+
         if storage_space == 'app_storage':
             remote_file_name = f"{self.carolina.get_path('app', {})}{name}"
             bucket = self._get_app_storage_bucket()
@@ -73,7 +133,7 @@ class StorageGCPCS:
         else:
             localts = 0
 
-        blob = bucket.blob(remote_file_name)
+        blob = bucket.blob(remote_file_name, chunk_size=chunk_size)
         if not blob.exists():
             return None
 
