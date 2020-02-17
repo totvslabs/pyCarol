@@ -35,6 +35,7 @@ class Staging:
     Class to send data to Carol.
 
     """
+
     def __init__(self, carol):
         self.carol = carol
 
@@ -326,11 +327,12 @@ class Staging:
         """
 
         Args:
-            :param staging_name:  `str`,
+
+            staging_name:  `str`,
                 Staging name.
-            :param connector_name: `str`, default `None`
+            connector_name: `str`, default `None`
                 Connector name.
-            :param connector_id: `str`, default `None`
+            connector_id: `str`, default `None`
                 Connector Id.
             reject_on_no_schema: `bool` default `False`
                 Do not drop if no schema found.
@@ -340,6 +342,7 @@ class Staging:
                 Raise an error if there exists a mapping for this staging table
 
         Returns:
+
             Carol response
 
         """
