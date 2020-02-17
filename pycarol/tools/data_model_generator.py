@@ -1,3 +1,9 @@
+"""
+This tool helps to DataModels from json files.
+
+
+"""
+
 from ..data_models.data_model_types import DataModelTypeIds
 from ..verticals import Verticals
 from ..data_models.data_models import CreateDataModel
@@ -10,7 +16,7 @@ class DataModelGenerator(object):
     """
     This class will create a Datamodel from a python dictionary. Today, it is not allowed nested fileds in the dictionary.
 
-    Ex:
+    Usage:
 
     .. code-block:: python
 
@@ -34,9 +40,6 @@ class DataModelGenerator(object):
 
 
     def __init__(self, carol):
-        """
-
-        """
         self.carol = carol
 
     def start(self, json_sample, dm_name, publish=True, profile_title=None, overwrite=False, vertical_ids=None,
@@ -45,7 +48,10 @@ class DataModelGenerator(object):
               group_name='Others', transaction_dm=False, ignore_field_type=False):
         """
 
+        Start the process.
+
         Args:
+
             json_sample: `dict`
                 Dictionary with key and values to be used as template for the data model
             dm_name: `str`
@@ -75,7 +81,7 @@ class DataModelGenerator(object):
                 will use the one that already exists.
 
         Returns:
-
+            None
         """
 
         if publish:
