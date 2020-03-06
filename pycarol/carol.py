@@ -398,10 +398,11 @@ class Carol:
         Args:
             env_name: `str` default `None`
                 Environment (tenant) name to switch the context to.
-            env_id:
+            env_id: `str` default `None`
                 Environment (tenant) id to switch the context to.
-            app_name:
+            app_name: `str` default `None`
                 App name in the target environment to switch the context to.
+                Only needed with using CDS.
 
         Returns:
             None
