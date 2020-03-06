@@ -23,6 +23,16 @@ class ApiKeyAuth:
 
     def switch_context(self, env_id):
 
+        """
+
+        Args:
+            env_id: enviroment id to switch context to.
+
+        Returns:
+            None
+
+        """
+
         path = f'v2/oauth2/switchTenantContextWithApiKey/{env_id}'
         resp = self.carol.call_api(method='POST', path=path)
 

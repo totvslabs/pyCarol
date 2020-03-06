@@ -393,6 +393,20 @@ class Carol:
 
 
     def switch_context(self, env_name=None, env_id=None, app_name=None):
+        """
+
+        Args:
+            env_name: `str` default `None`
+                Environment (tenant) name to switch the context to.
+            env_id:
+                Environment (tenant) id to switch the context to.
+            app_name:
+                App name in the target environment to switch the context to.
+
+        Returns:
+            None
+
+        """
 
         if self.org is None:
             self.org = Organization(self).get_organization_info(self.organization)
