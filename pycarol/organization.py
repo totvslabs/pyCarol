@@ -39,9 +39,3 @@ class Organization:
         """
         return self.carol.call_api(f'v2/tenants/domain/{environment}',
                                    auth=False, status_forcelist=[], retries=0)
-
-    def all_tenants(self, org_id=None, org_name=None):
-
-        raise NotImplemented
-        return self.carol.call_api(f'v1/organizations/{org_id}/allTenants',
-                                   auth=False, status_forcelist=[], retries=0)
