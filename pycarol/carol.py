@@ -20,6 +20,7 @@ class Carol:
 
 
     Args:
+
         domain: `str`. default `None`.
             Tenant name. e.x., domain.carol.ai
         app_name: `str`. default `None`.
@@ -130,6 +131,7 @@ class Carol:
         Set the host to be used.
 
         Args:
+
             domain: `str`
                 Former tenant name.
                 e.x., domain.carol.ai
@@ -165,6 +167,7 @@ class Carol:
 
 
         Args:
+
             retries: `int` , default `5`
                 Number of retries for the API calls
             session: Session object dealt `None`
@@ -207,6 +210,7 @@ class Carol:
 
 
         Args:
+
             path: `str`.
                 API URI path. e.x.  v2/staging/schema
             method: 'str', default `None`.
@@ -411,8 +415,18 @@ class Carol:
                 Only needed with using CDS.
 
         Returns:
-
             self
+
+        .. code:: python
+
+            from pycarol import Carol, Staging
+            carol = Carol('B', 'teste', auth=PwdAuth('email@totvs.com.br', 'pass'), )
+            carol.switch_environment('A')
+            Staging(carol_tenant_A).fetch_parquet(...) # fetch parquet from tenant A
+            # To switch back
+            carol.switch_environment('B')
+            #back to tenant B
+
 
         """
 
@@ -449,6 +463,17 @@ class Carol:
 
         Returns:
             None
+
+        Usage:
+
+        .. code:: python
+
+            from pycarol import Carol, Staging
+            carol = Carol('B', 'teste', auth=PwdAuth('email@totvs.com.br', 'pass'), )
+            with carol.switch_context('A') as carol_tenant_A:
+                Staging(carol_tenant_A).fetch_parquet(...) # fetch parquet from tenant A
+            #back to tenant B
+
 
         """
 
