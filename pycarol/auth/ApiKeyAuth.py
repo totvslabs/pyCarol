@@ -20,3 +20,14 @@ class ApiKeyAuth:
     def authenticate_request(self, headers):
         headers['x-auth-key'] = self.api_key
         headers['x-auth-connectorid'] = self.connector_id
+
+    def switch_context(self, env_id):
+
+        path = f'v2/oauth2/switchTenantContextWithApiKey/{env_id}'
+        resp = self.carol.call_api(method='POST', path=path)
+
+        self.api_key = resp['apiKey']
+        self.connector_id = resp['connectorId']
+
+
+

@@ -9,6 +9,7 @@ from .auth.PwdAuth import PwdAuth
 from .tenant import Tenant
 from . import __CONNECTOR_PYCAROL__
 from . import __version__
+from . organization import Organization
 
 
 class Carol:
@@ -119,6 +120,8 @@ class Carol:
         self.auth.set_connector_id(self.connector_id)
         self.auth.login(self)
         self.response = None
+
+        self.org = None
 
 
     @staticmethod
@@ -387,3 +390,21 @@ class Carol:
             print("Copied API Key to clipboard: " + token)
         else:
             raise Exception("Auth object not set. Can't fetch token.")
+
+
+    def switch_context(self, env_name=None, env_id=None, app_name=None):
+
+        if self.org is None:
+            self.org = Organization(self).get_organization_info(self.organization)
+
+        if env_name:
+            env_id = Tenant(self).get_tenant_by_domain(env_name)['mdmId']
+        elif env_id is None:
+            raise ValueError('Either `env_name` or `env_id` must be set.')
+
+        self.auth.switch_context(env_id=env_id)
+
+        self.organization = self.org['mdmSubdomain']
+        self.domain = env_name
+        self.app_name = app_name #TODO: Today we cannot use CDS without a valid app name.
+        self.tenant = Tenant(self).get_tenant_by_domain(env_name)

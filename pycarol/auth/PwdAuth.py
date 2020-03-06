@@ -70,3 +70,16 @@ class PwdAuth:
         self._token.access_token = resp['access_token']
         self._token.refresh_token = resp['refresh_token']
         self._token.expiration = resp['timeIssuedInMillis'] + (resp['expires_in'] * 1000)
+
+    def switch_context(self, env_id):
+
+        path = f'v2/oauth2/switchTenantContext/{env_id}'
+        resp = self.carol.call_api(method='POST', path=path)
+
+        self._token = types.SimpleNamespace()
+        self._token.access_token = resp['access_token']
+        self._token.refresh_token = resp['refresh_token']
+        self._token.expiration = resp['timeIssuedInMillis'] + (resp['expires_in'] * 1000)
+
+
+

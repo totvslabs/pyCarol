@@ -5,17 +5,17 @@ class Organization:
     def __init__(self, carol):
         self.carol = carol
 
-    def get_organization_info(self, subdomain):
+    def get_organization_info(self, organization):
         """
         Get organization information.
 
-        :param subdomain: `str`
+        :param organization: `str`
             Organization subdomain
         :return:
             dict with the information about the organization.
         """
 
-        return self.carol.call_api(f'v1/organizations/domain/{subdomain}',
+        return self.carol.call_api(f'v1/organizations/domain/{organization}',
                                    auth=False, status_forcelist=[], retries=0)
 
 
@@ -30,6 +30,17 @@ class Organization:
         """
         return self.carol.call_api(f'v2/tenants/domain/{environment}',
                                    auth=False, status_forcelist=[], retries=0)
+
+    def all_tenants(self, org_id=None, org_name=None):
+
+        return self.carol.call_api(f'v1/organizations/{org_id}/allTenants',
+                                   auth=False, status_forcelist=[], retries=0)
+
+
+
+
+
+
 
 
 
