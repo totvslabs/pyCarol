@@ -1,8 +1,17 @@
 
 
 class Organization:
+    """
+    Get organization information.
+
+    Args:
+
+        Carol object
+            Carol object.
+    """
 
     def __init__(self, carol):
+
         self.carol = carol
 
     def get_organization_info(self, organization):
@@ -33,5 +42,6 @@ class Organization:
 
     def all_tenants(self, org_id=None, org_name=None):
 
+        raise NotImplemented
         return self.carol.call_api(f'v1/organizations/{org_id}/allTenants',
                                    auth=False, status_forcelist=[], retries=0)
