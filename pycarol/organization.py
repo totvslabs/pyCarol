@@ -35,14 +35,3 @@ class Organization:
 
         return self.carol.call_api(f'v1/organizations/{org_id}/allTenants',
                                    auth=False, status_forcelist=[], retries=0)
-
-
-
-
-
-
-
-
-
-
-
