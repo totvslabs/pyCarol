@@ -22,11 +22,11 @@ class ApiKeyAuth:
         headers['x-auth-connectorid'] = self.connector_id
 
     def switch_context(self, env_id):
-
         """
+        Switch context to an environment within the same organization.
 
         Args:
-            env_id: enviroment id to switch context to.
+            env_id: environment id to switch context to.
 
         Returns:
             None
@@ -39,5 +39,19 @@ class ApiKeyAuth:
         self.api_key = resp['apiKey']
         self.connector_id = resp['connectorId']
 
+    def switch_org_context(self, org_id):
+        """
+        Go to the organization context.
+
+        Args:
+            org_id: organization id.
+
+        Returns:
+            NotImplemented. This feature does not work for `ApiKeyAuth`
+
+        """
+
+        raise NotImplemented("Switch context using `ApiKeyAuth` "
+                             "is not available")
 
 

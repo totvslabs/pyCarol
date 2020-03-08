@@ -34,7 +34,8 @@ class PwdAuth:
         self._token = types.SimpleNamespace()
         self._token.access_token = resp['access_token']
         self._token.refresh_token = resp['refresh_token']
-        self._token.expiration = resp['timeIssuedInMillis'] + (resp['expires_in'] * 1000)
+        self._token.expiration = resp['timeIssuedInMillis'] + (
+                    resp['expires_in'] * 1000)
         if self.carol.verbose:
             print("Token: {}".format(self._token.access_token))
 
@@ -69,9 +70,20 @@ class PwdAuth:
         self._token = types.SimpleNamespace()
         self._token.access_token = resp['access_token']
         self._token.refresh_token = resp['refresh_token']
-        self._token.expiration = resp['timeIssuedInMillis'] + (resp['expires_in'] * 1000)
+        self._token.expiration = resp['timeIssuedInMillis'] \
+                                 + (resp['expires_in'] * 1000)
 
     def switch_context(self, env_id):
+        """
+        Switch context to an environment within the same organization.
+
+        Args:
+            env_id: environment id to switch context to.
+
+        Returns:
+            None
+
+        """
 
         path = f'v2/oauth2/switchTenantContext/{env_id}'
         resp = self.carol.call_api(method='POST', path=path)
@@ -79,7 +91,26 @@ class PwdAuth:
         self._token = types.SimpleNamespace()
         self._token.access_token = resp['access_token']
         self._token.refresh_token = resp['refresh_token']
-        self._token.expiration = resp['timeIssuedInMillis'] + (resp['expires_in'] * 1000)
+        self._token.expiration = resp['timeIssuedInMillis'] \
+                                 + (resp['expires_in'] * 1000)
 
+    def switch_org_context(self, org_id):
+        """
+        Go to the organization context.
 
+        Args:
+            org_id: organization id.
 
+        Returns:
+            None
+
+        """
+
+        path = f'v2/oauth2/switchOrgContext/{org_id}'
+        resp = self.carol.call_api(method='POST', path=path)
+
+        self._token = types.SimpleNamespace()
+        self._token.access_token = resp['access_token']
+        self._token.refresh_token = resp['refresh_token']
+        self._token.expiration = resp['timeIssuedInMillis'] + (
+                resp['expires_in'] * 1000)
