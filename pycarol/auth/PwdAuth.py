@@ -96,7 +96,7 @@ class PwdAuth:
 
     def switch_org_context(self, org_id):
         """
-        Go to the organization context.
+        Go to the organization context or switch organization.
 
         Args:
             org_id: organization id.

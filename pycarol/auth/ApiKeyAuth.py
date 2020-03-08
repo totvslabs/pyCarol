@@ -41,17 +41,20 @@ class ApiKeyAuth:
 
     def switch_org_context(self, org_id):
         """
-        Go to the organization context.
+        Go to the organization context or switch organization.
 
         Args:
             org_id: organization id.
 
         Returns:
-            NotImplemented. This feature does not work for `ApiKeyAuth`
+            None
 
         """
 
-        raise NotImplemented("Switch context using `ApiKeyAuth` "
-                             "is not available")
+        path = f'v2/oauth2/switchOrgContext/{org_id}'
+        resp = self.carol.call_api(method='POST', path=path)
+
+        self.api_key = resp['apiKey']
+        self.connector_id = resp['connectorId']
 
 
