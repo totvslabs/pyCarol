@@ -312,3 +312,13 @@ The settings will be returned as a dictionary where the keys are the parameter n
 the value for that parameter. Please note that your app must be created in Carol.
 
 
+Release process
+--------
+
+1. Open a PR with your change for `master` branch;
+2. Once approved, merge into `master`;
+3. Locally, checkout to `master` branch;
+4. make bump_patch/bump_minor depending on the type of version. THis will create a commit with the new version.;
+5. Push your commit and tag;
+7. Create a new Release. 
+
