@@ -320,5 +320,5 @@ Release process
 3. Locally, checkout to `master` branch;
 4. make bump_patch/bump_minor depending on the type of version. THis will create a commit with the new version.;
 5. Push your commit and tag;
-7. Create a new Release. 
+6. Create a new Release. 
 
