@@ -2,23 +2,23 @@ from urllib3.util.retry import Retry
 import requests
 from requests.adapters import HTTPAdapter
 import json
-import os
+import os, copy
 import os.path
 from .auth.ApiKeyAuth import ApiKeyAuth
 from .auth.PwdAuth import PwdAuth
 from .tenant import Tenant
 from . import __CONNECTOR_PYCAROL__
 from . import __version__
+from . organization import Organization
 
 
 class Carol:
-
     """
     This class handle all Carol`s API calls It will handle all API calls,
     for a given authentication method. :param domain: `str`.
 
-
     Args:
+
         domain: `str`. default `None`.
             Tenant name. e.x., domain.carol.ai
         app_name: `str`. default `None`.
@@ -120,6 +120,8 @@ class Carol:
         self.auth.login(self)
         self.response = None
 
+        self.org = None
+
 
     @staticmethod
     def _set_host(domain, organization, environment, host):
@@ -127,6 +129,7 @@ class Carol:
         Set the host to be used.
 
         Args:
+
             domain: `str`
                 Former tenant name.
                 e.x., domain.carol.ai
@@ -160,8 +163,8 @@ class Carol:
         """
         Static method used to handle retries between calls.
 
-
         Args:
+
             retries: `int` , default `5`
                 Number of retries for the API calls
             session: Session object dealt `None`
@@ -202,8 +205,8 @@ class Carol:
         """
         This method handles all the API calls.
 
-
         Args:
+
             path: `str`.
                 API URI path. e.x.  v2/staging/schema
             method: 'str', default `None`.
@@ -316,7 +319,6 @@ class Carol:
 
     def issue_api_key(self):
         """
-
         Create an API key for a given connector.
 
         Returns: `dict`
@@ -331,10 +333,10 @@ class Carol:
     def api_key_details(self, api_key, connector_id):
 
         """
-
         Display information about the API key.
 
         Args:
+
             api_key: `str`
                 Carol's api key
             connector_id: `str`
@@ -351,15 +353,16 @@ class Carol:
         return resp
 
     def api_key_revoke(self, connector_id):
-
         """
         Revoke API key for ta given connector_id
 
-
         Args:
+
             connector_id: `str`
                 Connector Id which API key was created.
+
         Returns: `dict`
+
             Dictionary with API request response.
 
         """
@@ -371,11 +374,13 @@ class Carol:
         return resp
 
     def copy_token(self):
-
         """
         Copy token to clipboard
 
+        Returns:
+            None
         """
+
         import pyperclip
         if isinstance(self.auth, PwdAuth):
             token = self.auth._token.access_token
@@ -387,3 +392,106 @@ class Carol:
             print("Copied API Key to clipboard: " + token)
         else:
             raise Exception("Auth object not set. Can't fetch token.")
+
+    def switch_environment(self, env_name=None, env_id=None, app_name=None):
+        """
+        Switch environments. If the user has access to this environment, it will be "logged in" in this new environment.
+
+        Args:
+
+            env_name: `str` default `None`
+                Environment (tenant) name to switch the context to.
+            env_id: `str` default `None`
+                Environment (tenant) id to switch the context to.
+            app_name: `str` default `None`
+                App name in the target environment to switch the context to.
+                Only needed with using CDS.
+
+        Returns:
+            self
+
+        .. code:: python
+
+            from pycarol import Carol, Staging
+            carol = Carol('B', 'teste', auth=PwdAuth('email@totvs.com.br', 'pass'), )
+            carol.switch_environment('A')
+            Staging(carol_tenant_A).fetch_parquet(...) # fetch parquet from tenant A
+            # To switch back
+            carol.switch_environment('B')
+            #back to tenant B
+
+
+        """
+
+        if self.org is None:
+            self.org = Organization(self).get_organization_info(self.organization)
+
+        if env_name:
+            env_id = Tenant(self).get_tenant_by_domain(env_name)['mdmId']
+        elif env_id is None:
+            raise ValueError('Either `env_name` or `env_id` must be set.')
+
+        self.auth.switch_context(env_id=env_id)
+
+        self.domain = env_name
+        self.app_name = app_name #TODO: Today we cannot use CDS without a valid app name.
+        self.tenant = Tenant(self).get_tenant_by_domain(env_name)
+
+        return self
+
+    def switch_context(self, env_name=None, env_id=None, app_name=None):
+        """
+        Context manager to temporary have access to a second environment
+
+        Args:
+
+            env_name: `str` default `None`
+                Environment (tenant) name to switch the context to.
+            env_id: `str` default `None`
+                Environment (tenant) id to switch the context to.
+            app_name: `str` default `None`
+                App name in the target environment to switch the context to.
+                Only needed with using CDS.
+
+        Returns:
+            None
+
+        Usage:
+
+        .. code:: python
+
+            from pycarol import Carol, Staging
+            carol = Carol('B', 'teste', auth=PwdAuth('email@totvs.com.br', 'pass'), )
+            with carol.switch_context('A') as carol_tenant_A:
+                Staging(carol_tenant_A).fetch_parquet(...) # fetch parquet from tenant A
+            #back to tenant B
+
+
+        """
+
+        if self.org is None:
+            self.org = Organization(self).get_organization_info(self.organization)
+
+        if env_name:
+            env_id = Tenant(self).get_tenant_by_domain(env_name)['mdmId']
+        elif env_id is None:
+            raise ValueError('Either `env_name` or `env_id` must be set.')
+
+        class SwitchContext(object):
+
+            def __init__(self, parent_context, env_name=None, env_id=None, app_name=None):
+                self.parent_context = parent_context
+                self.env_name = env_name
+                self.env_id = env_id
+                self.app_name = app_name
+
+            def __enter__(self):
+
+                self.parent_context.switch_environment(env_name= self.env_name, env_id=self.env_id, app_name=self.app_name)
+
+                return self.parent_context
+
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                del self.parent_context
+
+        return SwitchContext(parent_context=copy.deepcopy(self), env_name=env_name, env_id=env_id, app_name=app_name)
