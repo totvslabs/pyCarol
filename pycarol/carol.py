@@ -13,11 +13,9 @@ from . organization import Organization
 
 
 class Carol:
-
     """
     This class handle all Carol`s API calls It will handle all API calls,
     for a given authentication method. :param domain: `str`.
-
 
     Args:
 
@@ -165,7 +163,6 @@ class Carol:
         """
         Static method used to handle retries between calls.
 
-
         Args:
 
             retries: `int` , default `5`
@@ -207,7 +204,6 @@ class Carol:
                  **kwds):
         """
         This method handles all the API calls.
-
 
         Args:
 
@@ -323,7 +319,6 @@ class Carol:
 
     def issue_api_key(self):
         """
-
         Create an API key for a given connector.
 
         Returns: `dict`
@@ -338,10 +333,10 @@ class Carol:
     def api_key_details(self, api_key, connector_id):
 
         """
-
         Display information about the API key.
 
         Args:
+
             api_key: `str`
                 Carol's api key
             connector_id: `str`
@@ -358,10 +353,8 @@ class Carol:
         return resp
 
     def api_key_revoke(self, connector_id):
-
         """
         Revoke API key for ta given connector_id
-
 
         Args:
 
@@ -449,7 +442,6 @@ class Carol:
     def switch_context(self, env_name=None, env_id=None, app_name=None):
         """
         Context manager to temporary have access to a second environment
-
 
         Args:
 
