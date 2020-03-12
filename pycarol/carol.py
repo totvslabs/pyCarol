@@ -65,7 +65,7 @@ class Carol:
     """
 
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
-                 organization=None, environment='carol.ai', host=None):
+                 organization=None, environment=None, host=None):
 
         settings = dict()
         if auth is None and domain is None:
@@ -105,8 +105,10 @@ class Carol:
                              " or CAROLUSER+CAROLPWD and  CAROLCONNECTORID")
 
         # TODO Fixed to be compatible with the old `ENV_DOMAIN`. We could add a deprecated warning.
-        self.environment = os.getenv('CAROL_DOMAIN', os.getenv('ENV_DOMAIN', environment))
-        self.organization = os.getenv('CAROLORGANIZATION',  os.getenv('API_SUBDOMAIN', organization))
+        self.environment = environment if environment is not None else os.getenv('CAROL_DOMAIN',
+                                                                                 os.getenv('ENV_DOMAIN', 'carol.ai'))
+        self.organization = organization if organization is not None else os.getenv('CAROLORGANIZATION',
+                                                                                    os.getenv('API_SUBDOMAIN'))
         self.domain = domain
         self.app_name = app_name
         self.port = port
