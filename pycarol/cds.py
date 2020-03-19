@@ -295,7 +295,7 @@ class CDSGolden:
 
         query_params = {"entityTemplateId": dm_id, "numRecords": num_records, "filePattern": file_pattern}
 
-        return self.carol.call_api(path='v1/cds/staging/fetchData', method='POST', params=query_params,
+        return self.carol.call_api(path='v1/cds/golden/fetchData', method='POST', params=query_params,
                                    data=filter_query)
 
     def delete(self, dm_name=None, dm_id=None):
