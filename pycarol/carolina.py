@@ -33,7 +33,10 @@ class Carolina:
             else:
                 expired = True
 
-        if Carolina.token is None or expired or Carolina.token.get('tenant_name', '') != self.carol.tenant['mdmName'] or Carolina.token.get('app_name', '') != self.carol.app_name:
+        if Carolina.token is None or expired or Carolina.token.get('tenant_name', '') != self.carol.tenant['mdmName'] \
+                or Carolina.token.get('app_name', '') != self.carol.app_name \
+                or (datetime.utcnow() + timedelta(minutes=1)
+                    >= datetime.fromtimestamp(Carolina.token.get('expirationTimestamp', 1)/1000.0)):
             token = self.carol.call_api('v1/storage/storage/token', params={'carolAppName': self.carol.app_name})
             token['tenant_name'] = self.carol.tenant['mdmName']
             token['app_name'] = self.carol.app_name
