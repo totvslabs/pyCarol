@@ -12,7 +12,6 @@ class Storage:
 
     """
 
-    backend = None #this is not being used anymore.
     def __init__(self, carol):
         """
 
@@ -26,10 +25,12 @@ class Storage:
         self.carolina = None
 
     def _init_if_needed(self):
+        # TODO: This if seems to be useless. It can be handled in `carolina.init_if_needed()`
         if (Carolina.token is not None) and (Carolina.token.get('tenant_name', '') == self.carol.tenant['mdmName']) and \
            (Carolina.token.get('app_name', '') == self.carol.app_name) and \
-           (datetime.utcnow() + timedelta(minutes=1) > datetime.fromtimestamp(Carolina.token.get('expirationTimestamp', 1)/1000.0)):
-            return
+           (datetime.utcnow() + timedelta(minutes=1) < datetime.fromtimestamp(Carolina.token.get('expirationTimestamp', 1)/1000.0)):
+            pass
+            #return
         else:
             Carolina.token = None
 
