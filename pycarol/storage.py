@@ -25,7 +25,7 @@ class Storage:
         self.carolina = None
 
     def _init_if_needed(self):
-        # TODO: This if seems to be unuseful. It is the same in `carolina.init_if_needed()`
+        # TODO: This if seems to be useless. It can be handled in `carolina.init_if_needed()`
         if (Carolina.token is not None) and (Carolina.token.get('tenant_name', '') == self.carol.tenant['mdmName']) and \
            (Carolina.token.get('app_name', '') == self.carol.app_name) and \
            (datetime.utcnow() + timedelta(minutes=1) < datetime.fromtimestamp(Carolina.token.get('expirationTimestamp', 1)/1000.0)):
