@@ -12,7 +12,7 @@ test "${OSNAME}" = "linux" && {
 	dpkg -l | grep -q python3-dev || {
 		echo "~~~ Installing missing package python3-dev"
 		sudo apt-get update
-		sudo apt-get install -y python3-dev
+		sudo apt-get install -y python3-dev python3-distutils
 	}
 }
 
