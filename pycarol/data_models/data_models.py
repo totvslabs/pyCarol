@@ -21,7 +21,7 @@ from ..utils.miscellaneous import ranges
 from ..utils import async_helpers
 from ..utils.miscellaneous import stream_data
 from .. import _CAROL_METADATA_GOLDEN
-from ..utils.miscellaneous import drop_duplicated_parquet
+from ..utils.miscellaneous import drop_duplicated_parquet, _deprecation_msgs
 
 _DATA_MODEL_TYPES_MAPPING = {
     "boolean": bool,
@@ -133,12 +133,11 @@ class DataModel:
         # validate export
 
         if not cds:
+
+            _deprecation_msgs("`cds` option will be removed from pycarol 3.33. Consider use `cds=True`"
+                              " to avoid problems. ")
+
             dms = self._get_dm_export_stats()
-            if not dms.get(dm_name):
-                raise Exception(
-                    f'"{dm_name}" is not set to export data, \n'
-                    f'use `dm = DataModel(login).export(dm_name="{dm_name}",'
-                    f' sync_dm=True) to activate')
             import_type = 'golden'
         else:
             import_type = 'golden_cds'

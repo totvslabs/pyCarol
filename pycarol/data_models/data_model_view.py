@@ -6,7 +6,7 @@ from ..storage import Storage
 from ..query import Query
 from ..filter import TYPE_FILTER, Filter
 import itertools
-from ..utils.miscellaneous import drop_duplicated_parquet
+from ..utils.miscellaneous import drop_duplicated_parquet, _deprecation_msgs
 
 class DataModelView:
 
@@ -213,10 +213,10 @@ class DataModelView:
         dms = self._get_view_export_stats()
 
         if not cds:
-            if not dms.get(view_name):
-                raise Exception(
-                    f'"{view_name}" is not set to export data, \n'
-                    f'use `dm = DataModelView(login).export(view_name="{view_name}", sync_dm=True) to activate')
+
+            _deprecation_msgs("`cds` option will be removed from pycarol 3.33. Consider use `cds=True`"
+                              " to avoid problems. ")
+
             import_type = 'view'
         else:
             import_type = 'view_cds'
