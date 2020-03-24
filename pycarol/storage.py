@@ -178,7 +178,7 @@ class Storage:
             login = Carol()
             stg = Storage(login)
 
-            stg.load(name='myfile.csv', format='file')
+            path = stg.load(name='myfile.csv', format='file')
             pd.read_csv(path)
 
         Loading an object.
