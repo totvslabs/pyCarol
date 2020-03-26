@@ -13,7 +13,7 @@ from .filter import Filter, TYPE_FILTER
 from .utils import async_helpers
 from .utils.miscellaneous import stream_data
 from . import _CAROL_METADATA_STAGING
-from .utils.miscellaneous import drop_duplicated_parquet
+from .utils.miscellaneous import drop_duplicated_parquet, _deprecation_msgs
 
 _SCHEMA_TYPES_MAPPING = {
     "geopoint": str,
@@ -25,7 +25,6 @@ _SCHEMA_TYPES_MAPPING = {
     "date": str,
     "boolean": bool
 }
-
 
 
 class Staging:
@@ -44,6 +43,7 @@ class Staging:
                   flexible_schema=False, force=False,  max_workers=2,  dm_to_delete=None,
                   async_send=False, carol_data_storage=False, storage_only=False):
         """
+        Send data to a staging table in Carol.
 
         Args:
             staging_name:  `str`,
@@ -71,7 +71,7 @@ class Staging:
                 If `force=True` it will not check. If `False` it will check for duplicates and raise an error.
             max_workers: `int`, default `2`
                 To be used with `async_send=True`. Number of threads to use when sending.
-            dm_to_delete: `str`, default `None`
+            dm_to_delete: `str`, default `None` DEPRECATED.
                 Name of the data model to be erased before send the data.
             async_send: `bool`, default `False`
                 To use async to send the data. This is much faster than a sequential send.
@@ -88,6 +88,16 @@ class Staging:
                 Send data only to CDS.
 
         """
+
+        if dm_to_delete is not None:
+            _deprecation_msgs("`dm_to_delete` is deprecated and has no action.")
+
+        if carol_data_storage:
+            _deprecation_msgs("`carol_data_storage` is deprecated and has no action.")
+
+        if storage_only:
+            _deprecation_msgs("`storage_only` will be irrelevant. All data will be send to CDS as default.")
+
 
         self.gzip = gzip
         extra_headers = {}
@@ -239,6 +249,9 @@ class Staging:
 
         """
 
+        if export_data is not None:
+            _deprecation_msgs("`export_data` is deprecated and has no action.")
+
         assert staging_name is not None, 'staging_name must be set.'
         assert fields_dict is not None or data is not None, 'fields_dict or df must be set'
 
@@ -263,11 +276,11 @@ class Staging:
 
         if isinstance(data, dict):
             schema = carolSchemaGenerator(data)
-            schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible, export_data=export_data,
+            schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible,
                                     crosswalkname=crosswalk_name, crosswalkList=crosswalk_list)
         elif isinstance(data, str):
             schema = carolSchemaGenerator.from_json(data)
-            schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible, export_data=export_data,
+            schema = schema.to_dict(mdmStagingType=staging_name, mdmFlexible=mdm_flexible,
                                     crosswalkname=crosswalk_name, crosswalkList=crosswalk_list)
         else:
             print('Behavior for type %s not defined!' % type(data))
@@ -450,11 +463,9 @@ class Staging:
         # TODO: Validate the code bellow for cds param
         # validate export
         if not cds:
+            _deprecation_msgs("`cds` option will be removed from pycarol 3.33. Consider use `cds=True`"
+                              " to avoid problems. ")
             stags = self._get_staging_export_stats()
-            if not stags.get(connector_id + '_' + staging_name):
-                raise Exception(f'"{staging_name}" is not set to export data, \n '
-                                f'use `dm = Staging(login).export(staging_name="{staging_name}",'
-                                f'connector_id="{connector_id}", sync_staging=True) to activate')
 
             if stags.get(connector_id + '_' + staging_name)['mdmConnectorId'] != connector_id:
                 raise Exception(

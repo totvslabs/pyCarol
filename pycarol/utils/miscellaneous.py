@@ -3,8 +3,15 @@ import gzip, io
 import pandas as pd
 from collections import defaultdict
 import numpy as np
+import warnings
 
 _FILE_MARKER = '<files>'
+
+def _deprecation_msgs(msg):
+    warnings.warn(
+        msg,
+        DeprecationWarning, stacklevel=3
+    )
 
 
 def drop_duplicated_parquet(d):
