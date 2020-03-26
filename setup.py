@@ -1,4 +1,3 @@
-from distutils.core import setup
 from setuptools import setup, find_packages
 
 import codecs
@@ -17,7 +16,7 @@ install_requires = [
     'flask==1.0.2',
     'google-auth-httplib2',
     'google-auth',
-    'google-cloud-core',
+    'google-cloud-core>=1.3.0',
     'google-cloud-storage',
     'joblib==0.11',
     'luigi',
@@ -33,7 +32,7 @@ install_requires = [
     'bumpversion',
     'python-dotenv',
     'papermill',
-    'gcsfs',
+    'gcsfs>=0.3.0',
     'dash',
     'dash-cytoscape',
     'colorcet',
@@ -68,11 +67,13 @@ def find_version(*file_paths):
 
 setup(
     name='pycarol',
+    setup_requires=["wheel"],
     packages=find_packages(exclude=['docs', 'doc']),
     version=find_version("pycarol", "__init__.py"),
     license='TOTVS',
     description='Carol Python API and Tools',
     long_description=long_description,
+    long_description_content_type="text/x-rst",
     author='TotvsLabs',
     maintainer='TOTVS Labs',
     author_email='ops@totvslabs.com',
