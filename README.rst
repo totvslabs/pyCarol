@@ -311,10 +311,8 @@ We can use pyCarol to access the settings of your Carol App.
 The settings will be returned as a dictionary where the keys are the parameter names and the values are
 the value for that parameter. Please note that your app must be created in Carol.
 
-
 Release process
---------
-
+----------------
 1. Open a PR with your change for `master` branch;
 2. Once approved, merge into `master`;
 3. Locally, checkout to `master` branch;
