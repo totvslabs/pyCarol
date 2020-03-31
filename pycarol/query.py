@@ -189,6 +189,46 @@ class Query:
         if self.fields is not None:
             self.fields = ','.join(self.fields)
 
+
+    def page(self, offset=0):
+        """
+        Get only one page of the result using offset.
+
+        Args:
+            offset: `int`, default 0
+                Offset to get. To properly paginate manually, offset should be `offset + page_size`.
+
+        Returns:
+            Query json response
+        """
+
+        self.offset = offset
+        self.scrollable = False
+
+        self.results = []
+        if self.json_query is None:
+            raise ValueError("You must call query() or named() before calling page()")
+
+        self._build_return_fields()
+        self._build_query_params()
+
+        if self.named_query is None:
+            url_filter = "v2/queries/filter"
+        else:
+            url_filter = "v2/queries/named/{}".format(self.named_query)
+
+        result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params, timeout=240,
+                                     method_whitelist=frozenset(['POST']))
+
+        if self.only_hits:
+
+            result = result['hits']
+            return [elem.get('mdmGoldenFieldAndValues', elem)
+                    for elem in result if  elem.get('mdmGoldenFieldAndValues', None)]
+
+        else:
+            return result
+
     def go(self, callback=None):
         """
 
@@ -202,7 +242,7 @@ class Query:
 
         self.results = []
         if self.json_query is None:
-            raise ValueError("You must call all() or filter() or named() before calling go()")
+            raise ValueError("You must call all() or query() or named() before calling go()")
 
         self._build_return_fields()
         self._build_query_params()
