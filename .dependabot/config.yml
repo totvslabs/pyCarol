@@ -4,7 +4,7 @@ update_configs:
     directory: /
     update_schedule: live
     default_reviewers:
-      - "totvslabs/ds"
+      - "totvslabs/ai"
     default_assignees:
       - "totvslabsbot"
     default_labels:
