@@ -207,7 +207,7 @@ class Query:
 
         self.results = []
         if self.json_query is None:
-            raise ValueError("You must call all() or filter() or named() before calling page()")
+            raise ValueError("You must call query() or named() before calling page()")
 
         self._build_return_fields()
         self._build_query_params()
@@ -242,7 +242,7 @@ class Query:
 
         self.results = []
         if self.json_query is None:
-            raise ValueError("You must call all() or filter() or named() before calling go()")
+            raise ValueError("You must call all() or query() or named() before calling go()")
 
         self._build_return_fields()
         self._build_query_params()
