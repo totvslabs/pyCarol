@@ -129,7 +129,7 @@ class Apps:
 
         return query
 
-    def get_settings(self, app_name=None, app_id=None, entity_space='PRODUCTION', check_all_spaces=False):
+    def get_settings(self, app_name=None, app_id=None, entity_space=None, check_all_spaces=False):
         """
         Get settings from app
 
@@ -141,7 +141,7 @@ class Apps:
                 App name, if None will get from  `app_id`
             app_id: `str` default `None`
                 App id. Either app_name or app_id must be set.
-            entity_space: `str` default `PRODUCTION`
+            entity_space: `str` default None
                 Space to get the app settings from. Possible values
 
                     1. PRODUCTION: For production
@@ -156,16 +156,11 @@ class Apps:
 
         assert app_name or app_id or self.carol.app_name
 
-        if app_id is not None:
-            self.get_by_id(app_id, entity_space)
-        elif app_name is not None:
-            self.get_by_name(app_name, entity_space)
-        else:
-            self.get_by_name(self.carol.app_name, entity_space)
+        search_app = app_id or app_name or self.carol.app_name
 
         query_string = {"entitySpace": entity_space, "checkAllSpaces": check_all_spaces}
 
-        query = self.carol.call_api(f'v1/tenantApps/{self.current_app_id}/settings', method='GET',
+        query = self.carol.call_api(f'v1/tenantApps/{search_app}/settings', method='GET',
                                     params=query_string)
 
         self.app_settings = {}
