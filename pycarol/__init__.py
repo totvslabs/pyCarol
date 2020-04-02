@@ -29,5 +29,6 @@ from .data_models import DataModel, DataModelView
 from .logger import CarolHandler
 from .auth.PwdAuth import PwdAuth
 from .auth.ApiKeyAuth import ApiKeyAuth
+from .auth.PwdKeyAuth import PwdKeyAuth
 from .cds import CDSGolden, CDSStaging
 from .apps import Apps
