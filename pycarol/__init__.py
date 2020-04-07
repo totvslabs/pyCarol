@@ -14,9 +14,11 @@ __CONNECTOR_PYCAROL__ = 'f9953f6645f449baaccd16ab462f9b64'
 _CAROL_METADATA_STAGING = ['mdmCounterForEntity', 'mdmId', 'mdmLastUpdated',
                            'mdmConnectorId', 'mdmDeleted']
 
-_CAROL_METADATA_GOLDEN = ['mdmCounterForEntity', 'mdmId', 'mdmCreated', 'mdmLastUpdated',
-                          'mdmTenantId', 'mdmEntityType', 'mdmSourceEntityNames', 'mdmCrosswalk',
-                          'mdmApplicationIdMasterRecordId','mdmDeleted']
+_CAROL_METADATA_GOLDEN = ['mdmApplicationIdMasterRecordId', 'mdmCounterForEntity', 'mdmCreated',  'mdmCrosswalk',
+                          'mdmDeleted', 'mdmEntityType',  'mdmId',  'mdmLastUpdated', 'mdmSourceEntityNames',
+                          'mdmStagingRecord', 'mdmTenantId']
+
+_NEEDED_FOR_MERGE = ['mdmCounterForEntity', 'mdmId', 'mdmDeleted']
 
 from .carol import Carol
 from .staging import Staging
