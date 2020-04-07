@@ -137,7 +137,7 @@ class DataModel:
 
         _diff_cols = set(columns) - set(all_cols)
         if len(_diff_cols) > 0:
-            warnings.warn(f"It seems was passed columns not in this data model {_diff_cols}", UserWarning)
+            warnings.warn(f"It seems there was used columns not in this data model: {_diff_cols}", UserWarning)
 
         if return_dask_graph:
             assert backend == 'dask'
