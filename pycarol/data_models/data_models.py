@@ -132,12 +132,12 @@ class DataModel:
         if not columns:  # if an empty list was sent.
             columns = all_cols
 
-        if isinstance(columns, str):
+        elif isinstance(columns, str):
             columns = [columns]
 
-            _diff_cols = set(columns) - set(all_cols)
-            if len(_diff_cols) > 0:
-                warnings.warn(f"It seems was passed columns not in this datamodel {_diff_cols}", UserWarning)
+        _diff_cols = set(columns) - set(all_cols)
+        if len(_diff_cols) > 0:
+            warnings.warn(f"It seems was passed columns not in this data model {_diff_cols}", UserWarning)
 
         if return_dask_graph:
             assert backend == 'dask'
