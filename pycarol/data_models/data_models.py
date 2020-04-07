@@ -115,7 +115,7 @@ class DataModel:
             :return:
             """
 
-        if backend != 'dask' or backend != 'pandas':
+        if backend not in ['dask', 'pandas']:
             raise ValueError(f"`backend` should be either `dask` or `pandas`. It was passed {backend}")
 
         if return_metadata:
