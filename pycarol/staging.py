@@ -416,7 +416,7 @@ class Staging:
             max_hits: `int`, default `None`
                 Number of records to get. This only should be user for tests.
             return_metadata: `bool`, default `False`
-                To return or not the fields ['mdmId', 'mdmCounterForEntity']
+                To return or not the fields like ['mdmId', 'mdmCounterForEntity', etc.]
             callback: `callable`, default `None`
                 Function to be called each downloaded file.
             cds: `bool`, default `True`
