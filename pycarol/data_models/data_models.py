@@ -78,7 +78,7 @@ class DataModel:
     def fetch_parquet(self, dm_name, merge_records=True, backend='pandas',
                       return_dask_graph=False,
                       columns=None, return_metadata=False, callback=None,
-                      max_hits=None, cds=False, max_workers=None, file_pattern=None,
+                      max_hits=None, cds=True, max_workers=None, file_pattern=None,
                       return_callback_result=False):
 
         """
