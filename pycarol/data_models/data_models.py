@@ -20,7 +20,7 @@ from ..filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
 from ..utils.miscellaneous import ranges
 from ..utils import async_helpers
 from ..utils.miscellaneous import stream_data
-from .. import _CAROL_METADATA_GOLDEN
+from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE
 from ..utils.miscellaneous import drop_duplicated_parquet, _deprecation_msgs
 
 _DATA_MODEL_TYPES_MAPPING = {
@@ -78,7 +78,7 @@ class DataModel:
     def fetch_parquet(self, dm_name, merge_records=True, backend='pandas',
                       return_dask_graph=False,
                       columns=None, return_metadata=False, callback=None,
-                      max_hits=None, cds=False, max_workers=None, file_pattern=None,
+                      max_hits=None, cds=True, max_workers=None, file_pattern=None,
                       return_callback_result=False):
 
         """
@@ -97,7 +97,7 @@ class DataModel:
             columns: `list`, default `None`
                 List of columns to fetch.
             return_metadata: `bool`, default `False`
-                To return or not the fields ['mdmId', 'mdmCounterForEntity']
+                To return or not the fields like ['mdmId', 'mdmCounterForEntity', etc.]
             callback: `callable`, default `None`
                 Function to be called each downloaded file.
             max_hits: `int`, default `None`
@@ -115,22 +115,32 @@ class DataModel:
             :return:
             """
 
+        if backend not in ['dask', 'pandas']:
+            raise ValueError(f"`backend` should be either `dask` or `pandas`. It was passed {backend}")
+
+        if return_metadata:
+            # It can be costly to get all meta from a golden. So er should alway ask for the info we want.
+            _meta_cols = _CAROL_METADATA_GOLDEN
+        else:
+            _meta_cols = _NEEDED_FOR_MERGE
+
         if callback:
             assert callable(callback), \
                 f'"{callback}" is a {type(callback)} and is not callable.'
 
+        all_cols = list(self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields']))
         if not columns:  # if an empty list was sent.
-            columns = None
+            columns = all_cols
 
-        if isinstance(columns, str):
+        elif isinstance(columns, str):
             columns = [columns]
 
-        assert backend == 'dask' or backend == 'pandas'
+        _diff_cols = set(columns) - set(all_cols)
+        if len(_diff_cols) > 0:
+            warnings.warn(f"It seems there was used columns not in this data model: {_diff_cols}", UserWarning)
 
         if return_dask_graph:
             assert backend == 'dask'
-
-        # validate export
 
         if not cds:
 
@@ -143,7 +153,7 @@ class DataModel:
             import_type = 'golden_cds'
 
         if columns:
-            columns.extend(_CAROL_METADATA_GOLDEN)
+            columns.extend(_meta_cols)
 
         storage = Storage(self.carol)
         token_carolina = storage.backend.carolina.token
@@ -168,10 +178,10 @@ class DataModel:
                 _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
                 cols_keys = list(_field_types)
                 if return_metadata:
-                    cols_keys.extend(_CAROL_METADATA_GOLDEN)
+                    cols_keys.extend(_meta_cols)
 
                 elif columns:
-                    columns = [i for i in columns if i not in _CAROL_METADATA_GOLDEN]
+                    columns = [i for i in columns if i not in _meta_cols]
 
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in _field_types.items():
@@ -198,7 +208,7 @@ class DataModel:
                     .reset_index(drop=True)
 
         if not return_metadata:
-            to_drop = set(_CAROL_METADATA_GOLDEN).intersection(set(d.columns))
+            to_drop = set(_meta_cols).intersection(set(d.columns))
             d = d.drop(labels=to_drop, axis=1)
 
         return d

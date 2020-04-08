@@ -12,7 +12,7 @@ from .utils.importers import _import_dask, _import_pandas
 from .filter import Filter, TYPE_FILTER
 from .utils import async_helpers
 from .utils.miscellaneous import stream_data
-from . import _CAROL_METADATA_STAGING
+from . import _CAROL_METADATA_STAGING, _NEEDED_FOR_MERGE
 from .utils.miscellaneous import drop_duplicated_parquet, _deprecation_msgs
 
 _SCHEMA_TYPES_MAPPING = {
@@ -391,7 +391,7 @@ class Staging:
 
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='pandas',
                       merge_records=True, return_dask_graph=False, columns=None, max_hits=None,
-                      return_metadata=False, callback=None, cds=False, max_workers=None, file_pattern=None,
+                      return_metadata=False, callback=None, cds=True, max_workers=None, file_pattern=None,
                       return_callback_result=False):
         """
 
@@ -416,10 +416,10 @@ class Staging:
             max_hits: `int`, default `None`
                 Number of records to get. This only should be user for tests.
             return_metadata: `bool`, default `False`
-                To return or not the fields ['mdmId', 'mdmCounterForEntity']
+                To return or not the fields like ['mdmId', 'mdmCounterForEntity', etc.]
             callback: `callable`, default `None`
                 Function to be called each downloaded file.
-            cds: `bool`, default `False`
+            cds: `bool`, default `True`
                 Get staging data from CDS.
             max_workers: `int` default `None`
                 Number of workers to use when downloading parquet files with pandas back-end.
@@ -434,6 +434,11 @@ class Staging:
             DataFrame with the staging data.
 
         """
+
+        if return_metadata:
+            _meta_cols = _CAROL_METADATA_STAGING
+        else:
+            _meta_cols = _NEEDED_FOR_MERGE
 
         if callback:
             assert callable(callback), \
@@ -457,7 +462,7 @@ class Staging:
             mapping_columns = list(_staging['mdmStagingMapping']['properties'].keys())
             columns = [i.replace("-", "_") for i in mapping_columns]
 
-        columns.extend(_CAROL_METADATA_STAGING)
+        columns.extend(_meta_cols)
         mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
 
         # TODO: Validate the code bellow for cds param
@@ -501,10 +506,10 @@ class Staging:
                 cols_keys = [i.replace("-", "_") for i in cols_keys]
 
                 if return_metadata:
-                    cols_keys.extend(_CAROL_METADATA_STAGING)
+                    cols_keys.extend(_meta_cols)
 
                 elif columns:
-                    columns = [i for i in columns if i not in _CAROL_METADATA_STAGING]
+                    columns = [i for i in columns if i not in _meta_cols]
 
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in self.get_schema(staging_name=staging_name,
@@ -532,7 +537,7 @@ class Staging:
                     .reset_index(drop=True)
 
         if not return_metadata:
-            to_drop = set(_CAROL_METADATA_STAGING).intersection(set(d.columns))
+            to_drop = set(_meta_cols).intersection(set(d.columns))
             d = d.drop(labels=to_drop, axis=1)
 
         return d
