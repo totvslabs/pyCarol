@@ -4,13 +4,10 @@ class Tasks:
     def __init__(self, carol, task_id=None):
         self.carol = carol
 
-        assert (task_id is not None or self.get_current_task_id() is not None), "Task ID " \
-            "should be set because it has not been set in env by Carol."
-
-        if task_id is None:
-            self.get_by_task_id_in_env()
-        else:
+        if task_id is not None:
             self.get_task(task_id=task_id)
+        else:
+            self.task_id = os.environ.get('LONGTASKID')
 
     def _set_task_by_json(self, json_task):
         self.task_id = json_task.get('mdmId')
