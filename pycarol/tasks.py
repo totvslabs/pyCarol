@@ -1,85 +1,69 @@
 import os
 
-
 class Tasks:
     def __init__(self, carol):
         self.carol = carol
 
-        self.task_id = None
-        self.mdm_data = None
-        self.mdm_user_id = None
-        self.mdm_connector_id = None
-        self.mdm_task_ready = None
-        self.mdm_task_processing = None
-        self.mdm_task_status = None
-        self.mdm_task_owner = None
-        self.mdm_task_progress = None
-        self.mdm_process_after = None
-        self.mdm_distribution_value = None
-        self.mdm_task_priority = None
-        self.mdm_number_of_steps = None
-        self.mdm_number_of_steps_executed = None
-        self.mdm_entity_type = None
-        self.mdm_created = None
-        self.mdm_last_updated = None
-        self.mdm_tenant_id = None
+        if self.get_current_task_id() is None:
+            self.task_id = None
+            self.user_id = None
+            self.connector_id = None
+            self.task_ready = None
+            self.task_processing = None
+            self.task_status = None
+            self.task_owner = None
+            self.task_progress = None
+            self.distribution_value = None
+            self.task_priority = None
+            self.number_of_steps = None
+            self.number_of_steps_executed = None
+            self.entity_type = None
+            self.created_date = None
+            self.start_date = None
+            self.created_user = None
+            self.updated_user = None
+            self.last_updated = None
+            self.tenant_id = None
+            self.process_after = None
+            self.data = None
+        else:
+            self.get_current_task()
 
     def _set_task_by_json(self, json_task):
-        self.task_id = json_task['mdmId']
-        self.mdm_user_id = json_task['mdmUserId']
-        self.mdm_connector_id = json_task['mdmConnectorId']
-        self.mdm_task_ready = json_task['mdmTaskReady']
-        self.mdm_task_processing = json_task['mdmTaskProcessing']
-        self.mdm_task_status = json_task['mdmTaskStatus']
-        self.mdm_task_owner = json_task['mdmTaskOwner']
-        self.mdm_task_progress = json_task['mdmTaskProgress']
-        self.mdm_distribution_value = json_task['mdmDistributionValue']
-        self.mdm_task_priority = json_task.get('mdmTaskPreference')
-        self.mdm_number_of_steps = json_task['mdmNumberOfSteps']
-        self.mdm_number_of_steps_executed = json_task['mdmNumberOfStepsExecuted']
-        self.mdm_entity_type = json_task['mdmEntityType']
-        self.mdm_created = json_task['mdmCreated']
-        self.mdm_last_updated = json_task['mdmLastUpdated']
-        self.mdm_tenant_id = json_task['mdmTenantId']
+        self.task_id = json_task.get('mdmId')
+        self.user_id = json_task.get('mdmUserId')
+        self.connector_id = json_task.get('mdmConnectorId')
+        self.task_ready = json_task.get('mdmTaskReady')
+        self.task_processing = json_task.get('mdmTaskProcessing')
+        self.task_status = json_task.get('mdmTaskStatus')
+        self.task_owner = json_task.get('mdmTaskOwner')
+        self.task_progress = json_task.get('mdmTaskProgress')
+        self.distribution_value = json_task.get('mdmDistributionValue')
+        self.task_priority = json_task.get('mdmTaskPreference')
+        self.number_of_steps = json_task.get('mdmNumberOfSteps')
+        self.number_of_steps_executed = json_task.get('mdmNumberOfStepsExecuted')
+        self.entity_type = json_task.get('mdmEntityType')
+        self.created_date = json_task.get('mdmCreated')
+        self.start_date = json_task.get('mdmStartDate')
+        self.created_user = json_task.get('mdmCreatedUser')
+        self.updated_user = json_task.get('mdmUpdatedUser')
+        self.last_updated = json_task.get('mdmLastUpdated')
+        self.tenant_id = json_task.get('mdmTenantId')
+        self.process_after = json_task.get('mdmProcessAfter')
+        self.data = json_task.get('mdmData')
 
-        self.mdm_process_after = json_task.get('mdmProcessAfter')
-        self.mdm_data = json_task.get('mdmData')
-
-
-    def create(self, task_type, task_group, data=None):
-        """
-        Create a new task
-        :param task_type: type of task
-        :param task_group: commonly is used tenandId
-        :param data: data used in the task
-        :return: Task
-        """
-
-        data = data if data else []
-        dataJson = {
-            "mdmTaskType": task_type,
-            "mdmTaskGroup": task_group,
-            "mdmData": data,
-        }
-
-        json_task = self.carol.call_api('v1/tasks/new', data=dataJson)
-        self._set_task_by_json(json_task)
-        return self
-
-    def current_task(self):
-        task_id = os.environ['LONGTASKID']
-        if task_id is None:
-            print("Can only get current_task if being called by Carol as a batch app")
-        self.get_task(task_id)
+    def get_current_task(self):
+        task_id = os.getenv('LONGTASKID')
+        assert task_id, "The task id has not been set by Carol."
+        return self.get_task_by_id(task_id)
 
     def get_current_task_id(self):
-        task_id = os.environ['LONGTASKID']
-        return task_id
+        return os.getenv('LONGTASKID')
 
     def set_as_current_task(self):
         os.environ['LONGTASKID'] = self.task_id
 
-    def get_task(self, task_id=None):
+    def get_task_by_id(self, task_id=None):
         """
         Get Task
         :param task_id: task id
@@ -88,6 +72,7 @@ class Tasks:
 
         if task_id is None:
             task_id = self.task_id
+            assert task_id, "Task ID should be set because it has not been set by Carol."
 
         json_task = self.carol.call_api('v1/tasks/{}'.format(task_id))
         self._set_task_by_json(json_task)
@@ -113,14 +98,13 @@ class Tasks:
         Add a log
         :param log_message: commonly used tenandId
         :param log_level: options: ERROR, WARN, INFO, DEBUG, TRACE
-        :param task_id: it's not necessary if self.mdm_id is defined or if we are running from Carol as a batch app
+        :param task_id: it's not necessary if self.id is defined or if we are running from Carol as a batch app
         :return: boolean
         """
 
         if task_id is None:
             task_id = self.task_id
-        if task_id is None:
-            task_id = self.get_current_task_id()
+            assert task_id, "Task ID should be set because it has not been set by Carol."
 
         log = [{
             "mdmTaskId": task_id,
@@ -144,12 +128,10 @@ class Tasks:
 
         if task_id is None:
             task_id = self.task_id
+            assert task_id, "Task ID should be set because it has not been set by Carol."
 
         resp = self.carol.call_api('v1/tasks/{}/logs'.format(task_id), data=logs)
-        if resp['success']:
-            return True
-        else:
-            return False
+        return resp['success']
 
     def get_logs(self, task_id=None):
         """
@@ -165,9 +147,9 @@ class Tasks:
 
         if task_id is None:
             task_id = self.task_id
+            assert task_id, "Task ID should be set because it has not been set by Carol."
 
-        resp = self.carol.call_api('v1/tasks/{}/logs'.format(task_id))
-        return resp
+        return self.carol.call_api('v1/tasks/{}/logs'.format(task_id))
 
     def set_progress(self, progress, progress_data=None, task_id=None):
         """
@@ -179,7 +161,7 @@ class Tasks:
             progress_data: 'dict` default `None`
                 Json payload to be sent to Carol
             task_id `str` default `None`
-                The task ID. it's not necessary if self.task_id is defined
+                The task ID. It's not necessary if self.task_id is defined
 
         :return:
             Task response.
@@ -192,9 +174,9 @@ class Tasks:
 
         if task_id is None:
             task_id = self.task_id
+            assert task_id, "Task ID should be set because it has not been set by Carol."
 
-        resp = self.carol.call_api('v1/tasks/{}/progress/{}'.format(task_id, progress), data=progress_data)
-        return resp
+        return self.carol.call_api('v1/tasks/{}/progress/{}'.format(task_id, progress), data=progress_data)
 
     def cancel(self, task_id=None, force=False):
         """
@@ -202,8 +184,8 @@ class Tasks:
 
         Args:
             task_id: `str` default `None`
-                The task ID. it's not necessary if self.task_id is defined
-            force: `boll` default `False`
+                The task ID. It's not necessary if self.task_id is defined
+            force: `bool` default `False`
                 Force cancel
 
         :return:
@@ -212,15 +194,12 @@ class Tasks:
 
         if task_id is None:
             task_id = self.task_id
-            assert task_id, "Task ID should be set"
+            assert task_id, "Task ID should be set because it has not been set by Carol."
 
-        querystring = {"force": force}
+        params = {"force": force}
 
-        resp = self.carol.call_api('v1/tasks/{}/cancel'.format(task_id), method="POST",params=querystring )
-        if resp['success']:
-            return True
-        else:
-            return False
+        resp = self.carol.call_api('v1/tasks/{}/cancel'.format(task_id), method="POST",params=params)
+        return resp['mdmTaskStatus'] == 'CANCELED'
 
     def fail(self, task_id=None, message=''):
         """
@@ -228,7 +207,7 @@ class Tasks:
 
         Args:
             task_id: `str` default `None`
-                The task Id. it's not necessary if self.task_id is defined
+                The task Id. It's not necessary if self.task_id is defined
             :param message: `str` default ``
                 message to log
 
@@ -238,12 +217,9 @@ class Tasks:
 
         if task_id is None:
             task_id = self.task_id
-            assert task_id, "Task ID should be set"
+            assert task_id, "Task ID should be set because it has not been set by Carol."
 
-        querystring = {"message": message}
+        params = {"message": message}
 
-        resp = self.carol.call_api('v1/tasks/{}/fail'.format(task_id), method="POST",params=querystring )
-        if resp['success']:
-            return True
-        else:
-            return False
+        resp = self.carol.call_api('v1/tasks/{}/fail'.format(task_id), method="POST",params=params)
+        return resp['mdmTaskStatus'] == 'FAILED'
