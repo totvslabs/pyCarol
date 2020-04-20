@@ -41,7 +41,7 @@ class Staging:
     def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=500,
                   print_stats=True, gzip=True, auto_create_schema=False, crosswalk_auto_create=None,
                   flexible_schema=False, force=False,  max_workers=2,  dm_to_delete=None,
-                  async_send=False, carol_data_storage=False, storage_only=False):
+                  async_send=False, carol_data_storage=False, storage_only=False, carol_sync=False):
         """
         Send data to a staging table in Carol.
 
@@ -76,8 +76,8 @@ class Staging:
             async_send: `bool`, default `False`
                 To use async to send the data. This is much faster than a sequential send.
                 It can conflict with jupyter notebooks process. To run this inside a jupyter notebook, use
-                .. code:: python
 
+                .. code:: python
 
                     import nest_asyncio
                     nest_asyncio.apply()
@@ -86,6 +86,8 @@ class Staging:
                 Deprecated, Use `storage_only`
             storage_only: `bool`, default `False`
                 Send data only to CDS.
+            carol_sync: `bool`, default `False`
+                Send and wait data to be processed in Carol
 
         """
 
@@ -156,9 +158,12 @@ class Staging:
             if data.duplicated(subset=_crosswalk).sum() >= 1:
                 raise Exception("crosswalk is not unique on data frame. set force=True to send it anyway.")
 
-        if not storage_only:
+        if not storage_only and not carol_sync:
             #TODO: @bruno do we need this carolDataStorage flag for the normal intake?
             url = f'v2/staging/tables/{staging_name}?carolDataStorage={carol_data_storage}&returnData=false&connectorId={connector_id}'
+        elif carol_sync:
+            step_size = 100 #sync API accepts only 100 records.
+            url = f'v2/staging/tables/{staging_name}/sync?&connectorId={connector_id}&processMerge=true'
         else:
             url = f'v2/staging/intake/{staging_name}?returnData=false&connectorId={connector_id}'
         
