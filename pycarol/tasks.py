@@ -1,33 +1,16 @@
 import os
 
 class Tasks:
-    def __init__(self, carol):
+    def __init__(self, carol, task_id=None):
         self.carol = carol
 
-        if self.get_current_task_id() is None:
-            self.task_id = None
-            self.user_id = None
-            self.connector_id = None
-            self.task_ready = None
-            self.task_processing = None
-            self.task_status = None
-            self.task_owner = None
-            self.task_progress = None
-            self.distribution_value = None
-            self.task_priority = None
-            self.number_of_steps = None
-            self.number_of_steps_executed = None
-            self.entity_type = None
-            self.created_date = None
-            self.start_date = None
-            self.created_user = None
-            self.updated_user = None
-            self.last_updated = None
-            self.tenant_id = None
-            self.process_after = None
-            self.data = None
+        assert (task_id is not None or self.get_current_task_id() is not None), "Task ID " \
+            "should be set because it has not been set in env by Carol."
+
+        if task_id is None:
+            self.get_by_task_id_in_env()
         else:
-            self.get_current_task()
+            self.get_task(task_id=task_id)
 
     def _set_task_by_json(self, json_task):
         self.task_id = json_task.get('mdmId')
@@ -52,10 +35,10 @@ class Tasks:
         self.process_after = json_task.get('mdmProcessAfter')
         self.data = json_task.get('mdmData')
 
-    def get_current_task(self):
+    def get_by_task_id_in_env(self):
         task_id = os.getenv('LONGTASKID')
-        assert task_id, "The task id has not been set by Carol."
-        return self.get_task_by_id(task_id)
+        assert task_id, "The task id has not been set in env by Carol."
+        return self.get_task(task_id)
 
     def get_current_task_id(self):
         return os.getenv('LONGTASKID')
@@ -63,7 +46,7 @@ class Tasks:
     def set_as_current_task(self):
         os.environ['LONGTASKID'] = self.task_id
 
-    def get_task_by_id(self, task_id=None):
+    def get_task(self, task_id=None):
         """
         Get Task
         :param task_id: task id
@@ -72,7 +55,7 @@ class Tasks:
 
         if task_id is None:
             task_id = self.task_id
-            assert task_id, "Task ID should be set because it has not been set by Carol."
+            assert task_id, "Task ID should be set because it has not been set in env by Carol."
 
         json_task = self.carol.call_api('v1/tasks/{}'.format(task_id))
         self._set_task_by_json(json_task)
@@ -104,7 +87,7 @@ class Tasks:
 
         if task_id is None:
             task_id = self.task_id
-            assert task_id, "Task ID should be set because it has not been set by Carol."
+            assert task_id, "Task ID should be set because it has not been set in env by Carol."
 
         log = [{
             "mdmTaskId": task_id,
@@ -128,7 +111,7 @@ class Tasks:
 
         if task_id is None:
             task_id = self.task_id
-            assert task_id, "Task ID should be set because it has not been set by Carol."
+            assert task_id, "Task ID should be set because it has not been set in env by Carol."
 
         resp = self.carol.call_api('v1/tasks/{}/logs'.format(task_id), data=logs)
         return resp['success']
@@ -147,7 +130,7 @@ class Tasks:
 
         if task_id is None:
             task_id = self.task_id
-            assert task_id, "Task ID should be set because it has not been set by Carol."
+            assert task_id, "Task ID should be set because it has not been set in env by Carol."
 
         return self.carol.call_api('v1/tasks/{}/logs'.format(task_id))
 
@@ -174,7 +157,7 @@ class Tasks:
 
         if task_id is None:
             task_id = self.task_id
-            assert task_id, "Task ID should be set because it has not been set by Carol."
+            assert task_id, "Task ID should be set because it has not been set in env by Carol."
 
         return self.carol.call_api('v1/tasks/{}/progress/{}'.format(task_id, progress), data=progress_data)
 
@@ -194,7 +177,7 @@ class Tasks:
 
         if task_id is None:
             task_id = self.task_id
-            assert task_id, "Task ID should be set because it has not been set by Carol."
+            assert task_id, "Task ID should be set because it has not been set in env by Carol."
 
         params = {"force": force}
 
@@ -217,7 +200,7 @@ class Tasks:
 
         if task_id is None:
             task_id = self.task_id
-            assert task_id, "Task ID should be set because it has not been set by Carol."
+            assert task_id, "Task ID should be set because it has not been set in env by Carol."
 
         params = {"message": message}
 
