@@ -115,7 +115,7 @@ class Carol:
         self.verbose = verbose
         self.host = self._set_host(domain=self.domain, organization=self.organization,
                                    environment=self.environment, host=host)
-        self.tenant = Tenant(self).get_tenant_by_domain(domain)
+        self._tenant = None
         self.connector_id = connector_id
         self.auth = auth
         self.auth.set_connector_id(self.connector_id)
@@ -123,6 +123,13 @@ class Carol:
         self.response = None
 
         self.org = None
+
+
+    @property
+    def tenant(self):
+        if self._tenant is None:
+            self._tenant = Tenant(self).get_tenant_by_domain(self.domain)
+        return self._tenant
 
 
     @staticmethod
