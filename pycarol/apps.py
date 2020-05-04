@@ -187,8 +187,8 @@ class Apps:
 
         Args:
 
-            app_name: `str`
-                App Name
+            app_name: `str` default `None`
+                Carol app name. It will overwrite the app name used in Carol() initialization.
             app_version: `str`
                 App Version
             carolappname: `str`
@@ -229,41 +229,49 @@ class Apps:
             with open(file_path, 'wb') as out:  ## Open temporary file as bytes
                 out.write(io.BytesIO(r.content).read())
 
-    def get_manifest(self, app_name):
+    def get_manifest(self, app_name=None):
         """
 
         Args: `str`
-            app_name: Carol app name
+
+            app_name: `str` default `None`
+                Carol app name. It will overwrite the app name used in Carol() initialization.
 
         Returns: `dict`
             Dictionary with the manifest file.
 
         """
 
+        if app_name is None:
+            app_name = self.carol.app_name
+
         url = f'v1/tenantApps/manifest/{app_name}'
 
         r = self.carol.call_api(url, method='GET')
         return r
 
-    def edit_manifest(self, app_name, manifest):
+    def edit_manifest(self, manifest, app_name=None):
         """
 
         Args:
-            app_name: `str`
-                Carol app name
+
             manifest: `dict`
                 Dictionary with the manifest
+            app_name: `str` default `None`
+                Carol app name. It will overwrite the app name used in Carol() initialization.
 
         Returns: `dict`
             {"success": True}
 
         """
 
+        if app_name is None:
+            app_name = self.carol.app_name
+
         url = f'v1/tenantApps/manifest/{app_name}'
 
         r = self.carol.call_api(url, method='PUT', data=manifest)
         return r
-
 
     def get_git_process(self, app_name=None):
         """
@@ -271,8 +279,8 @@ class Apps:
 
         Args:
 
-            app_name: `str`
-                App name.
+            app_name: `str` default `None`
+                Carol app name. It will overwrite the app name used in Carol() initialization.
 
         Returns: List of Dicts
 
@@ -294,8 +302,8 @@ class Apps:
             git_token: `str`
                 Git token to be used to pull the files.
 
-            app_name: `str`
-                App name.
+            app_name: `str` default `None`
+                Carol app name. It will overwrite the app name used in Carol() initialization.
 
         Returns:
 
