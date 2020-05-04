@@ -338,7 +338,7 @@ class Apps:
     @staticmethod
     def _assert_manifest_fields(manifest):
         """
-        Assert the the fields needed to build the image exist.
+        Assert that the fields needed to build the image exist.
         Args:
             manifest: `list of dict`
                 list of docker definition in the manifest file.
