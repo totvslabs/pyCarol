@@ -306,7 +306,7 @@ class Apps:
                 Carol app name. It will overwrite the app name used in Carol() initialization.
 
         Returns:
-
+            List of task ids.
         """
 
         if app_name is None:
@@ -333,7 +333,7 @@ class Apps:
 
             tasks.append(response)
             
-        return response
+        return tasks
 
     @staticmethod
     def _assert_manifest_fields(manifest):
