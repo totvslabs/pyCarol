@@ -6,7 +6,7 @@ Carol app funtionalities.
 
 
 import zipfile, io
-
+from .utils.miscellaneous import _deprecation_msgs
 
 class Apps:
     """
@@ -180,16 +180,21 @@ class Apps:
 
         return self.app_settings
 
-    def download_app(self, carolappname, carolappversion, file_path, extract=False):
+    def download_app(self, app_name=None, app_version=None, carolappname=None, carolappversion=None,
+                     file_path='carol.zip', extract=False):
         """
         Download App artifacts.
 
         Args:
 
-            carolappname: `str`
-                App Name.
-            carolappversion: `str`
+            app_name: `str` default `None`
+                Carol app name. It will overwrite the app name used in Carol() initialization.
+            app_version: `str`
                 App Version
+            carolappname: `str`
+                App Name. Deprecated. Use app_name
+            carolappversion: `str`
+                App Version. Deprecated. Use app_version
             file_path:  `os.PathLike`
                 Path to save the zip file.
             extract: `bool` default `False`
@@ -199,7 +204,21 @@ class Apps:
 
         """
 
-        url = f'v1/carolApps/download/{carolappname}/version/{carolappversion}'
+        if carolappname is not None:
+            app_name = carolappname
+            _deprecation_msgs("`carolappname` is deprecated use `app_name`.")
+        if carolappversion is not None:
+            app_version = carolappversion
+            _deprecation_msgs("`carolappversion` is deprecated use `app_version`.")
+
+        if app_name is None:
+            app_name = self.carol.app_name
+
+        if app_version is None:
+            raise ValueError('app_version must be set.')
+
+
+        url = f'v1/carolApps/download/{app_name}/version/{app_version}'
 
         r = self.carol.call_api(url, method='GET', stream=True, downloadable=True)
 
@@ -210,37 +229,129 @@ class Apps:
             with open(file_path, 'wb') as out:  ## Open temporary file as bytes
                 out.write(io.BytesIO(r.content).read())
 
-    def get_manifest(self, app_name):
+    def get_manifest(self, app_name=None):
         """
 
         Args: `str`
-            app_name: Carol app name
+
+            app_name: `str` default `None`
+                Carol app name. It will overwrite the app name used in Carol() initialization.
 
         Returns: `dict`
             Dictionary with the manifest file.
 
         """
 
+        if app_name is None:
+            app_name = self.carol.app_name
+
         url = f'v1/tenantApps/manifest/{app_name}'
 
         r = self.carol.call_api(url, method='GET')
         return r
 
-    def edit_manifest(self, app_name, manifest):
+    def edit_manifest(self, manifest, app_name=None):
         """
 
         Args:
-            app_name: `str`
-                Carol app name
+
             manifest: `dict`
                 Dictionary with the manifest
+            app_name: `str` default `None`
+                Carol app name. It will overwrite the app name used in Carol() initialization.
 
         Returns: `dict`
             {"success": True}
 
         """
 
+        if app_name is None:
+            app_name = self.carol.app_name
+
         url = f'v1/tenantApps/manifest/{app_name}'
 
         r = self.carol.call_api(url, method='PUT', data=manifest)
         return r
+
+    def get_git_process(self, app_name=None):
+        """
+        Get Git processes definid in the manifest file.
+
+        Args:
+
+            app_name: `str` default `None`
+                Carol app name. It will overwrite the app name used in Carol() initialization.
+
+        Returns: List of Dicts
+
+        """
+
+        if app_name is None:
+            app_name = self.carol.app_name
+
+        response = self.carol.call_api(path=f'v1/compute/{app_name}/getProcessesByGitRepo',
+                                       method='POST')
+
+        return response
+
+    def build_docker_git(self, git_token, app_name=None, ):
+        """
+        Build App image using manifest definition.
+
+        Args:
+            git_token: `str`
+                Git token to be used to pull the files.
+
+            app_name: `str` default `None`
+                Carol app name. It will overwrite the app name used in Carol() initialization.
+
+        Returns:
+
+        """
+
+        if app_name is None:
+            app_name = self.carol.app_name
+
+        manifest = self.get_git_process(app_name)
+
+        self._assert_manifest_fields(manifest)
+
+        tasks = []
+        for build in manifest:
+            docker_name = build['dockerName']
+            docker_tag = build['dockerTag']
+            instance_type = build['instanceType']
+            git_token = git_token
+            params = {
+                'dockerName': docker_name,
+                'tagName': docker_tag,
+                'gitToken': git_token,
+                'instanceType': instance_type,
+            }
+            response = self.carol.call_api(path=f'v1/compute/{app_name}/buildGitDocker',
+                                           method='POST', params=params)
+
+            tasks.append(response)
+            
+        return response
+
+    @staticmethod
+    def _assert_manifest_fields(manifest):
+        """
+        Assert that the fields needed to build the image exist.
+        Args:
+            manifest: `list of dict`
+                list of docker definition in the manifest file.
+
+        Returns:
+            None
+        """
+
+        fields = {'dockerName', 'dockerTag', 'instanceType'}
+        for build in manifest:
+            set_diff = fields - set(build)
+            if len(set_diff)>=1:
+                raise ValueError(f'Missing docker definition {set_diff}')
+
+
+

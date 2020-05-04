@@ -127,12 +127,14 @@ class Query:
             Use the stram of data.
         get_times: `bool`, default `False`
             It will create a list of times that each pagination took.
+        kwargs: `dict`
+            Extra parameters to be passed to Carol.call_api
 
     """
     def __init__(self, carol, max_hits=float('inf'), offset=0, page_size=100, sort_order='ASC', sort_by=None,
                  scrollable=True, index_type='MASTER', only_hits=True, fields=None, get_aggs=False,
                  save_results=False, filename='query_result.json', print_status=True, safe_check=False,
-                 get_errors=False, flush_result=False, use_stream=False, get_times=False):
+                 get_errors=False, flush_result=False, use_stream=False, get_times=False, **kwargs):
 
         self.carol = carol
         self.max_hits = max_hits
@@ -163,6 +165,7 @@ class Query:
         self.json_query = None
         self.total_hits = None
         self.query_times = []
+        self.kwargs = kwargs
 
         self.results = []
 
@@ -218,7 +221,7 @@ class Query:
             url_filter = "v2/queries/named/{}".format(self.named_query)
 
         result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params, timeout=240,
-                                     method_whitelist=frozenset(['POST']))
+                                     method_whitelist=frozenset(['POST']), **self.kwargs)
 
         if self.only_hits:
 
@@ -271,8 +274,7 @@ class Query:
         while count < to_get:
 
             result = self.carol.call_api(url_filter, data=self.json_query, params=self.query_params, timeout=240,
-                                         method_whitelist=frozenset(['HEAD', 'TRACE', 'GET',
-                                                                     'PUT', 'OPTIONS', 'DELETE', 'POST']))
+                                         method_whitelist=frozenset(['POST']), **self.kwargs)
 
             if set_param:
                 self.total_hits = result["totalHits"]
