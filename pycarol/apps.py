@@ -314,6 +314,8 @@ class Apps:
 
         manifest = self.get_git_process(app_name)
 
+        self._assert_manifest_fields(manifest)
+
         tasks = []
         for build in manifest:
             docker_name = build['dockerName']
@@ -332,3 +334,24 @@ class Apps:
             tasks.append(response)
             
         return response
+
+    @staticmethod
+    def _assert_manifest_fields(manifest):
+        """
+        Assert the the fields needed to build the image exist.
+        Args:
+            manifest: `list of dict`
+                list of docker definition in the manifest file.
+
+        Returns:
+            None
+        """
+
+        fields = {'dockerName', 'dockerTag', 'instanceType'}
+        for build in manifest:
+            set_diff = fields - set(build)
+            if len(set_diff)>=1:
+                raise ValueError(f'Missing docker definition {set_diff}')
+
+
+
