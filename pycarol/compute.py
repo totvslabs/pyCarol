@@ -45,6 +45,6 @@ class Compute:
         }
 
         response = self.carol.call_api(path=f'v1/log/retrieveLogs', data=filters,
-                                       method='POST', params=params, content_type='application/octet-stream')
+                                       method='POST', params=params, content_type='text/plain')
 
         return response
