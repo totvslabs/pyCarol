@@ -286,7 +286,10 @@ class CDSGolden:
 
         self.carol = carol
 
-    def sync_data(self, dm_name, dm_id=None, num_records=-1, file_pattern='*', filter_query=None):
+    def sync_data(self, dm_name, dm_id=None, num_records=-1, file_pattern='*', filter_query=None,
+                  skip_consolidation=False, force_dataflow=False, records_percentage=100, worker_type=None,
+                  max_number_workers=-1, clear_golden_realtime=False,
+                  ):
 
         """
         Sync data to realtime layer.
@@ -304,6 +307,19 @@ class CDSGolden:
                 One can use this to filter data in CDS received in a given date.
             filter_query: `dict`, default `None`
                 Query to be used to filter the data to be processed.
+            skip_consolidation: `bool` default `False
+                If consolidation process should be skipped
+            force_dataflow: `bool`  default `False`
+                If Dataflow job should be spinned even for small datasets
+                (by default, small datasets are processed directly inside Carol)
+            records_percentage" `int` default `100`
+                The percentage of records (0-100) to import
+            worker_type: `str`, default `None`
+                Machine flavor to be used. If `None` Carol will decide the machine to use.
+            max_number_workers: `int`, default `-1`
+                Max number of workers to be used during the process. '-1' means all the available.
+            clear_golden_realtime: `bool`, default `False`
+                If the records on realtime should be deleted first
 
         :return: None
 
@@ -317,7 +333,13 @@ class CDSGolden:
             if dm_id is None:
                 raise ValueError('dm_name or dm_id should be set.')
 
-        query_params = {"entityTemplateId": dm_id, "numRecords": num_records, "filePattern": file_pattern}
+        query_params = {
+            "entityTemplateId": dm_id, "numRecords": num_records, "filePattern": file_pattern,
+            "skipConsolidation": skip_consolidation, "forceDataflow":force_dataflow,
+            "clearGoldenRealtime":clear_golden_realtime, "maxNumberOfWorkers":max_number_workers,
+            "workerType":worker_type, "recordsPercentage": records_percentage,
+
+                        }
 
         return self.carol.call_api(path='v1/cds/golden/fetchData', method='POST', params=query_params,
                                    data=filter_query)
