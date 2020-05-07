@@ -8,6 +8,7 @@ the `pycarol.cds.CDSGolden` classes are used to manipulate the data inside the f
 """
 from .connectors import Connectors
 from .data_models import DataModel
+from .utils.miscellaneous import _deprecation_msgs
 
 _MACHINE_FLAVORS = [
     'n1-standard-1',
@@ -104,8 +105,8 @@ class CDSStaging:
                                    data=filter_query)
 
     def sync_data(self, staging_name, connector_id=None, connector_name=None, num_records=-1,
-                  delete_realtime_records=False, enable_realtime=False,
-                  file_pattern='*', filter_query=None):
+                  delete_realtime_records=False, enable_realtime=None,
+                  file_pattern='*', filter_query=None, force_dataflow=False, records_percentage=100):
 
         """
         Sync data to realtime layer.
@@ -121,6 +122,7 @@ class CDSStaging:
             num_records: `int`, default `-1`
                 Number of records to be processed. '-1' means all the records.
             enable_realtime: `bool`, default `False`
+                DEPRECATED. Removed from Carol.
                 Enable this staging table to send the processed data to realtime layer.
             delete_realtime_records: `bool`, default `False`
                 Delete previous processed data in realtime.
@@ -129,9 +131,17 @@ class CDSStaging:
                 One can use this to filter data in CDS received in a given date.
             filter_query: `dict`, default `None`
                 Query to be used to filter the data to be processed.
+            force_dataflow: `bool`  default `False`
+                If Dataflow job should be spinned even for small datasets
+                (by default, small datasets are processed directly inside Carol)
+            records_percentage" `int` default `100`
+                The percentage of records (0-100) to import
 
         :return: None
         """
+
+        if enable_realtime is not None:
+            _deprecation_msgs("`enable_realtime` is deprecated and it is not used in Carol. ")
 
         filter_query = filter_query if filter_query else {}
 
@@ -142,14 +152,18 @@ class CDSStaging:
                 raise ValueError('connector_id or connector_name should be set.')
 
         query_params = {"connectorId": connector_id, "stagingType": staging_name,
-                        "numRecords": num_records, "enableStagingRealtime": enable_realtime,
-                        "clearStagingRealtime": delete_realtime_records, "filePattern": file_pattern}
+                        "numRecords": num_records,
+                        "clearStagingRealtime": delete_realtime_records, "filePattern": file_pattern,
+                        "forceDataflow": force_dataflow, "recordsPercentage":records_percentage,
+                        }
 
         return self.carol.call_api(path='v1/cds/staging/fetchData', method='POST', params=query_params,
                                    data=filter_query)
 
     def consolidate(self, staging_name, connector_id=None, connector_name=None,
-                    worker_type=None, max_number_workers=-1, number_shards=-1):
+                    worker_type=None, max_number_workers=-1, number_shards=-1, force_dataflow=False,
+                    rehash_ids=False
+                    ):
 
         """
         Process staging CDS data.
@@ -168,6 +182,11 @@ class CDSStaging:
                 Max number of workers to be used during the process. '-1' means all the available.
             number_shards: `int`, default `-1`
                 Number of shards.
+            force_dataflow: `bool`  default `False`
+                If Dataflow job should be spinned even for small datasets
+                (by default, small datasets are processed directly inside Carol)
+            rehash_ids" `bool` default `False`
+                If all ids should be regenerated from the crosswalk
 
         :return: None
 
@@ -184,7 +203,9 @@ class CDSStaging:
 
         query_params = {"connectorId": connector_id, "stagingType": staging_name,
                         "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
-                        "numberOfShards": number_shards}
+                        "numberOfShards": number_shards,
+                        "rehashIds":rehash_ids, "forceDataflow":force_dataflow,
+                        }
 
         return self.carol.call_api(path='v1/cds/staging/consolidate', method='POST', params=query_params)
 
