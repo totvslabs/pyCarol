@@ -34,7 +34,8 @@ class CDSStaging:
     def process_data(self, staging_name, connector_id=None, connector_name=None,
                      worker_type=None, max_number_workers=-1, number_shards=-1, num_records=-1,
                      delete_target_folder=False, enable_realtime=False, delete_realtime_records=False,
-                     send_realtime=False, file_pattern='*', filter_query=None):
+                     send_realtime=False, file_pattern='*', filter_query=None, skip_consolidation=False,
+                     force_dataflow=False):
 
         """
         Process CDS staging data.
@@ -68,6 +69,11 @@ class CDSStaging:
                 One can use this to filter data in CDS received in a given date.
             filter_query: `dict`, default `None`
                 Query to be used to filter the data to be processed.
+            skip_consolidation: `bool` default `False
+                If consolidation process should be skipped
+            force_dataflow: `bool`  default `False`
+                If Dataflow job should be spinned even for small datasets
+                (by default, small datasets are processed directly inside Carol)
 
         :return: None
 
@@ -89,7 +95,10 @@ class CDSStaging:
                         "numRecords": num_records,
                         "deleteTargetFolder": delete_target_folder, "enableStagingRealtime": enable_realtime,
                         "deleteRealtimeRecords": delete_realtime_records,
-                        "sendToRealtime": send_realtime, "filePattern": file_pattern}
+                        "sendToRealtime": send_realtime, "filePattern": file_pattern,
+                        "skipConsolidation": skip_consolidation,
+                        "forceDataflow": force_dataflow,
+                        }
 
         return self.carol.call_api(path='v1/cds/staging/processData', method='POST', params=query_params,
                                    data=filter_query)
