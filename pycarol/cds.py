@@ -154,7 +154,7 @@ class CDSStaging:
         query_params = {"connectorId": connector_id, "stagingType": staging_name,
                         "numRecords": num_records,
                         "clearStagingRealtime": delete_realtime_records, "filePattern": file_pattern,
-                        "forceDataflow": force_dataflow, "recordsPercentage":records_percentage,
+                        "forceDataflow": force_dataflow, "recordsPercentage": records_percentage,
                         }
 
         return self.carol.call_api(path='v1/cds/staging/fetchData', method='POST', params=query_params,
@@ -204,7 +204,7 @@ class CDSStaging:
         query_params = {"connectorId": connector_id, "stagingType": staging_name,
                         "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
                         "numberOfShards": number_shards,
-                        "rehashIds":rehash_ids, "forceDataflow":force_dataflow,
+                        "rehashIds": rehash_ids, "forceDataflow": force_dataflow,
                         }
 
         return self.carol.call_api(path='v1/cds/staging/consolidate', method='POST', params=query_params)
@@ -335,11 +335,11 @@ class CDSGolden:
 
         query_params = {
             "entityTemplateId": dm_id, "numRecords": num_records, "filePattern": file_pattern,
-            "skipConsolidation": skip_consolidation, "forceDataflow":force_dataflow,
-            "clearGoldenRealtime":clear_golden_realtime, "maxNumberOfWorkers":max_number_workers,
-            "workerType":worker_type, "recordsPercentage": records_percentage,
+            "skipConsolidation": skip_consolidation, "forceDataflow": force_dataflow,
+            "clearGoldenRealtime": clear_golden_realtime, "maxNumberOfWorkers": max_number_workers,
+            "workerType": worker_type, "recordsPercentage": records_percentage,
 
-                        }
+        }
 
         return self.carol.call_api(path='v1/cds/golden/fetchData', method='POST', params=query_params,
                                    data=filter_query)
@@ -437,7 +437,7 @@ class CDSGolden:
             "entityTemplateId": dm_id,
             "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
             "numberOfShards": number_shards,
-            "forceDataflow": force_dataflow, "ignoreMerge" : ignore_merge
-                        }
+            "forceDataflow": force_dataflow, "ignoreMerge": ignore_merge
+        }
 
         return self.carol.call_api(path='v1/cds/golden/consolidate', method='POST', params=query_params)
