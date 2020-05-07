@@ -395,7 +395,9 @@ class CDSGolden:
         return self.carol.call_api(path='v1/cds/golden/fetchCount', method='POST', params=query_params).get('count')
 
     def consolidate(self, dm_name=None, dm_id=None,
-                    worker_type=None, max_number_workers=-1, number_shards=-1):
+                    worker_type=None, max_number_workers=-1, number_shards=-1, force_dataflow=False,
+                    ignore_merge=False
+                    ):
 
         """
 
@@ -413,6 +415,11 @@ class CDSGolden:
                 Max number of workers to be used during the process. '-1' means all the available.
             number_shards: `int`, default `-1`
                 Number of shards.
+            ignore_merge: `bool` default `False
+                If merge rules should be ignored when consolidating the records
+            force_dataflow: `bool`  default `False`
+                If Dataflow job should be spinned even for small datasets
+                (by default, small datasets are processed directly inside Carol)
 
         :return: None
         """
@@ -426,8 +433,11 @@ class CDSGolden:
         if worker_type not in _MACHINE_FLAVORS and worker_type is not None:
             raise ValueError(f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
 
-        query_params = {"entityTemplateId": dm_id,
-                        "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
-                        "numberOfShards": number_shards}
+        query_params = {
+            "entityTemplateId": dm_id,
+            "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
+            "numberOfShards": number_shards,
+            "forceDataflow": force_dataflow, "ignoreMerge" : ignore_merge
+                        }
 
         return self.carol.call_api(path='v1/cds/golden/consolidate', method='POST', params=query_params)
