@@ -91,15 +91,16 @@ class CDSStaging:
             if connector_id is None:
                 raise ValueError('connector_id or connector_name should be set.')
 
-        query_params = {"connectorId": connector_id, "stagingType": staging_name, "workerType": worker_type,
-                        "maxNumberOfWorkers": max_number_workers, "numberOfShards": number_shards,
-                        "numRecords": num_records,
-                        "deleteTargetFolder": delete_target_folder, "enableStagingRealtime": enable_realtime,
-                        "deleteRealtimeRecords": delete_realtime_records,
-                        "sendToRealtime": send_realtime, "filePattern": file_pattern,
-                        "skipConsolidation": skip_consolidation,
-                        "forceDataflow": force_dataflow,
-                        }
+        query_params = {
+            "connectorId": connector_id, "stagingType": staging_name, "workerType": worker_type,
+            "maxNumberOfWorkers": max_number_workers, "numberOfShards": number_shards,
+            "numRecords": num_records,
+            "deleteTargetFolder": delete_target_folder, "enableStagingRealtime": enable_realtime,
+            "deleteRealtimeRecords": delete_realtime_records,
+            "sendToRealtime": send_realtime, "filePattern": file_pattern,
+            "skipConsolidation": skip_consolidation,
+            "forceDataflow": force_dataflow,
+        }
 
         return self.carol.call_api(path='v1/cds/staging/processData', method='POST', params=query_params,
                                    data=filter_query)
@@ -151,11 +152,12 @@ class CDSStaging:
             if connector_id is None:
                 raise ValueError('connector_id or connector_name should be set.')
 
-        query_params = {"connectorId": connector_id, "stagingType": staging_name,
-                        "numRecords": num_records,
-                        "clearStagingRealtime": delete_realtime_records, "filePattern": file_pattern,
-                        "forceDataflow": force_dataflow, "recordsPercentage": records_percentage,
-                        }
+        query_params = {
+            "connectorId": connector_id, "stagingType": staging_name,
+            "numRecords": num_records,
+            "clearStagingRealtime": delete_realtime_records, "filePattern": file_pattern,
+            "forceDataflow": force_dataflow, "recordsPercentage": records_percentage,
+        }
 
         return self.carol.call_api(path='v1/cds/staging/fetchData', method='POST', params=query_params,
                                    data=filter_query)
@@ -201,11 +203,12 @@ class CDSStaging:
             if connector_id is None:
                 raise ValueError('connector_id or connector_name should be set.')
 
-        query_params = {"connectorId": connector_id, "stagingType": staging_name,
-                        "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
-                        "numberOfShards": number_shards,
-                        "rehashIds": rehash_ids, "forceDataflow": force_dataflow,
-                        }
+        query_params = {
+            "connectorId": connector_id, "stagingType": staging_name,
+            "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
+            "numberOfShards": number_shards,
+            "rehashIds": rehash_ids, "forceDataflow": force_dataflow,
+        }
 
         return self.carol.call_api(path='v1/cds/staging/consolidate', method='POST', params=query_params)
 
