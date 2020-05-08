@@ -24,8 +24,9 @@ class Compute:
                 Possible values `carolApp` or `carolConnect`
             severity: `str` default `INFO`
                 Minimal log to fetch.
-            filters: `dict` default `None`
-                Extra filters.
+            filters: `list` default `None`
+                List with extra filters in string format. e.g,.
+                filters = ['''"insertId"="n7qvjkx9se0erdgi1"''', "OR", '''"severity"="ERROR"''']
             page_size: `int` default 10
                 Number of records to return.
         Returns:
@@ -35,7 +36,9 @@ class Compute:
         if app_name is None:
             app_name = self.carol.app_name
 
-        filters = filters if filters else ""
+        filters = filters if filters else []
+
+        filters = '\n'.join(filters)
 
         params = {
             "appType": app_type,
