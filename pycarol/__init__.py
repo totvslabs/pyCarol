@@ -5,7 +5,7 @@
 import os
 import tempfile
 
-__version__ = '2.33.1'
+__version__ = '2.33.2'
 
 __TEMP_STORAGE__ = os.path.join(tempfile.gettempdir(), 'carolina/cache')
 
