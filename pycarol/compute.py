@@ -54,6 +54,7 @@ class Compute:
             url = f'v1/log/retrieveLogs'
         else:
             url = f'v1/log/retrieveLogs/nextPage'
+            params.update({"pageToken": page_token})
 
         response = self.carol.call_api(path=url, data=filters, backoff_factor=1,
                                        status_forcelist=[502, 429, 524, 408, 504, 598, 520, 503],
