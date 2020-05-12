@@ -13,7 +13,8 @@ class Compute:
 
         return response
 
-    def get_app_logs(self, app_name=None, app_type='carolApp', severity='INFO', filters=None, page_size=10, ):
+    def get_app_logs(self, app_name=None, app_type='carolApp', severity='INFO', page_token=None,  filters=None,
+                     page_size=10, ):
         """
         Get execution logs for an app.
 
@@ -24,6 +25,8 @@ class Compute:
                 Possible values `carolApp` or `carolConnect`
             severity: `str` default `INFO`
                 Minimal log to fetch.
+            page_token: `str` default `None`
+                Pagination token for logs.
             filters: `list` default `None`
                 List with extra filters in string format. e.g,.
                 filters = ['''"insertId"="n7qvjkx9se0erdgi1"''', "OR", '''"severity"="ERROR"''']
@@ -47,7 +50,12 @@ class Compute:
             "severity": severity
         }
 
-        response = self.carol.call_api(path=f'v1/log/retrieveLogs', data=filters,
+        if page_token is None:
+            url = f'v1/log/retrieveLogs'
+        else:
+            url = f'v1/log/retrieveLogs/nextPage'
+
+        response = self.carol.call_api(path=url, data=filters,
                                        method='POST', params=params, content_type='text/plain')
 
         return response
