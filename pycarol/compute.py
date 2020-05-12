@@ -56,6 +56,7 @@ class Compute:
             url = f'v1/log/retrieveLogs/nextPage'
 
         response = self.carol.call_api(path=url, data=filters,
+                                       status_forcelist=[502, 429, 524, 408, 504, 598, 520, 503],
                                        method='POST', params=params, content_type='text/plain')
 
         return response
