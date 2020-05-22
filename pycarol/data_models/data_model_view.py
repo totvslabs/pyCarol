@@ -124,6 +124,8 @@ class DataModelView:
                delete_previous=False, export_format='PARQUET'):
         """
 
+        @DEPRECATED. This function was removed in pycarol 3.34
+
         Export datamodel to s3
 
         This method will trigger or pause the export of the data in the datamodel to
@@ -145,22 +147,9 @@ class DataModelView:
         :return: None
         """
 
-        if sync_view:
-            status = 'RUNNING'
-        else:
-            status = 'PAUSED'
+        _deprecation_msgs("This function was removed from pyCarol")
+        return None
 
-        if view_id:
-            view_name = self.get_by_id(view_id)['mdmName']
-        else:
-            assert view_name
-
-        query_params = {"status": status, "fullExport": full_export,
-                        'viewName':view_name, 'format':export_format,
-                        "deletePrevious": delete_previous}
-
-        url = f'v1/goldenRecordView/exporter'
-        return self.carol.call_api(url, method='POST', params=query_params)
 
 
     def fetch_parquet(self, view_name, merge_records=True, backend='pandas', return_dask_graph=False,
@@ -209,23 +198,14 @@ class DataModelView:
         if return_dask_graph:
             assert backend == 'dask'
 
-
-        dms = self._get_view_export_stats()
-
         if not cds:
-
             _deprecation_msgs("`cds` option will be removed from pycarol 3.33. Consider use `cds=True`"
                               " to avoid problems. ")
 
-            import_type = 'view'
-        else:
-            import_type = 'view_cds'
         if columns:
             columns.extend(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated'])
 
-
-
-
+        import_type = 'view_cds'
         storage = Storage(self.carol)
         token_carolina = storage.backend.carolina.token
         storage_space = storage.backend.carolina.get_bucket_name(import_type)
@@ -269,7 +249,8 @@ class DataModelView:
     def export_all(self, sync_view=True, full_export=False, delete_previous=False):
         """
 
-        Export all datamodel to s3
+        @DEPRECATED. This function was removed in pycarol 3.34
+        Export all data model view
 
         This method will trigger or pause the export of the data in the data model view to CDS
 
@@ -281,39 +262,22 @@ class DataModelView:
             Delete previous exported files.
         :return: None
         """
-        self.get_all()
 
-        for _name, i in self.template_dict.items():
-            view_id = i['mdmId']
-            self.export(view_id=view_id, sync_view=sync_view, full_export=full_export,
-                        delete_previous=delete_previous)
+        _deprecation_msgs("This function was removed from pyCarol")
+        return None
 
 
     def _get_view_export_stats(self):
         """
+        @DEPRECATED. This function was removed in pycarol 3.34
+
         Get export status for views
 
         :return: `dict`
             dict with the information of which data model view is exporting its data.
         """
 
-        json_q = Filter.Builder(key_prefix="") \
-            .must(TYPE_FILTER(value="mdmGoldenRecordViewExport")).build().to_json()
-
-        query = Query(self.carol, index_type='CONFIG', page_size=1000, only_hits=False)
-        query.query(json_q, ).go()
-
-        dm_results = query.results
-        dm_results = [elem.get('hits', elem) for elem in dm_results
-                      if elem.get('hits', None)]
-        dm_results = list(itertools.chain(*dm_results))
-
-        dm = self.get_all().template_data
-        dm = {i['mdmId']: i['mdmName'] for i in dm}
-
-        if dm_results is not None:
-            return {dm.get(i['mdmRelationshipViewId'], i['mdmRelationshipViewId'] + '_NOT_FOUND'): i for i in dm_results}
-
-        return dm_results
+        _deprecation_msgs("This function was removed from pyCarol")
+        return None
 
 
