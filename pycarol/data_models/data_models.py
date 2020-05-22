@@ -143,15 +143,10 @@ class DataModel:
             assert backend == 'dask'
 
         if not cds:
-
             _deprecation_msgs("`cds` option will be removed from pycarol 3.33. Consider use `cds=True`"
                               " to avoid problems. ")
 
-            dms = self._get_dm_export_stats()
-            import_type = 'golden'
-        else:
-            import_type = 'golden_cds'
-
+        import_type = 'golden_cds'
         if columns:
             columns.extend(_meta_cols)
 
@@ -280,7 +275,9 @@ class DataModel:
     def export(self, dm_name=None, dm_id=None, sync_dm=True, full_export=False, delete_previous=False):
         """
 
-        Export datamodel to s3
+        @DEPRECATED. This function was removed in pycarol 3.34
+
+        Export data models
 
         This method will trigger or pause the export of the data in the datamodel to
         CDS
@@ -297,27 +294,15 @@ class DataModel:
             Delete previous exported files.
         :return: None
         """
-
-        if sync_dm:
-            status = 'RUNNING'
-        else:
-            status = 'PAUSED'
-
-        if dm_name:
-            dm_id = self.get_by_name(dm_name)['mdmId']
-        else:
-            assert dm_id
-
-        query_params = {"status": status, "fullExport": full_export,
-                        "deletePrevious": delete_previous}
-
-        url = f'v1/entities/templates/{dm_id}/exporter'
-        return self.carol.call_api(url, method='POST', params=query_params)
+        _deprecation_msgs("This function was removed from pyCarol")
+        return None
 
     def export_all(self, sync_dm=True, full_export=False, delete_previous=False):
         """
 
-        Export all datamodel to s3
+        @DEPRECATED. This function was removed in pycarol 3.34
+
+        Export all data models
 
         This method will trigger or pause the export of the data in the datamodel to
         CDS
@@ -330,16 +315,9 @@ class DataModel:
             Delete previous exported files.
         :return: None
         """
-        self.get_all()
 
-        for _name, i in self.template_dict.items():
-            dm_id = i['mdmId']
-            if i['mdmPublishedExists']:
-                self.export(dm_id=dm_id, sync_dm=sync_dm, full_export=full_export,
-                            delete_previous=delete_previous)
-            else:
-                print(
-                    f'Data Model `{_name}` is only in draft, and cannot be exported. Publish the Data Model to export it.')
+        _deprecation_msgs("This function was removed from pyCarol")
+        return None
 
     def delete(self, dm_id=None, dm_name=None, entity_space='WORKING'):
         # TODO: Check Possible entity_spaces
@@ -365,30 +343,17 @@ class DataModel:
 
     def _get_dm_export_stats(self):
         """
+
+        @DEPRECATED. This function was removed in pycarol 3.34
+
         Get export status for data models
 
         :return: `dict`
             dict with the information of which data model is exporting its data.
         """
 
-        json_q = Filter.Builder(key_prefix="") \
-            .must(TYPE_FILTER(value="mdmEntityTemplateExport")).build().to_json()
-
-        query = Query(self.carol, index_type='CONFIG', page_size=1000, only_hits=False)
-        query.query(json_q, ).go()
-
-        dm_results = query.results
-        dm_results = [elem.get('hits', elem) for elem in dm_results
-                      if elem.get('hits', None)]
-        dm_results = list(itertools.chain(*dm_results))
-
-        dm = self.get_all().template_data
-        dm = {i['mdmId']: i['mdmName'] for i in dm}
-
-        if dm_results is not None:
-            return {dm.get(i['mdmEntityTemplateId'], i['mdmEntityTemplateId'] + '_NOT_FOUND'): i for i in dm_results}
-
-        return dm_results
+        _deprecation_msgs("This function was removed from pyCarol")
+        return None
 
     def _get_min_max(self, query_filter=None):
 
