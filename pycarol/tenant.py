@@ -1,7 +1,5 @@
-from .query import Query
-import itertools
-from .data_models import DataModel
-from .staging import Staging
+from .utils.miscellaneous import _deprecation_msgs
+
 
 class Tenant:
     def __init__(self, carol):
@@ -19,9 +17,11 @@ class Tenant:
         return self.carol.call_api('v2/tenants/domain/{}'.format(domain), auth=False, status_forcelist=[], retries=0)
 
 
-
     def check_exports(self, staging=True, data_model=True):
         """
+
+        @DEPRECATED. This function was removed in pycarol 3.34
+
         Find all data models or stating tables that have export active.
 
         :param staging: `bool`, default `True`
@@ -32,15 +32,6 @@ class Tenant:
             staging stats, data model stats
         """
 
-        staging_results = None
-        dm_results = None
-        if staging:
-            staging_results = Staging(self.carol)._get_staging_export_stats()
+        _deprecation_msgs("This function was removed from pyCarol")
 
-        if data_model:
-            dm_results = DataModel(self.carol)._get_dm_export_stats()
-
-
-        return staging_results, dm_results
-
-
+        return None

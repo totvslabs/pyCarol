@@ -41,7 +41,7 @@ class Staging:
     def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=500,
                   print_stats=True, gzip=True, auto_create_schema=False, crosswalk_auto_create=None,
                   flexible_schema=False, force=False,  max_workers=2,  dm_to_delete=None,
-                  async_send=False, carol_data_storage=False, storage_only=False, carol_sync=False):
+                  async_send=False, carol_data_storage=False, storage_only=True, carol_sync=False):
         """
         Send data to a staging table in Carol.
 
@@ -97,7 +97,7 @@ class Staging:
         if carol_data_storage:
             _deprecation_msgs("`carol_data_storage` is deprecated and has no action.")
 
-        if storage_only:
+        if not storage_only:
             _deprecation_msgs("`storage_only` will be irrelevant. All data will be send to CDS as default.")
 
 
@@ -473,18 +473,9 @@ class Staging:
         # TODO: Validate the code bellow for cds param
         # validate export
         if not cds:
-            _deprecation_msgs("`cds` option will be removed from pycarol 3.33. Consider use `cds=True`"
-                              " to avoid problems. ")
-            stags = self._get_staging_export_stats()
+            _deprecation_msgs("`cds` option was removed. Returning CDS data.")
 
-            if stags.get(connector_id + '_' + staging_name)['mdmConnectorId'] != connector_id:
-                raise Exception(
-                    f'"Wrong connector Id {connector_id}. The connector Id associated to this staging is  '
-                    f'{stags.get(staging_name)["mdmConnectorId"]}"')
-            import_type = 'staging'
-        else:
-            import_type = 'staging_cds'
-
+        import_type = 'staging_cds'
         storage = Storage(self.carol)
         token_carolina = storage.backend.carolina.token
         storage_space = storage.backend.carolina.get_bucket_name(import_type)
@@ -550,6 +541,7 @@ class Staging:
     def export(self, staging_name, connector_id=None, connector_name=None, sync_staging=True, full_export=False,
                delete_previous=False):
         """
+        @DEPRECATED. This function was removed in pycarol 3.34
 
         Export Staging from RT to CDS
 
@@ -597,25 +589,15 @@ class Staging:
 
 
         """
+        _deprecation_msgs("This function was removed from pyCarol")
 
-        if sync_staging:
-            status = 'RUNNING'
-        else:
-            status = 'PAUSED'
-
-        if connector_name:
-            connector_id = self._connector_by_name(connector_name)
-        else:
-            assert connector_id
-
-        query_params = {"status": status, "fullExport": full_export,
-                        "deletePrevious": delete_previous}
-        url = f'v2/staging/{connector_id}/{staging_name}/exporter'
-        return self.carol.call_api(url, method='POST', params=query_params)
+        return None
 
     def export_all(self, connector_id=None, connector_name=None, sync_staging=True, full_export=False,
                    delete_previous=False):
         """
+
+        @DEPRECATED. This function was removed in pycarol 3.34
 
         Export all Stagings from a connector to s3
 
@@ -636,61 +618,24 @@ class Staging:
 
         Usage: See `Staging.export()`
         """
-        if connector_name:
-            connector_id = self._connector_by_name(connector_name)
-        else:
-            assert connector_id
 
-        conn_stats = Connectors(self.carol).stats(connector_id=connector_id)
-
-        for staging in conn_stats.get(connector_id):
-            self.export(staging_name=staging, connector_id=connector_id,
-                        sync_staging=sync_staging, full_export=full_export, delete_previous=delete_previous)
+        _deprecation_msgs("This function was removed from pyCarol")
+        return None
 
     def _get_staging_export_stats(self):
         """
+
+        @DEPRECATED. This function was removed in pycarol 3.34
+
         Get export status for data models
 
         :return: `dict`
             dict with the information of which staging table is exporting its data.
         """
 
-        query = Query(self.carol, index_type='CONFIG', only_hits=False)
+        _deprecation_msgs("This function was removed from pyCarol")
+        return None
 
-        json_q = Filter.Builder(key_prefix="") \
-            .must(TYPE_FILTER(value="mdmStagingDataExport")).build().to_json()
-
-        query.query(json_q, ).go()
-        staging_results = query.results
-        staging_results = [elem.get('hits', elem) for elem in staging_results
-                           if elem.get('hits', None)]
-        staging_results = list(itertools.chain(*staging_results))
-        if staging_results is not None:
-            return {f"{i.get('mdmConnectorId', 'connectorId_not_found')}_{i.get('mdmStagingType', 'staging_not_found')}": i for i in staging_results}
-
-    def _sync_counters(self, staging_name, connector_id=None, connector_name=None, incremental=False):
-        """
-
-        :param staging_name: `str`
-            Staging Name
-        :param connector_name: `str`, default `None`
-            Connector name
-        :param connector_id: `str`, default `None`
-            Connector id
-        :param incremental: `bool`, default `False`
-            If `True`, it will reset all `mdmCountForEntity`, if `False`, it will only increment the missing values.
-
-        :return: None
-        """
-
-        if connector_name:
-            connector_id = self._connector_by_name(connector_name)
-        else:
-            assert connector_id
-
-        query_params = {"incrementAll": incremental}
-        url = f'v2/staging/{connector_id}/{staging_name}/syncCounters'
-        return self.carol.call_api(url, method='POST', params=query_params, errors='ignore')
 
     def get_mapping_snapshot(self, connector_id, mapping_id, entity_space='PRODUCTION', reverse_mapping=False):
 
