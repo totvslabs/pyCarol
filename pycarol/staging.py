@@ -4,12 +4,10 @@ import itertools
 import warnings
 import asyncio
 
-from .query import Query, delete_golden
 from .schema_generator import carolSchemaGenerator
 from .connectors import Connectors
 from .storage import Storage
 from .utils.importers import _import_dask, _import_pandas
-from .filter import Filter, TYPE_FILTER
 from .utils import async_helpers
 from .utils.miscellaneous import stream_data
 from . import _CAROL_METADATA_STAGING, _NEEDED_FOR_MERGE

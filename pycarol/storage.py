@@ -270,6 +270,9 @@ class Storage:
     def build_url_parquet_staging(self, staging_name, connector_id):
         return self.backend.build_url_parquet_staging(staging_name, connector_id)
 
+    def build_url_parquet_staging_cds(self, staging_name, connector_id):
+        return self.backend.build_url_parquet_staging_cds(staging_name, connector_id)
+
     def build_url_parquet_staging_master(self, staging_name, connector_id):
         return self.backend.build_url_parquet_staging_master(staging_name, connector_id)
 

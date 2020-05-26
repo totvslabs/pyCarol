@@ -1,5 +1,4 @@
 import pandas as pd
-from dask import dataframe as dd
 import multiprocessing
 import functools
 import warnings
@@ -14,12 +13,13 @@ def _import_dask(storage, merge_records=False,
                  dm_name=None, import_type='staging', return_dask_graph=False,
                  connector_id=None, staging_name=None, view_name=None, columns=None,
                  max_hits=None, mapping_columns=None):
+    from dask import dataframe as dd
     if columns:
         columns = list(set(columns))
         columns += __STAGING_FIELDS
         columns = list(set(columns))
 
-    if import_type=='golden':
+    if import_type == 'golden':
         url = [storage.build_url_parquet_golden(dm_name=dm_name)]
     elif import_type == 'staging':
         url = []
@@ -36,14 +36,13 @@ def _import_dask(storage, merge_records=False,
             url.append(url3)
     elif import_type == 'view':
         url = [storage.build_url_parquet_view(view_name=view_name)]
+    elif import_type == 'staging_cds':
+        url = [storage.build_url_parquet_staging_cds(staging_name=staging_name, connector_id=connector_id)]
     else:
-        raise KeyError('import_type should be `golden`,`staging` or `view`')
-
-
+        raise KeyError('import_type should be `golden`,`staging`, `view`, `staging_cds`')
 
     d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns)
-
-    d= d.rename(columns=mapping_columns)
+    d = d.rename(columns=mapping_columns)
     if return_dask_graph:
         return d
     else:

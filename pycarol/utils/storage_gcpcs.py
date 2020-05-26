@@ -195,6 +195,10 @@ class StorageGCPCS:
         path = self.carolina.get_path("golden", {'dm_name': dm_name})
         return f'gcs://{self.carolina.get_bucket_name("golden")}/{path}'
 
+    def build_url_parquet_staging_cds(self, staging_name, connector_id):
+        path = self.carolina.get_path('staging_cds', {'connector_id': connector_id, 'staging_type': staging_name})
+        return f'gcs://{self.carolina.get_bucket_name("staging_cds")}/{path}'
+
     def build_url_parquet_view(self, view_name):
         path = self.carolina.get_path("view", {'relationship_view_name': view_name})
         return f'gcs://{self.carolina.get_bucket_name("view")}/{path}'
