@@ -16,7 +16,7 @@ Run ``pip install pycarol`` to install the latest stable version from `PyPI
 This will install the minimal dependencies. To install pyCarol with the pipeline dependencies use
 ``pip install pycarol[pipeline]``, or to install with dask+pipeline dependencies use ``pip install pycarol[pipeline,dask]``
 
-The options we have are: `complete`, `online`, `dask`, `pipeline`
+The options we have are: `complete`, `onlineapp`, `dask`, `pipeline`
 
 To install from source:
 1. ``pip install -r requirements.txt`` to install the minimal requirements.
