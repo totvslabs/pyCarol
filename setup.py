@@ -7,36 +7,33 @@ import sys
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-install_requires = [
-    'pykube',
-    'click==7.0',
-    'dask[complete]',
-    'toolz',
-    'fastparquet',
-    'flask==1.0.2',
+min_requires = [
     'google-auth-httplib2',
     'google-auth',
     'google-cloud-core>=1.3.0',
     'google-cloud-storage',
-    'joblib==0.11',
-    'luigi',
-    'numpy==1.16.3',
-    'pandas==0.23.4',
+    'joblib>=0.11',
+    'numpy>=1.16.3',
+    'pandas>=0.23.4',
     'pyarrow>=0.15.1',
-    'redis==2.10.6',
     'requests',
     'tqdm',
     'urllib3',
     'deprecated',
-    'pytest',
-    'bumpversion',
     'python-dotenv',
-    'papermill',
-    'gcsfs>=0.3.0',
-    'dash',
-    'dash-cytoscape',
-    'colorcet',
+    'gcsfs>=0.3.0'
 ]
+
+extras_require = {
+    "pipeline": min_requires + ['luigi', 'papermill'],
+    "onlineapp": min_requires + ['flask>=1.0.2', 'redis'],
+    "dask": min_requires + ['dask[complete]'],
+    "dev": min_requires + ['pytest', 'bumpversion'],
+}
+extras_require["complete"] = sorted(
+    {v for req in extras_require.values() for v in req}
+)
+
 
 def read(*parts):
     # intentionally *not* adding an encoding option to open, See:
@@ -79,7 +76,8 @@ setup(
     author_email='ops@totvslabs.com',
     url='https://github.com/totvslabs/pyCarol',
     keywords=['Totvs', 'Carol.ai', 'AI'],
-    install_requires=install_requires,
+    install_requires=min_requires,
+    extras_require=extras_require,
     classifiers=[
         # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
         'Development Status :: 5 - Production/Stable',
