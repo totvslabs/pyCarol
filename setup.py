@@ -7,15 +7,12 @@ import sys
 
 here = os.path.abspath(os.path.dirname(__file__))
 
+
 min_requires = [
     'google-auth-httplib2',
     'google-auth',
     'google-cloud-core>=1.3.0',
     'google-cloud-storage',
-    'joblib>=0.11',
-    'numpy>=1.16.3',
-    'pandas>=0.23.4',
-    'pyarrow>=0.15.1',
     'requests',
     'tqdm',
     'urllib3',
@@ -25,7 +22,9 @@ min_requires = [
 ]
 
 extras_require = {
-    "pipeline": min_requires + ['luigi', 'papermill'],
+    "dataframe": min_requires + [ 'pandas>=0.23.4', 'numpy>=1.16.3', 'joblib>=0.11', 'pyarrow>=0.15.1'],
+    "pipeline": min_requires + ['luigi', 'papermill', 'pandas>=0.23.4', 'numpy>=1.16.3', 'joblib>=0.11',
+                                'pyarrow>=0.15.1',],
     "onlineapp": min_requires + ['flask>=1.0.2', 'redis'],
     "dask": min_requires + ['dask[complete]'],
     "dev": min_requires + ['pytest', 'bumpversion'],

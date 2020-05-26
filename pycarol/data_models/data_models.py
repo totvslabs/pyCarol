@@ -3,7 +3,6 @@ import json
 import time
 import copy
 import warnings
-import pandas as pd
 import asyncio
 
 from .data_models_fields import DataModelFields
@@ -114,6 +113,7 @@ class DataModel:
                 operation to merge records and return selected columns.
             :return:
             """
+        import pandas as pd
 
         if backend not in ['dask', 'pandas']:
             raise ValueError(f"`backend` should be either `dask` or `pandas`. It was passed {backend}")
@@ -456,6 +456,7 @@ class DataModel:
             To use async to send the data. This is much faster than a sequential send.
         :return: None
         """
+        import pandas as pd
 
         self.gzip = gzip
         extra_headers = {}
