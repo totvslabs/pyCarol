@@ -8,7 +8,7 @@ the `pycarol.cds.CDSGolden` classes are used to manipulate the data inside the f
 """
 from .connectors import Connectors
 from .data_models import DataModel
-from .utils.miscellaneous import _deprecation_msgs
+from .utils.deprecation_msgs import _deprecation_msgs
 
 _MACHINE_FLAVORS = [
     'n1-standard-1',

@@ -1,4 +1,4 @@
-from .utils.miscellaneous import _deprecation_msgs
+from .utils.deprecation_msgs import _deprecation_msgs
 
 
 class Tenant:

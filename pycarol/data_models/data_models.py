@@ -1,5 +1,4 @@
 import json
-import itertools
 
 import time
 import copy
@@ -21,7 +20,8 @@ from ..utils.miscellaneous import ranges
 from ..utils import async_helpers
 from ..utils.miscellaneous import stream_data
 from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE
-from ..utils.miscellaneous import drop_duplicated_parquet, _deprecation_msgs
+from ..utils.miscellaneous import drop_duplicated_parquet
+from ..utils.deprecation_msgs import _deprecation_msgs
 
 _DATA_MODEL_TYPES_MAPPING = {
     "boolean": bool,

@@ -8,7 +8,6 @@ import os
 import logging
 import sys
 import re
-import math
 
 _carol_levels = dict(
     NOTSET="NOTSET",
