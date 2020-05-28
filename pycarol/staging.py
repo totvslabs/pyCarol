@@ -442,12 +442,14 @@ class Staging:
         else:
             _meta_cols = _NEEDED_FOR_MERGE
 
-        if callback:
-            assert callable(callback), \
-                f'"{callback}" is a {type(callback)} and is not callable.'
-        assert backend == 'dask' or backend == 'pandas'
-        if return_dask_graph:
-            assert backend == 'dask'
+        if callback and not callable(callback):
+            raise TypeError(f'"{callback}" object is not callable')
+
+        if backend not in ('dask','pandas'):
+            raise ValueError(f"Backend options are 'dask','pandas' {backend} was given")
+
+        if return_dask_graph and backend != 'dask':
+            warnings.warn('`return_dask_graph` has no use when `backend!=dask`')
 
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
@@ -467,7 +469,6 @@ class Staging:
         columns.extend(_meta_cols)
         mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
 
-        # TODO: Validate the code bellow for cds param
         # validate export
         if not cds:
             _deprecation_msgs("`cds` option was removed. Returning CDS data.")

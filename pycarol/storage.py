@@ -267,6 +267,9 @@ class Storage:
     def build_url_parquet_golden(self, dm_name):
         return self.backend.build_url_parquet_golden(dm_name)
 
+    def build_url_parquet_golden_cds(self, dm_name):
+        return self.backend.build_url_parquet_golden(dm_name)
+
     def build_url_parquet_staging(self, staging_name, connector_id):
         return self.backend.build_url_parquet_staging(staging_name, connector_id)
 
