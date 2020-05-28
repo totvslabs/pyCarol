@@ -1,7 +1,5 @@
 import json
-import numpy as np
 from datetime import datetime
-import pandas as pd
 
 class IntType(object):
     json_type = "integer"
@@ -39,6 +37,9 @@ class DateType(object):
 class Type(object):
     @classmethod
     def get_schema_type_for(cls, t):
+        import pandas as pd
+        import numpy as np
+
         """docstring for get_schema_type_for"""
 
         SCHEMA_TYPES = {

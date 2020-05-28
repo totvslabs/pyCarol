@@ -6,7 +6,7 @@ Carol app funtionalities.
 
 
 import zipfile, io
-from .utils.miscellaneous import _deprecation_msgs
+from .utils.deprecation_msgs import _deprecation_msgs
 
 class Apps:
     """

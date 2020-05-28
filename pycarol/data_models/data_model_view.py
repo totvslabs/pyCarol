@@ -1,12 +1,9 @@
 import warnings
-import pandas as pd
 import json
 from ..utils.importers import _import_dask, _import_pandas
 from ..storage import Storage
-from ..query import Query
-from ..filter import TYPE_FILTER, Filter
-import itertools
-from ..utils.miscellaneous import drop_duplicated_parquet, _deprecation_msgs
+from ..utils.miscellaneous import drop_duplicated_parquet
+from ..utils.deprecation_msgs import _deprecation_msgs
 
 class DataModelView:
 

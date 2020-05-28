@@ -1,19 +1,16 @@
-import pandas as pd
 import json
-import itertools
 import warnings
 import asyncio
 
-from .query import Query, delete_golden
 from .schema_generator import carolSchemaGenerator
 from .connectors import Connectors
 from .storage import Storage
 from .utils.importers import _import_dask, _import_pandas
-from .filter import Filter, TYPE_FILTER
 from .utils import async_helpers
 from .utils.miscellaneous import stream_data
 from . import _CAROL_METADATA_STAGING, _NEEDED_FOR_MERGE
-from .utils.miscellaneous import drop_duplicated_parquet, _deprecation_msgs
+from .utils.miscellaneous import drop_duplicated_parquet
+from .utils.deprecation_msgs import _deprecation_msgs
 
 _SCHEMA_TYPES_MAPPING = {
     "geopoint": str,
@@ -90,7 +87,7 @@ class Staging:
                 Send and wait data to be processed in Carol
 
         """
-
+        import pandas as pd
         if dm_to_delete is not None:
             _deprecation_msgs("`dm_to_delete` is deprecated and has no action.")
 
@@ -253,7 +250,7 @@ class Staging:
                 Data to create schema from.
 
         """
-
+        import pandas as pd
         if export_data is not None:
             _deprecation_msgs("`export_data` is deprecated and has no action.")
 
@@ -439,7 +436,7 @@ class Staging:
             DataFrame with the staging data.
 
         """
-
+        import pandas as pd
         if return_metadata:
             _meta_cols = _CAROL_METADATA_STAGING
         else:

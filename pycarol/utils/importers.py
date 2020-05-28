@@ -1,9 +1,6 @@
-import pandas as pd
-from dask import dataframe as dd
 import multiprocessing
 import functools
 import warnings
-
 from tqdm import tqdm
 
 __STAGING_FIELDS = ['mdmCounterForEntity', 'mdmId']
@@ -14,6 +11,8 @@ def _import_dask(storage, merge_records=False,
                  dm_name=None, import_type='staging', return_dask_graph=False,
                  connector_id=None, staging_name=None, view_name=None, columns=None,
                  max_hits=None, mapping_columns=None):
+
+    from dask import dataframe as dd
     if columns:
         columns = list(set(columns))
         columns += __STAGING_FIELDS
@@ -53,6 +52,7 @@ def _import_dask(storage, merge_records=False,
 def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mapping_columns=None, max_workers=None,
                    staging_name=None, view_name=None, import_type='staging', golden=False, max_hits=None, callback=None,
                    token_carolina=None, storage_space=None,  file_pattern=None):
+    import pandas as pd
     if columns:
         columns = list(set(columns))
         columns += __DM_FIELDS
@@ -120,6 +120,7 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
 
 
 def _download_files(file, storage, storage_space, columns, mapping_columns, callback):
+    import pandas as pd
     filename = storage_space +'/' + file['name']
     buffer = storage.open(filename)
     result = pd.read_parquet(buffer, columns=columns)

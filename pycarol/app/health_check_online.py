@@ -1,11 +1,7 @@
 import os
-import sys
-import urllib.parse
-import urllib.request
 
 from pycarol.tasks import Tasks
 from pycarol.carol import Carol
-from pycarol.auth.ApiKeyAuth import ApiKeyAuth
 
 
 class HealthCheckOnline():
