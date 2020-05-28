@@ -1,17 +1,8 @@
 import json
 import gzip, io
-import pandas as pd
 from collections import defaultdict
-import numpy as np
-import warnings
 
 _FILE_MARKER = '<files>'
-
-def _deprecation_msgs(msg):
-    warnings.warn(
-        msg,
-        DeprecationWarning, stacklevel=3
-    )
 
 
 def drop_duplicated_parquet(d):
@@ -40,6 +31,7 @@ class NumpyEncoder(json.JSONEncoder):
     """ Special json encoder for numpy types """
 
     def default(self, obj):
+        import numpy as np
         if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
                             np.int16, np.int32, np.int64, np.uint8,
                             np.uint16, np.uint32, np.uint64)):
@@ -110,7 +102,7 @@ def stream_data(data, step_size, compress_gzip):
     :return: Generator, cont
         Return a slice of `data` and the count of records until that moment.
     """
-
+    import pandas as pd
     if isinstance(data, pd.DataFrame):
         is_df = True
     else:

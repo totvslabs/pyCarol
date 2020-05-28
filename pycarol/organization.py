@@ -1,5 +1,3 @@
-
-
 class Organization:
     """
     Get organization information.

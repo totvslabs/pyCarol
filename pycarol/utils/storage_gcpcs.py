@@ -1,7 +1,6 @@
 import os
 import pickle
 import gzip
-import pandas as pd
 from .. import __TEMP_STORAGE__
 from collections import defaultdict
 from ..utils.miscellaneous import prettify_path, _attach_path, _FILE_MARKER
@@ -10,8 +9,10 @@ from ._cds_utils import retry_check_sum
 
 class StorageGCPCS:
     def __init__(self, carol, carolina):
+        import pandas as pd
         self.carol = carol
         self.carolina = carolina
+
 
         if not os.path.exists(__TEMP_STORAGE__):
             os.makedirs(__TEMP_STORAGE__)

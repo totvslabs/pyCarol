@@ -13,6 +13,20 @@ Run ``pip install pycarol`` to install the latest stable version from `PyPI
 <https://pypi.python.org/pypi/pycarol>`_. `Documentation for the latest release
 <http://pycarol.readthedocs.io/>`__ is hosted on readthedocs.
 
+This will install the minimal dependencies. To install pyCarol with the `dataframes` dependencies use
+``pip install pycarol[dataframe]``, or to install with dask+pipeline dependencies use ``pip install pycarol[pipeline,dask]``
+
+The options we have are: `complete`, `dataframe`, `onlineapp`, `dask`, `pipeline`
+
+To install from source:
+1. ``pip install -r requirements.txt`` to install the minimal requirements;
+2. ``pip install -e . ".[dev]"`` to install the minimal requirements + dev libs;
+3. ``pip install -e . ".[pipeline]"`` to install the minimal requirements + pipelines dependencies;
+4. ``pip install -e . ".[dev]"`` to install the minimal requirements + dev libs;
+5. ``pip install -e . ".[complete]"`` to install all dependencies;
+5. etc;
+
+
 Initializing pyCarol
 --------------------
 
@@ -318,5 +332,5 @@ Release process
 3. Locally, checkout to `master` branch;
 4. make bump_patch/bump_minor depending on the type of version. THis will create a commit with the new version.;
 5. Push your commit and tag;
-6. Create a new Release. 
+6. Create a new Release.
 

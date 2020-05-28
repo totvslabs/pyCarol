@@ -6,8 +6,6 @@ This submodule has all the classes to query data from RT layer in Carol.
 
 import json
 import itertools
-from joblib import Parallel, delayed
-import pandas as pd
 from datetime import datetime
 from .connectors import Connectors
 from .named_query import NamedQuery
@@ -427,7 +425,7 @@ class ParQuery:
         :param verbose:
         :param n_jobs:
         """
-
+        import pandas as pd
         self._stag_mdm_key_range = None
         self._multiplier = None
         self.carol = carol
@@ -736,7 +734,6 @@ class ParQuery:
 
 def _dask_backend(carol, chunks, datamodel_name, page_size, index_type, fields,
                   only_hits, mdm_key, return_df, fields_to_get, custom_filter):
-    import dask
     list_to_compute = []
     for RANGE_FILTER in chunks:
         y = dask.delayed(_par_query)(
@@ -759,6 +756,7 @@ def _dask_backend(carol, chunks, datamodel_name, page_size, index_type, fields,
 
 def _joblib_backend(carol, chunks, datamodel_name, page_size, index_type, fields,
                     only_hits, mdm_key, return_df, fields_to_get, custom_filter, n_jobs, verbose, ):
+    from joblib import Parallel, delayed
     list_to_compute = Parallel(n_jobs=n_jobs,
                                verbose=verbose)(delayed(_par_query)(
         datamodel_name=datamodel_name,

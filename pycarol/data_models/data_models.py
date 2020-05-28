@@ -1,10 +1,8 @@
 import json
-import itertools
 
 import time
 import copy
 import warnings
-import pandas as pd
 import asyncio
 
 from .data_models_fields import DataModelFields
@@ -21,7 +19,8 @@ from ..utils.miscellaneous import ranges
 from ..utils import async_helpers
 from ..utils.miscellaneous import stream_data
 from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE
-from ..utils.miscellaneous import drop_duplicated_parquet, _deprecation_msgs
+from ..utils.miscellaneous import drop_duplicated_parquet
+from ..utils.deprecation_msgs import _deprecation_msgs
 
 _DATA_MODEL_TYPES_MAPPING = {
     "boolean": bool,
@@ -114,6 +113,7 @@ class DataModel:
                 operation to merge records and return selected columns.
             :return:
             """
+        import pandas as pd
 
         if backend not in ['dask', 'pandas']:
             raise ValueError(f"`backend` should be either `dask` or `pandas`. It was passed {backend}")
@@ -456,6 +456,7 @@ class DataModel:
             To use async to send the data. This is much faster than a sequential send.
         :return: None
         """
+        import pandas as pd
 
         self.gzip = gzip
         extra_headers = {}
