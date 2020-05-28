@@ -13,6 +13,8 @@ def _import_dask(storage, merge_records=False,
                  max_hits=None, mapping_columns=None):
 
     from dask import dataframe as dd
+    mapping_columns = mapping_columns or {} #dask does not accepets None. Need to send a valid mapping.
+
     if columns:
         columns = list(set(columns))
         columns += __STAGING_FIELDS
@@ -76,7 +78,6 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
 
     df_list = []
     count = 0
-
 
     if max_workers is not None:
         assert max_workers > 0, f"max_workers must be greater than zero, you passed {max_workers}"

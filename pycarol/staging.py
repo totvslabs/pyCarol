@@ -436,7 +436,6 @@ class Staging:
             DataFrame with the staging data.
 
         """
-        import pandas as pd
         if return_metadata:
             _meta_cols = _CAROL_METADATA_STAGING
         else:
@@ -485,6 +484,7 @@ class Staging:
                              columns=columns, max_hits=max_hits)
 
         elif backend == 'pandas':
+            import pandas as pd
             d = _import_pandas(storage=storage, connector_id=connector_id, max_workers=max_workers,
                                token_carolina=token_carolina, storage_space=storage_space,
                                staging_name=staging_name, import_type=import_type,  columns=columns,
@@ -525,10 +525,13 @@ class Staging:
             if not return_dask_graph:
                 d = drop_duplicated_parquet(d)
             else:
-                # TODO: add mdmDeleted to dask.
                 d = d.set_index('mdmCounterForEntity', sorted=True) \
                     .drop_duplicates(subset='mdmId', keep='last') \
                     .reset_index(drop=True)
+                if 'mdmDeleted' in d.columns:
+                    d['mdmDeleted'] = d['mdmDeleted'].fillna(False)
+                    d = d[~d['mdmDeleted']]
+                d = d.reset_index(drop=True)
 
         if not return_metadata:
             to_drop = set(_meta_cols).intersection(set(d.columns))
