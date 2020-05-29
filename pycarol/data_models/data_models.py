@@ -19,7 +19,7 @@ from ..utils.miscellaneous import ranges
 from ..utils import async_helpers
 from ..utils.miscellaneous import stream_data
 from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE
-from ..utils.miscellaneous import drop_duplicated_parquet
+from ..utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
 from ..utils.deprecation_msgs import _deprecation_msgs
 
 _DATA_MODEL_TYPES_MAPPING = {
@@ -197,13 +197,7 @@ class DataModel:
             if (not return_dask_graph) or (backend == 'pandas'):
                 d = drop_duplicated_parquet(d)
             else:
-                d = d.set_index('mdmCounterForEntity',) \
-                    .drop_duplicates(subset='mdmId', keep='last') \
-                    .reset_index()
-                if 'mdmDeleted' in d.columns:
-                    d['mdmDeleted'] = d['mdmDeleted'].fillna(False)
-                    d = d[~d['mdmDeleted']]
-                d = d.reset_index(drop=True)
+                d = drop_duplicated_parquet_dask(d)
 
         if not return_metadata:
             to_drop = set(_meta_cols).intersection(set(d.columns))

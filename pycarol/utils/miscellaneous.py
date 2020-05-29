@@ -5,6 +5,28 @@ from collections import defaultdict
 _FILE_MARKER = '<files>'
 
 
+def drop_duplicated_parquet_dask(d):
+    """
+    Merge updates and delete records from the parquet files in CDS.
+
+    Args:
+        d: dask DataFrame
+
+    Returns:
+        dask DataFrame
+
+    """
+
+    d = d.set_index('mdmCounterForEntity', ) \
+        .drop_duplicates(subset='mdmId', keep='last') \
+        .reset_index()
+    if 'mdmDeleted' in d.columns:
+        d['mdmDeleted'] = d['mdmDeleted'].fillna(False)
+        d = d[~d['mdmDeleted']]
+    d = d.reset_index(drop=True)
+    return d
+
+
 def drop_duplicated_parquet(d):
     """
     Merge updates and delete records from the parquet files in CDS.
