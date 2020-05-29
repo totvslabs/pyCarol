@@ -23,7 +23,7 @@ def _import_dask(storage, merge_records=False,
     if import_type == 'golden':
         url = [storage.build_url_parquet_golden(dm_name=dm_name)]
     elif import_type == 'golden_cds':
-        url = [storage.build_url_parquet_golden_cds(dm_name=dm_name)]
+        url = storage.build_url_parquet_golden_cds(dm_name=dm_name)
     elif import_type == 'staging':
         url = []
         url1 = storage.build_url_parquet_staging(staging_name=staging_name, connector_id=connector_id)
@@ -38,7 +38,7 @@ def _import_dask(storage, merge_records=False,
     elif import_type == 'view':
         url = [storage.build_url_parquet_view(view_name=view_name)]
     elif import_type == 'staging_cds':
-        url = [storage.build_url_parquet_staging_cds(staging_name=staging_name, connector_id=connector_id)]
+        url = storage.build_url_parquet_staging_cds(staging_name=staging_name, connector_id=connector_id)
     else:
         raise KeyError('import_type should be `golden`,`staging`, `view`, `staging_cds`, `golden_cds`, `view_cds`')
 
