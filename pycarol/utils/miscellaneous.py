@@ -17,13 +17,11 @@ def drop_duplicated_parquet(d):
 
     """
 
-    d.sort_values('mdmCounterForEntity', inplace=True)
-    d.reset_index(inplace=True, drop=True)
-    d.drop_duplicates(subset='mdmId', keep='last', inplace=True)
+    d = d.sort_values('mdmCounterForEntity').reset_index(drop=True).drop_duplicates(subset='mdmId', keep='last')
     if 'mdmDeleted' in d.columns:
         d['mdmDeleted'] = d['mdmDeleted'].fillna(False)
         d = d[~d['mdmDeleted']]
-    d.reset_index(inplace=True, drop=True)
+    d = d.reset_index(drop=True)
     return d
 
 

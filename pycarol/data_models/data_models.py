@@ -194,10 +194,10 @@ class DataModel:
             return d
 
         if merge_records:
-            if not return_dask_graph:
+            if (not return_dask_graph) or (backend == 'pandas'):
                 d = drop_duplicated_parquet(d)
             else:
-                d = d.set_index('mdmCounterForEntity', sorted=True) \
+                d = d.set_index('mdmCounterForEntity',) \
                     .drop_duplicates(subset='mdmId', keep='last') \
                     .reset_index(drop=True)
                 if 'mdmDeleted' in d.columns:
