@@ -199,7 +199,7 @@ class DataModel:
             else:
                 d = d.set_index('mdmCounterForEntity',) \
                     .drop_duplicates(subset='mdmId', keep='last') \
-                    .reset_index(drop=True)
+                    .reset_index()
                 if 'mdmDeleted' in d.columns:
                     d['mdmDeleted'] = d['mdmDeleted'].fillna(False)
                     d = d[~d['mdmDeleted']]
