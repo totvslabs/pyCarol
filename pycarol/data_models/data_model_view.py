@@ -2,7 +2,7 @@ import warnings
 import json
 from ..utils.importers import _import_dask, _import_pandas
 from ..storage import Storage
-from ..utils.miscellaneous import drop_duplicated_parquet
+from ..utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
 from ..utils.deprecation_msgs import _deprecation_msgs
 
 class DataModelView:
@@ -229,12 +229,10 @@ class DataModelView:
             return d
 
         if merge_records:
-            if not return_dask_graph:
+            if (not return_dask_graph) or (backend == 'pandas'):
                 d = drop_duplicated_parquet(d)
             else:
-                d = d.set_index('mdmCounterForEntity', sorted=True) \
-                    .drop_duplicates(subset='mdmId', keep='last') \
-                    .reset_index(drop=True)
+                d = drop_duplicated_parquet_dask(d)
 
         if not return_metadata:
             to_drop = set(['mdmId', 'mdmCounterForEntity', 'mdmLastUpdated']).intersection(set(d.columns))
