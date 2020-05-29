@@ -10,7 +10,7 @@ __DM_FIELDS = ['mdmCounterForEntity', 'mdmId']
 def _import_dask(storage, merge_records=False,
                  dm_name=None, import_type='staging', return_dask_graph=False,
                  connector_id=None, staging_name=None, view_name=None, columns=None,
-                 max_hits=None, mapping_columns=None):
+                 max_hits=None, mapping_columns=None, engine='pyarrow'):
 
     from dask import dataframe as dd
     mapping_columns = mapping_columns or {} #dask does not accepets None. Need to send a valid mapping.
@@ -42,7 +42,7 @@ def _import_dask(storage, merge_records=False,
     else:
         raise KeyError('import_type should be `golden`,`staging`, `view`, `staging_cds`, `golden_cds`, `view_cds`')
 
-    d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns)
+    d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns, engine=engine)
     d = d.rename(columns=mapping_columns)
     if return_dask_graph:
         return d
