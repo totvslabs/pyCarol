@@ -94,7 +94,7 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
         with multiprocessing.Pool(processes=max_workers) as pool:
             df_list = pool.map(partial_download, file_paths)
     else:
-        for i, file in enumerate(tqdm(list(file_paths))):
+        for i, file in enumerate(tqdm(list(file_paths))): # need list to be able to track the counts.
             buffer = storage.load(file['name'], format='raw', cache=False, storage_space=file['storage_space'])
             result = pd.read_parquet(buffer, columns=columns)
 
