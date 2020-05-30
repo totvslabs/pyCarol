@@ -52,6 +52,7 @@ class StorageGCPCS:
         blob = bucket.blob(remote_file_name, chunk_size=chunk_size)
 
         if parquet:
+            import pandas as pd
             if not isinstance(obj, pd.DataFrame):
                 raise ValueError(f"Object to be saved as parquet must be a "
                                  f"DataFrame. Received a {type(obj)}")
@@ -161,6 +162,7 @@ class StorageGCPCS:
 
         if os.path.isfile(local_file_name):
             if parquet:
+                import pandas as pd
                 return pd.read_parquet(local_file_name, columns=columns)
             elif format == 'joblib':
                 import joblib
