@@ -443,12 +443,12 @@ class Carol:
         self.auth.switch_context(env_id=env_id)
 
         self.domain = env_name
-        self.app_name = app_name #TODO: Today we cannot use CDS without a valid app name.
-        self.tenant = Tenant(self).get_tenant_by_domain(env_name)
+        self.app_name = app_name # TODO: Today we cannot use CDS without a valid app name.
+        self._tenant = Tenant(self).get_tenant_by_domain(env_name)
 
         return self
 
-    def switch_context(self, env_name=None, env_id=None, app_name=None):
+    def switch_context(self, env_name=None, env_id=None, org_name=None, org_id=None, app_name=None):
         """
         Context manager to temporary have access to a second environment
 
@@ -481,26 +481,43 @@ class Carol:
         if self.org is None:
             self.org = Organization(self).get_organization_info(self.organization)
 
+        current_state = self.get_current()
+
         if env_name:
             env_id = Tenant(self).get_tenant_by_domain(env_name)['mdmId']
         elif env_id is None:
             raise ValueError('Either `env_name` or `env_id` must be set.')
 
+        if org_name:
+            org_id = Organization(self).get_organization_info(org_name)['mdmId']
+
         class SwitchContext(object):
 
-            def __init__(self, parent_context, env_name=None, env_id=None, app_name=None):
+            def __init__(self, parent_context, env_name=None, env_id=None, org_id=None, app_name=None):
                 self.parent_context = parent_context
                 self.env_name = env_name
                 self.env_id = env_id
                 self.app_name = app_name
+                self.org_id = org_id
 
             def __enter__(self):
-
-                self.parent_context.switch_environment(env_name= self.env_name, env_id=self.env_id, app_name=self.app_name)
-
+                self.parent_context.switch_environment(env_name=self.env_name, env_id=self.env_id,
+                                                       app_name=self.app_name)
                 return self.parent_context
 
             def __exit__(self, exc_type, exc_val, exc_tb):
                 del self.parent_context
 
         return SwitchContext(parent_context=copy.deepcopy(self), env_name=env_name, env_id=env_id, app_name=app_name)
+
+    def get_current(self):
+
+        env = self.call_api('v2/tenants/current')
+        org = self.call_api('v1/organizations/current')
+
+        return {
+            "env_name": env['mdmName'],
+            "env_id": env['mdmId'],
+            "org_name": org['mdmName'],
+            "org_id": org['mdmId'],
+        }
