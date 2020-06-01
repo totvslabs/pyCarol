@@ -113,6 +113,7 @@ class Carol:
         self.app_name = app_name
         self.port = port
         self.verbose = verbose
+        self._host_string = host
         self.host = self._set_host(domain=self.domain, organization=self.organization,
                                    environment=self.environment, host=host)
         self._tenant = None
@@ -123,6 +124,7 @@ class Carol:
         self.response = None
 
         self.org = None
+
 
 
     @property
@@ -402,9 +404,15 @@ class Carol:
         else:
             raise Exception("Auth object not set. Can't fetch token.")
 
-    def switch_environment(self, env_name=None, env_id=None, app_name=None):
+    def switch_org_level(self):
+
+        org = self._current_org()
+        self.auth.switch_org_context(org['mdmId'])
+
+    def switch_environment(self, env_name=None, env_id=None, app_name=None, org_name=None, org_id=None):
         """
-        Switch environments. If the user has access to this environment, it will be "logged in" in this new environment.
+        Switch org/environments. If the user has access to this environment, it will be "logged in" in this new
+        org/environment.
 
         Args:
 
@@ -415,6 +423,10 @@ class Carol:
             app_name: `str` default `None`
                 App name in the target environment to switch the context to.
                 Only needed with using CDS.
+            org_name: `str` default `None`
+                The organization name to switch context to. If the same keep it `None`
+            org_id: `str` default `None`
+                The organization id to switch context to. If the same keep it `None`
 
         Returns:
             self
@@ -435,6 +447,14 @@ class Carol:
         if self.org is None:
             self.org = Organization(self).get_organization_info(self.organization)
 
+        if org_id is not None or org_name is not None:
+            # Switch to org context.
+            self.switch_org_level()
+            if org_id is None:
+                org_id = Organization(self).get_organization_info(org_name)['mdmId']
+            # Switch org.
+            self.auth.switch_org_context(org_id)
+
         if env_name:
             env_id = Tenant(self).get_tenant_by_domain(env_name)['mdmId']
         elif env_id is None:
@@ -443,12 +463,16 @@ class Carol:
         self.auth.switch_context(env_id=env_id)
 
         self.domain = env_name
-        self.app_name = app_name #TODO: Today we cannot use CDS without a valid app name.
-        self.tenant = Tenant(self).get_tenant_by_domain(env_name)
+        self.app_name = app_name # TODO: Today we cannot use CDS without a valid app name.
+        self._tenant = self._current_env()['mdmName']
+        self.organization = self._current_org()['mdmName']
+
+        self.host = self._set_host(domain=self.domain, organization=self.organization,
+                                   environment=self.environment, host=self._host_string)
 
         return self
 
-    def switch_context(self, env_name=None, env_id=None, app_name=None):
+    def switch_context(self, env_name=None, env_id=None, app_name=None, org_name=None, org_id=None):
         """
         Context manager to temporary have access to a second environment
 
@@ -488,19 +512,65 @@ class Carol:
 
         class SwitchContext(object):
 
-            def __init__(self, parent_context, env_name=None, env_id=None, app_name=None):
+            def __init__(self, parent_context, env_name=None, env_id=None, org_id=None, org_name=None, app_name=None):
                 self.parent_context = parent_context
                 self.env_name = env_name
                 self.env_id = env_id
                 self.app_name = app_name
+                self.org_id = org_id
+                self.org_name = org_name
 
             def __enter__(self):
-
-                self.parent_context.switch_environment(env_name= self.env_name, env_id=self.env_id, app_name=self.app_name)
-
+                self.parent_context.switch_environment(env_name=self.env_name, env_id=self.env_id,
+                                                       app_name=self.app_name, org_name=self.org_name,
+                                                       org_id=self.org_id)
                 return self.parent_context
 
             def __exit__(self, exc_type, exc_val, exc_tb):
                 del self.parent_context
 
-        return SwitchContext(parent_context=copy.deepcopy(self), env_name=env_name, env_id=env_id, app_name=app_name)
+        return SwitchContext(parent_context=copy.deepcopy(self), env_name=env_name, env_id=env_id, app_name=app_name,
+                             org_name=org_name, org_id=org_id,)
+
+
+    def _current_env(self):
+        return self.call_api('v1/tenants/current')
+
+    def _current_org(self):
+        return self.call_api('v1/organizations/current')
+
+    def get_current(self, level='all'):
+        """
+        Get current org/env information.
+
+        Args:
+
+            level: `str`:
+                Possible Values:
+                    "all": To get organization and environment information.
+                    "org": To get organization information.
+                    "env": To get environment information.
+
+        Returns: `dict`
+            Dictionary with keys org_Id, org_name, env_id, env_name
+
+        """
+
+        env = {}
+        org = {}
+
+        if level.lower() not in ['org', 'env', 'all']:
+            raise ValueError(f"level should be 'all', 'org', 'env', {level} was passed.")
+
+        if level.lower() == 'env' or level.lower() == 'all':
+            env = self._current_env()
+
+        if level.lower() == 'org' or level.lower() == 'all':
+            org = self._current_org()
+
+        return {
+            "env_name": env.get('mdmName'),
+            "env_id": env.get('mdmId'),
+            "org_name": org.get('mdmName'),
+            "org_id": org.get('mdmId'),
+        }

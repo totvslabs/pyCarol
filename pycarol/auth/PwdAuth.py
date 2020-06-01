@@ -4,12 +4,29 @@ from .PwdAuth_cloner import PwdAuthCloner
 
 
 class PwdAuth:
+    """
+
+    Args:
+        user: `str`
+            Username
+        password: `str`
+            Password
+
+    """
+
     def __init__(self, user, password):
         self.user = user
         self.password = password
         self._token = None
         self.carol = None
         self.connector_id = None
+
+    def _set_token(self, data):
+        self._token = types.SimpleNamespace()
+        self._token.access_token = data['access_token']
+        self._token.refresh_token = data['refresh_token']
+        self._token.expiration = data['timeIssuedInMillis'] + (
+                    data['expires_in'] * 1000)
 
     def set_connector_id(self, connector_id):
         self.connector_id = connector_id
@@ -18,6 +35,16 @@ class PwdAuth:
         return PwdAuthCloner(self)
 
     def login(self, carol):
+        """
+
+        Args:
+            carol: pycarol.Carol
+                Carol() instance.
+
+        Returns:
+            None
+
+        """
         self.carol = carol
 
         data = {
@@ -31,11 +58,7 @@ class PwdAuth:
         resp = self.carol.call_api('v2/oauth2/token', auth=False, data=data,
                                    content_type='application/x-www-form-urlencoded')
 
-        self._token = types.SimpleNamespace()
-        self._token.access_token = resp['access_token']
-        self._token.refresh_token = resp['refresh_token']
-        self._token.expiration = resp['timeIssuedInMillis'] + (
-                    resp['expires_in'] * 1000)
+        self._set_token(resp)
         if self.carol.verbose:
             print("Token: {}".format(self._token.access_token))
 
@@ -67,11 +90,7 @@ class PwdAuth:
             'refresh_token': self._token.refresh_token
         }, content_type='application/x-www-form-urlencoded')
 
-        self._token = types.SimpleNamespace()
-        self._token.access_token = resp['access_token']
-        self._token.refresh_token = resp['refresh_token']
-        self._token.expiration = resp['timeIssuedInMillis'] \
-                                 + (resp['expires_in'] * 1000)
+        self._set_token(resp)
 
     def switch_context(self, env_id):
         """
@@ -88,11 +107,7 @@ class PwdAuth:
         path = f'v2/oauth2/switchTenantContext/{env_id}'
         resp = self.carol.call_api(method='POST', path=path)
 
-        self._token = types.SimpleNamespace()
-        self._token.access_token = resp['access_token']
-        self._token.refresh_token = resp['refresh_token']
-        self._token.expiration = resp['timeIssuedInMillis'] \
-                                 + (resp['expires_in'] * 1000)
+        self._set_token(resp)
 
     def switch_org_context(self, org_id):
         """
@@ -109,8 +124,4 @@ class PwdAuth:
         path = f'v2/oauth2/switchOrgContext/{org_id}'
         resp = self.carol.call_api(method='POST', path=path)
 
-        self._token = types.SimpleNamespace()
-        self._token.access_token = resp['access_token']
-        self._token.refresh_token = resp['refresh_token']
-        self._token.expiration = resp['timeIssuedInMillis'] + (
-                resp['expires_in'] * 1000)
+        self._set_token(resp)
