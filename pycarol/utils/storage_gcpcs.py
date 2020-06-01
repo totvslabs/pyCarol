@@ -52,6 +52,7 @@ class StorageGCPCS:
         blob = bucket.blob(remote_file_name, chunk_size=chunk_size)
 
         if parquet:
+            import pandas as pd
             if not isinstance(obj, pd.DataFrame):
                 raise ValueError(f"Object to be saved as parquet must be a "
                                  f"DataFrame. Received a {type(obj)}")
@@ -161,6 +162,7 @@ class StorageGCPCS:
 
         if os.path.isfile(local_file_name):
             if parquet:
+                import pandas as pd
                 return pd.read_parquet(local_file_name, columns=columns)
             elif format == 'joblib':
                 import joblib
@@ -195,6 +197,29 @@ class StorageGCPCS:
     def build_url_parquet_golden(self, dm_name):
         path = self.carolina.get_path("golden", {'dm_name': dm_name})
         return f'gcs://{self.carolina.get_bucket_name("golden")}/{path}'
+
+    def build_url_parquet_golden_cds(self, dm_name):
+        path = self.carolina.get_path("golden_cds", {'dm_name': dm_name})
+        return f'gcs://{self.carolina.get_bucket_name("golden_cds")}/{path}'
+
+    def build_url_dask_parquet_golden_cds(self, dm_name):
+        bucket = self.carolina.get_client().bucket(self.carolina.get_bucket_name('golden_cds'))
+        path = self.carolina.get_path("golden_cds", {'dm_name': dm_name})
+        blobs = bucket.list_blobs(prefix=path, delimiter=None)
+        #Dask does not accept iterators.
+        return [f'gcs://{file.bucket.name}/{file.name}' for file in blobs]
+
+    def build_url_parquet_staging_cds(self, staging_name, connector_id):
+        path = self.carolina.get_path('staging_cds', {'connector_id': connector_id, 'staging_type': staging_name})
+        return f'gcs://{self.carolina.get_bucket_name("staging_cds")}/{path}'
+
+    def build_url_dask_parquet_staging_cds(self, staging_name, connector_id):
+
+        bucket = self.carolina.get_client().bucket(self.carolina.get_bucket_name('staging_cds'))
+        path = self.carolina.get_path('staging_cds', {'connector_id': connector_id, 'staging_type': staging_name})
+        blobs = bucket.list_blobs(prefix=path, delimiter=None)
+        #Dask does not accept iterators.
+        return [f'gcs://{file.bucket.name}/{file.name}' for file in blobs]
 
     def build_url_parquet_view(self, view_name):
         path = self.carolina.get_path("view", {'relationship_view_name': view_name})
@@ -235,7 +260,7 @@ class StorageGCPCS:
         bucket = self.carolina.get_client().bucket(self.carolina.get_bucket_name('golden'))
         path = self.carolina.get_path('golden', {'dm_name': dm_name})
         blobs = bucket.list_blobs(prefix=path, delimiter=None)
-        return [{'storage_space': 'golden', 'name': i.name} for i in blobs if i.name.endswith('.parquet')]
+        return ({'storage_space': 'golden', 'name': i.name} for i in blobs if i.name.endswith('.parquet'))
 
     def get_golden_cds_file_paths(self, dm_name, file_pattern=None):
         bucket = self.carolina.get_client().bucket(self.carolina.get_bucket_name('golden_cds'))
@@ -244,19 +269,19 @@ class StorageGCPCS:
             path = path + file_pattern
 
         blobs = bucket.list_blobs(prefix=path, delimiter=None)
-        return [{'storage_space': 'golden_cds', 'name': i.name} for i in blobs if i.name.endswith('.parquet')]
+        return ({'storage_space': 'golden_cds', 'name': i.name} for i in blobs if i.name.endswith('.parquet'))
 
     def get_view_cds_file_paths(self, dm_name):
         bucket = self.carolina.get_client().bucket(self.carolina.get_bucket_name('view_cds'))
         path = self.carolina.get_path('view_cds', {'dm_name': dm_name})
         blobs = bucket.list_blobs(prefix=path, delimiter=None)
-        return [{'storage_space': 'view_cds', 'name': i.name} for i in blobs if i.name.endswith('.parquet')]
+        return ({'storage_space': 'view_cds', 'name': i.name} for i in blobs if i.name.endswith('.parquet'))
 
     def get_view_file_paths(self, view_name):
         bucket = self.carolina.get_client().bucket(self.carolina.get_bucket_name('view'))
         path = self.carolina.get_path('view', {'relationship_view_name': view_name})
         blobs = bucket.list_blobs(prefix=path, delimiter=None)
-        return [{'storage_space': 'view', 'name': i.name} for i in blobs if i.name.endswith('.parquet')]
+        return ({'storage_space': 'view', 'name': i.name} for i in blobs if i.name.endswith('.parquet'))
 
     def get_staging_cds_file_paths(self, staging_name, connector_id, file_pattern=None):
 
@@ -266,7 +291,7 @@ class StorageGCPCS:
             path = path + file_pattern
 
         blobs = bucket.list_blobs(prefix=path, delimiter=None)
-        return [{'storage_space': 'staging_cds', 'name': i.name} for i in blobs if i.name.endswith('.parquet')]
+        return ({'storage_space': 'staging_cds', 'name': i.name} for i in blobs if i.name.endswith('.parquet'))
 
     def get_staging_file_paths(self, staging_name, connector_id):
         bucket_staging = self.carolina.get_client().bucket(self.carolina.get_bucket_name('staging'))

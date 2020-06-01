@@ -734,7 +734,6 @@ class ParQuery:
 
 def _dask_backend(carol, chunks, datamodel_name, page_size, index_type, fields,
                   only_hits, mdm_key, return_df, fields_to_get, custom_filter):
-    import dask
     list_to_compute = []
     for RANGE_FILTER in chunks:
         y = dask.delayed(_par_query)(

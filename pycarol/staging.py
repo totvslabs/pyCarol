@@ -9,7 +9,7 @@ from .utils.importers import _import_dask, _import_pandas
 from .utils import async_helpers
 from .utils.miscellaneous import stream_data
 from . import _CAROL_METADATA_STAGING, _NEEDED_FOR_MERGE
-from .utils.miscellaneous import drop_duplicated_parquet
+from .utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
 from .utils.deprecation_msgs import _deprecation_msgs
 
 _SCHEMA_TYPES_MAPPING = {
@@ -436,18 +436,19 @@ class Staging:
             DataFrame with the staging data.
 
         """
-        import pandas as pd
         if return_metadata:
             _meta_cols = _CAROL_METADATA_STAGING
         else:
             _meta_cols = _NEEDED_FOR_MERGE
 
-        if callback:
-            assert callable(callback), \
-                f'"{callback}" is a {type(callback)} and is not callable.'
-        assert backend == 'dask' or backend == 'pandas'
-        if return_dask_graph:
-            assert backend == 'dask'
+        if callback and not callable(callback):
+            raise TypeError(f'"{callback}" object is not callable')
+
+        if backend not in ('dask','pandas'):
+            raise ValueError(f"Backend options are 'dask','pandas' {backend} was given")
+
+        if return_dask_graph and backend != 'dask':
+            warnings.warn('`return_dask_graph` has no use when `backend!=dask`')
 
         if connector_name:
             connector_id = self._connector_by_name(connector_name)
@@ -467,7 +468,6 @@ class Staging:
         columns.extend(_meta_cols)
         mapping_columns = dict(zip([i.replace("-", "_") for i in columns], mapping_columns))
 
-        # TODO: Validate the code bellow for cds param
         # validate export
         if not cds:
             _deprecation_msgs("`cds` option was removed. Returning CDS data.")
@@ -484,6 +484,7 @@ class Staging:
                              columns=columns, max_hits=max_hits)
 
         elif backend == 'pandas':
+            import pandas as pd
             d = _import_pandas(storage=storage, connector_id=connector_id, max_workers=max_workers,
                                token_carolina=token_carolina, storage_space=storage_space,
                                staging_name=staging_name, import_type=import_type,  columns=columns,
@@ -521,13 +522,10 @@ class Staging:
             return d
 
         if merge_records:
-            if not return_dask_graph:
+            if (not return_dask_graph) or (backend == 'pandas'):
                 d = drop_duplicated_parquet(d)
             else:
-                # TODO: add mdmDeleted to dask.
-                d = d.set_index('mdmCounterForEntity', sorted=True) \
-                    .drop_duplicates(subset='mdmId', keep='last') \
-                    .reset_index(drop=True)
+                d = drop_duplicated_parquet_dask(d)
 
         if not return_metadata:
             to_drop = set(_meta_cols).intersection(set(d.columns))

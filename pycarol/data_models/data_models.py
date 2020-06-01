@@ -19,7 +19,7 @@ from ..utils.miscellaneous import ranges
 from ..utils import async_helpers
 from ..utils.miscellaneous import stream_data
 from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE
-from ..utils.miscellaneous import drop_duplicated_parquet
+from ..utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
 from ..utils.deprecation_msgs import _deprecation_msgs
 
 _DATA_MODEL_TYPES_MAPPING = {
@@ -113,10 +113,9 @@ class DataModel:
                 operation to merge records and return selected columns.
             :return:
             """
-        import pandas as pd
 
-        if backend not in ['dask', 'pandas']:
-            raise ValueError(f"`backend` should be either `dask` or `pandas`. It was passed {backend}")
+        if backend not in ('dask','pandas'):
+            raise ValueError(f"Backend options are 'dask','pandas' {backend} was given")
 
         if return_metadata:
             # It can be costly to get all meta from a golden. So er should alway ask for the info we want.
@@ -124,9 +123,8 @@ class DataModel:
         else:
             _meta_cols = _NEEDED_FOR_MERGE
 
-        if callback:
-            assert callable(callback), \
-                f'"{callback}" is a {type(callback)} and is not callable.'
+        if callback and not callable(callback):
+            raise TypeError(f'"{callback}" object is not callable')
 
         all_cols = list(self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields']))
         if not columns:  # if an empty list was sent.
@@ -139,8 +137,8 @@ class DataModel:
         if len(_diff_cols) > 0:
             warnings.warn(f"It seems there was used columns not in this data model: {_diff_cols}", UserWarning)
 
-        if return_dask_graph:
-            assert backend == 'dask'
+        if return_dask_graph and backend != 'dask':
+            warnings.warn('`return_dask_graph` has no use when `backend!=dask`')
 
         if not cds:
             _deprecation_msgs("`cds` option will be removed from pycarol 3.33. Consider use `cds=True`"
@@ -162,6 +160,7 @@ class DataModel:
                              columns=columns)
 
         elif backend == 'pandas':
+            import pandas as pd
             d = _import_pandas(storage=storage, dm_name=dm_name,
                                import_type=import_type, columns=columns,
                                callback=callback, max_hits=max_hits,
@@ -195,12 +194,10 @@ class DataModel:
             return d
 
         if merge_records:
-            if not return_dask_graph:
+            if (not return_dask_graph) or (backend == 'pandas'):
                 d = drop_duplicated_parquet(d)
             else:
-                d = d.set_index('mdmCounterForEntity', sorted=True) \
-                    .drop_duplicates(subset='mdmId', keep='last') \
-                    .reset_index(drop=True)
+                d = drop_duplicated_parquet_dask(d)
 
         if not return_metadata:
             to_drop = set(_meta_cols).intersection(set(d.columns))

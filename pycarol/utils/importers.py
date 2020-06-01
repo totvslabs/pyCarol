@@ -10,39 +10,40 @@ __DM_FIELDS = ['mdmCounterForEntity', 'mdmId']
 def _import_dask(storage, merge_records=False,
                  dm_name=None, import_type='staging', return_dask_graph=False,
                  connector_id=None, staging_name=None, view_name=None, columns=None,
-                 max_hits=None, mapping_columns=None):
+                 max_hits=None, mapping_columns=None, engine='pyarrow'):
 
     from dask import dataframe as dd
+    mapping_columns = mapping_columns or {} #dask does not accepets None. Need to send a valid mapping.
+
     if columns:
         columns = list(set(columns))
         columns += __STAGING_FIELDS
         columns = list(set(columns))
 
-    if import_type=='golden':
+    if import_type == 'golden':
         url = [storage.build_url_parquet_golden(dm_name=dm_name)]
+    elif import_type == 'golden_cds':
+        url = storage.build_url_parquet_golden_cds(dm_name=dm_name)
     elif import_type == 'staging':
         url = []
         url1 = storage.build_url_parquet_staging(staging_name=staging_name, connector_id=connector_id)
         if url1 is not None:
             url.append(url1)
-
         url2 = storage.build_url_parquet_staging_master(staging_name=staging_name, connector_id=connector_id)
         if url2 is not None:
             url.append(url2)
-
         url3 = storage.build_url_parquet_staging_rejected(staging_name=staging_name, connector_id=connector_id)
         if url3 is not None:
             url.append(url3)
     elif import_type == 'view':
         url = [storage.build_url_parquet_view(view_name=view_name)]
+    elif import_type == 'staging_cds':
+        url = storage.build_url_parquet_staging_cds(staging_name=staging_name, connector_id=connector_id)
     else:
-        raise KeyError('import_type should be `golden`,`staging` or `view`')
+        raise KeyError('import_type should be `golden`,`staging`, `view`, `staging_cds`, `golden_cds`, `view_cds`')
 
-
-
-    d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns)
-
-    d= d.rename(columns=mapping_columns)
+    d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns, engine=engine)
+    d = d.rename(columns=mapping_columns)
     if return_dask_graph:
         return d
     else:
@@ -58,9 +59,9 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
         columns += __DM_FIELDS
         columns = list(set(columns))
 
-    if import_type=='golden':
+    if import_type == 'golden':
         file_paths = storage.get_golden_file_paths(dm_name=dm_name)
-    elif import_type=='staging':
+    elif import_type == 'staging':
         file_paths = storage.get_staging_file_paths(staging_name=staging_name, connector_id=connector_id)
     elif import_type == 'view':
         file_paths = storage.get_view_file_paths(view_name=view_name)
@@ -78,7 +79,6 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
     df_list = []
     count = 0
 
-
     if max_workers is not None:
         assert max_workers > 0, f"max_workers must be greater than zero, you passed {max_workers}"
     else:
@@ -94,7 +94,7 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
         with multiprocessing.Pool(processes=max_workers) as pool:
             df_list = pool.map(partial_download, file_paths)
     else:
-        for i, file in enumerate(tqdm(file_paths)):
+        for i, file in enumerate(tqdm(list(file_paths))): # need list to be able to track the counts.
             buffer = storage.load(file['name'], format='raw', cache=False, storage_space=file['storage_space'])
             result = pd.read_parquet(buffer, columns=columns)
 
