@@ -51,7 +51,7 @@ class ApiKeyAuth:
 
         """
 
-        path = f'v2/oauth2/switchOrgContext/{org_id}'
+        path = f'v2/oauth2/switchOrgContextWithApiKey/{org_id}'
         resp = self.carol.call_api(method='POST', path=path)
 
         self.api_key = resp['apiKey']
