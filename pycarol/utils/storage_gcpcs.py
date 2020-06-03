@@ -12,10 +12,7 @@ class StorageGCPCS:
         import pandas as pd
         self.carol = carol
         self.carolina = carolina
-
-
-        if not os.path.exists(__TEMP_STORAGE__):
-            os.makedirs(__TEMP_STORAGE__)
+        os.makedirs(__TEMP_STORAGE__, exist_ok=True)
 
     def _get_app_storage_bucket(self):
         return self.carolina.get_client().bucket(self.carolina.get_bucket_name("app"))
