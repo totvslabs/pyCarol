@@ -1,0 +1,17 @@
+name: Auto Assign to Projects
+
+on:
+  pull_request:
+    types: [opened]
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  assign_one_project:
+    runs-on: ubuntu-latest
+    name: pyCarol
+    steps:
+    - name: Assign to pyCarol project. 
+      uses: srggrs/assign-one-project-github-action@1.2.0
+      with:
+        project: 'https://github.com/orgs/totvslabs/projects/3'
