@@ -4,7 +4,7 @@
 """
 
 import luigi
-from luigi import parameter, six
+from luigi import parameter
 from luigi.task import flatten
 from luigi.parameter import ParameterVisibility
 from pycarol.pipeline.targets import PickleTarget
@@ -215,11 +215,12 @@ class Task(luigi.Task):
             result[param_name] = param_obj.normalize(arg)
 
         # Then the keyword arguments
-        for param_name, arg in six.iteritems(kwargs):
+        for param_name, arg in kwargs.items():
             if param_name in result:
                 raise parameter.DuplicateParameterException(
                     '%s: parameter %s was already set as a positional parameter' % (exc_desc, param_name))
             if param_name not in params_dict:
+                # this is the difference between our and luigi's implementations.
                 # raise parameter.UnknownParameterException('%s: unknown parameter %s' % (exc_desc, param_name))
                 continue
 
@@ -251,7 +252,7 @@ class Task(luigi.Task):
         """
         params_str = {}
         params = dict(self.get_params())
-        for param_name, param_value in six.iteritems(self.param_kwargs):
+        for param_name, param_value in self.param_kwargs.items():
             if (((not only_significant) or params[param_name].significant)
                     and ((not only_public) or params[param_name].visibility == ParameterVisibility.PUBLIC)
                     and params[param_name].visibility != ParameterVisibility.PRIVATE):
