@@ -464,7 +464,7 @@ class Carol:
 
         self.domain = env_name
         self.app_name = app_name # TODO: Today we cannot use CDS without a valid app name.
-        self._tenant = self._current_env()['mdmName']
+        self._tenant = self._current_env()
         self.organization = self._current_org()['mdmName']
 
         self.host = self._set_host(domain=self.domain, organization=self.organization,
