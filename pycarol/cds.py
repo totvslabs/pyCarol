@@ -36,7 +36,7 @@ class CDSStaging:
                      worker_type=None, max_number_workers=-1, number_shards=-1, num_records=-1,
                      delete_target_folder=False, enable_realtime=False, delete_realtime_records=False,
                      send_realtime=False, file_pattern='*', filter_query=None, skip_consolidation=False,
-                     force_dataflow=False):
+                     force_dataflow=False, recursive_processing=True):
 
         """
         Process CDS staging data.
@@ -75,8 +75,12 @@ class CDSStaging:
             force_dataflow: `bool`  default `False`
                 If Dataflow job should be spinned even for small datasets
                 (by default, small datasets are processed directly inside Carol)
+            recursive_processing: `bool`  default `True`
+                If processing should be chained/recursed in target entities. e.g., If a staging has 3 ETLs and each ETL
+                maps to a data model. If we process this staging it will trigger the whole tree to be processed.
 
-        :return: None
+        :return: dict
+            Task definition.
 
         """
 
@@ -100,6 +104,7 @@ class CDSStaging:
             "sendToRealtime": send_realtime, "filePattern": file_pattern,
             "skipConsolidation": skip_consolidation,
             "forceDataflow": force_dataflow,
+            "recursiveProcessing": recursive_processing,
         }
 
         return self.carol.call_api(path='v1/cds/staging/processData', method='POST', params=query_params,
