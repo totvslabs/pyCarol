@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+from .utils.deprecation_msgs import _deprecation_msgs
 
 
 class Connectors:
@@ -112,13 +113,15 @@ class Connectors:
         mdm_id = self.get_by_name(name)['mdmId']
         self.delete_by_id(mdm_id, force_deletion)
 
-    def delete_by_id(self, mdm_id, force_deletion=True):
+    def delete_by_id(self, connector_id=None, mdm_id=None, force_deletion=True):
         """
         Delete Connector by ID
 
         Args:
 
-            mdm_id: `str`` #TODO: Rename to connector_id
+            connector_id: `str``
+                Connector ID
+            mdm_id: `str``
                 Connector ID
             force_deletion: `bool` default `True`
                 Force the deletion
@@ -126,8 +129,11 @@ class Connectors:
         Returns: None
 
         """
+        if mdm_id is not None:
+            _deprecation_msgs("mdm_id is deprecated and will be removed, use connector_id")
+            connector_id = connector_id if connector_id else mdm_id
 
-        self.carol.call_api('v1/connectors/{}?forceDeletion={}'.format(mdm_id, force_deletion), method='DELETE')
+        self.carol.call_api(f'v1/connectors/{connector_id}?forceDeletion={force_deletion}', method='DELETE')
 
     def get_all(self, offset=0, page_size=-1, sort_order='ASC', sort_by=None, include_connectors=False,
                 include_mappings=False, include_consumption=False, print_status=True, save_results=False,
@@ -310,7 +316,6 @@ class Connectors:
 
         """
 
-
         if all_connectors:
             payload = {
                 "offset": offset,
@@ -362,3 +367,109 @@ class Connectors:
             payload['offset'] = count
 
         return self.resp
+
+    def get_entity_mappings(self, connector_name=None, connector_id=None,
+                            reverse_mapping=False, staging_name=None,
+                            offset=0, page_size=1000, sort_order='ASC',
+                            sort_by=None, print_status=False, errors='raise'):
+
+        """
+        Get all Entity Mappings.
+
+        Args:
+            connector_name: `str`, `str`, default `None`
+                Connector Name
+            connector_id: `str`, `str`, default `None`
+                Connector ID
+            reverse_mapping: `bool` default `False`
+                When using with consumer.False if you don't know what consumer is.
+            staging_name: str` default None
+                Name of the staging to find the mapping. Returns 404  if there is not mapping..
+            offset: `int`, default 0
+                Offset for pagination. Only used when `scrollable=False`
+            page_size: `int`, default 100
+                Number of records downloaded in each pagination. The maximum value is 1000
+            sort_order: `str`, default 'ASC'
+                Sort ascending ('ASC') vs. descending ('DESC').
+            sort_by: `str`,  default `None`
+                Name to sort by.
+            print_status: `bool`, default `False`
+                Print the number of records in each interaction.
+            errors: {‘ignore’, ‘raise’}, default ‘raise’
+                If ‘raise’, then invalid request will raise an exception If ‘ignore’,
+                then invalid request will return the request response.
+
+        Returns: list of dict
+            List of dict with mappings,
+        """
+
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+
+        template_data = []
+        count = offset
+        query_params = {
+            "offset": offset, "pageSize": str(page_size),
+            "sortOrder": sort_order,
+            "sortBy": sort_by,
+            'stagingType': staging_name,
+            'reverseMapping': reverse_mapping,
+        }
+
+        set_param = True
+        total_hits = float("inf")
+        while count < total_hits:
+            query = self.carol.call_api(path=f'v1/connectors/{connector_id}/entityMappings', method="GET",
+                                        params=query_params, errors=errors)
+
+            if query.get('hits') is None:
+                # when errors==ignore it will return the error msg.
+                return query
+
+            if query['count'] == 0:
+                print('There are no more results.')
+                print(f'Expecting {total_hits}, response = {count}')
+                break
+            count += query['count']
+            if set_param:
+                total_hits = query["totalHits"]
+                set_param = False
+
+            query = query['hits']
+            template_data.extend(query)
+
+            query_params['offset'] = count
+            if print_status:
+                print(f'{count}/{total_hits}', end='\r')
+
+        return template_data
+
+    def play_mapping(self, entity_mapping_id=None, staging_name=None, connector_name=None, connector_id=None,
+                     reverse_mapping=False,
+                     process_dds=True, ):
+
+        params = {
+            'reverseMapping': reverse_mapping,
+            'processCds': process_dds,
+        }
+
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+
+        resp = self.carol.call_api(path=f'v1/connectors/{connector_id}/entityMappings/{entity_mapping_id}/play',
+                                   method="POST", params=params, )
+
+        return resp
+
+    def pause_etl(self, entity_mapping_id, connector_name=None, connector_id=None,
+                  reverse_mapping=False, process_dds=True, ):
+
+        params = {
+            'reverseMapping': reverse_mapping,
+            'processCds': process_dds,
+        }
+
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+
+        resp = self.carol.call_api(path=f'v1/connectors/{connector_id}/entityMappings/{entity_mapping_id}/play',
+                                   method="POST", params=params, )
+
+        return resp
