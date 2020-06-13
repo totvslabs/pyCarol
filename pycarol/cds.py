@@ -34,9 +34,9 @@ class CDSStaging:
 
     def process_data(self, staging_name, connector_id=None, connector_name=None,
                      worker_type=None, max_number_workers=-1, number_shards=-1, num_records=-1,
-                     delete_target_folder=False, enable_realtime=False, delete_realtime_records=False,
-                     send_realtime=False, file_pattern='*', filter_query=None, skip_consolidation=False,
-                     force_dataflow=False):
+                     delete_target_folder=False, enable_realtime=None, delete_realtime_records=False,
+                     send_realtime=None, file_pattern='*', filter_query=None, skip_consolidation=False,
+                     force_dataflow=False, recursive_processing=True):
 
         """
         Process CDS staging data.
@@ -60,10 +60,11 @@ class CDSStaging:
             delete_target_folder: `bool`, default `False`
                 If delete the previous processed records.
             enable_realtime: `bool`, default `False`
+                DEPRECATED. Removed from Carol.
                 Enable this staging table to send the processed data to realtime layer.
             delete_realtime_records: `bool`, default `False`
                 Delete previous processed data in realtime.
-            send_realtime: `bool`, default `False`
+            send_realtime: `bool`, default `None`
                 Send the processed data to realtime layer.
             file_pattern: `str`, default `*`
                 File pattern of the files in CDS to be processed. The pattern in  `YYYY-MM-DDTHH_mm_ss*.parquet`.
@@ -75,13 +76,20 @@ class CDSStaging:
             force_dataflow: `bool`  default `False`
                 If Dataflow job should be spinned even for small datasets
                 (by default, small datasets are processed directly inside Carol)
+            recursive_processing: `bool`  default `True`
+                If processing should be chained/recursed in target entities. e.g., If a staging has 3 ETLs and each ETL
+                maps to a data model. If we process this staging it will trigger the whole tree to be processed.
 
-        :return: None
+        :return: dict
+            Task definition.
 
         """
 
         if worker_type not in _MACHINE_FLAVORS and worker_type is not None:
             raise ValueError(f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
+
+        if enable_realtime is not None:
+            _deprecation_msgs("`enable_realtime` is deprecated and it is not used in Carol. ")
 
         filter_query = filter_query if filter_query else {}
 
@@ -95,11 +103,12 @@ class CDSStaging:
             "connectorId": connector_id, "stagingType": staging_name, "workerType": worker_type,
             "maxNumberOfWorkers": max_number_workers, "numberOfShards": number_shards,
             "numRecords": num_records,
-            "deleteTargetFolder": delete_target_folder, "enableStagingRealtime": enable_realtime,
+            "deleteTargetFolder": delete_target_folder,
             "deleteRealtimeRecords": delete_realtime_records,
             "sendToRealtime": send_realtime, "filePattern": file_pattern,
             "skipConsolidation": skip_consolidation,
             "forceDataflow": force_dataflow,
+            "recursiveProcessing": recursive_processing,
         }
 
         return self.carol.call_api(path='v1/cds/staging/processData', method='POST', params=query_params,
