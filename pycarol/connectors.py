@@ -326,10 +326,7 @@ class Connectors:
             url = "v1/connectors/mappings/all"
 
         else:
-            if connector_name:
-                connector_id = self.get_by_name(connector_name)['mdmId']
-            else:
-                assert connector_id
+            connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
 
             if dm_name is not None:
                 url_dm = f"v1/entities/templates/name/{dm_name}"
@@ -346,6 +343,7 @@ class Connectors:
             }
 
             url = f"v1/connectors/{connector_id}/entityMappings"
+
         set_param = True
         to_get = float('inf')
         count = 0
@@ -424,8 +422,11 @@ class Connectors:
                                         params=query_params, errors=errors)
 
             if query.get('hits') is None:
-                # when errors==ignore it will return the error msg.
-                return query
+                if len(template_data) == 0:
+                    # when errors==ignore it will return the error msg.
+                    return query
+                else:
+                    return template_data
 
             if query['count'] == 0:
                 print('There are no more results.')
