@@ -613,3 +613,23 @@ class Connectors:
         )
 
         return responses
+
+    def get_etl_information(self, connector_id=None, connector_name=None):
+        """
+        Get ETL Configurations for a connector
+
+        Args:
+
+            connector_name: `str`, `str`, default `None`
+                Connector Name
+            connector_id: `str`, `str`, default `None`
+                Connector ID
+
+        Returns:
+
+        """
+
+
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+
+        return self.carol.call_api(path=f"v1/etl/connector/{connector_id}")
