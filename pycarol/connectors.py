@@ -602,7 +602,7 @@ class Connectors:
                 Connector ID
 
         Returns: dict
-         Dictionary with the response of all mappings played.
+         Dictionary with the response Carol's response
 
         """
 
@@ -625,7 +625,8 @@ class Connectors:
             connector_id: `str`, `str`, default `None`
                 Connector ID
 
-        Returns:
+        Returns: list of dict
+            Etl information
 
         """
 
