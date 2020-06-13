@@ -445,8 +445,6 @@ class Connectors:
 
         return template_data
 
-
-
     def _play_pause_mapping(self, kind, entity_mapping_id=None, staging_name=None,
                             connector_name=None, connector_id=None,
                             reverse_mapping=False,
@@ -481,8 +479,6 @@ class Connectors:
             responses[entity_mapping_id] = resp
 
         return responses
-
-
 
     def play_mapping(
             self, entity_mapping_id=None, staging_name=None,
@@ -531,9 +527,9 @@ class Connectors:
 
         Args:
             entity_mapping_id: `str` or list of strings
-                Mapping ids to be resumed.
+                Mapping ids to be stopped.
             staging_name:
-                Staging name for starting the mapping
+                Staging name to stop the mappings
             connector_name: `str`, `str`, default `None`
                 Connector Name
             connector_id: `str`, `str`, default `None`
@@ -550,6 +546,69 @@ class Connectors:
             kind='pause', entity_mapping_id=entity_mapping_id, staging_name=staging_name,
             connector_name=connector_name, connector_id=connector_id,
             reverse_mapping=reverse_mapping,
+        )
+
+        return responses
+
+    def _play_pause_etl(self, kind, staging_name=None,
+                        connector_name=None, connector_id=None, ):
+
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+        resp = self.carol.call_api(path=f'v1/etl/staging/{connector_id}/{staging_name}/{kind}', method='POST')
+
+        return resp
+
+    def play_etl(
+            self, staging_name=None,
+            connector_name=None, connector_id=None,
+    ):
+        """
+        Start ETL processes.
+
+        Args:
+            staging_name:
+                Staging name for starting the ETLs
+            connector_name: `str`, `str`, default `None`
+                Connector Name
+            connector_id: `str`, `str`, default `None`
+                Connector ID
+
+        Returns: dict
+         Dictionary with the response of all mappings played.
+
+        """
+
+        responses = self._play_pause_etl(
+            kind='play', staging_name=staging_name,
+            connector_name=connector_name, connector_id=connector_id,
+        )
+
+        return responses
+
+    def pause_etl(
+            self, staging_name=None,
+            connector_name=None, connector_id=None,
+    ):
+        """
+        Pause ETL.
+
+        Args:
+            staging_name:
+                Staging name to stop the ETLs
+            connector_name: `str`, `str`, default `None`
+                Connector Name
+            connector_id: `str`, `str`, default `None`
+                Connector ID
+
+        Returns: dict
+         Dictionary with the response of all mappings played.
+
+        """
+
+        responses = self._play_pause_etl(
+            kind='pause', staging_name=staging_name,
+            connector_name=connector_name, connector_id=connector_id,
+
         )
 
         return responses
