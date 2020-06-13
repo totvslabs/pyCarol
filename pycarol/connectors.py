@@ -368,10 +368,12 @@ class Connectors:
 
         return self.resp
 
-    def get_entity_mappings(self, connector_name=None, connector_id=None,
-                            reverse_mapping=False, staging_name=None,
-                            offset=0, page_size=1000, sort_order='ASC',
-                            sort_by=None, print_status=False, errors='raise'):
+    def get_entity_mappings(
+            self, connector_name=None, connector_id=None,
+            reverse_mapping=False, staging_name=None,
+            offset=0, page_size=1000, sort_order='ASC',
+            sort_by=None, print_status=False, errors='raise'
+    ):
 
         """
         Get all Entity Mappings.
@@ -443,33 +445,111 @@ class Connectors:
 
         return template_data
 
-    def play_mapping(self, entity_mapping_id=None, staging_name=None, connector_name=None, connector_id=None,
-                     reverse_mapping=False,
-                     process_dds=True, ):
 
-        params = {
-            'reverseMapping': reverse_mapping,
-            'processCds': process_dds,
-        }
+
+    def _play_pause_mapping(self, kind, entity_mapping_id=None, staging_name=None,
+                            connector_name=None, connector_id=None,
+                            reverse_mapping=False,
+                            process_cds=True, ):
 
         connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
 
-        resp = self.carol.call_api(path=f'v1/connectors/{connector_id}/entityMappings/{entity_mapping_id}/play',
-                                   method="POST", params=params, )
+        if entity_mapping_id is None:
+            if staging_name is None:
+                raise ValueError("Either staging_name or entity_mapping_id must be set.")
+            entity_mappings = self.get_entity_mappings(connector_id=connector_id, staging_name=staging_name)
+            entity_mappings = [i['mdmId'] for i in entity_mappings]
+        else:
+            if isinstance(entity_mapping_id, str):
+                entity_mappings = [entity_mapping_id]
+            elif isinstance(entity_mapping_id, list):
+                entity_mappings = entity_mapping_id
+            else:
+                raise ValueError('entity_mapping_id must be string of list of string.')
 
-        return resp
+        responses = {}
+        for _mapping in entity_mappings:
+            entity_mapping_id = _mapping
 
-    def pause_etl(self, entity_mapping_id, connector_name=None, connector_id=None,
-                  reverse_mapping=False, process_dds=True, ):
+            params = {
+                'reverseMapping': reverse_mapping,
+                'processCds': process_cds,
+            }
 
-        params = {
-            'reverseMapping': reverse_mapping,
-            'processCds': process_dds,
-        }
+            resp = self.carol.call_api(path=f'v1/connectors/{connector_id}/entityMappings/{entity_mapping_id}/{kind}',
+                                       method="POST", params=params, )
+            responses[entity_mapping_id] = resp
 
-        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+        return responses
 
-        resp = self.carol.call_api(path=f'v1/connectors/{connector_id}/entityMappings/{entity_mapping_id}/play',
-                                   method="POST", params=params, )
 
-        return resp
+
+    def play_mapping(
+            self, entity_mapping_id=None, staging_name=None,
+            connector_name=None, connector_id=None,
+            reverse_mapping=False,
+            process_cds=True,
+    ):
+        """
+        Start mapping.
+
+        Args:
+            entity_mapping_id: `str` or list of strings
+                Mapping ids to be resumed.
+            staging_name:
+                Staging name for starting the mapping
+            connector_name: `str`, `str`, default `None`
+                Connector Name
+            connector_id: `str`, `str`, default `None`
+                Connector ID
+            reverse_mapping: `bool` default `False`
+                When using with consumer.False if you don't know what consumer is.
+            process_cds: `bool` default `True`
+                Process pending records after play.
+
+        Returns: dict
+         Dictionary with the response of all mappings played.
+
+        """
+
+        responses = self._play_pause_mapping(
+            kind='play', entity_mapping_id=entity_mapping_id, staging_name=staging_name,
+            connector_name=connector_name, connector_id=connector_id,
+            reverse_mapping=reverse_mapping,
+            process_cds=process_cds,
+        )
+
+        return responses
+
+    def pause_mapping(
+            self, entity_mapping_id=None, staging_name=None,
+            connector_name=None, connector_id=None,
+            reverse_mapping=False,
+    ):
+        """
+        Pause mapping.
+
+        Args:
+            entity_mapping_id: `str` or list of strings
+                Mapping ids to be resumed.
+            staging_name:
+                Staging name for starting the mapping
+            connector_name: `str`, `str`, default `None`
+                Connector Name
+            connector_id: `str`, `str`, default `None`
+                Connector ID
+            reverse_mapping: `bool` default `False`
+                When using with consumer.False if you don't know what consumer is.
+
+        Returns: dict
+         Dictionary with the response of all mappings played.
+
+        """
+
+        responses = self._play_pause_mapping(
+            kind='pause', entity_mapping_id=entity_mapping_id, staging_name=staging_name,
+            connector_name=connector_name, connector_id=connector_id,
+            reverse_mapping=reverse_mapping,
+        )
+
+        return responses
