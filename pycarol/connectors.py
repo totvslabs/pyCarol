@@ -129,9 +129,14 @@ class Connectors:
         Returns: None
 
         """
-        if mdm_id is not None:
+
+        if connector_id is None and mdm_id is not None:
             _deprecation_msgs("mdm_id is deprecated and will be removed, use connector_id")
-            connector_id = connector_id if connector_id else mdm_id
+
+        connector_id = connector_id if connector_id else mdm_id
+
+        if connector_id is None:
+            raise ValueError('Connector Id must be set')
 
         self.carol.call_api(f'v1/connectors/{connector_id}?forceDeletion={force_deletion}', method='DELETE')
 
