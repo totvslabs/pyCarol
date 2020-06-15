@@ -368,6 +368,9 @@ class DataModel:
             Task Definition.
         """
 
+        if dm_name is None and dm_id is None:
+            raise ValueError('Either dm_name or dm_id must be set.')
+
         dm_id = dm_id if dm_id else self.get_by_name(dm_name)['mdmId']
 
         params = {
