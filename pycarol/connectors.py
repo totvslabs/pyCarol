@@ -331,6 +331,8 @@ class Connectors:
             url = "v1/connectors/mappings/all"
 
         else:
+            if connector_id is None and connector_name is None:
+                raise ValueError('Either connector_id or connector_name must be set if `all_connectors=False`. ')
             connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
 
             if dm_name is not None:
