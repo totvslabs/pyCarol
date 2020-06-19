@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+from .utils.deprecation_msgs import _deprecation_msgs
 
 
 class Connectors:
@@ -112,13 +113,15 @@ class Connectors:
         mdm_id = self.get_by_name(name)['mdmId']
         self.delete_by_id(mdm_id, force_deletion)
 
-    def delete_by_id(self, mdm_id, force_deletion=True):
+    def delete_by_id(self, connector_id=None, mdm_id=None, force_deletion=True):
         """
         Delete Connector by ID
 
         Args:
 
-            mdm_id: `str`` #TODO: Rename to connector_id
+            connector_id: `str``
+                Connector ID
+            mdm_id: `str``
                 Connector ID
             force_deletion: `bool` default `True`
                 Force the deletion
@@ -127,7 +130,15 @@ class Connectors:
 
         """
 
-        self.carol.call_api('v1/connectors/{}?forceDeletion={}'.format(mdm_id, force_deletion), method='DELETE')
+        if connector_id is None and mdm_id is not None:
+            _deprecation_msgs("mdm_id is deprecated and will be removed, use connector_id")
+
+        connector_id = connector_id if connector_id else mdm_id
+
+        if connector_id is None:
+            raise ValueError('Connector Id must be set')
+
+        self.carol.call_api(f'v1/connectors/{connector_id}?forceDeletion={force_deletion}', method='DELETE')
 
     def get_all(self, offset=0, page_size=-1, sort_order='ASC', sort_by=None, include_connectors=False,
                 include_mappings=False, include_consumption=False, print_status=True, save_results=False,
@@ -310,7 +321,6 @@ class Connectors:
 
         """
 
-
         if all_connectors:
             payload = {
                 "offset": offset,
@@ -321,10 +331,9 @@ class Connectors:
             url = "v1/connectors/mappings/all"
 
         else:
-            if connector_name:
-                connector_id = self.get_by_name(connector_name)['mdmId']
-            else:
-                assert connector_id
+            if connector_id is None and connector_name is None:
+                raise ValueError('Either connector_id or connector_name must be set if `all_connectors=False`. ')
+            connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
 
             if dm_name is not None:
                 url_dm = f"v1/entities/templates/name/{dm_name}"
@@ -341,6 +350,7 @@ class Connectors:
             }
 
             url = f"v1/connectors/{connector_id}/entityMappings"
+
         set_param = True
         to_get = float('inf')
         count = 0
@@ -362,3 +372,272 @@ class Connectors:
             payload['offset'] = count
 
         return self.resp
+
+    def get_entity_mappings(
+            self, connector_name=None, connector_id=None,
+            reverse_mapping=False, staging_name=None,
+            offset=0, page_size=1000, sort_order='ASC',
+            sort_by=None, print_status=False, errors='raise'
+    ):
+
+        """
+        Get all Entity Mappings.
+
+        Args:
+            connector_name: `str`, `str`, default `None`
+                Connector Name
+            connector_id: `str`, `str`, default `None`
+                Connector ID
+            reverse_mapping: `bool` default `False`
+                When using with consumer.False if you don't know what consumer is.
+            staging_name: str` default None
+                Name of the staging to find the mapping. Returns 404  if there is not mapping..
+            offset: `int`, default 0
+                Offset for pagination. Only used when `scrollable=False`
+            page_size: `int`, default 100
+                Number of records downloaded in each pagination. The maximum value is 1000
+            sort_order: `str`, default 'ASC'
+                Sort ascending ('ASC') vs. descending ('DESC').
+            sort_by: `str`,  default `None`
+                Name to sort by.
+            print_status: `bool`, default `False`
+                Print the number of records in each interaction.
+            errors: {‘ignore’, ‘raise’}, default ‘raise’
+                If ‘raise’, then invalid request will raise an exception If ‘ignore’,
+                then invalid request will return the request response.
+
+        Returns: list of dict
+            List of dict with mappings,
+        """
+
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+
+        template_data = []
+        count = offset
+        query_params = {
+            "offset": offset, "pageSize": str(page_size),
+            "sortOrder": sort_order,
+            "sortBy": sort_by,
+            'stagingType': staging_name,
+            'reverseMapping': reverse_mapping,
+        }
+
+        set_param = True
+        total_hits = float("inf")
+        while count < total_hits:
+            query = self.carol.call_api(path=f'v1/connectors/{connector_id}/entityMappings', method="GET",
+                                        params=query_params, errors=errors)
+
+            if query.get('hits') is None:
+                if len(template_data) == 0:
+                    # when errors==ignore it will return the error msg.
+                    return query
+                else:
+                    return template_data
+
+            if query['count'] == 0:
+                print('There are no more results.')
+                print(f'Expecting {total_hits}, response = {count}')
+                break
+            count += query['count']
+            if set_param:
+                total_hits = query["totalHits"]
+                set_param = False
+
+            query = query['hits']
+            template_data.extend(query)
+
+            query_params['offset'] = count
+            if print_status:
+                print(f'{count}/{total_hits}', end='\r')
+
+        return template_data
+
+    def _play_pause_mapping(self, kind, entity_mapping_id=None, staging_name=None,
+                            connector_name=None, connector_id=None,
+                            reverse_mapping=False,
+                            process_cds=True, ):
+
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+
+        if entity_mapping_id is None:
+            if staging_name is None:
+                raise ValueError("Either staging_name or entity_mapping_id must be set.")
+            entity_mappings = self.get_entity_mappings(connector_id=connector_id, staging_name=staging_name)
+            entity_mappings = [i['mdmId'] for i in entity_mappings]
+        else:
+            if isinstance(entity_mapping_id, str):
+                entity_mappings = [entity_mapping_id]
+            elif isinstance(entity_mapping_id, list):
+                entity_mappings = entity_mapping_id
+            else:
+                raise ValueError('entity_mapping_id must be string of list of string.')
+
+        responses = {}
+        for _mapping in entity_mappings:
+            entity_mapping_id = _mapping
+
+            params = {
+                'reverseMapping': reverse_mapping,
+                'processCds': process_cds,
+            }
+
+            resp = self.carol.call_api(path=f'v1/connectors/{connector_id}/entityMappings/{entity_mapping_id}/{kind}',
+                                       method="POST", params=params, )
+            responses[entity_mapping_id] = resp
+
+        return responses
+
+    def play_mapping(
+            self, entity_mapping_id=None, staging_name=None,
+            connector_name=None, connector_id=None,
+            reverse_mapping=False,
+            process_cds=True,
+    ):
+        """
+        Start mapping.
+
+        Args:
+            entity_mapping_id: `str` or list of strings
+                Mapping ids to be resumed.
+            staging_name:
+                Staging name for starting the mapping
+            connector_name: `str`, `str`, default `None`
+                Connector Name
+            connector_id: `str`, `str`, default `None`
+                Connector ID
+            reverse_mapping: `bool` default `False`
+                When using with consumer.False if you don't know what consumer is.
+            process_cds: `bool` default `True`
+                Process pending records after play.
+
+        Returns: dict
+         Dictionary with the response of all mappings played.
+
+        """
+
+        responses = self._play_pause_mapping(
+            kind='play', entity_mapping_id=entity_mapping_id, staging_name=staging_name,
+            connector_name=connector_name, connector_id=connector_id,
+            reverse_mapping=reverse_mapping,
+            process_cds=process_cds,
+        )
+
+        return responses
+
+    def pause_mapping(
+            self, entity_mapping_id=None, staging_name=None,
+            connector_name=None, connector_id=None,
+            reverse_mapping=False,
+    ):
+        """
+        Pause mapping.
+
+        Args:
+            entity_mapping_id: `str` or list of strings
+                Mapping ids to be stopped.
+            staging_name:
+                Staging name to stop the mappings
+            connector_name: `str`, `str`, default `None`
+                Connector Name
+            connector_id: `str`, `str`, default `None`
+                Connector ID
+            reverse_mapping: `bool` default `False`
+                When using with consumer.False if you don't know what consumer is.
+
+        Returns: dict
+         Dictionary with the response of all mappings played.
+
+        """
+
+        responses = self._play_pause_mapping(
+            kind='pause', entity_mapping_id=entity_mapping_id, staging_name=staging_name,
+            connector_name=connector_name, connector_id=connector_id,
+            reverse_mapping=reverse_mapping,
+        )
+
+        return responses
+
+    def _play_pause_etl(self, kind, staging_name=None,
+                        connector_name=None, connector_id=None, ):
+
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+        resp = self.carol.call_api(path=f'v1/etl/staging/{connector_id}/{staging_name}/{kind}', method='POST')
+
+        return resp
+
+    def play_etl(
+            self, staging_name=None,
+            connector_name=None, connector_id=None,
+    ):
+        """
+        Start ETL processes.
+
+        Args:
+            staging_name:
+                Staging name for starting the ETLs
+            connector_name: `str`, `str`, default `None`
+                Connector Name
+            connector_id: `str`, `str`, default `None`
+                Connector ID
+
+        Returns: dict
+         Dictionary with the response of all mappings played.
+
+        """
+
+        responses = self._play_pause_etl(
+            kind='play', staging_name=staging_name,
+            connector_name=connector_name, connector_id=connector_id,
+        )
+
+        return responses
+
+    def pause_etl(
+            self, staging_name=None,
+            connector_name=None, connector_id=None,
+    ):
+        """
+        Pause ETL.
+
+        Args:
+            staging_name:
+                Staging name to stop the ETLs
+            connector_name: `str`, `str`, default `None`
+                Connector Name
+            connector_id: `str`, `str`, default `None`
+                Connector ID
+
+        Returns: dict
+         Dictionary with the response Carol's response
+
+        """
+
+        responses = self._play_pause_etl(
+            kind='pause', staging_name=staging_name,
+            connector_name=connector_name, connector_id=connector_id,
+
+        )
+
+        return responses
+
+    def get_etl_information(self, connector_id=None, connector_name=None):
+        """
+        Get ETL Configurations for a connector
+
+        Args:
+
+            connector_name: `str`, `str`, default `None`
+                Connector Name
+            connector_id: `str`, `str`, default `None`
+                Connector ID
+
+        Returns: list of dict
+            Etl information
+
+        """
+
+
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+
+        return self.carol.call_api(path=f"v1/etl/connector/{connector_id}")

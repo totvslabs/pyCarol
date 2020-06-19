@@ -352,38 +352,43 @@ class DataModel:
         _deprecation_msgs("This function was removed from pyCarol")
         return None
 
-    def _get_min_max(self, query_filter=None):
+    def reprocess_rejected(self, dm_name=None, dm_id=None, delete_records=True):
+        """
+        Reprocess rejected records.
 
-        if query_filter is not None:
-            j = query_filter.type(self.datamodel_name) \
-                .aggregation_list([MINIMUM(name='MINIMUM', params=self.mdm_key), MAXIMUM(name='MAXIMUM',
-                                                                                         params=self.mdm_key)]) \
-                .build().to_json()
-        else:
-            j = Filter.Builder() \
-                .type(self.datamodel_name) \
-                .aggregation_list([MINIMUM(name='MINIMUM', params=self.mdm_key), MAXIMUM(name='MAXIMUM',
-                                                                                         params=self.mdm_key)]) \
-                .build().to_json()
+        Args:
+            dm_name: `str` default None
+                 Data model name
+            dm_id: `str` default None
+                 Data model ID
+            delete_records: `boll` default True
+                True to delete and reprocess, False for copy and reprocess.
 
-        query = Query(self.carol, index_type=self.index_type, only_hits=False, get_aggs=True, save_results=False,
-                      print_status=True, page_size=0).query(j).go()
+        Returns: dict
+            Task Definition.
+        """
 
-        if query.results[0].get('aggs') is None:
-            return None, None
-        min_v = query.results[0]['aggs']['MINIMUM']['value']
-        max_v = query.results[0]['aggs']['MAXIMUM']['value']
-        print(f"Total Hits to reprocess: {query.total_hits}")
-        return min_v, max_v
+        if dm_name is None and dm_id is None:
+            raise ValueError('Either dm_name or dm_id must be set.')
 
-    def reprocess(self, datamodel_name, n_of_tasks=10, copy_or_move='move', record_type='ALL', query_filter=None):
+        dm_id = dm_id if dm_id else self.get_by_name(dm_name)['mdmId']
+
+        params = {
+            'recordType': 'REJECTED',
+            'fuzzy': False,
+            'queryDescription': {"a":"REJECTED","q":"*","p":"1","o":"ASC","r":"[]"},
+            'deleteRecords': delete_records
+        }
+        result = self.carol.call_api(f'v1/entities/templates/{dm_id}/reprocess', method='POST', params=params)
+
+        return result
+
+    def reprocess(self, dm_name, copy_or_move='move', record_type='ALL', query_filter=None):
         """
         Reprocess records from a data model
 
-        :param datamodel_name: `str`
+        :param dm_name: `str`
             Data model name
-        :param n_of_tasks: `int`, default `10`
-            Number of process to split the reprocess.
         :param copy_or_move: `str`, default `move`
             Either `move` or `copy` to staging.
         :param record_type:  `str`, default `ALL`
@@ -393,41 +398,23 @@ class DataModel:
         :return: None
         """
 
-        assert copy_or_move == 'copy' or copy_or_move == 'move', 'copy_or_move shoulb be "copy" or "move"'
-        if query_filter:
-            assert isinstance(query_filter, Filter.Builder)
+        if copy_or_move not in ["copy", "move"]:
+            ValueError(f'copy_or_move should be "copy" or "move". {copy_or_move} was used')
 
         if copy_or_move == 'copy':
             copy_or_move = False
         else:
             copy_or_move = True
 
-        self.mdm_id = self.get_by_name(datamodel_name)['mdmId']
+        mdm_id = self.get_by_name(dm_name)['mdmId']
 
-        self.index_type = 'MASTER'
-        self.datamodel_name = datamodel_name + 'Golden'
-        self.mdm_key = 'mdmCounterForEntity'
-        min_v, max_v = self._get_min_max(query_filter=query_filter)
+        url_filter = f"v1/entities/templates/{mdm_id}/reprocess"
 
-        chunks = ranges(min_v, max_v, n_of_tasks)
-        print(f"Number of chunks: {len(chunks)}")
+        query_params = {"recordType": record_type, "fuzzy": "false",
+                        "deleteRecords": copy_or_move}
 
-        url_filter = f"v1/entities/templates/{self.mdm_id}/reprocess"
-
-        for c, i in enumerate(chunks):
-            if query_filter is not None:
-                query_filter_to_use = copy.deepcopy(query_filter)
-                json_query = query_filter_to_use.must(RF(key=self.mdm_key, value=i)).build().to_json()
-            else:
-                json_query = Filter.Builder() \
-                    .must(RF(key=self.mdm_key, value=i)) \
-                    .build().to_json()
-
-            query_params = {"recordType": record_type, "fuzzy": "false",
-                            "deleteRecords": copy_or_move}
-
-            result = self.carol.call_api(url_filter, data=json_query, params=query_params)
-            print(f"To go: {c + 1}/{len(chunks)}")
+        result = self.carol.call_api(url_filter, data=query_filter, params=query_params)
+        return result
 
     def send_data(self, data, dm_name=None, dm_id=None, step_size=500, gzip=False, delete_old_records=False,
                   print_stats=True, max_workers=2, async_send=False):
