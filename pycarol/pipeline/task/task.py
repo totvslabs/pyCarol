@@ -11,6 +11,8 @@ from pycarol.pipeline.targets import PickleTarget
 from pycarol.utils.miscellaneous import Hashabledict
 import logging
 import warnings
+import types
+
 
 logger = logging.getLogger('luigi-interface')
 logger.setLevel(logging.INFO)
@@ -115,10 +117,22 @@ class Task(luigi.Task):
         return metadata
 
     def run(self):
-
         if self.easy_run:
             inputs = self.function_inputs()
             self.output_object = self.easy_run(inputs)
+
+            if isinstance(self.output_object, types.GeneratorType):
+                # Allowing dynamic tasks.
+                # https://luigi.readthedocs.io/en/stable/tasks.html#dynamic-dependencies
+                while True:
+                    try:
+                        new_requires = next(self.output_object)
+                    except StopIteration as e:
+                        # We expect the result of the task in the return of the iterator.
+                        self.output_object = e.value
+                        break
+                    # From here, Luigi assumes and generate the new dependencies.
+                    yield new_requires
             self.save()
             del self.output_object  # after dump, free memory
 
