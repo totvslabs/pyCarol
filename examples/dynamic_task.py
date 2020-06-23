@@ -2,6 +2,7 @@
 import random as rnd
 import time
 from pycarol.pipeline import Task, inherit_list
+
 Task.is_cloud_target = False
 import luigi
 
@@ -33,13 +34,11 @@ class Dynamic(Task):
     seed = luigi.IntParameter(default=1)
 
     def easy_run(self, inputs):
-
         data = [int(x) for x in inputs[0].split(',')]
-        #Generate requeires on run time.
+        # Generate requeires on run time.
         ata_dependent_deps = [Data(magic_number=x) for x in data]
         yield ata_dependent_deps
         return ata_dependent_deps
-
 
 
 @inherit_list(
@@ -49,13 +48,9 @@ class NextDynamic(Task):
     seed = luigi.IntParameter(default=1)
 
     def easy_run(self, inputs):
-
-        #load the dependencies of the the dynamicly created tasks.
+        # load the dependencies of the the dynamicly created tasks.
         ata_dependent_deps = [x.load() for x in inputs[0]]
         pass
-
-
-
 
 
 if __name__ == '__main__':
