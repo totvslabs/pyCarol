@@ -10,7 +10,7 @@ from .tenant import Tenant
 from . import __CONNECTOR_PYCAROL__
 from . import __version__
 from . organization import Organization
-
+from . import InvalidToken
 
 class Carol:
     """
@@ -318,7 +318,7 @@ class Carol:
 
             elif (response.reason == 'Unauthorized') and isinstance(self.auth,PwdAuth):
                 if response.json().get('possibleResponsibleField') in ['password', 'userLogin']:
-                    raise Exception(response.text)
+                    raise InvalidToken(response.text)
                 self.auth.get_access_token()  #It will refresh token if Unauthorized
                 __count+=1
                 if __count<5: #To avoid infinity loops
