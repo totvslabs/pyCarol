@@ -2,6 +2,14 @@ from .ApiKeyAuth_cloner import ApiKeyAuthCloner
 
 
 class ApiKeyAuth:
+    """
+
+    Args:
+        api_key: `str`
+            Api Key
+
+    """
+
     def __init__(self, api_key):
         self.api_key = api_key
         self.carol = None
@@ -26,9 +34,11 @@ class ApiKeyAuth:
         Switch context to an environment within the same organization.
 
         Args:
+
             env_id: environment id to switch context to.
 
         Returns:
+
             None
 
         """

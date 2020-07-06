@@ -11,6 +11,7 @@ pyCarol
     data_models
     pipeline
     tools
+    auth
 
 .. autosummary::
     :toctree: generated
