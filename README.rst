@@ -44,6 +44,16 @@ where ``domain`` is the tenant name, ``app_name`` is the Carol's app name, if an
 is the authentication method to be used (using user/password in this case) and ``organization`` is the organization
 one wants to connect. Carols's URL is build as ``www.ORGANIZATION.carol.ai/TENANT_NAME``
 
+It is also possible to initialize the object with a token generated via user/password. This is useful when creating an
+online app that interacts with Carol
+
+.. code:: python
+
+    from pycarol import PwdKeyAuth, Carol
+    carol = Carol(domain=TENANT_NAME, app_name=APP_NAME,
+                  auth=PwdKeyAuth(pwd_auth_token), organization=ORGANIZATION)
+
+
 Using API Key
 --------------
 To use API keys instead of username and password:

@@ -7,6 +7,7 @@ class PwdKeyAuth(PwdAuth):
     """
 
     Args:
+
         access_token: `str`
             Carol access token created using the user and password.
         lazy_login: `bool` default `False`
@@ -27,6 +28,7 @@ class PwdKeyAuth(PwdAuth):
         """
 
         Args:
+
             carol: pycarol.Carol
                 Carol() instance.
 
