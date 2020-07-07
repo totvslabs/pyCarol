@@ -447,7 +447,9 @@ class Carol:
         if self.org is None:
             self.org = Organization(self).get_organization_info(self.organization)
 
-        if org_id is not None or org_name is not None:
+        current = self.get_current()
+
+        if (org_id is not None and org_id != current['org_id']) or (org_name is not None and org_name != current['org_name'] ):
             # Switch to org context.
             self.switch_org_level()
             if org_id is None:
