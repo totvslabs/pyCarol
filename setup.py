@@ -27,7 +27,7 @@ extras_require = {
                                 'pyarrow>=0.15.1',],
     "onlineapp": min_requires + ['flask>=1.0.2', 'redis'],
     "dask": min_requires + ['dask[complete]'],
-    "dev": min_requires + ['pytest', 'bumpversion'],
+    "dev": min_requires + ['pytest', 'bumpversion', "sphinx-rtd-theme", "sphinx"],
 }
 extras_require["complete"] = sorted(
     {v for req in extras_require.values() for v in req}

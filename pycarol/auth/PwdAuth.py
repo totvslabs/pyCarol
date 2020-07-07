@@ -1,3 +1,8 @@
+"""
+Standard User/Password Auth
+
+"""
+
 import types
 import time
 from .PwdAuth_cloner import PwdAuthCloner
@@ -7,6 +12,7 @@ class PwdAuth:
     """
 
     Args:
+
         user: `str`
             Username
         password: `str`
@@ -38,6 +44,7 @@ class PwdAuth:
         """
 
         Args:
+
             carol: pycarol.Carol
                 Carol() instance.
 
@@ -97,9 +104,12 @@ class PwdAuth:
         Switch context to an environment within the same organization.
 
         Args:
-            env_id: environment id to switch context to.
+
+            env_id: `str`
+                environment id to switch context to.
 
         Returns:
+
             None
 
         """
@@ -114,9 +124,12 @@ class PwdAuth:
         Go to the organization context or switch organization.
 
         Args:
-            org_id: organization id.
+
+            org_id: `str`
+                organization id.
 
         Returns:
+
             None
 
         """
