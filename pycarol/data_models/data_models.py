@@ -21,6 +21,7 @@ from ..utils.miscellaneous import stream_data
 from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE
 from ..utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
 from ..utils.deprecation_msgs import _deprecation_msgs
+from ..exceptions import CarolApiResponseException
 
 _DATA_MODEL_TYPES_MAPPING = {
     "boolean": bool,
@@ -697,7 +698,7 @@ class CreateDataModel(object):
         est_ = DataModel(self.carol)
         try:
             est_.get_by_name(self.dm_name)
-        except Exception:
+        except CarolApiResponseException:
             return
 
         raise Exception('mdm name {} already exist'.format(self.dm_name))
