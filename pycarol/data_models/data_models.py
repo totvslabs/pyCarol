@@ -693,11 +693,14 @@ class CreateDataModel(object):
                                                           self.template_type_dict))
 
     def _check_dm_name(self):
-
         est_ = DataModel(self.carol)
-        est_.get_by_name(self.dm_name)
-        if est_.entity_template_ is not None:
-            raise Exception('mdm name {} already exist'.format(self.dm_name))
+        try:
+            est_.get_by_name(self.dm_name)
+        except Exception:
+            return
+
+        raise Exception('mdm name {} already exist'.format(self.dm_name))
+
 
     def create(self, dm_name, overwrite=False, vertical_ids=None, vertical_names=None, entity_template_type_ids=None,
                entity_template_type_names=None, label=None, group_name='Others',
