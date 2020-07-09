@@ -122,12 +122,12 @@ def stream_data(data, step_size, compress_gzip):
     :return: Generator, cont
         Return a slice of `data` and the count of records until that moment.
     """
-    import pandas as pd
-    if isinstance(data, pd.DataFrame):
-        is_df = True
-    else:
+    if isinstance(data, list):
         is_df = False
-        assert isinstance(data, list)
+    else:
+        import pandas as pd
+        if isinstance(data, pd.DataFrame):
+            is_df = True
 
     data_size = len(data)
     cont = 0
