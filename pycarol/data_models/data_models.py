@@ -21,6 +21,7 @@ from ..utils.miscellaneous import stream_data
 from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE
 from ..utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
 from ..utils.deprecation_msgs import _deprecation_msgs
+from ..exceptions import CarolApiResponseException
 
 _DATA_MODEL_TYPES_MAPPING = {
     "boolean": bool,
@@ -695,9 +696,12 @@ class CreateDataModel(object):
     def _check_dm_name(self):
 
         est_ = DataModel(self.carol)
-        est_.get_by_name(self.dm_name)
-        if est_.entity_template_ is not None:
-            raise Exception('mdm name {} already exist'.format(self.dm_name))
+        try:
+            est_.get_by_name(self.dm_name)
+        except CarolApiResponseException:
+            return
+
+        raise Exception('mdm name {} already exist'.format(self.dm_name))
 
     def create(self, dm_name, overwrite=False, vertical_ids=None, vertical_names=None, entity_template_type_ids=None,
                entity_template_type_names=None, label=None, group_name='Others',
