@@ -5,9 +5,6 @@
 import os
 import tempfile
 
-class InvalidToken(Exception):
-    pass
-
 
 __version__ = '2.34.3'
 

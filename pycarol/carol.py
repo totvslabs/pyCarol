@@ -10,8 +10,7 @@ from .tenant import Tenant
 from . import __CONNECTOR_PYCAROL__
 from . import __version__
 from . organization import Organization
-from . import InvalidToken
-from .exceptions import CarolApiResponseException
+from .exceptions import CarolApiResponseException, InvalidToken
 
 class Carol:
     """
@@ -317,12 +316,12 @@ class Carol:
                     return {}
                 return json.loads(response.text)
 
-            elif (response.reason == 'Unauthorized') and isinstance(self.auth,PwdAuth):
+            elif (response.reason == 'Unauthorized') and isinstance(self.auth, PwdAuth):
                 if response.json().get('possibleResponsibleField') in ['password', 'userLogin']:
                     raise InvalidToken(response.text)
                 self.auth.get_access_token()  #It will refresh token if Unauthorized
-                __count+=1
-                if __count<5: #To avoid infinity loops
+                __count += 1
+                if __count < 5: #To avoid infinity loops
                     continue
                 else:
                     raise Exception('Too many retries to refresh token.\n', response.text, response.status_code)

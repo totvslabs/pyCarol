@@ -5,3 +5,7 @@ class CarolApiResponseException(Exception):
         Exception (Exception): SuperClass
     """
     pass
+
+class InvalidToken(Exception):
+    pass
+
