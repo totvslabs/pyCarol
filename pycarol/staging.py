@@ -87,7 +87,7 @@ class Staging:
                 Send and wait data to be processed in Carol
 
         """
-        import pandas as pd
+
         if dm_to_delete is not None:
             _deprecation_msgs("`dm_to_delete` is deprecated and has no action.")
 
@@ -114,17 +114,20 @@ class Staging:
 
         is_df = False
         _crosswalk = None
-        if isinstance(data, pd.DataFrame):
-            is_df = True
-            data_size = data.shape[0]
-            _sample_json = data.iloc[0].to_json(date_format='iso')
-        elif isinstance(data, str):
+        if isinstance(data, str):
             data = json.loads(data)
             data_size = len(data)
             _sample_json = data[0]
-        else:
+        elif isinstance(data, list):
             data_size = len(data)
             _sample_json = data[0]
+        else:
+            import pandas as pd
+            if isinstance(data, pd.DataFrame):
+                is_df = True
+                data_size = data.shape[0]
+                _sample_json = data.iloc[0].to_json(date_format='iso')
+
 
         if (not isinstance(data, list)) and (not is_df):
             data = [data]
