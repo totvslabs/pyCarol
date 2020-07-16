@@ -277,7 +277,7 @@ To send the data  (assuming we have a json with the data we want to send).
 
 
     staging = Staging(carol)
-    staging.sendData(staging_name = 'my_stag', data = json_ex, step_size = 2,
+    staging.send_data(staging_name = 'my_stag', data = json_ex, step_size = 2,
                      connector_id=connectorId, print_stats = True)
 
 The parameter ``step_size`` says how many registers will be sent each time. Remember the the max size per payload is
