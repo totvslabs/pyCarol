@@ -1,7 +1,6 @@
 from google.resumable_media import DataCorruption
-from google.api_core.exceptions import GatewayTimeout
+from google.api_core.exceptions import GatewayTimeout, ServiceUnavailable
 import functools
-
 
 def retry_check_sum(func):
     """
@@ -21,7 +20,7 @@ def retry_check_sum(func):
         for i in range(5):
             try:
                 return func(*args, **kwargs)
-            except (GatewayTimeout, DataCorruption) as e:
+            except (GatewayTimeout, DataCorruption, ServiceUnavailable) as e:
                 # TODO: Add logs in pycarol.
                 continue
 
