@@ -4,8 +4,11 @@ import gzip
 from .. import __TEMP_STORAGE__
 from collections import defaultdict
 from ..utils.miscellaneous import prettify_path, _attach_path, _FILE_MARKER
-from ._cds_utils import retry_check_sum
+from retry import retry
+from google.resumable_media import DataCorruption
+from google.api_core.exceptions import GatewayTimeout, ServiceUnavailable
 
+CDS_RETRY_LIST = (GatewayTimeout, DataCorruption, ServiceUnavailable)
 
 class StorageGCPCS:
     def __init__(self, carol, carolina):
@@ -77,7 +80,7 @@ class StorageGCPCS:
         blob.upload_from_filename(filename=local_file_name)
         os.utime(local_file_name, None)
 
-    @retry_check_sum
+    @retry(CDS_RETRY_LIST, tries=5)
     def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage', columns=None,
              chunk_size=None):
         """

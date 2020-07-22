@@ -18,7 +18,8 @@ min_requires = [
     'urllib3',
     'deprecated',
     'python-dotenv',
-    'gcsfs>=0.3.0'
+    'gcsfs>=0.3.0',
+    "retry"
 ]
 
 extras_require = {
