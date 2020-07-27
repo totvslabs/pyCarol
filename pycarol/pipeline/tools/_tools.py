@@ -160,10 +160,10 @@ def _get_dag_(dag, tasks) -> dict:
         the daq as a collections.defaultdict(set)
 
     """
-    #recursivly get tasks requeirements
     for task in tasks:
         if task in dag:
             continue
+        #flatten handles dicts and lists.
         reqs = flatten(task.requires())
         if len(reqs) > 0:
             dag[task].update(set(reqs))
