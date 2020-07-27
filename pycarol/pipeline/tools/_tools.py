@@ -25,9 +25,10 @@ class Pipe(object):
         self.params = copy.deepcopy(params)
         self.top_nodes = tasks # top nodes are root nodes
         #self.dag = _get_dag_from_task(tasks)
-        self.dag = _get_dag_(defaultdict(set), tasks)
         self.top_nodes = [t(**self.params) for t in self.top_nodes]
-        self.dag = _get_instances_from_classes(self.dag, self.params)
+        self.dag = _get_dag_(defaultdict(set), self.top_nodes)
+        self.dag = {i: list(j) for i,j in self.dag.items()}
+        #self.dag = _get_instances_from_classes(self.dag, self.params)
         self.rev_dag = get_reverse_dag(self.dag)
         self.leaf_nodes = find_root_in_dag(self.rev_dag) #  leaf nodes are root nodes of rev dag
         self.all_tasks = [k for k in self.dag]
