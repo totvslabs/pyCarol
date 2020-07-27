@@ -147,11 +147,11 @@ class Pipe(object):
 
 def _get_dag_(req_dict, tasks) -> dict:
     for task in tasks:
-        if task.task_id in req_dict:
+        if task in req_dict:
             continue
         reqs = flatten(task.requires())
         if len(reqs) > 0:
-            req_dict[task.task_id].update(set(reqs))
+            req_dict[task].update(set(reqs))
             req_dict = _get_dag_(req_dict, reqs)
         else:
             continue
