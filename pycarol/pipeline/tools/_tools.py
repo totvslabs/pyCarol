@@ -145,18 +145,33 @@ class Pipe(object):
 ### Auxiliary functions ###
 
 
-def _get_dag_(req_dict, tasks) -> dict:
+def _get_dag_(dag, tasks) -> dict:
+    """
+    Compute the DAQ of a pipeline.
+
+
+    Args:
+        dag: `collections.defaultdict(set)`
+            A defaultdict of a set. This will hold the dict with the result {task : requirements_set}
+        tasks: `list`
+            List of taks to find the dependencies.
+
+    Returns: collections.defaultdict(set)
+        the daq as a collections.defaultdict(set)
+
+    """
+    #recursivly get tasks requeirements
     for task in tasks:
-        if task in req_dict:
+        if task in dag:
             continue
         reqs = flatten(task.requires())
         if len(reqs) > 0:
-            req_dict[task].update(set(reqs))
-            req_dict = _get_dag_(req_dict, reqs)
+            dag[task].update(set(reqs))
+            dag = _get_dag_(dag, reqs)
         else:
             continue
 
-    return req_dict
+    return dag
 
 
 def _luigi_get_sons(task) -> list:
