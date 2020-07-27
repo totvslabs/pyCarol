@@ -7,7 +7,8 @@ from pycarol.pipeline.utils import (
     get_reverse_dag,
     find_root_in_dag,
 )
-
+from luigi.task import flatten
+from collections import defaultdict
 
 class Pipe(object):
     """
@@ -23,7 +24,8 @@ class Pipe(object):
 
         self.params = copy.deepcopy(params)
         self.top_nodes = tasks # top nodes are root nodes
-        self.dag = _get_dag_from_task(tasks)
+        #self.dag = _get_dag_from_task(tasks)
+        self.dag = _get_dag_(defaultdict(set), tasks)
         self.top_nodes = [t(**self.params) for t in self.top_nodes]
         self.dag = _get_instances_from_classes(self.dag, self.params)
         self.rev_dag = get_reverse_dag(self.dag)
@@ -143,6 +145,20 @@ class Pipe(object):
 ### Auxiliary functions ###
 
 
+def _get_dag_(req_dict, tasks) -> dict:
+    for task in tasks:
+        if task.task_id in req_dict:
+            continue
+        reqs = flatten(task.requires())
+        if len(reqs) > 0:
+            req_dict[task.task_id].update(set(reqs))
+            req_dict = _get_dag_(req_dict, reqs)
+        else:
+            continue
+
+    return req_dict
+
+
 def _luigi_get_sons(task) -> list:
     """
     Returns a list of required tasks. This is used in build_dag
@@ -174,6 +190,8 @@ def _get_dag_from_task(task:list) -> dict:
 
 def _get_instances_from_classes(dag:dict, params:dict):
     """Returns a dag of task instances, given a dag of task classes and pipeline params."""
+
+    dag = {i: list(j) for i,j in dag.items()}
     instances_dag = {}
     for k,v in dag.items():
         task_params = params
