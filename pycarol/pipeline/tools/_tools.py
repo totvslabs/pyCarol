@@ -166,8 +166,8 @@ def _get_dag_(dag, tasks) -> dict:
             continue
         #flatten handles dicts and lists.
         reqs = flatten(task.requires())
+        dag[task].update(set(reqs))
         if len(reqs) > 0:
-            dag[task].update(set(reqs))
             dag = _get_dag_(dag, reqs)
         else:
             continue
