@@ -8,6 +8,10 @@ from pycarol.pipeline.utils import (
     find_root_in_dag,
 )
 
+from luigi.task import flatten
+from collections import defaultdict
+
+
 class Pipe(object):
     """
     This class should be used to compose a pipeline given a list of tasks. It
@@ -22,9 +26,11 @@ class Pipe(object):
 
         self.params = copy.deepcopy(params)
         self.top_nodes = tasks # top nodes are root nodes
-        self.dag = _get_dag_from_task(tasks)
+        #self.dag = _get_dag_from_task(tasks)
         self.top_nodes = [t(**self.params) for t in self.top_nodes]
-        self.dag = _get_instances_from_classes(self.dag, self.params)
+        self.dag = _get_dag_(defaultdict(set), self.top_nodes)
+        self.dag = {i: list(j) for i,j in self.dag.items()}
+        #self.dag = _get_instances_from_classes(self.dag, self.params)
         self.rev_dag = get_reverse_dag(self.dag)
         self.leaf_nodes = find_root_in_dag(self.rev_dag) #  leaf nodes are root nodes of rev dag
         self.all_tasks = [k for k in self.dag]
@@ -142,6 +148,35 @@ class Pipe(object):
 ### Auxiliary functions ###
 
 
+def _get_dag_(dag, tasks) -> dict:
+    """
+    Compute the DAQ of a pipeline.
+
+
+    Args:
+        dag: `collections.defaultdict(set)`
+            A defaultdict of a set. This will hold the dict with the result {task : requirements_set}
+        tasks: `list`
+            List of taks to find the dependencies.
+
+    Returns: collections.defaultdict(set)
+        the daq as a collections.defaultdict(set)
+
+    """
+    for task in tasks:
+        if task in dag:
+            continue
+        #flatten handles dicts and lists.
+        reqs = flatten(task.requires())
+        dag[task].update(set(reqs))
+        if len(reqs) > 0:
+            dag = _get_dag_(dag, reqs)
+        else:
+            continue
+
+    return dag
+
+
 def _luigi_get_sons(task) -> list:
     """
     Returns a list of required tasks. This is used in build_dag
@@ -173,6 +208,8 @@ def _get_dag_from_task(task:list) -> dict:
 
 def _get_instances_from_classes(dag:dict, params:dict):
     """Returns a dag of task instances, given a dag of task classes and pipeline params."""
+
+    dag = {i: list(j) for i,j in dag.items()}
     instances_dag = {}
     for k,v in dag.items():
         task_params = params
