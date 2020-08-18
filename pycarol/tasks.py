@@ -98,10 +98,10 @@ class Tasks:
         Add more than one log
 
         Args:
-        logs: `list`
-            list of logs objects [{"task_id":"", "log_message": "", "log_level": ""}]
-        task_id `str` default `None`
-                The task ID. it's not necessary if self.task_id is defined
+            logs: `list`
+                list of logs objects [{"task_id":"", "log_message": "", "log_level": ""}]
+            task_id `str` default `None`
+                    The task ID. it's not necessary if self.task_id is defined
 
         :return: Task
         """
@@ -110,7 +110,8 @@ class Tasks:
             task_id = self.task_id
             assert task_id, "Task ID should be set because it has not been set in env by Carol."
 
-        resp = self.carol.call_api('v1/tasks/{}/logs'.format(task_id), data=logs)
+        resp = self.carol.call_api('v1/tasks/{}/logs'.format(task_id), data=logs, status_forcelist=(500, 502, 503,
+                                                                                                    504, 524))
         return resp['success']
 
     def get_logs(self, task_id=None):
