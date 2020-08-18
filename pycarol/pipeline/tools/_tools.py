@@ -7,8 +7,10 @@ from pycarol.pipeline.utils import (
     get_reverse_dag,
     find_root_in_dag,
 )
+
 from luigi.task import flatten
 from collections import defaultdict
+
 
 class Pipe(object):
     """
