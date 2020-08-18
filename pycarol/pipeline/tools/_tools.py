@@ -8,7 +8,6 @@ from pycarol.pipeline.utils import (
     find_root_in_dag,
 )
 
-
 class Pipe(object):
     """
     This class should be used to compose a pipeline given a list of tasks. It

@@ -89,11 +89,7 @@ class CarolHandler(logging.StreamHandler):
     def _log_carol(self, record):
         msg = self.format(record)
         log_level = _carol_levels.get(record.levelname)
-        if 'Pending tasks' in msg:
-            self._set_progress_task_luigi(msg, log_level=log_level)
-
-        if record.name != 'luigi-interface':
-            self._task.add_log(msg, log_level=log_level)
+        self._task.add_log(msg, log_level=log_level)
 
     def emit(self, record):
         """
@@ -112,43 +108,3 @@ class CarolHandler(logging.StreamHandler):
         else:
             self._log_carol(record)
 
-    def _set_progress_task_luigi(self, msg, log_level):
-
-        """
-        Used to auto set the process bar in Carol when using Luigi.
-
-        Args:
-            msg: `str`
-                Message to log
-            log_level:
-                log level.
-
-        Returns: `None`
-
-        """
-
-        match = re.search(r'\d+.?\d*', msg)
-        wrong_value = False
-        if match:
-            try:
-                current_count = float(match.group())
-            except:
-                wrong_value = True
-
-        else:
-            current_count = 100
-            wrong_value = True
-            self._task.add_log('Something wrong with task counter', log_level='WARN')
-
-        if (self._first_pending) and (not wrong_value):
-            self._first_pending = False
-            self._total_number_of_tasks = current_count
-
-        if wrong_value:
-            try:
-                current_percentage = 100 - 100 * (current_count / self._total_number_of_tasks)
-                current_percentage = int(min(current_percentage, 99))
-                self._task.set_progress(current_percentage)
-            except:
-                pass
-        self._task.add_log(msg, log_level='INFO')
