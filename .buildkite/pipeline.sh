@@ -6,7 +6,7 @@ steps:
   - label: ":python: build"
     command: make ci
     agents:
-      queue: "default"
+      queue: "general"
       dind: true
     timeout_in_minutes: 10
   - wait: ~
@@ -14,7 +14,7 @@ steps:
     command: make release
     branches: "*.*.*"
     agents:
-      queue: "default"
+      queue: "general"
       dind: true
     timeout_in_minutes: 15
 EOF
