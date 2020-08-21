@@ -21,6 +21,12 @@ _CAROL_METADATA_GOLDEN = ['mdmApplicationIdMasterRecordId', 'mdmCounterForEntity
 
 _NEEDED_FOR_MERGE = ['mdmCounterForEntity', 'mdmId', 'mdmDeleted']
 
+_REJECTED_DM_COLS = ['mdmConnectorId', 'mdmCreated', 'mdmCreatedUser', 'mdmCrosswalk',
+                     'mdmDetailFieldValues', 'mdmEntityTemplateId', 'mdmEntityType',
+                     'mdmErrors', 'mdmId', 'mdmLastUpdated', 'mdmMasterFieldAndValues',
+                     'mdmStagingApplicationId', 'mdmStagingEntityName', 'mdmStagingRecord',
+                     'mdmTenantId', 'mdmUpdatedUser']
+
 from .carol import Carol
 from .staging import Staging
 from .connectors import Connectors

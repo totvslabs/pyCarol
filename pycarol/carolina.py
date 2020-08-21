@@ -57,6 +57,10 @@ class Carolina:
 
         self.cds_golden_intake_path = token['cdsIntakeGoldenPath']
         self.cds_staging_intake_path = token['cdsIntakeStagingPath']
+        #TODO: wait for carol's deploy
+        #self.cds_golden_rejected_intake_path = token['cdsGoldenRejectedPath']
+        self.cds_golden_rejected_intake_path = {'bucket': 'prod-mdm-1-carol-internal-{tenant_id}',
+                                                'path': 'rejected-output/{dm_name}Rejected'}
 
         self.cds_view_intake_path = token['cdsIntakeViewPath']
 
@@ -134,6 +138,8 @@ class Carolina:
             template = self.cds_golden_intake_path['bucket']
         elif space == 'view_cds':
             template = self.cds_view_intake_path['bucket']
+        elif space == 'golden_rejected':
+            template = self.cds_staging_rejected_path['bucket']
         else:
             raise ValueError
 
@@ -193,6 +199,8 @@ class Carolina:
             template = self.cds_golden_intake_path['path'] + '/'
         elif space == 'view_cds':
             template = self.cds_view_intake_path['path'] + '/'
+        elif space == 'golden_rejected':
+            template = self.cds_golden_rejected_intake_path['path'] + '/'
         else:
             raise ValueError
 

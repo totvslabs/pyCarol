@@ -1,6 +1,9 @@
 import multiprocessing
 import functools
 import warnings
+import gzip
+import json
+
 from tqdm import tqdm
 
 __STAGING_FIELDS = ['mdmCounterForEntity', 'mdmId']
@@ -54,6 +57,10 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
                    staging_name=None, view_name=None, import_type='staging', golden=False, max_hits=None, callback=None,
                    token_carolina=None, storage_space=None,  file_pattern=None):
     import pandas as pd
+
+    if callback is not None and not callable(callback):
+        raise TypeError(f'"{callback}" is a {type(callback)} and is not callable.')
+
     if columns:
         columns = list(set(columns))
         columns += __DM_FIELDS
@@ -73,8 +80,11 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
                                                        file_pattern=file_pattern)
     elif import_type == 'view_cds':
         file_paths = storage.get_view_cds_file_paths(dm_name=view_name)
+    elif import_type == 'golden_rejected':
+        file_paths = storage.get_golden_rejected_cds_file_paths(dm_name=dm_name)
     else:
-        raise KeyError('import_type should be `golden`,`staging`, `view`, `staging_cds`, `golden_cds`, `view_cds`')
+        raise KeyError('import_type should be `golden`,`staging`, `view`, `staging_cds`, `golden_cds`, `view_cds`',
+                       'golden_rejected')
 
     df_list = []
     count = 0
@@ -94,16 +104,22 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
         with multiprocessing.Pool(processes=max_workers) as pool:
             df_list = pool.map(partial_download, file_paths)
     else:
-        for i, file in enumerate(tqdm(list(file_paths))): # need list to be able to track the counts.
+        for i, file in enumerate(tqdm(list(file_paths))):  # need list to be able to track the counts.
             buffer = storage.load(file['name'], format='raw', cache=False, storage_space=file['storage_space'])
-            result = pd.read_parquet(buffer, columns=columns)
+            if file['name'].endswith('.parquet'):
+                result = pd.read_parquet(buffer, columns=columns)
+            elif file['name'].endswith('.json.gz'):
+                buffer.seek(0)
+                result = (json.loads(f) for f in gzip.GzipFile(fileobj=buffer).readlines())
+                result = pd.DataFrame(result)
+                result = pd.concat([pd.DataFrame(result.pop('mdmMasterFieldAndValues').tolist(), ), result], axis=1)
+            else:
+                ValueError('Supported files are `parquet` and `json.gz`')
 
             if mapping_columns is not None:
                 # fix columns names (we replace `-` for `_` due to parquet limitations.
                 result.rename(columns=mapping_columns, inplace=True)
             if callback:
-                assert callable(callback), \
-                    f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function/class.'
                 result = callback(result)
 
             df_list.append(result)
@@ -127,7 +143,6 @@ def _download_files(file, storage, storage_space, columns, mapping_columns, call
 
     if mapping_columns is not None:
         result.rename(columns=mapping_columns, inplace=True)
-
     if callback:
         result = callback(result)
     return result
