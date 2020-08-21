@@ -298,7 +298,7 @@ class Storage:
         return self.backend.get_staging_file_paths(staging_name, connector_id)
 
     def get_golden_rejected_cds_file_paths(self, dm_name, file_pattern=None):
-        return self.backend.get_golden_rejected_cds_file_paths(dm_name, file_pattern=None)
+        return self.backend.get_golden_rejected_cds_file_paths(dm_name, file_pattern=file_pattern)
 
     def get_staging_cds_file_paths(self, staging_name, connector_id, file_pattern=None):
         return self.backend.get_staging_cds_file_paths(staging_name, connector_id, file_pattern=file_pattern)

@@ -323,10 +323,11 @@ class StorageGCPCS:
     def get_golden_rejected_cds_file_paths(self, dm_name, file_pattern=None):
         bucket_rejected = self.carolina.get_client().bucket(self.carolina.get_bucket_name('golden_rejected'))
         path_rejected = self.carolina.get_path("golden_rejected", {'dm_name': dm_name, })
-        blobs_rejected = list(bucket_rejected.list_blobs(prefix=path_rejected))
-
         if file_pattern is not None:
             path_rejected = path_rejected + file_pattern
+
+        blobs_rejected = list(bucket_rejected.list_blobs(prefix=path_rejected))
+
         br = [{'storage_space': 'golden_rejected', 'name': i.name} for i in blobs_rejected if
               i.name.endswith('.json.gz')]
         return br
