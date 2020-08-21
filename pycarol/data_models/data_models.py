@@ -608,20 +608,24 @@ class DataModel:
         storage_space = storage.backend.carolina.get_bucket_name(import_type)
 
         if backend == 'dask':
-            d = _import_dask(storage=storage, dm_name=dm_name,
-                             import_type=import_type,
-                             merge_records=False,
-                             return_dask_graph=return_dask_graph,
-                             columns=None)
+            d = _import_dask(
+                storage=storage, dm_name=dm_name,
+                import_type=import_type,
+                merge_records=False,
+                return_dask_graph=return_dask_graph,
+                columns=None, file_pattern=file_pattern,
+            )
 
         elif backend == 'pandas':
             import pandas as pd
-            d = _import_pandas(storage=storage, dm_name=dm_name,
-                               import_type=import_type, columns=None,
-                               callback=callback, max_hits=max_hits,
-                               max_workers=max_workers,
-                               token_carolina=token_carolina,
-                               storage_space=storage_space, file_pattern=file_pattern)
+            d = _import_pandas(
+                storage=storage, dm_name=dm_name,
+                import_type=import_type, columns=None,
+                callback=callback, max_hits=max_hits,
+                max_workers=max_workers,
+                token_carolina=token_carolina,
+                storage_space=storage_space, file_pattern=file_pattern
+            )
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
                 _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])

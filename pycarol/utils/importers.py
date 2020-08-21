@@ -10,13 +10,15 @@ __STAGING_FIELDS = ['mdmCounterForEntity', 'mdmId']
 __DM_FIELDS = ['mdmCounterForEntity', 'mdmId']
 
 
-def _import_dask(storage, merge_records=False,
-                 dm_name=None, import_type='staging', return_dask_graph=False,
-                 connector_id=None, staging_name=None, view_name=None, columns=None,
-                 max_hits=None, mapping_columns=None, engine='pyarrow'):
-
+def _import_dask(
+        storage, merge_records=False,
+        dm_name=None, import_type='staging', return_dask_graph=False,
+        connector_id=None, staging_name=None, view_name=None, columns=None,
+        max_hits=None, mapping_columns=None, engine='pyarrow', file_pattern=None,
+):
+    file_pattern = file_pattern if file_pattern else ''
     from dask import dataframe as dd
-    mapping_columns = mapping_columns or {} #dask does not accepets None. Need to send a valid mapping.
+    mapping_columns = mapping_columns or {}  # dask does not accepets None. Need to send a valid mapping.
 
     if columns:
         columns = list(set(columns))
@@ -51,11 +53,12 @@ def _import_dask(storage, merge_records=False,
                        '`golden_rejected`')
 
     if is_parquet:
-        url = url + "*.parquet"
+        url = url + file_pattern + "*.parquet"
         d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns, engine=engine)
     else:
-        url = url + "*.json.gz"
+        url = url + file_pattern + "*.json.gz"
         d = dd.read_json(url, storage_options=storage.get_dask_options(), compression='gzip')
+
     d = d.rename(columns=mapping_columns)
     if return_dask_graph:
         return d
@@ -65,7 +68,7 @@ def _import_dask(storage, merge_records=False,
 
 def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mapping_columns=None, max_workers=None,
                    staging_name=None, view_name=None, import_type='staging', golden=False, max_hits=None, callback=None,
-                   token_carolina=None, storage_space=None,  file_pattern=None):
+                   token_carolina=None, storage_space=None, file_pattern=None):
     import pandas as pd
 
     if callback is not None and not callable(callback):
@@ -145,10 +148,9 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
     return pd.concat(df_list, ignore_index=True, sort=True)
 
 
-
 def _download_files(file, storage, storage_space, columns, mapping_columns, callback):
     import pandas as pd
-    filename = storage_space +'/' + file['name']
+    filename = storage_space + '/' + file['name']
     buffer = storage.open(filename)
     if file['name'].endswith('.parquet'):
         result = pd.read_parquet(buffer, columns=columns)
@@ -164,6 +166,7 @@ def _download_files(file, storage, storage_space, columns, mapping_columns, call
     if callback:
         result = callback(result)
     return result
+
 
 def _load_client(token):
     import gcsfs
