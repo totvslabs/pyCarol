@@ -94,7 +94,7 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
     elif import_type == 'view_cds':
         file_paths = storage.get_view_cds_file_paths(dm_name=view_name)
     elif import_type == 'golden_rejected':
-        file_paths = storage.get_golden_rejected_cds_file_paths(dm_name=dm_name)
+        file_paths = storage.get_golden_rejected_cds_file_paths(dm_name=dm_name, file_pattern=file_pattern)
     else:
         raise KeyError('import_type should be `golden`,`staging`, `view`, `staging_cds`, `golden_cds`, `view_cds`',
                        'golden_rejected')
