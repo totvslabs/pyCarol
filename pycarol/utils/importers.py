@@ -18,7 +18,6 @@ def _import_dask(
 ):
     file_pattern = file_pattern if file_pattern else ''
     from dask import dataframe as dd
-    import dask
     mapping_columns = mapping_columns or {}  # dask does not accepets None. Need to send a valid mapping.
 
     if columns:
