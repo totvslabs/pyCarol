@@ -53,7 +53,8 @@ def _import_dask(storage, merge_records=False,
     if is_parquet:
         d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns, engine=engine)
     else:
-        pass
+        url = url + "*.json.gz"
+        d = dd.read_json(url, storage_options=storage.get_dask_options(), compression='gzip')
     d = d.rename(columns=mapping_columns)
     if return_dask_graph:
         return d
@@ -120,7 +121,8 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
                 buffer.seek(0)
                 result = (json.loads(f) for f in gzip.GzipFile(fileobj=buffer).readlines())
                 result = pd.DataFrame(result)
-                result = pd.concat([pd.DataFrame(result.pop('mdmMasterFieldAndValues').tolist(), ), result], axis=1)
+                if 'mdmMasterFieldAndValues' in result.columns:
+                    result = pd.concat([pd.DataFrame(result.pop('mdmMasterFieldAndValues').tolist(), ), result], axis=1)
             else:
                 ValueError('Supported files are `parquet` and `json.gz`')
 
@@ -153,7 +155,8 @@ def _download_files(file, storage, storage_space, columns, mapping_columns, call
         buffer.seek(0)
         result = (json.loads(f) for f in gzip.GzipFile(fileobj=buffer).readlines())
         result = pd.DataFrame(result)
-        result = pd.concat([pd.DataFrame(result.pop('mdmMasterFieldAndValues').tolist(), ), result], axis=1)
+        if 'mdmMasterFieldAndValues' in result.columns:
+            result = pd.concat([pd.DataFrame(result.pop('mdmMasterFieldAndValues').tolist(), ), result], axis=1)
 
     if mapping_columns is not None:
         result.rename(columns=mapping_columns, inplace=True)
