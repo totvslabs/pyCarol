@@ -559,28 +559,19 @@ class DataModel:
     ):
 
         """
-        Fetch parquet from Golden.
+        Fetch rejected records from Golden.
 
             Args:
                 dm_name: `str`
                     Data model name to be imported
-                merge_records: `bool`, default `True`
-                    This will keep only the most recent record exported. Sometimes there are updates and/or deletions and
-                    one should keep only the last records.
                 backend: ['dask','pandas'], default `dask`
                     if to use either dask or pandas to fetch the data
                 return_dask_graph: `bool`, default `false`
                     If to return the dask graph or the dataframe.
-                columns: `list`, default `None`
-                    List of columns to fetch.
-                return_metadata: `bool`, default `False`
-                    To return or not the fields like ['mdmId', 'mdmCounterForEntity', etc.]
                 callback: `callable`, default `None`
                     Function to be called each downloaded file.
                 max_hits: `int`, default `None`
                     Number of records to get.
-                cds: `bool`, default `False`
-                    Get records from CDS.
                 max_workers: `int` default `None`
                     Number of workers to use when downloading parquet files with pandas back-end.
                 file_pattern: `str` default `None`
@@ -590,6 +581,7 @@ class DataModel:
                     If a callback is used, it will return the result of the response of the callback. This will skip all the
                     operation to merge records and return selected columns.
                 :return:
+                    pd.DataFrame with rejected records.
                 """
 
         if backend not in ('dask', 'pandas'):
