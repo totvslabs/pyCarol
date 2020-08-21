@@ -18,6 +18,7 @@ def _import_dask(
 ):
     file_pattern = file_pattern if file_pattern else ''
     from dask import dataframe as dd
+    import dask
     mapping_columns = mapping_columns or {}  # dask does not accepets None. Need to send a valid mapping.
 
     if columns:
@@ -58,7 +59,6 @@ def _import_dask(
     else:
         url = url + file_pattern + "*.json.gz"
         d = dd.read_json(url, storage_options=storage.get_dask_options(), compression='gzip')
-
     d = d.rename(columns=mapping_columns)
     if return_dask_graph:
         return d
