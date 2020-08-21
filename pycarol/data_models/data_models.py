@@ -630,20 +630,12 @@ class DataModel:
                 warnings.warn("No data to fetch!", UserWarning)
                 _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
                 cols_keys = list(_field_types)
-                if return_metadata:
-                    cols_keys.extend(_meta_cols)
-
-                elif columns:
-                    columns = [i for i in columns if i not in _meta_cols]
 
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in _field_types.items():
                     if isinstance(value, dict):
                         value = "STRING"  # If nested we receive as a `STR`
                     d.loc[:, key] = d.loc[:, key].astype(_DATA_MODEL_TYPES_MAPPING.get(value.lower(), str), copy=False)
-                if columns:
-                    columns = list(set(columns))
-                    d = d[list(set(columns))]
                 return d
 
         else:
@@ -651,16 +643,6 @@ class DataModel:
 
         if (return_callback_result) and (callback is not None):
             return d
-
-        if merge_records:
-            if (not return_dask_graph) or (backend == 'pandas'):
-                d = drop_duplicated_parquet(d)
-            else:
-                d = drop_duplicated_parquet_dask(d)
-
-        if not return_metadata:
-            to_drop = set(_meta_cols).intersection(set(d.columns))
-            d = d.drop(labels=to_drop, axis=1)
 
         return d
 
