@@ -252,6 +252,10 @@ class StorageGCPCS:
             return None
         return f'gcs://{bucket_name}/{path}'
 
+    def build_url_parquet_golden_rejected_cds(self, dm_name):
+        path = self.carolina.get_path("golden_rejected", {'dm_name': dm_name})
+        return f'gcs://{self.carolina.get_bucket_name("golden_rejected")}/{path}'
+
     def get_dask_options(self):
         return {'token': self.carolina.token}
 

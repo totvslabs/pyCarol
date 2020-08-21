@@ -23,6 +23,7 @@ def _import_dask(storage, merge_records=False,
         columns += __STAGING_FIELDS
         columns = list(set(columns))
 
+    is_parquet = True
     if import_type == 'golden':
         url = [storage.build_url_parquet_golden(dm_name=dm_name)]
     elif import_type == 'golden_cds':
@@ -42,10 +43,17 @@ def _import_dask(storage, merge_records=False,
         url = [storage.build_url_parquet_view(view_name=view_name)]
     elif import_type == 'staging_cds':
         url = storage.build_url_parquet_staging_cds(staging_name=staging_name, connector_id=connector_id)
+    elif import_type == 'golden_rejected':
+        is_parquet = False
+        url = storage.build_url_parquet_golden_rejected_cds(dm_name=dm_name)
     else:
-        raise KeyError('import_type should be `golden`,`staging`, `view`, `staging_cds`, `golden_cds`, `view_cds`')
+        raise KeyError('import_type should be `golden`,`staging`, `view`, `staging_cds`, `golden_cds`, `view_cds`,'
+                       '`golden_rejected`')
 
-    d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns, engine=engine)
+    if is_parquet:
+        d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns, engine=engine)
+    else:
+        pass
     d = d.rename(columns=mapping_columns)
     if return_dask_graph:
         return d
@@ -139,7 +147,13 @@ def _download_files(file, storage, storage_space, columns, mapping_columns, call
     import pandas as pd
     filename = storage_space +'/' + file['name']
     buffer = storage.open(filename)
-    result = pd.read_parquet(buffer, columns=columns)
+    if file['name'].endswith('.parquet'):
+        result = pd.read_parquet(buffer, columns=columns)
+    elif file['name'].endswith('.json.gz'):
+        buffer.seek(0)
+        result = (json.loads(f) for f in gzip.GzipFile(fileobj=buffer).readlines())
+        result = pd.DataFrame(result)
+        result = pd.concat([pd.DataFrame(result.pop('mdmMasterFieldAndValues').tolist(), ), result], axis=1)
 
     if mapping_columns is not None:
         result.rename(columns=mapping_columns, inplace=True)

@@ -11,11 +11,8 @@ from .data_model_types import DataModelTypeIds
 from ..utils.importers import _import_dask, _import_pandas
 from ..verticals import Verticals
 from ..storage import Storage
-from ..query import Query, delete_golden
+from ..query import delete_golden
 from ..connectors import Connectors
-from ..filter import RANGE_FILTER as RF
-from ..filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
-from ..utils.miscellaneous import ranges
 from ..utils import async_helpers
 from ..utils.miscellaneous import stream_data
 from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE, _REJECTED_DM_COLS
@@ -115,7 +112,7 @@ class DataModel:
             :return:
             """
 
-        if backend not in ('dask','pandas'):
+        if backend not in ('dask', 'pandas'):
             raise ValueError(f"Backend options are 'dask','pandas' {backend} was given")
 
         if return_metadata:
@@ -377,7 +374,7 @@ class DataModel:
         params = {
             'recordType': 'REJECTED',
             'fuzzy': False,
-            'queryDescription': {"a":"REJECTED","q":"*","p":"1","o":"ASC","r":"[]"},
+            'queryDescription': {"a": "REJECTED", "q": "*", "p": "1", "o": "ASC", "r": "[]"},
             'deleteRecords': delete_records
         }
         result = self.carol.call_api(f'v1/entities/templates/{dm_id}/reprocess', method='POST', params=params)
@@ -554,10 +551,12 @@ class DataModel:
 
         return resp
 
-    def fetch_rejected(self, dm_name, backend='pandas',
-                      return_dask_graph=False, callback=None,
-                      max_hits=None, max_workers=None, file_pattern=None,
-                      return_callback_result=False):
+    def fetch_rejected(
+            self, dm_name, backend='pandas',
+            return_dask_graph=False, callback=None,
+            max_hits=None, max_workers=None, file_pattern=None,
+            return_callback_result=False
+    ):
 
         """
         Fetch parquet from Golden.
@@ -596,11 +595,8 @@ class DataModel:
         if backend not in ('dask', 'pandas'):
             raise ValueError(f"Backend options are 'dask','pandas' {backend} was given")
 
-
         if callback and not callable(callback):
             raise TypeError(f'"{callback}" object is not callable')
-
-        all_cols = list(self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields']))
 
         if return_dask_graph and backend != 'dask':
             warnings.warn('`return_dask_graph` has no use when `backend!=dask`')
@@ -645,7 +641,6 @@ class DataModel:
             return d
 
         return d
-
 
 
 class entIntType(object):

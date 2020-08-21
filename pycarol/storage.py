@@ -282,6 +282,9 @@ class Storage:
     def build_url_parquet_staging_rejected(self, staging_name, connector_id):
         return self.backend.build_url_parquet_staging_rejected(staging_name, connector_id)
 
+    def build_url_parquet_golden_rejected_cds(self, dm_name):
+        return self.backend.build_url_parquet_golden_rejected_cds(dm_name)
+
     def get_dask_options(self):
         return self.backend.get_dask_options()
 
