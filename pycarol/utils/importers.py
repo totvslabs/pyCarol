@@ -51,6 +51,7 @@ def _import_dask(storage, merge_records=False,
                        '`golden_rejected`')
 
     if is_parquet:
+        url = url + "*.parquet"
         d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns, engine=engine)
     else:
         url = url + "*.json.gz"
