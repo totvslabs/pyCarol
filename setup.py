@@ -18,14 +18,14 @@ min_requires = [
     'urllib3',
     'deprecated',
     'python-dotenv',
-    'gcsfs>=0.3.0',
+    'gcsfs>=0.3.0,<0.7',
     "retry"
 ]
 
 extras_require = {
     "dataframe": min_requires + ['pandas>=0.23.4,!=1.0.4', 'numpy>=1.16.3', 'joblib>=0.11', 'pyarrow>=0.15.1'],
     "pipeline": min_requires + ['luigi', 'papermill', 'pandas>=0.23.4,!=1.0.4', 'numpy>=1.16.3', 'joblib>=0.11',
-                                'pyarrow>=0.15.1',],
+                                'pyarrow>=0.15.1,<1.0.0',],
     "onlineapp": min_requires + ['flask>=1.0.2', 'redis'],
     "dask": min_requires + ['dask[complete]'],
     "dev": min_requires + ['pytest', 'bumpversion', "sphinx-rtd-theme", "sphinx"],
