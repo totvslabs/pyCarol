@@ -11,14 +11,11 @@ from .data_model_types import DataModelTypeIds
 from ..utils.importers import _import_dask, _import_pandas
 from ..verticals import Verticals
 from ..storage import Storage
-from ..query import Query, delete_golden
+from ..query import delete_golden
 from ..connectors import Connectors
-from ..filter import RANGE_FILTER as RF
-from ..filter import TYPE_FILTER, Filter, MAXIMUM, MINIMUM
-from ..utils.miscellaneous import ranges
 from ..utils import async_helpers
 from ..utils.miscellaneous import stream_data
-from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE
+from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE, _REJECTED_DM_COLS
 from ..utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
 from ..utils.deprecation_msgs import _deprecation_msgs
 from ..exceptions import CarolApiResponseException
@@ -115,7 +112,7 @@ class DataModel:
             :return:
             """
 
-        if backend not in ('dask','pandas'):
+        if backend not in ('dask', 'pandas'):
             raise ValueError(f"Backend options are 'dask','pandas' {backend} was given")
 
         if return_metadata:
@@ -377,7 +374,7 @@ class DataModel:
         params = {
             'recordType': 'REJECTED',
             'fuzzy': False,
-            'queryDescription': {"a":"REJECTED","q":"*","p":"1","o":"ASC","r":"[]"},
+            'queryDescription': {"a": "REJECTED", "q": "*", "p": "1", "o": "ASC", "r": "[]"},
             'deleteRecords': delete_records
         }
         result = self.carol.call_api(f'v1/entities/templates/{dm_id}/reprocess', method='POST', params=params)
@@ -553,6 +550,93 @@ class DataModel:
             self.carol.call_api(url, method='POST')
 
         return resp
+
+    def fetch_rejected(
+            self, dm_name, backend='pandas',
+            return_dask_graph=False, callback=None,
+            max_hits=None, max_workers=None, file_pattern=None,
+            return_callback_result=False
+    ):
+
+        """
+        Fetch rejected records from Golden.
+
+            Args:
+                dm_name: `str`
+                    Data model name to be imported
+                backend: ['dask','pandas'], default `dask`
+                    if to use either dask or pandas to fetch the data
+                return_dask_graph: `bool`, default `false`
+                    If to return the dask graph or the dataframe.
+                callback: `callable`, default `None`
+                    Function to be called each downloaded file.
+                max_hits: `int`, default `None`
+                    Number of records to get.
+                max_workers: `int` default `None`
+                    Number of workers to use when downloading parquet files with pandas back-end.
+                file_pattern: `str` default `None`
+                    File pattern to filter data when fetching from CDS. e.g.
+                    file_pattern='2019-11-25' will fetch only CDS files that start with `2019-11-25`.
+                return_callback_result `bool` default `False`
+                    If a callback is used, it will return the result of the response of the callback. This will skip all the
+                    operation to merge records and return selected columns.
+                :return:
+                    pd.DataFrame with rejected records.
+                """
+
+        if backend not in ('dask', 'pandas'):
+            raise ValueError(f"Backend options are 'dask','pandas' {backend} was given")
+
+        if callback and not callable(callback):
+            raise TypeError(f'"{callback}" object is not callable')
+
+        if return_dask_graph and backend != 'dask':
+            warnings.warn('`return_dask_graph` has no use when `backend!=dask`')
+
+        import_type = 'golden_rejected'
+
+        storage = Storage(self.carol)
+        token_carolina = storage.backend.carolina.token
+        storage_space = storage.backend.carolina.get_bucket_name(import_type)
+
+        if backend == 'dask':
+            d = _import_dask(
+                storage=storage, dm_name=dm_name,
+                import_type=import_type,
+                merge_records=False,
+                return_dask_graph=return_dask_graph,
+                columns=None, file_pattern=file_pattern,
+            )
+
+        elif backend == 'pandas':
+            import pandas as pd
+            d = _import_pandas(
+                storage=storage, dm_name=dm_name,
+                import_type=import_type, columns=None,
+                callback=callback, max_hits=max_hits,
+                max_workers=max_workers,
+                token_carolina=token_carolina,
+                storage_space=storage_space, file_pattern=file_pattern
+            )
+            if d is None:
+                warnings.warn("No data to fetch!", UserWarning)
+                _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
+                cols_keys = list(_field_types)
+
+                d = pd.DataFrame(columns=cols_keys)
+                for key, value in _field_types.items():
+                    if isinstance(value, dict):
+                        value = "STRING"  # If nested we receive as a `STR`
+                    d.loc[:, key] = d.loc[:, key].astype(_DATA_MODEL_TYPES_MAPPING.get(value.lower(), str), copy=False)
+                return d
+
+        else:
+            raise ValueError(f'backend should be either "dask" or "pandas" you entered {backend}')
+
+        if (return_callback_result) and (callback is not None):
+            return d
+
+        return d
 
 
 class entIntType(object):

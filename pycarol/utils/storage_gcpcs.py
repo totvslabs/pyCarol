@@ -252,6 +252,10 @@ class StorageGCPCS:
             return None
         return f'gcs://{bucket_name}/{path}'
 
+    def build_url_parquet_golden_rejected_cds(self, dm_name):
+        path = self.carolina.get_path("golden_rejected", {'dm_name': dm_name})
+        return f'gcs://{self.carolina.get_bucket_name("golden_rejected")}/{path}'
+
     def get_dask_options(self):
         return {'token': self.carolina.token}
 
@@ -315,6 +319,18 @@ class StorageGCPCS:
 
         ball = bs + bm + br
         return ball
+
+    def get_golden_rejected_cds_file_paths(self, dm_name, file_pattern=None):
+        bucket_rejected = self.carolina.get_client().bucket(self.carolina.get_bucket_name('golden_rejected'))
+        path_rejected = self.carolina.get_path("golden_rejected", {'dm_name': dm_name, })
+        if file_pattern is not None:
+            path_rejected = path_rejected + file_pattern
+
+        blobs_rejected = list(bucket_rejected.list_blobs(prefix=path_rejected))
+
+        br = [{'storage_space': 'golden_rejected', 'name': i.name} for i in blobs_rejected if
+              i.name.endswith('.json.gz')]
+        return br
 
     def files_storage_list(self, prefix='pipeline/', print_paths=False):
         bucket_staging = self.carolina.get_client().bucket(self.carolina.get_bucket_name('app'))
