@@ -82,9 +82,12 @@ class Carol:
 
         if domain is None:
             domain = os.getenv('CAROLTENANT')
-            app_name = os.getenv('CAROLAPPNAME')
-            if domain is None and app_name is None:
-                raise ValueError(f"One of the following env variables are missing:\n CAROLTENANT: {domain}\n CAROLAPPNAME: {app_name}")
+            if domain is None:
+                raise ValueError("`domain` must be set.")
+
+        if app_name is None:
+            app_name = os.getenv('CAROLAPPNAME', ' ')
+
 
         if connector_id is None:
             if auth.connector_id is None:
