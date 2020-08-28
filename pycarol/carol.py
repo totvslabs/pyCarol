@@ -67,31 +67,24 @@ class Carol:
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
                  organization=None, environment=None, host=None):
 
-        settings = dict()
-        if auth is None and domain is None:
-
-            domain = os.getenv('CAROLTENANT')
-            app_name = os.getenv('CAROLAPPNAME')
-
-            assert domain and app_name, \
-                f"One of the following env variables are missing:\n CAROLTENANT: {domain}\n CAROLAPPNAME: {app_name}"
-
+        if auth is None:
             carol_user = os.getenv('CAROLUSER')
             carol_pw = os.getenv('CAROLPWD')
 
             if carol_user and carol_pw:
                 auth = PwdAuth(user=carol_user, password=carol_pw)
-
             else:
                 auth_token = os.getenv('CAROLAPPOAUTH')
                 connector_id = os.getenv('CAROLCONNECTORID')
-
-                assert domain and app_name and auth_token and connector_id,\
-                    "One of the following env variables are missing:\n " \
-                    f"CAROLTENANT: {domain}\nCAROLAPPNAME: {app_name}" \
-                    f"\nCAROLAPPOAUTH: {auth}\nCAROLCONNECTORID: {connector_id}\n"
-
                 auth = ApiKeyAuth(auth_token)
+            if auth is None:
+                raise ValueError("either `auth` method or pycarol env variables must be set.")
+
+        if domain is None:
+            domain = os.getenv('CAROLTENANT')
+            app_name = os.getenv('CAROLAPPNAME')
+            if domain is None and app_name is None:
+                raise ValueError(f"One of the following env variables are missing:\n CAROLTENANT: {domain}\n CAROLAPPNAME: {app_name}")
 
         if connector_id is None:
             if auth.connector_id is None:
