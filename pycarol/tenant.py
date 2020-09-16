@@ -5,16 +5,20 @@ class Tenant:
     def __init__(self, carol):
         self.carol = carol
 
-    def get_tenant_by_domain(self, domain):
+    def get_tenant_by_domain(self, domain, auth=True):
         """
         Get tenant information.
 
-        :param domain: `str`
-            Tenant name
+        Args:
+            domain: `str`
+                Tenant name
+            auth: `bool` default `True`
+                This API ca be called without being logged in. If auth=False it will not use token to call it.
+
         :return:
             dict with the information about the tenant.
         """
-        return self.carol.call_api('v2/tenants/domain/{}'.format(domain), auth=False, status_forcelist=[], retries=0)
+        return self.carol.call_api('v2/tenants/domain/{}'.format(domain), auth=auth, status_forcelist=[], retries=0)
 
 
     def check_exports(self, staging=True, data_model=True):
