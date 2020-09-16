@@ -61,7 +61,7 @@ sonar: test
 	@sonar-scanner \
 		-Dsonar.projectKey=pyCarol \
 		-Dsonar.sources=. \
-		-Dsonar.host.url=https://sonar.ops.carol.ai \
+		-Dsonar.host.url=https://sonar.ops.totvslabs.com \
 		-Dsonar.login=$(SONAR_PYCAROL_TOKEN) \
 		-Dsonar.branch.name=$(BUILDKITE_BRANCH)
 
