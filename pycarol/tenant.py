@@ -15,7 +15,7 @@ class Tenant:
             auth: `bool` default `True`
                 This API ca be called without being logged in. If auth=False it will not use token to call it.
 
-        :return:
+        Returns:
             dict with the information about the tenant.
         """
         return self.carol.call_api('v2/tenants/domain/{}'.format(domain), auth=auth, status_forcelist=[], retries=0)
