@@ -411,7 +411,7 @@ class DataModel:
         query_params = {"recordType": record_type, "fuzzy": "false",
                         "deleteRecords": copy_or_move}
 
-        result = self.carol.call_api(url_filter, data=query_filter, params=query_params)
+        result = self.carol.call_api(url_filter, data=query_filter, params=query_params, method='POST')
         return result
 
     def send_data(self, data, dm_name=None, dm_id=None, step_size=500, gzip=False, delete_old_records=False,
