@@ -12,7 +12,7 @@ __TEMP_STORAGE__ = os.path.join(tempfile.gettempdir(), 'carolina/cache')
 
 __CONNECTOR_PYCAROL__ = 'f9953f6645f449baaccd16ab462f9b64'
 
-_CAROL_METADATA_STAGING = ['mdmCounterForEntity', 'mdmId', 'mdmLastUpdated',
+_CAROL_METADATA_STAGING = ['mdmCounterForEntity', 'mdmId', 'mdmLastUpdated', 'mdmCreated',
                            'mdmConnectorId', 'mdmDeleted']
 
 _CAROL_METADATA_GOLDEN = ['mdmApplicationIdMasterRecordId', 'mdmCounterForEntity', 'mdmCreated',  'mdmCrosswalk',
