@@ -32,11 +32,13 @@ class CDSStaging:
     def __init__(self, carol):
         self.carol = carol
 
-    def process_data(self, staging_name, connector_id=None, connector_name=None,
-                     worker_type=None, max_number_workers=-1, number_shards=-1, num_records=-1,
-                     delete_target_folder=False, enable_realtime=None, delete_realtime_records=False,
-                     send_realtime=None, file_pattern='*', filter_query=None, skip_consolidation=False,
-                     force_dataflow=False, recursive_processing=True):
+    def process_data(
+            self, staging_name, connector_id=None, connector_name=None,
+            worker_type=None, max_number_workers=-1, number_shards=-1, num_records=-1,
+            delete_target_folder=False, enable_realtime=None, delete_realtime_records=False,
+            send_realtime=None, file_pattern='*', filter_query=None, skip_consolidation=False,
+            force_dataflow=False, recursive_processing=True, dm_name=None
+    ):
 
         """
         Process CDS staging data.
@@ -79,6 +81,8 @@ class CDSStaging:
             recursive_processing: `bool`  default `True`
                 If processing should be chained/recursed in target entities. e.g., If a staging has 3 ETLs and each ETL
                 maps to a data model. If we process this staging it will trigger the whole tree to be processed.
+            dm_name: `str` default `None`
+                If not None, it will reprocess the rejected records from the selected staging table.
 
         :return: dict
             Task definition.
@@ -109,14 +113,17 @@ class CDSStaging:
             "skipConsolidation": skip_consolidation,
             "forceDataflow": force_dataflow,
             "recursiveProcessing": recursive_processing,
+            "rejectedType": dm_name,
         }
 
         return self.carol.call_api(path='v1/cds/staging/processData', method='POST', params=query_params,
                                    data=filter_query)
 
-    def sync_data(self, staging_name, connector_id=None, connector_name=None, num_records=-1,
-                  delete_realtime_records=False, enable_realtime=None,
-                  file_pattern='*', filter_query=None, force_dataflow=False, records_percentage=100):
+    def sync_data(
+            self, staging_name, connector_id=None, connector_name=None, num_records=-1,
+            delete_realtime_records=False, enable_realtime=None,
+            file_pattern='*', filter_query=None, force_dataflow=False, records_percentage=100
+    ):
 
         """
         Sync data to realtime layer.
@@ -171,10 +178,11 @@ class CDSStaging:
         return self.carol.call_api(path='v1/cds/staging/fetchData', method='POST', params=query_params,
                                    data=filter_query)
 
-    def consolidate(self, staging_name, connector_id=None, connector_name=None,
-                    worker_type=None, max_number_workers=-1, number_shards=-1, force_dataflow=False,
-                    rehash_ids=False
-                    ):
+    def consolidate(
+            self, staging_name, connector_id=None, connector_name=None,
+            worker_type=None, max_number_workers=-1, number_shards=-1, force_dataflow=False,
+            rehash_ids=False
+    ):
 
         """
         Process staging CDS data.

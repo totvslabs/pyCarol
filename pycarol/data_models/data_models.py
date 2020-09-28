@@ -41,6 +41,34 @@ class DataModel:
         self.fields_dict = {}
         self.entity_template_ = {}
 
+    def get_staging_mapped(self, dm_name=None, dm_id=None):
+        """
+        Get mapped stagings to this data model.
+
+        Args:
+            dm_name: `str` default `None`
+                Datamodel name
+            dm_id: `str` default `None`
+                Datamodel id
+
+        Returns: `dict`
+            A dictionary formated as:
+            {
+                "connector_id_1" : ["staging1", "staging2"],
+                "connector_id_2" : ["staging_3", "staging_4"]
+            }
+        """
+
+        if dm_name is not None:
+            resp = self.get_by_name(dm_name)
+            dm_id = resp['mdmId']
+        elif dm_id is None:
+            raise ValueError('Either `dm_name` or `dm_id` must be set.')
+        url = f"v1/entities/templates/{dm_id}/mappedStagingTypes"
+        query = self.carol.call_api(url, method='GET')
+        return query
+
+
     def _build_query_params(self):
         if self.sort_by is None:
             self.query_params = {"offset": self.offset, "pageSize": str(self.page_size), "sortOrder": self.sort_order}
@@ -72,11 +100,13 @@ class DataModel:
         self.fields_dict.update({resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
 
-    def fetch_parquet(self, dm_name, merge_records=True, backend='pandas',
-                      return_dask_graph=False,
-                      columns=None, return_metadata=False, callback=None,
-                      max_hits=None, cds=True, max_workers=None, file_pattern=None,
-                      return_callback_result=False):
+    def fetch_parquet(
+            self, dm_name, merge_records=True, backend='pandas',
+            return_dask_graph=False,
+            columns=None, return_metadata=False, callback=None,
+            max_hits=None, cds=True, max_workers=None, file_pattern=None,
+            return_callback_result=False
+    ):
 
         """
         Fetch parquet from Golden.
@@ -575,8 +605,9 @@ class DataModel:
                 max_workers: `int` default `None`
                     Number of workers to use when downloading parquet files with pandas back-end.
                 file_pattern: `str` default `None`
-                    File pattern to filter data when fetching from CDS. e.g.
-                    file_pattern='2019-11-25' will fetch only CDS files that start with `2019-11-25`.
+                    File pattern to filter data when fetching from CDS. It is possible to fetch only records from a staging table. e.g.
+                    file_pattern='{connector_id}_{staging_name}/2019-11-25' will fetch only CDS files that came from
+                    the connector  "connector_id" and staging "staging_name" on "2019-11-25".
                 return_callback_result `bool` default `False`
                     If a callback is used, it will return the result of the response of the callback. This will skip all the
                     operation to merge records and return selected columns.

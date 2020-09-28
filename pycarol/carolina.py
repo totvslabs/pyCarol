@@ -57,10 +57,8 @@ class Carolina:
 
         self.cds_golden_intake_path = token['cdsIntakeGoldenPath']
         self.cds_staging_intake_path = token['cdsIntakeStagingPath']
-        #TODO: wait for carol's deploy
-        #self.cds_golden_rejected_intake_path = token['cdsGoldenRejectedPath']
-        self.cds_golden_rejected_intake_path = {'bucket': 'prod-mdm-1-carol-internal-{tenant_id}',
-                                                'path': 'rejected-output/{dm_name}Rejected'}
+
+        self.cds_golden_rejected_intake_path = token['cdsRejectedPath']
 
         self.cds_view_intake_path = token['cdsIntakeViewPath']
 
