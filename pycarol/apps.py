@@ -4,9 +4,9 @@ Carol app funtionalities.
 
 """
 
-
 import zipfile, io
 from .utils.deprecation_msgs import _deprecation_msgs
+
 
 class Apps:
     """
@@ -19,6 +19,7 @@ class Apps:
 
 
     """
+
     def __init__(self, carol):
         """
         Initialize Class
@@ -67,7 +68,6 @@ class Apps:
             All apps json definition
 
         """
-
 
         query_string = self._build_query_params(offset=offset, page_size=page_size, entity_space=entity_space,
                                                 sort_by=sort_by, sort_order=sort_order)
@@ -217,7 +217,6 @@ class Apps:
         if app_version is None:
             raise ValueError('app_version must be set.')
 
-
         url = f'v1/carolApps/download/{app_name}/version/{app_version}'
 
         r = self.carol.call_api(url, method='GET', stream=True, downloadable=True)
@@ -332,7 +331,7 @@ class Apps:
                                            method='POST', params=params)
 
             tasks.append(response)
-            
+
         return tasks
 
     @staticmethod
@@ -350,7 +349,7 @@ class Apps:
         fields = {'dockerName', 'dockerTag', 'instanceType'}
         for build in manifest:
             set_diff = fields - set(build)
-            if len(set_diff)>=1:
+            if len(set_diff) >= 1:
                 raise ValueError(f'Missing docker definition {set_diff}')
 
     def update_setting_values(self, settings, app_name=None):
@@ -449,9 +448,7 @@ class Apps:
 
         return self.carol.call_api("v1/tenantApps/subscribableCarolApps", method='GET')['hits']
 
-
-
-    def install_carol_app(self, app_name=None, app_version=None, connector_group=None, publish=True ):
+    def install_carol_app(self, app_name=None, app_version=None, connector_group=None, publish=True):
 
         """
         Install a carol app in an env.
@@ -477,7 +474,7 @@ class Apps:
         to_install = self.get_subscribable_carol_apps()
         to_install = [i for i in to_install if i["mdmName"] == app_name]
 
-        if app_version==None:
+        if app_version == None:
             to_install = sorted(to_install, key=lambda x: x['mdmAppVersion'])
         else:
             to_install = [i for i in to_install if i["mdmAppVersion"] == app_version]
@@ -489,17 +486,6 @@ class Apps:
 
         to_install_id = to_install['mdmId']
 
-        updated = login.call_api(f"v1/tenantApps/subscribe/carolApps/{to_install_id}", method='POST')
+        updated = self.carol.call_api(f"v1/tenantApps/subscribe/carolApps/{to_install_id}", method='POST')
         params = {"publish": publish, "connectorGroup": connector_group}
-        return login.call_api(f"v1/tenantApps/{updated['mdmId']}/install", method='POST', params=params)
-
-
-
-
-
-
-
-
-
-
-
+        return self.carol.call_api(f"v1/tenantApps/{updated['mdmId']}/install", method='POST', params=params)
