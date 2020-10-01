@@ -353,5 +353,48 @@ class Apps:
             if len(set_diff)>=1:
                 raise ValueError(f'Missing docker definition {set_diff}')
 
+    def update_setting_values(self, settings, app_name=None):
+        """
+        Change Settings values in Carol.
+
+        Args:
+            settings: `dict`
+                dict with settings:
+                {"param1": "value1", "param2": "value2"}
+            app_name: `str` default None
+                App name to change the settings.
+
+        Returns: `dict`
+            Carol Response.
+
+
+        """
+
+        if app_name is None:
+            app_name = self.carol.app_name
+
+        if not isinstance(settings, dict):
+            ValueError(f"settings should be a dictionary,")
+
+        app_id = self.get_by_name(app_name)['mdmId']
+        settings_id = self._get_app_settings_config(app_id=app_id)['mdmId']
+        data = [{"mdmName": i, "mdmParameterValue": j} for i, j in settings.items()]
+
+        return self.carol.call_api(path=f'v1/tenantApps/{app_id}/settings/{settings_id}?publish=true', method='PUT',
+                                   data=data)
+
+    def _get_app_settings_config(self, app_name=None, app_id=None):
+
+        if app_id is not None:
+            pass
+        elif app_name is None:
+            app_name = self.carol.app_name
+            app_id = self.get_by_name(app_name)['mdmId']
+
+        return self.carol.call_api(path=f'v1/tenantApps/{app_id}/settings', )
+
+
+
+
 
 
