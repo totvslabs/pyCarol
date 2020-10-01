@@ -393,6 +393,54 @@ class Apps:
 
         return self.carol.call_api(path=f'v1/tenantApps/{app_id}/settings', )
 
+    def start_app_process(self, process_name, app_name=None, ):
+
+        """
+        Start a carol process by process name.
+
+        Args:
+            process_name: `str`
+                Process name.
+            app_name: `str` default None
+                App name to change the settings.
+
+        Returns: `dict`
+            task information.
+
+        """
+
+        if app_name is None:
+            app_name = self.carol.app_name
+
+        app_id = self.get_by_name(app_name)['mdmId']
+        process_id = self.get_processes_info(app_name=app_name)["mdmId"]
+        return self.carol.call_api(f"v1/tenantApps/{app_id}/aiprocesses/{process_id}/execute/{process_name}",
+                                   method='POST')
+
+    def get_processes_info(self, app_name=None, entity_space='WORKING', check_all_spaces=True):
+        """
+        Get app processes information.
+        Args:
+            app_name: `str` default None
+                App name to change the settings.
+            entity_space: `str` default `WORKING`
+                WORKING or PRODUCTION
+            check_all_spaces: `bool`
+                Check all spaces.
+
+        Returns:
+            Process informations
+        """
+
+        params = {"entitySpace": entity_space, "checkAllSpaces": check_all_spaces}
+        if app_name is None:
+            app_name = self.carol.app_name
+        app_id = self.get_by_name(app_name)['mdmId']
+        return self.carol.call_api(f"v1/tenantApps/{app_id}/aiprocesses", method='GET', params=params)
+
+
+
+
 
 
 
