@@ -504,7 +504,7 @@ class Apps:
                 WORKING or PRODUCTION
 
         Returns: `dict`
-            Carol respoonse.
+            Carol response.
         """
 
         if app_name is None:
