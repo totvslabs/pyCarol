@@ -474,6 +474,7 @@ class Apps:
         to_install = self.get_subscribable_carol_apps()
         to_install = [i for i in to_install if i["mdmName"] == app_name]
 
+
         if app_version == None:
             to_install = sorted(to_install, key=lambda x: x['mdmAppVersion'])
         else:
@@ -489,3 +490,22 @@ class Apps:
         updated = self.carol.call_api(f"v1/tenantApps/subscribe/carolApps/{to_install_id}", method='POST')
         params = {"publish": publish, "connectorGroup": connector_group}
         return self.carol.call_api(f"v1/tenantApps/{updated['mdmId']}/install", method='POST', params=params)
+
+    def get_app_details(self, app_name=None, entity_space='PRODUCTION'):
+
+        if app_name is None:
+            app_name = self.carol.app_name
+
+        #check if it exists as a subscribable apps
+        to_install = self.get_subscribable_carol_apps()
+        to_install = [i for i in to_install if i["mdmName"] == app_name]
+
+        if to_install:
+            to_install = to_install[0]
+            app_id = to_install['mdmId']
+        else:
+            # try installed app.
+            app_id = self.get_by_name(app_name)['mdmCarolAppId']
+
+        params = {"entitySpace": entity_space}
+        return self.carol.call_api(f"v1/carolApps/{app_id}/details", method='GET', params=params)
