@@ -438,6 +438,63 @@ class Apps:
         app_id = self.get_by_name(app_name)['mdmId']
         return self.carol.call_api(f"v1/tenantApps/{app_id}/aiprocesses", method='GET', params=params)
 
+    def get_subscribable_carol_apps(self):
+        """
+        Find all available apps to install in this env.
+
+        Returns: `list`
+            list of apps.
+
+        """
+
+        return self.carol.call_api("v1/tenantApps/subscribableCarolApps", method='GET')['hits']
+
+
+
+    def install_carol_app(self, app_name=None, app_version=None, connector_group=None, publish=True ):
+
+        """
+        Install a carol app in an env.
+
+        Args:
+            app_name: `str` default None
+                App name to change the settings.
+            app_version: `str` default None
+                App version to install. If not specified, it will install the most recent.
+            connector_group: `str` default None
+                Connector Group to install.
+            publish: `bool` default True
+                If publish the update.
+
+        Returns:
+            Carol task.
+
+        """
+
+        if app_name is None:
+            app_name = self.carol.app_name
+
+        to_install = self.get_subscribable_carol_apps()
+        to_install = [i for i in to_install if i["mdmName"] == app_name]
+
+        if app_version==None:
+            to_install = sorted(to_install, key=lambda x: x['mdmAppVersion'])
+        else:
+            to_install = [i for i in to_install if i["mdmAppVersion"] == app_version]
+
+        if to_install:
+            to_install = to_install[0]
+        else:
+            return
+
+        to_install_id = to_install['mdmId']
+
+        updated = login.call_api(f"v1/tenantApps/subscribe/carolApps/{to_install_id}", method='POST')
+        params = {"publish": publish, "connectorGroup": connector_group}
+        return login.call_api(f"v1/tenantApps/{updated['mdmId']}/install", method='POST', params=params)
+
+
+
 
 
 
