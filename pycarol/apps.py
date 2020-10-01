@@ -492,6 +492,20 @@ class Apps:
         return self.carol.call_api(f"v1/tenantApps/{updated['mdmId']}/install", method='POST', params=params)
 
     def get_app_details(self, app_name=None, entity_space='PRODUCTION'):
+        """
+
+        Find all information about an app. This will fetch information about connector groups, AI process, descriptions,
+        data models, etc.
+
+        Args:
+            app_name: `str` default None
+                App name to change the settings.
+            entity_space: `str` default `PRODUCTION`
+                WORKING or PRODUCTION
+
+        Returns: `dict`
+            Carol respoonse.
+        """
 
         if app_name is None:
             app_name = self.carol.app_name
