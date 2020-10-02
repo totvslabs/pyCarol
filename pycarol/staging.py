@@ -159,10 +159,9 @@ class Staging:
                 raise Exception("crosswalk is not unique on data frame. set force=True to send it anyway.")
 
         if not storage_only and not carol_sync:
-            #TODO: @bruno do we need this carolDataStorage flag for the normal intake?
-            url = f'v2/staging/tables/{staging_name}?carolDataStorage={carol_data_storage}&returnData=false&connectorId={connector_id}'
+            url = f'v2/staging/tables/{staging_name}&returnData=false&connectorId={connector_id}'
         elif carol_sync:
-            step_size = 100 #sync API accepts only 100 records.
+            step_size = min(100, step_size)
             url = f'v2/staging/tables/{staging_name}/sync?&connectorId={connector_id}&processMerge=true'
         else:
             url = f'v2/staging/intake/{staging_name}?returnData=false&connectorId={connector_id}'
