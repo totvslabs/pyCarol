@@ -4,9 +4,9 @@ Carol app funtionalities.
 
 """
 
-
 import zipfile, io
 from .utils.deprecation_msgs import _deprecation_msgs
+
 
 class Apps:
     """
@@ -19,6 +19,7 @@ class Apps:
 
 
     """
+
     def __init__(self, carol):
         """
         Initialize Class
@@ -67,7 +68,6 @@ class Apps:
             All apps json definition
 
         """
-
 
         query_string = self._build_query_params(offset=offset, page_size=page_size, entity_space=entity_space,
                                                 sort_by=sort_by, sort_order=sort_order)
@@ -217,7 +217,6 @@ class Apps:
         if app_version is None:
             raise ValueError('app_version must be set.')
 
-
         url = f'v1/carolApps/download/{app_name}/version/{app_version}'
 
         r = self.carol.call_api(url, method='GET', stream=True, downloadable=True)
@@ -332,7 +331,7 @@ class Apps:
                                            method='POST', params=params)
 
             tasks.append(response)
-            
+
         return tasks
 
     @staticmethod
@@ -350,8 +349,177 @@ class Apps:
         fields = {'dockerName', 'dockerTag', 'instanceType'}
         for build in manifest:
             set_diff = fields - set(build)
-            if len(set_diff)>=1:
+            if len(set_diff) >= 1:
                 raise ValueError(f'Missing docker definition {set_diff}')
 
+    def update_setting_values(self, settings, app_name=None):
+        """
+        Change Settings values in Carol.
+
+        Args:
+            settings: `dict`
+                dict with settings:
+                {"param1": "value1", "param2": "value2"}
+            app_name: `str` default None
+                App name to change the settings.
+
+        Returns: `dict`
+            Carol Response.
 
 
+        """
+
+        if app_name is None:
+            app_name = self.carol.app_name
+
+        if not isinstance(settings, dict):
+            ValueError(f"settings should be a dictionary,")
+
+        app_id = self.get_by_name(app_name)['mdmId']
+        settings_id = self._get_app_settings_config(app_id=app_id)['mdmId']
+        data = [{"mdmName": i, "mdmParameterValue": j} for i, j in settings.items()]
+
+        return self.carol.call_api(path=f'v1/tenantApps/{app_id}/settings/{settings_id}?publish=true', method='PUT',
+                                   data=data)
+
+    def _get_app_settings_config(self, app_name=None, app_id=None):
+
+        if app_id is not None:
+            pass
+        elif app_name is None:
+            app_name = self.carol.app_name
+            app_id = self.get_by_name(app_name)['mdmId']
+
+        return self.carol.call_api(path=f'v1/tenantApps/{app_id}/settings', )
+
+    def start_app_process(self, process_name, app_name=None, ):
+
+        """
+        Start a carol process by process name.
+
+        Args:
+            process_name: `str`
+                Process name.
+            app_name: `str` default None
+                App name to change the settings.
+
+        Returns: `dict`
+            task information.
+
+        """
+
+        if app_name is None:
+            app_name = self.carol.app_name
+
+        app_id = self.get_by_name(app_name)['mdmId']
+        process_id = self.get_processes_info(app_name=app_name)["mdmId"]
+        return self.carol.call_api(f"v1/tenantApps/{app_id}/aiprocesses/{process_id}/execute/{process_name}",
+                                   method='POST')
+
+    def get_processes_info(self, app_name=None, entity_space='WORKING', check_all_spaces=True):
+        """
+        Get app processes information.
+        Args:
+            app_name: `str` default None
+                App name to change the settings.
+            entity_space: `str` default `WORKING`
+                WORKING or PRODUCTION
+            check_all_spaces: `bool`
+                Check all spaces.
+
+        Returns:
+            Process informations
+        """
+
+        params = {"entitySpace": entity_space, "checkAllSpaces": check_all_spaces}
+        if app_name is None:
+            app_name = self.carol.app_name
+        app_id = self.get_by_name(app_name)['mdmId']
+        return self.carol.call_api(f"v1/tenantApps/{app_id}/aiprocesses", method='GET', params=params)
+
+    def get_subscribable_carol_apps(self):
+        """
+        Find all available apps to install in this env.
+
+        Returns: `list`
+            list of apps.
+
+        """
+
+        return self.carol.call_api("v1/tenantApps/subscribableCarolApps", method='GET')['hits']
+
+    def install_carol_app(self, app_name=None, app_version=None, connector_group=None, publish=True):
+
+        """
+        Install a carol app in an env.
+
+        Args:
+            app_name: `str` default None
+                App name to change the settings.
+            app_version: `str` default None
+                App version to install. If not specified, it will install the most recent.
+            connector_group: `str` default None
+                Connector Group to install.
+            publish: `bool` default True
+                If publish the update.
+
+        Returns:
+            Carol task.
+
+        """
+
+        if app_name is None:
+            app_name = self.carol.app_name
+
+        to_install = self.get_subscribable_carol_apps()
+        to_install = [i for i in to_install if i["mdmName"] == app_name]
+
+
+        if app_version == None:
+            to_install = sorted(to_install, key=lambda x: x['mdmAppVersion'])
+        else:
+            to_install = [i for i in to_install if i["mdmAppVersion"] == app_version]
+
+        if to_install:
+            to_install = to_install[0]
+        else:
+            return
+
+        to_install_id = to_install['mdmId']
+
+        updated = self.carol.call_api(f"v1/tenantApps/subscribe/carolApps/{to_install_id}", method='POST')
+        params = {"publish": publish, "connectorGroup": connector_group}
+        return self.carol.call_api(f"v1/tenantApps/{updated['mdmId']}/install", method='POST', params=params)
+
+    def get_app_details(self, app_name=None, entity_space='PRODUCTION'):
+        """
+
+        Find all information about an app. This will fetch information about connector groups, AI process, descriptions,
+        data models, etc.
+
+        Args:
+            app_name: `str` default None
+                App name to change the settings.
+            entity_space: `str` default `PRODUCTION`
+                WORKING or PRODUCTION
+
+        Returns: `dict`
+            Carol response.
+        """
+
+        if app_name is None:
+            app_name = self.carol.app_name
+
+        #check if it exists as a subscribable apps
+        to_install = self.get_subscribable_carol_apps()
+        to_install = [i for i in to_install if i["mdmName"] == app_name]
+
+        if to_install:
+            to_install = to_install[0]
+            app_id = to_install['mdmId']
+        else:
+            # try installed app.
+            app_id = self.get_by_name(app_name)['mdmCarolAppId']
+
+        params = {"entitySpace": entity_space}
+        return self.carol.call_api(f"v1/carolApps/{app_id}/details", method='GET', params=params)
