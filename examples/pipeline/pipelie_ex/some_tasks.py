@@ -33,12 +33,21 @@ def my_function_task(input_task_1, **extra_param):
     return my_output
 
 @inherit_list(
-    MyTask1
+    MyTask2
 )
 class MyTask3(Task):
     param_3 = luigi.IntParameter()
     # pycarol will send the inputs of the task as positional and all task parameters as keyword arguments.
     task_function = my_function_task
+    
+
+@inherit_list(
+    MyTask3
+)
+class MyTask4(Task):
+    param_4 = luigi.IntParameter()
+    #look at the notebook to check what is being doing.
+    task_notebook = "pipelie_ex/a_notebook_task.ipynb"
 
 
 
