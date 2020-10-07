@@ -76,7 +76,15 @@ a second task.
     task = [DataProcess(connector_name='new_connector', staging_name='iris')]
     luigi.build(task, local_scheduler=True)
 
+Notice that we can start the pipeline with luigi.build. Pycarol has a method for that too.
+If  a single task needs to be build, one can call, from the example above,
 
+.. code:: python
+
+    task = DataProcess(connector_name='new_connector', staging_name='iris')
+    task.buildme(local_scheduler=True,)
+
+It will have exactly the same behavior.
 
 """
 
