@@ -527,11 +527,11 @@ class Apps:
 
     def upload_file(self, filepath,  app_name=None,):
         """
-        Upload the app artefacts
+        Upload the app artifacts
 
         Args:
             filepath: `str`
-                Folder path with artefacts (manifest.json or site)
+                Folder path with artifacts (manifest.json or site)
 
             app_name: `str` default None
                 App name
