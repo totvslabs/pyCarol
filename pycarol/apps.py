@@ -4,9 +4,10 @@ Carol app funtionalities.
 
 """
 
-import zipfile, io
+import zipfile, io, os
 from .utils.deprecation_msgs import _deprecation_msgs
-
+from .utils.miscellaneous import zip_folder
+import tempfile
 
 class Apps:
     """
@@ -523,3 +524,37 @@ class Apps:
 
         params = {"entitySpace": entity_space}
         return self.carol.call_api(f"v1/carolApps/{app_id}/details", method='GET', params=params)
+
+    def upload_file(self, filepath,  app_name=None,):
+        """
+
+        Args:
+            filepath:
+            app_name:
+
+        Returns:
+
+        """
+
+        if app_name is None:
+            app_name = self.carol.app_name
+
+        app_id = self.get_by_name(app_name)['mdmId']
+
+        if filepath.endswith('.zip'):
+            file = open(filepath, 'rb')
+        elif os.path.isdir(filepath):
+
+            output_path = zip_folder(filepath)
+            file = open(output_path, 'rb')
+
+        files = {'file': file}
+        uri = f'v1/carolApps/{app_id}/files/upload'
+
+        r = self.carol.call_api(path=uri, method='POST', files=files, content_type="multipart/form-data")
+
+        print(r)
+
+
+
+

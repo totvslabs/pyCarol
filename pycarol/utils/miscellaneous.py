@@ -1,7 +1,7 @@
 import json
-import gzip, io
+import gzip, io, zipfile, os
 from collections import defaultdict
-
+from pathlib import Path
 _FILE_MARKER = '<files>'
 
 
@@ -161,3 +161,13 @@ def stream_data(data, step_size, compress_gzip):
 class Hashabledict(dict):
     def __hash__(self):
         return hash(frozenset(self))
+
+
+def zip_folder(path_to_zip):
+    path_to_zip = Path(path_to_zip)
+    zip_file = Path(path_to_zip).with_suffix('.zip')
+    with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as z:
+        for f in list(path_to_zip.rglob('*.*')):
+            z.write(f, arcname=f.relative_to(path_to_zip))
+
+    return zip_file
