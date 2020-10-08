@@ -32,11 +32,10 @@ class Task(luigi.Task):
         :py:class:`pycarol.pipeline.inherit_dict`
 
 
-    There are to ways to execute the computation of a task.
+    There are two ways to execute the computation of a task.
         1. Implementing the method: * :py:meth:`easy_run`
         2. Defining either the class variable `task_function` or `task_notebook`. Refer to main documentation
         for more details.
-
 
     """
     TARGET_DIR = './TARGETS/'
