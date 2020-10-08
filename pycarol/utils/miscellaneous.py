@@ -164,10 +164,13 @@ class Hashabledict(dict):
 
 
 def zip_folder(path_to_zip):
+    path_to_zip = os.path.abspath(path_to_zip)
     path_to_zip = Path(path_to_zip)
+    base_name = path_to_zip.name
+
     zip_file = Path(path_to_zip).with_suffix('.zip')
     with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED, ) as z:
         for f in list(path_to_zip.rglob('*.*')):
-            z.write(f, arcname=f.relative_to(path_to_zip))
+            z.write(f, arcname=f.relative_to(path_to_zip.parents[0]))
 
     return zip_file
