@@ -527,33 +527,35 @@ class Apps:
 
     def upload_file(self, filepath,  app_name=None,):
         """
+        Upload the app artefacts
 
         Args:
-            filepath:
-            app_name:
+            filepath: `str`
+                Folder path with artefacts (manifest.json or site)
 
-        Returns:
+            app_name: `str` default None
+                App name
 
+        Returns: `dict`
+            Carol response.
         """
 
         if app_name is None:
             app_name = self.carol.app_name
 
-        app_id = self.get_by_name(app_name)['mdmId']
+        app_id = self.get_by_name(app_name)['mdmCarolAppId']
 
-        if filepath.endswith('.zip'):
-            file = open(filepath, 'rb')
+        if filepath.endswith(('.zip', '.json')):
+            file = filepath
         elif os.path.isdir(filepath):
-
-            output_path = zip_folder(filepath)
-            file = open(output_path, 'rb')
-
-        files = {'file': file}
+            file = zip_folder(filepath)
         uri = f'v1/carolApps/{app_id}/files/upload'
 
-        r = self.carol.call_api(path=uri, method='POST', files=files, content_type="multipart/form-data")
+        with open(file, 'rb') as f:
+            files = {'file': f}
+            r = self.carol.call_api(path=uri, method='POST', files=files, content_type=None)
 
-        print(r)
+        return r
 
 
 

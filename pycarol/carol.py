@@ -207,7 +207,7 @@ class Carol:
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json', retries=8,
                  session=None, backoff_factor=0.5, status_forcelist=(502, 503, 504, 524), downloadable=False,
                  method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']), errors='raise',
-                 extra_headers=None,
+                 extra_headers=None, files=None,
                  **kwds):
         """
         This method handles all the API calls.
@@ -247,6 +247,8 @@ class Carol:
                 then invalid request will return the request response
             extra_headers: `dict` default `None`
                 extra headers to be sent.
+            files: `dict` default `None`
+                Used when uploading files to carol. This will be sent to :class: `requests.request`
             kwds: `dict` default `None`
                 Extra parameters to be sent to :class: `requests.request`
 
@@ -277,7 +279,8 @@ class Carol:
             pass
 
         elif (method == 'POST') or (method == 'DELETE') or (method == 'PUT'):
-            headers['content-type'] = content_type
+            if content_type is not None:
+                headers['content-type'] = content_type
 
             if content_type == 'application/json':
                 data_json = data
@@ -293,7 +296,7 @@ class Carol:
                                               status_forcelist=status_forcelist, method_whitelist=method_whitelist)
 
             response = session.request(method=method, url=url, data=data, json=data_json,
-                                       headers=headers, params=params, **kwds)
+                                       headers=headers, params=params, files=files, **kwds)
 
             if self.verbose:
                 if data_json is not None:
