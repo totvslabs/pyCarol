@@ -5,7 +5,6 @@
 import os
 import tempfile
 
-
 __version__ = '2.40.2'
 
 __TEMP_STORAGE__ = os.path.join(tempfile.gettempdir(), 'carolina/cache')
@@ -15,9 +14,11 @@ __CONNECTOR_PYCAROL__ = 'f9953f6645f449baaccd16ab462f9b64'
 _CAROL_METADATA_STAGING = ['mdmCounterForEntity', 'mdmId', 'mdmLastUpdated', 'mdmCreated',
                            'mdmConnectorId', 'mdmDeleted']
 
-_CAROL_METADATA_GOLDEN = ['mdmApplicationIdMasterRecordId', 'mdmCounterForEntity', 'mdmCreated',  'mdmCrosswalk',
-                          'mdmDeleted', 'mdmEntityType',  'mdmId',  'mdmLastUpdated', 'mdmSourceEntityNames',
-                          'mdmStagingRecord', 'mdmTenantId']
+_CAROL_METADATA_GOLDEN = ['mdmCounterForEntity', 'mdmStagingCounter', 'mdmId', 'mdmCreated', 'mdmLastUpdated',
+                          'mdmTenantId',
+                          'mdmEntityType', 'mdmSourceEntityNames', 'mdmCrosswalk', 'mdmStagingRecord',
+                          'mdmApplicationIdMasterRecordId',
+                          'mdmPreviousIds', 'mdmDeleted']
 
 _NEEDED_FOR_MERGE = ['mdmCounterForEntity', 'mdmId', 'mdmDeleted']
 
