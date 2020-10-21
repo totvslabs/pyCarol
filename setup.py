@@ -12,7 +12,7 @@ min_requires = [
     'google-auth-httplib2',
     'google-auth',
     'google-cloud-core>=1.3.0',
-    'google-cloud-storage',
+    'google-cloud-storage<=1.23.0',
     'requests',
     'tqdm',
     'urllib3',
