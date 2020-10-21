@@ -123,10 +123,16 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
             elif file['name'].endswith('.json.gz'):
                 buffer.seek(0)
                 try:
-                    result = (json.loads(f) for f in gzip.GzipFile(fileobj=buffer).readlines())
-                except (OSError, json.JSONDecodeError) as e:
+                    result = [json.loads(f) for f in gzip.GzipFile(fileobj=buffer).readlines()]
+                except OSError as e:
                     buffer.seek(0)
                     result = (json.loads(f) for f in buffer.readlines())
+                except json.decoder.JSONDecodeError:
+                    buffer.seek(0)
+                    result = gzip.GzipFile(fileobj=buffer).read().decode()
+                    result = json.loads("[" + (result.replace("}{","},{")) + "]")
+
+
 
                 result = pd.DataFrame(result)
                 if 'mdmMasterFieldAndValues' in result.columns:
