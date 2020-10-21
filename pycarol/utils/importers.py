@@ -124,7 +124,7 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
                 buffer.seek(0)
                 try:
                     result = (json.loads(f) for f in gzip.GzipFile(fileobj=buffer).readlines())
-                except OSError:
+                except (OSError, json.JSONDecodeError) as e:
                     buffer.seek(0)
                     result = (json.loads(f) for f in buffer.readlines())
 
