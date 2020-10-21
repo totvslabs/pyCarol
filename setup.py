@@ -11,8 +11,8 @@ here = os.path.abspath(os.path.dirname(__file__))
 min_requires = [
     'google-auth-httplib2',
     'google-auth',
-    'google-cloud-core>=1.3.0',
-    'google-cloud-storage<=1.23.0',
+    'google-cloud-core>=1.4.1',
+    'google-cloud-storage',
     'requests',
     'tqdm',
     'urllib3',
