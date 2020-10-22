@@ -54,7 +54,7 @@ class Tasks:
             task_id = self.task_id
             assert task_id, "Task ID should be set because it has not been set in env by Carol."
 
-        json_task = self.carol.call_api('v1/tasks/{}'.format(task_id))
+        json_task = self.carol.call_api('v1/tasks/{}'.format(task_id), status_forcelist=(500, 502, 503, 504, 524))
         self._set_task_by_json(json_task)
         return self
 
@@ -130,7 +130,7 @@ class Tasks:
             task_id = self.task_id
             assert task_id, "Task ID should be set because it has not been set in env by Carol."
 
-        return self.carol.call_api('v1/tasks/{}/logs'.format(task_id))
+        return self.carol.call_api('v1/tasks/{}/logs'.format(task_id), status_forcelist=(500, 502, 503, 504, 524))
 
     def set_progress(self, progress, progress_data=None, task_id=None):
         """
@@ -157,7 +157,8 @@ class Tasks:
             task_id = self.task_id
             assert task_id, "Task ID should be set because it has not been set in env by Carol."
 
-        return self.carol.call_api('v1/tasks/{}/progress/{}'.format(task_id, progress), data=progress_data)
+        return self.carol.call_api('v1/tasks/{}/progress/{}'.format(task_id, progress), data=progress_data,
+                                   status_forcelist=(500, 502, 503, 504, 524))
 
     def cancel(self, task_id=None, force=False):
         """
@@ -179,7 +180,7 @@ class Tasks:
 
         params = {"force": force}
 
-        resp = self.carol.call_api('v1/tasks/{}/cancel'.format(task_id), method="POST",params=params)
+        resp = self.carol.call_api('v1/tasks/{}/cancel'.format(task_id), method="POST", params=params)
         return resp['mdmTaskStatus'] == 'CANCELED'
 
     def fail(self, task_id=None, message=''):
@@ -202,5 +203,5 @@ class Tasks:
 
         params = {"message": message}
 
-        resp = self.carol.call_api('v1/tasks/{}/fail'.format(task_id), method="POST",params=params)
+        resp = self.carol.call_api('v1/tasks/{}/fail'.format(task_id), method="POST", params=params)
         return resp['mdmTaskStatus'] == 'FAILED'
