@@ -122,7 +122,7 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
                 result = pd.read_parquet(buffer, columns=columns)
             elif file['name'].endswith('.json.gz'):
                 buffer.seek(0)
-                #TODO: that is bad.
+                #TODO: that is bad. 
                 try:
                     result = [json.loads(f) for f in gzip.GzipFile(fileobj=buffer).readlines()]
                 except OSError as e:
@@ -132,8 +132,9 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
                     buffer.seek(0)
                     result = gzip.GzipFile(fileobj=buffer).read().decode()
                     result = json.loads("[" + (result.replace("}{","},{")) + "]")
-
-
+                except Exception as e:
+                    print(f"Error fetching {file['name']}")
+                    raise e
 
                 result = pd.DataFrame(result)
                 if 'mdmMasterFieldAndValues' in result.columns:
@@ -172,6 +173,13 @@ def _download_files(file, storage, storage_space, columns, mapping_columns, call
         except (OSError, json.JSONDecodeError):
             buffer.seek(0)
             result = (json.loads(f) for f in buffer.readlines())
+        except json.decoder.JSONDecodeError:
+            buffer.seek(0)
+            result = gzip.GzipFile(fileobj=buffer).read().decode()
+            result = json.loads("[" + (result.replace("}{", "},{")) + "]")
+        except Exception as e:
+            print(f"Error fetching {file['name']}")
+            raise e
         result = pd.DataFrame(result)
         if 'mdmMasterFieldAndValues' in result.columns:
             result = pd.concat([pd.DataFrame(result.pop('mdmMasterFieldAndValues').tolist(), ), result], axis=1)
