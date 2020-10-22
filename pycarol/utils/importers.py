@@ -122,7 +122,6 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
                 result = pd.read_parquet(buffer, columns=columns)
             elif file['name'].endswith('.json.gz'):
                 buffer.seek(0)
-                #TODO: that is bad. 
                 try:
                     result = [json.loads(f) for f in gzip.GzipFile(fileobj=buffer).readlines()]
                 except OSError as e:
@@ -170,7 +169,7 @@ def _download_files(file, storage, storage_space, columns, mapping_columns, call
         buffer.seek(0)
         try:
             result = (json.loads(f) for f in gzip.GzipFile(fileobj=buffer).readlines())
-        except (OSError, json.JSONDecodeError):
+        except OSError:
             buffer.seek(0)
             result = (json.loads(f) for f in buffer.readlines())
         except json.decoder.JSONDecodeError:
