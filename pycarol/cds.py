@@ -181,7 +181,7 @@ class CDSStaging:
     def consolidate(
             self, staging_name, connector_id=None, connector_name=None,
             worker_type=None, max_number_workers=-1, number_shards=-1, force_dataflow=False,
-            rehash_ids=False
+            rehash_ids=False, file_pattern="*.parquet",
     ):
 
         """
@@ -206,6 +206,9 @@ class CDSStaging:
                 (by default, small datasets are processed directly inside Carol)
             rehash_ids" `bool` default `False`
                 If all ids should be regenerated from the crosswalk
+            file_pattern: `str`, default `*.parquet`
+                File pattern of the files in CDS to be consolidated. The pattern is `YYYY-MM-DDTHH_mm_ss*.parquet`.
+                One can use this to filter data in CDS received in a given date.
 
         :return: None
 
@@ -223,7 +226,7 @@ class CDSStaging:
         query_params = {
             "connectorId": connector_id, "stagingType": staging_name,
             "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
-            "numberOfShards": number_shards,
+            "numberOfShards": number_shards, "filePattern": file_pattern,
             "rehashIds": rehash_ids, "forceDataflow": force_dataflow,
         }
 
@@ -416,7 +419,7 @@ class CDSGolden:
 
     def consolidate(self, dm_name=None, dm_id=None,
                     worker_type=None, max_number_workers=-1, number_shards=-1, force_dataflow=False,
-                    ignore_merge=False
+                    ignore_merge=False, file_pattern="*.parquet"
                     ):
 
         """
@@ -440,6 +443,9 @@ class CDSGolden:
             force_dataflow: `bool`  default `False`
                 If Dataflow job should be spinned even for small datasets
                 (by default, small datasets are processed directly inside Carol)
+            file_pattern: `str`, default `*.parquet`
+                File pattern of the files in CDS to be consolidated. The pattern is `YYYY-MM-DDTHH_mm_ss*.parquet`.
+                One can use this to filter data in CDS received in a given date.
 
         :return: None
         """
@@ -457,7 +463,7 @@ class CDSGolden:
             "entityTemplateId": dm_id,
             "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
             "numberOfShards": number_shards,
-            "forceDataflow": force_dataflow, "ignoreMerge": ignore_merge
+            "forceDataflow": force_dataflow, "ignoreMerge": ignore_merge, "filePattern": file_pattern,
         }
 
         return self.carol.call_api(path='v1/cds/golden/consolidate', method='POST', params=query_params)
