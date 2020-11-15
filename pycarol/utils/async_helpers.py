@@ -32,7 +32,9 @@ class AtomicCounter:
             return self.value
 
     def print(self):
-        print(f'{self.value}/{self.total} sent', end='\r')
+        # Guarantee to print only one thread each time.
+        with self._lock:
+            print(f'{self.value}/{self.total} sent', end='\r')
 
 
 def send_a(carol, session, url, data_json, extra_headers, content_type, counter):
