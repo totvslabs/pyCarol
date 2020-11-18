@@ -206,7 +206,7 @@ class Carol:
 
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json', retries=8,
                  session=None, backoff_factor=0.5, status_forcelist=(502, 503, 504, 524), downloadable=False,
-                 method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE']), errors='raise',
+                 method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE', 'POST']), errors='raise',
                  extra_headers=None, files=None,
                  **kwds):
         """
