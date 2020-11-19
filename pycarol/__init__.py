@@ -3,6 +3,7 @@
 """
 
 import os
+import resource
 import tempfile
 
 __version__ = '2.41.1'
@@ -43,3 +44,12 @@ from .auth.PwdKeyAuth import PwdKeyAuth
 from .cds import CDSGolden, CDSStaging
 from .apps import Apps
 from .subscription import Subscription
+
+if os.path.isfile('/sys/fs/cgroup/memory/memory.limit_in_bytes'):
+    old_soft, old_hard = resource.getrlimit(resource.RLIMIT_AS)
+    with open('/sys/fs/cgroup/memory/memory.limit_in_bytes') as limit:
+        mem = int(limit.read())
+        print(
+            'Setting memory limit from cgroups: soft {}->{}; hard {}->{}'.format(old_soft, mem, old_hard, mem)
+        )
+        resource.setrlimit(resource.RLIMIT_AS, (mem, mem))
