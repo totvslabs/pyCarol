@@ -45,3 +45,36 @@ class Organization:
 
         return self.carol.call_api(f'v2/tenants/domain/{environment}',
                                    auth=auth, status_forcelist=[], retries=0)
+
+    def get_org_by_id(self, org_id):
+
+        """
+        Get organization info by id.
+
+        Args:
+            org_id: `str`
+                Organization Id
+
+        Returns:
+            dict with the information about the organization.
+
+        """
+
+        return self.carol.call_api(f'v1/organizations/{org_id}', method='GET')
+
+
+    def get_env_by_id(self, env_id):
+
+        """
+        Get env. info by id.
+
+        Args:
+            env_id: `str`
+                Organization Id
+
+        Returns:
+            dict with the information about the organization.
+
+        """
+
+        return self.carol.call_api(f'v2/admin/tenants/{env_id}', method='GET')
