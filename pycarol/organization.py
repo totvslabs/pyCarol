@@ -47,7 +47,6 @@ class Organization:
                                    auth=auth, status_forcelist=[], retries=0)
 
     def get_org_by_id(self, org_id, auth=True):
-
         """
         Get organization info by id.
 
@@ -64,9 +63,7 @@ class Organization:
 
         return self.carol.call_api(f'v1/organizations/{org_id}', method='GET', auth=auth)
 
-
     def get_env_by_id(self, env_id, auth=True):
-
         """
         Get env. info by id.
 
