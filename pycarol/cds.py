@@ -181,7 +181,7 @@ class CDSStaging:
     def consolidate(
             self, staging_name, connector_id=None, connector_name=None,
             worker_type=None, max_number_workers=-1, number_shards=-1, force_dataflow=False,
-            rehash_ids=False, file_pattern="*.parquet",
+            rehash_ids=False, file_pattern="*.parquet", compute_transformations=False,
     ):
 
         """
@@ -209,6 +209,8 @@ class CDSStaging:
             file_pattern: `str`, default `*.parquet`
                 File pattern of the files in CDS to be consolidated. The pattern is `YYYY-MM-DDTHH_mm_ss*.parquet`.
                 One can use this to filter data in CDS received in a given date.
+            compute_transformations: `bool` default False
+                If staging transformations are defined, this will apply the transformations during the consolidate.
 
         :return: None
 
@@ -228,6 +230,7 @@ class CDSStaging:
             "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
             "numberOfShards": number_shards, "filePattern": file_pattern,
             "rehashIds": rehash_ids, "forceDataflow": force_dataflow,
+            "computeTransformations": compute_transformations,
         }
 
         return self.carol.call_api(path='v1/cds/staging/consolidate', method='POST', params=query_params)
