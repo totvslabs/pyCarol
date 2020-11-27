@@ -370,7 +370,51 @@ class CDSGolden:
         return self.carol.call_api(path='v1/cds/golden/fetchData', method='POST', params=query_params,
                                    data=filter_query)
 
-    def delete(self, dm_name=None, dm_id=None):
+
+    def delete_rejected(self, dm_name=None, dm_id=None, connector_name=None, connector_id=None, staging_name=None):
+        """
+        Delete CDS DataModel rejected data
+
+        Args:
+            dm_name: `str`,
+                Data Model name.
+            dm_id: `str`, default `None`
+                Data Model id.
+            connector_name: `str`, default `None`
+                Connector name. Used if delete only records from a given connector/staging table
+            connector_id:  `str`, default `None`
+                Connector id. Used if delete only records from a given connector/staging table
+            staging_name:  `str`, default `None`
+                Staging name. Used if delete only records from a given connector/staging table
+
+        Returns: dict
+            Carol task created.
+
+
+        """
+
+
+        if dm_name:
+            dm_id = DataModel(self.carol).get_by_name(dm_name)['mdmId']
+        else:
+            if dm_id is None:
+                raise ValueError('dm_name or dm_id should be set.')
+
+        if connector_name:
+            connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
+
+        if (staging_name is not None) and (connector_id is None):
+            raise ValueError('connector_id or connector_name must be set when using staging_name.')
+
+        params= {'entityTemplateId': dm_id,
+                 'connectorId': connector_id,
+                 'stagingTable': staging_name}
+
+        return  self.carol.call_api("v2/cds/rejected/clearData", method='POST',
+                                   params=params)
+
+
+    def delete(self, dm_name=None, dm_id=None, ):
 
         """
         Delete all CDS data model data.
