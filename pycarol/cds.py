@@ -403,6 +403,8 @@ class CDSGolden:
         if connector_name:
             connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
+        if (staging_name is not None) and (connector_id is None):
+            raise ValueError('connector_id or connector_name must be se when using staging_name.')
 
         params= {'entityTemplateId': dm_id,
                  'connectorId': connector_id,
