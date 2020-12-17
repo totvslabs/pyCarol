@@ -20,6 +20,8 @@ _CAROL_METADATA_GOLDEN = ['mdmCounterForEntity', 'mdmStagingCounter', 'mdmId', '
                           'mdmApplicationIdMasterRecordId',
                           'mdmPreviousIds', 'mdmDeleted']
 
+_EXTRA_META = ['mdmFileName']
+
 _NEEDED_FOR_MERGE = ['mdmCounterForEntity', 'mdmId', 'mdmDeleted']
 
 _REJECTED_DM_COLS = ['mdmConnectorId', 'mdmCreated', 'mdmCreatedUser', 'mdmCrosswalk',

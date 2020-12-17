@@ -120,6 +120,7 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
             buffer = storage.load(file['name'], format='raw', cache=False, storage_space=file['storage_space'])
             if file['name'].endswith('.parquet'):
                 result = pd.read_parquet(buffer, columns=columns)
+                result['mdmFileName'] = file['name']
             elif file['name'].endswith('.json.gz'):
                 buffer.seek(0)
                 try:
@@ -136,6 +137,7 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
                     raise e
 
                 result = pd.DataFrame(result)
+                result['mdmFileName'] = file['name']
                 if 'mdmMasterFieldAndValues' in result.columns:
                     result = pd.concat([pd.DataFrame(result.pop('mdmMasterFieldAndValues').tolist(), ), result], axis=1)
             else:
@@ -165,6 +167,7 @@ def _download_files(file, storage, storage_space, columns, mapping_columns, call
     buffer = storage.open(filename)
     if file['name'].endswith('.parquet'):
         result = pd.read_parquet(buffer, columns=columns)
+        result['mdmFileName'] = file['name']
     elif file['name'].endswith('.json.gz'):
         buffer.seek(0)
         try:
@@ -180,6 +183,7 @@ def _download_files(file, storage, storage_space, columns, mapping_columns, call
             print(f"Error fetching {file['name']}")
             raise e
         result = pd.DataFrame(result)
+        result['mdmFileName'] = file['name']
         if 'mdmMasterFieldAndValues' in result.columns:
             result = pd.concat([pd.DataFrame(result.pop('mdmMasterFieldAndValues').tolist(), ), result], axis=1)
 
