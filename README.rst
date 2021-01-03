@@ -210,7 +210,7 @@ The first step to send data to Carol is to create a connector.
 .. code:: python
 
     from pycarol import Connectors
-    connector_id = Connectors(carol).create(name='my_conector', label="conector_label", group_name="GroupName")
+    connector_id = Connectors(carol).create(name='my_connector', label="connector_label", group_name="GroupName")
     print(f"This is the connector id: {connector_id}")
 
 
@@ -226,7 +226,7 @@ a sample of the data we want to send.
     staging = Staging(carol)
     staging.create_schema(staging_name='my_stag', data = json_ex,
                           crosswalk_name= 'my_crosswalk' ,crosswalk_list=['name'],
-                            connector_name='may_connector')
+                            connector_name='my_connector')
 
 
 The json schema will be in the variable ``schema.schema``. The code above will create the following schema:
