@@ -121,12 +121,18 @@ class Staging:
         elif isinstance(data, list):
             data_size = len(data)
             _sample_json = data[0]
+        elif isinstance(data, dict):
+            data = [data]
+            data_size = len(data)
+            _sample_json = data[0]
         else:
             import pandas as pd
             if isinstance(data, pd.DataFrame):
                 is_df = True
                 data_size = data.shape[0]
                 _sample_json = data.iloc[0].to_json(date_format='iso')
+            else:
+                raise ValueError('`data` should be either a stringfied json, a list of dictionaries, a dictionary or a pd.DataGrame ')
 
 
         if (not isinstance(data, list)) and (not is_df):
