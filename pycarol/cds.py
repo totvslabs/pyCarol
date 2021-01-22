@@ -37,7 +37,7 @@ class CDSStaging:
             worker_type=None, max_number_workers=-1, number_shards=-1, num_records=-1,
             delete_target_folder=False, enable_realtime=None, delete_realtime_records=False,
             send_realtime=None, file_pattern='*', filter_query=None, skip_consolidation=False,
-            force_dataflow=False, recursive_processing=True, dm_name=None
+            force_dataflow=False, recursive_processing=True, dm_name=None, auto_scaling=True,
     ):
 
         """
@@ -83,6 +83,8 @@ class CDSStaging:
                 maps to a data model. If we process this staging it will trigger the whole tree to be processed.
             dm_name: `str` default `None`
                 If not None, it will reprocess the rejected records from the selected staging table.
+            auto_scaling: `bool` default `True`
+                Use auto scaling. It `False` Carol will use max_number_workers for the whole process.
 
         :return: dict
             Task definition.
@@ -113,7 +115,7 @@ class CDSStaging:
             "skipConsolidation": skip_consolidation,
             "forceDataflow": force_dataflow,
             "recursiveProcessing": recursive_processing,
-            "rejectedType": dm_name,
+            "rejectedType": dm_name, "autoScaling": auto_scaling,
         }
 
         return self.carol.call_api(path='v1/cds/staging/processData', method='POST', params=query_params,
