@@ -191,7 +191,7 @@ class CDSStaging:
     def consolidate(
             self, staging_name, connector_id=None, connector_name=None,
             worker_type=None, max_number_workers=-1, number_shards=-1, force_dataflow=False,
-            rehash_ids=False, file_pattern="*.parquet", compute_transformations=False,
+            rehash_ids=False, file_pattern="*.parquet", compute_transformations=False,  auto_scaling=True,
     ):
 
         """
@@ -221,6 +221,8 @@ class CDSStaging:
                 One can use this to filter data in CDS received in a given date.
             compute_transformations: `bool` default False
                 If staging transformations are defined, this will apply the transformations during the consolidate.
+            auto_scaling: `bool` default `True`
+                Use auto scaling. It `False` Carol will use max_number_workers for the whole process.
 
         :return: None
 
@@ -240,7 +242,8 @@ class CDSStaging:
             "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
             "numberOfShards": number_shards, "filePattern": file_pattern,
             "rehashIds": rehash_ids, "forceDataflow": force_dataflow,
-            "computeTransformations": compute_transformations,
+            "computeTransformations": compute_transformations, 
+            "autoScaling": auto_scaling,
         }
 
         return self.carol.call_api(path='v1/cds/staging/consolidate', method='POST', params=query_params)
@@ -324,7 +327,7 @@ class CDSGolden:
 
     def sync_data(self, dm_name, dm_id=None, num_records=-1, file_pattern='*', filter_query=None,
                   skip_consolidation=False, force_dataflow=False, records_percentage=100, worker_type=None,
-                  max_number_workers=-1, clear_golden_realtime=False,
+                  max_number_workers=-1, clear_golden_realtime=False, 
                   ):
 
         """
@@ -476,7 +479,7 @@ class CDSGolden:
 
     def consolidate(self, dm_name=None, dm_id=None,
                     worker_type=None, max_number_workers=-1, number_shards=-1, force_dataflow=False,
-                    ignore_merge=False, file_pattern="*.parquet"
+                    ignore_merge=False, file_pattern="*.parquet",  auto_scaling=True,
                     ):
 
         """
@@ -503,6 +506,8 @@ class CDSGolden:
             file_pattern: `str`, default `*.parquet`
                 File pattern of the files in CDS to be consolidated. The pattern is `YYYY-MM-DDTHH_mm_ss*.parquet`.
                 One can use this to filter data in CDS received in a given date.
+            auto_scaling: `bool` default `True`
+                Use auto scaling. It `False` Carol will use max_number_workers for the whole process.
 
         :return: None
         """
@@ -521,6 +526,7 @@ class CDSGolden:
             "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
             "numberOfShards": number_shards,
             "forceDataflow": force_dataflow, "ignoreMerge": ignore_merge, "filePattern": file_pattern,
+            "autoScaling": auto_scaling,
         }
 
         return self.carol.call_api(path='v1/cds/golden/consolidate', method='POST', params=query_params)
