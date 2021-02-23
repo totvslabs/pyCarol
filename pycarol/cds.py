@@ -20,6 +20,14 @@ _MACHINE_FLAVORS = [
     'n1-highmem-4',
     'n1-highmem-8',
     'n1-highmem-16',
+    'n2-standard-2',
+    'n2-standard-4',
+    'n2-standard-8',
+    'n2-standard-16',
+    'n2-highmem-2',
+    'n2-highmem-4',
+    'n2-highmem-8',
+    'n2-highmem-16',
 ]
 
 
