@@ -333,6 +333,11 @@ class Carol:
         """
         Create an API key for a given connector.
 
+        Args:
+
+            connector_id: `str` default `None`.
+                Connector ID to be used when creating the APIkey
+
         Returns: `dict`
             Dictionary with the API key.
 
