@@ -329,7 +329,7 @@ class Carol:
 
             raise Exception(response.text, response.status_code)
 
-    def issue_api_key(self):
+    def issue_api_key(self, connector_id=None):
         """
         Create an API key for a given connector.
 
@@ -337,8 +337,11 @@ class Carol:
             Dictionary with the API key.
 
         """
+
+        if connector_id is None:
+            connector_id = self.connector_id
         resp = self.call_api('v2/apiKey/issue', data={
-            'connectorId': self.connector_id
+            'connectorId': connector_id
         }, content_type='application/x-www-form-urlencoded')
         return resp
 
