@@ -235,7 +235,30 @@ class DataModel:
 
     def get_all(self, offset=0, page_size=-1, sort_order='ASC',
                 sort_by=None, print_status=False,
-                save_file=None):
+                save_file=None, only_published=False):
+
+        """ 
+        Fetch all datamodels definition. 
+
+        Args:
+
+            offset: `int`, default 0
+                Offset for pagination. Only used when `scrollable=False`
+            page_size: `int`, default 100
+                Number of records downloaded in each pagination. The maximum value is 1000
+            sort_order: `str`, default 'ASC'
+                Sort ascending ('ASC') vs. descending ('DESC').
+            sort_by: `str`,  default `None`
+                Name to sort by.
+            print_status: `bool`, default False
+                Print number of records donwloaded. 
+            save_file: `str`, default `None`
+                If not `None` the results will be saved. 
+            only_published: `bool`, default `False`
+                Get only published data models. 
+
+        
+        """
 
         self.offset = offset
         self.page_size = page_size
@@ -252,8 +275,14 @@ class DataModel:
         if save_file:
             assert isinstance(save_file, str)
             file = open(save_file, 'w', encoding='utf8')
-        while count < self.total_hits:
+
+        if only_published:
+            url_filter = "v1/entities/templates/published"
+        else:
             url_filter = "v1/entities/templates"
+        
+        while count < self.total_hits:
+            
             query = self.carol.call_api(url_filter, params=self.query_params, method='GET')
 
             if query['count'] == 0:
