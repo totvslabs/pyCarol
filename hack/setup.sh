@@ -20,7 +20,7 @@ if ! command -v pip3 >/dev/null 2>&1; then
 	test "${OSNAME}" = "linux" && {
 		echo "~~~ Installing missing package python3-distutils"
 		sudo apt-get update
-		sudo apt-get install -y python3-distutils build-essential libssl-dev libffi-dev python-dev python3-dev
+		sudo apt-get install -y python3-distutils
 	}
 	echo "~~~ Installing missing package pip3"
 	curl -fL "https://bootstrap.pypa.io/get-pip.py" \
