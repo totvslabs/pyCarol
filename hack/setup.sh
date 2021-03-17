@@ -20,7 +20,7 @@ if ! command -v pip3 >/dev/null 2>&1; then
 	test "${OSNAME}" = "linux" && {
 		echo "~~~ Installing missing package python3-distutils"
 		sudo apt-get update
-		sudo apt-get install -y python3-distutils
+		sudo apt-get install -y python3-distutils build-essential libssl-dev libffi-dev python-dev python3-dev
 	}
 	echo "~~~ Installing missing package pip3"
 	curl -fL "https://bootstrap.pypa.io/get-pip.py" \
@@ -28,10 +28,9 @@ if ! command -v pip3 >/dev/null 2>&1; then
 	python3 /tmp/get-pip.py
 fi
 
-# Test
-pip3 install --upgrade setuptools
-
 echo "~~~ Installing dependencies from pyCarol"
+pip3 install --upgrade pip
+pip3 install --upgrade setuptools
 pip3 --quiet install -r requirements.txt
 # TODO(amalucelli): bump the versions of each dependency
 pip3 --quiet install nose coverage nose-cover3 twine
