@@ -1012,32 +1012,3 @@ class CreateDataModel(object):
         if publish:
             self._profile_title(profile_title, self.dm_id)
             self.publish_template(self.dm_id)
-
-    # not done
-    def _nested(self, mdmName, value, parentId=''):
-        raise ValueError('not implemented')
-        payload = {"mdmName": mdmName, "mdmMappingDataType": entity_type.ent_type,
-                   "mdmLabel": {"en-US": mdmName}, "mdmDescription": {"en-US": mdmName}}
-        entity_type = entType.get_ent_type_for(type(value))
-
-        if entity_type == entObjectType and len(value) > 0:
-            for key, val in value.items():
-                payload['mdmFieldType'] = 'NESTED'
-                print('criando NESTED')
-                parentId = 1234
-                create_field(key, val, parentId=parentId)
-
-        elif entity_type == entArrayType and len(value) > 0:
-            pass
-
-        if entity_type.ent_type == 'nested':
-
-            payload['mdmFieldType'] = 'NESTED'
-            print('criando NESTED')
-            parentId = 1234
-            _, parentId = create_field()
-        else:
-            payload['mdmFieldType'] = 'PRIMITIVE'
-            print('criando PRIMITIVE')
-
-        return payload, parentId
