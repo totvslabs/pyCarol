@@ -28,6 +28,9 @@ if ! command -v pip3 >/dev/null 2>&1; then
 	python3 /tmp/get-pip.py
 fi
 
+# Test
+pip3 install --upgrade setuptools
+
 echo "~~~ Installing dependencies from pyCarol"
 pip3 --quiet install -r requirements.txt
 # TODO(amalucelli): bump the versions of each dependency
