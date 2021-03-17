@@ -8,7 +8,7 @@ from .storage import Storage
 from .utils.importers import _import_dask, _import_pandas
 from .utils import async_helpers
 from .utils.miscellaneous import stream_data
-from . import _CAROL_METADATA_STAGING, _NEEDED_FOR_MERGE
+from . import _CAROL_METADATA_STAGING, _NEEDED_FOR_MERGE, _CAROL_METADATA_UNTIE_STAGING
 from .utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
 from .utils.deprecation_msgs import _deprecation_msgs
 
@@ -531,9 +531,9 @@ class Staging:
 
         if merge_records:
             if (not return_dask_graph) or (backend == 'pandas'):
-                d = drop_duplicated_parquet(d)
+                d = drop_duplicated_parquet(d, untie_field=_CAROL_METADATA_UNTIE_STAGING)
             else:
-                d = drop_duplicated_parquet_dask(d)
+                d = drop_duplicated_parquet_dask(d, untie_field=_CAROL_METADATA_UNTIE_STAGING)
 
         if not return_metadata:
             to_drop = set(_meta_cols).intersection(set(d.columns))
