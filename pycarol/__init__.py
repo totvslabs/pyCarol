@@ -20,8 +20,8 @@ _CAROL_METADATA_GOLDEN = ['mdmCounterForEntity', 'mdmStagingCounter', 'mdmId', '
                           'mdmApplicationIdMasterRecordId',
                           'mdmPreviousIds', 'mdmDeleted']
 
-_CAROL_METADATA_MERGE_GOLDEN = 'mdmStagingCounter'
-_CAROL_METADATA_MERGE_STAGING = 'mdmCounterForEntity'
+_CAROL_METADATA_UNTIE_GOLDEN = 'mdmStagingCounter'
+_CAROL_METADATA_UNTIE_STAGING = 'mdmCounterForEntity'
 
 
 _NEEDED_FOR_MERGE = ['mdmCounterForEntity', 'mdmId', 'mdmDeleted']
