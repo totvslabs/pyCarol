@@ -47,7 +47,6 @@ class CDSStaging:
             send_realtime=None, file_pattern='*', filter_query=None, skip_consolidation=False,
             force_dataflow=False, recursive_processing=True, dm_name=None, auto_scaling=True,
     ):
-
         """
         Process CDS staging data.
 
@@ -100,18 +99,22 @@ class CDSStaging:
         """
 
         if worker_type not in _MACHINE_FLAVORS and worker_type is not None:
-            raise ValueError(f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
+            raise ValueError(
+                f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
 
         if enable_realtime is not None:
-            _deprecation_msgs("`enable_realtime` is deprecated and it is not used in Carol. ")
+            _deprecation_msgs(
+                "`enable_realtime` is deprecated and it is not used in Carol. ")
 
         filter_query = filter_query if filter_query else {}
 
         if connector_name:
-            connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
+            connector_id = Connectors(self.carol).get_by_name(
+                connector_name)['mdmId']
         else:
             if connector_id is None:
-                raise ValueError('connector_id or connector_name should be set.')
+                raise ValueError(
+                    'connector_id or connector_name should be set.')
 
         query_params = {
             "connectorId": connector_id, "stagingType": staging_name, "workerType": worker_type,
@@ -134,7 +137,6 @@ class CDSStaging:
             delete_realtime_records=False, enable_realtime=None,
             file_pattern='*', filter_query=None, force_dataflow=False, records_percentage=100
     ):
-
         """
         Sync data to realtime layer.
 
@@ -168,15 +170,18 @@ class CDSStaging:
         """
 
         if enable_realtime is not None:
-            _deprecation_msgs("`enable_realtime` is deprecated and it is not used in Carol. ")
+            _deprecation_msgs(
+                "`enable_realtime` is deprecated and it is not used in Carol. ")
 
         filter_query = filter_query if filter_query else {}
 
         if connector_name:
-            connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
+            connector_id = Connectors(self.carol).get_by_name(
+                connector_name)['mdmId']
         else:
             if connector_id is None:
-                raise ValueError('connector_id or connector_name should be set.')
+                raise ValueError(
+                    'connector_id or connector_name should be set.')
 
         query_params = {
             "connectorId": connector_id, "stagingType": staging_name,
@@ -191,9 +196,9 @@ class CDSStaging:
     def consolidate(
             self, staging_name, connector_id=None, connector_name=None,
             worker_type=None, max_number_workers=-1, number_shards=-1, force_dataflow=False,
-            rehash_ids=False, file_pattern="*.parquet", compute_transformations=False,  auto_scaling=True,
+            rehash_ids=False, file_pattern="*.parquet", compute_transformations=False,
+            auto_scaling=True, file_size_limit=-1,
     ):
-
         """
         Process staging CDS data.
 
@@ -223,33 +228,39 @@ class CDSStaging:
                 If staging transformations are defined, this will apply the transformations during the consolidate.
             auto_scaling: `bool` default `True`
                 Use auto scaling. It `False` Carol will use max_number_workers for the whole process.
+            file_size_limit: `int` default `-1`
+                Ignore files larger than "file_size_limit" bytes during consolidation. 
 
-        :return: None
+
+        :return: `dict`
+            Task created in Carol. 
 
         """
 
         if worker_type not in _MACHINE_FLAVORS and worker_type is not None:
-            raise ValueError(f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
+            raise ValueError(
+                f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
 
         if connector_name:
-            connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
+            connector_id = Connectors(self.carol).get_by_name(
+                connector_name)['mdmId']
         else:
             if connector_id is None:
-                raise ValueError('connector_id or connector_name should be set.')
+                raise ValueError(
+                    'connector_id or connector_name should be set.')
 
         query_params = {
             "connectorId": connector_id, "stagingType": staging_name,
             "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
             "numberOfShards": number_shards, "filePattern": file_pattern,
             "rehashIds": rehash_ids, "forceDataflow": force_dataflow,
-            "computeTransformations": compute_transformations, 
-            "autoScaling": auto_scaling,
+            "computeTransformations": compute_transformations,
+            "autoScaling": auto_scaling, "fileSizeLimitBytes": file_size_limit, 
         }
 
         return self.carol.call_api(path='v1/cds/staging/consolidate', method='POST', params=query_params)
 
     def delete(self, staging_name, connector_id=None, connector_name=None):
-
         """
         Delete all CDS staging data.
 
@@ -267,17 +278,19 @@ class CDSStaging:
         """
 
         if connector_name:
-            connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
+            connector_id = Connectors(self.carol).get_by_name(
+                connector_name)['mdmId']
         else:
             if connector_id is None:
-                raise ValueError('connector_id or connector_name should be set.')
+                raise ValueError(
+                    'connector_id or connector_name should be set.')
 
-        query_params = {"connectorId": connector_id, "stagingType": staging_name}
+        query_params = {"connectorId": connector_id,
+                        "stagingType": staging_name}
 
         return self.carol.call_api(path='v1/cds/staging/clearData', method='POST', params=query_params)
 
     def count(self, staging_name, connector_id=None, connector_name=None):
-
         """
 
         Count number of messages in CDS.
@@ -297,12 +310,15 @@ class CDSStaging:
         """
 
         if connector_name:
-            connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
+            connector_id = Connectors(self.carol).get_by_name(
+                connector_name)['mdmId']
         else:
             if connector_id is None:
-                raise ValueError('connector_id or connector_name should be set.')
+                raise ValueError(
+                    'connector_id or connector_name should be set.')
 
-        query_params = {"connectorId": connector_id, "stagingType": staging_name}
+        query_params = {"connectorId": connector_id,
+                        "stagingType": staging_name}
         return self.carol.call_api(path='v1/cds/staging/fetchCount', method='POST', params=query_params).get('count')
 
 
@@ -327,9 +343,8 @@ class CDSGolden:
 
     def sync_data(self, dm_name, dm_id=None, num_records=-1, file_pattern='*', filter_query=None,
                   skip_consolidation=False, force_dataflow=False, records_percentage=100, worker_type=None,
-                  max_number_workers=-1, clear_golden_realtime=False, 
+                  max_number_workers=-1, clear_golden_realtime=False,
                   ):
-
         """
         Sync data to realtime layer.
 
@@ -383,7 +398,6 @@ class CDSGolden:
         return self.carol.call_api(path='v1/cds/golden/fetchData', method='POST', params=query_params,
                                    data=filter_query)
 
-
     def delete_rejected(self, dm_name=None, dm_id=None, connector_name=None, connector_id=None, staging_name=None):
         """
         Delete CDS DataModel rejected data
@@ -406,7 +420,6 @@ class CDSGolden:
 
         """
 
-
         if dm_name:
             dm_id = DataModel(self.carol).get_by_name(dm_name)['mdmId']
         else:
@@ -414,21 +427,21 @@ class CDSGolden:
                 raise ValueError('dm_name or dm_id should be set.')
 
         if connector_name:
-            connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
+            connector_id = Connectors(self.carol).get_by_name(
+                connector_name)['mdmId']
 
         if (staging_name is not None) and (connector_id is None):
-            raise ValueError('connector_id or connector_name must be set when using staging_name.')
+            raise ValueError(
+                'connector_id or connector_name must be set when using staging_name.')
 
-        params= {'entityTemplateId': dm_id,
-                 'connectorId': connector_id,
-                 'stagingTable': staging_name}
+        params = {'entityTemplateId': dm_id,
+                  'connectorId': connector_id,
+                  'stagingTable': staging_name}
 
-        return  self.carol.call_api("v2/cds/rejected/clearData", method='POST',
+        return self.carol.call_api("v2/cds/rejected/clearData", method='POST',
                                    params=params)
 
-
     def delete(self, dm_name=None, dm_id=None, ):
-
         """
         Delete all CDS data model data.
 
@@ -453,7 +466,6 @@ class CDSGolden:
         return self.carol.call_api(path='v1/cds/golden/clearData', method='POST', params=query_params)
 
     def count(self, dm_name=None, dm_id=None):
-
         """
         Count number of messages in CDS.
 
@@ -477,11 +489,12 @@ class CDSGolden:
         query_params = {"entityTemplateId": dm_id}
         return self.carol.call_api(path='v1/cds/golden/fetchCount', method='POST', params=query_params).get('count')
 
-    def consolidate(self, dm_name=None, dm_id=None,
-                    worker_type=None, max_number_workers=-1, number_shards=-1, force_dataflow=False,
-                    ignore_merge=False, file_pattern="*.parquet",  auto_scaling=True,
-                    ):
-
+    def consolidate(
+        self, dm_name=None, dm_id=None,
+        worker_type=None, max_number_workers=-1, number_shards=-1, force_dataflow=False,
+        ignore_merge=False, file_pattern="*.parquet",  auto_scaling=True,
+        file_size_limit=-1,
+    ):
         """
 
         Process staging CDS data.
@@ -508,8 +521,11 @@ class CDSGolden:
                 One can use this to filter data in CDS received in a given date.
             auto_scaling: `bool` default `True`
                 Use auto scaling. It `False` Carol will use max_number_workers for the whole process.
+            file_size_limit: `int` default `-1`
+                Ignore files larger than "file_size_limit" bytes during consolidation. 
 
-        :return: None
+        :return: `dict`
+            Task created in Carol. 
         """
 
         if dm_name:
@@ -519,14 +535,15 @@ class CDSGolden:
                 raise ValueError('dm_name or dm_id should be set.')
 
         if worker_type not in _MACHINE_FLAVORS and worker_type is not None:
-            raise ValueError(f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
+            raise ValueError(
+                f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
 
         query_params = {
             "entityTemplateId": dm_id,
             "workerType": worker_type, "maxNumberOfWorkers": max_number_workers,
             "numberOfShards": number_shards,
             "forceDataflow": force_dataflow, "ignoreMerge": ignore_merge, "filePattern": file_pattern,
-            "autoScaling": auto_scaling,
+            "autoScaling": auto_scaling, "fileSizeLimitBytes": file_size_limit,
         }
 
         return self.carol.call_api(path='v1/cds/golden/consolidate', method='POST', params=query_params)
