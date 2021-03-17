@@ -29,6 +29,8 @@ if ! command -v pip3 >/dev/null 2>&1; then
 fi
 
 echo "~~~ Installing dependencies from pyCarol"
+pip3 install --upgrade pip
+pip3 install --upgrade setuptools
 pip3 --quiet install -r requirements.txt
 # TODO(amalucelli): bump the versions of each dependency
 pip3 --quiet install nose coverage nose-cover3 twine
