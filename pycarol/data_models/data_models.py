@@ -15,7 +15,7 @@ from ..query import delete_golden
 from ..connectors import Connectors
 from ..utils import async_helpers
 from ..utils.miscellaneous import stream_data
-from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE, _REJECTED_DM_COLS
+from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE, _REJECTED_DM_COLS, _CAROL_METADATA_UNTIE_GOLDEN
 from ..utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
 from ..utils.deprecation_msgs import _deprecation_msgs
 from ..exceptions import CarolApiResponseException
@@ -223,9 +223,9 @@ class DataModel:
 
         if merge_records:
             if (not return_dask_graph) or (backend == 'pandas'):
-                d = drop_duplicated_parquet(d)
+                d = drop_duplicated_parquet(d, untie_field=_CAROL_METADATA_UNTIE_GOLDEN)
             else:
-                d = drop_duplicated_parquet_dask(d)
+                d = drop_duplicated_parquet_dask(d, untie_field=_CAROL_METADATA_UNTIE_GOLDEN)
 
         if not return_metadata:
             to_drop = set(_meta_cols).intersection(set(d.columns))
@@ -1012,32 +1012,3 @@ class CreateDataModel(object):
         if publish:
             self._profile_title(profile_title, self.dm_id)
             self.publish_template(self.dm_id)
-
-    # not done
-    def _nested(self, mdmName, value, parentId=''):
-        raise ValueError('not implemented')
-        payload = {"mdmName": mdmName, "mdmMappingDataType": entity_type.ent_type,
-                   "mdmLabel": {"en-US": mdmName}, "mdmDescription": {"en-US": mdmName}}
-        entity_type = entType.get_ent_type_for(type(value))
-
-        if entity_type == entObjectType and len(value) > 0:
-            for key, val in value.items():
-                payload['mdmFieldType'] = 'NESTED'
-                print('criando NESTED')
-                parentId = 1234
-                create_field(key, val, parentId=parentId)
-
-        elif entity_type == entArrayType and len(value) > 0:
-            pass
-
-        if entity_type.ent_type == 'nested':
-
-            payload['mdmFieldType'] = 'NESTED'
-            print('criando NESTED')
-            parentId = 1234
-            _, parentId = create_field()
-        else:
-            payload['mdmFieldType'] = 'PRIMITIVE'
-            print('criando PRIMITIVE')
-
-        return payload, parentId
