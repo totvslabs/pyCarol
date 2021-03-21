@@ -176,8 +176,8 @@ class Apps:
             query = [query]
         for query_list in query:
             self.app_settings.update({i['mdmName']: i.get('mdmParameterValue')
-                                      for i in query_list.get('mdmTenantAppSettingValues')})
-            self.full_settings.update({i['mdmName']: i for i in query_list.get('mdmTenantAppSettingValues')})
+                                      for i in query_list.get('mdmTenantAppSettingValues',{})})
+            self.full_settings.update({i['mdmName']: i for i in query_list.get('mdmTenantAppSettingValues',{})})
 
         return self.app_settings
 
