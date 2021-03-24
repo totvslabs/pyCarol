@@ -9,6 +9,7 @@ the `pycarol.cds.CDSGolden` classes are used to manipulate the data inside the f
 from .connectors import Connectors
 from .data_models import DataModel
 from .utils.deprecation_msgs import _deprecation_msgs
+import warnings
 
 _MACHINE_FLAVORS = [
     'n1-standard-1',
@@ -28,8 +29,16 @@ _MACHINE_FLAVORS = [
     'n2-highmem-4',
     'n2-highmem-8',
     'n2-highmem-16',
+    'n2-highmem-32',
+    'n2-highmem-64',
 ]
 
+def check_worker_type(worker_type):
+    if worker_type not in _MACHINE_FLAVORS and worker_type is not None:
+        warnings.warn(
+        f'worker_type {worker_type} is unknown. It might not work. Use one of the known machines {_MACHINE_FLAVORS}',
+        Warning, stacklevel=3
+    )
 
 class CDSStaging:
     """
@@ -98,9 +107,7 @@ class CDSStaging:
 
         """
 
-        if worker_type not in _MACHINE_FLAVORS and worker_type is not None:
-            raise ValueError(
-                f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
+        check_worker_type(worker_type=worker_type)
 
         if enable_realtime is not None:
             _deprecation_msgs(
@@ -237,9 +244,7 @@ class CDSStaging:
 
         """
 
-        if worker_type not in _MACHINE_FLAVORS and worker_type is not None:
-            raise ValueError(
-                f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
+        check_worker_type(worker_type=worker_type)
 
         if connector_name:
             connector_id = Connectors(self.carol).get_by_name(
@@ -255,7 +260,7 @@ class CDSStaging:
             "numberOfShards": number_shards, "filePattern": file_pattern,
             "rehashIds": rehash_ids, "forceDataflow": force_dataflow,
             "computeTransformations": compute_transformations,
-            "autoScaling": auto_scaling, "fileSizeLimitBytes": file_size_limit, 
+            "autoScaling": auto_scaling, "fileSizeLimitBytes": file_size_limit,
         }
 
         return self.carol.call_api(path='v1/cds/staging/consolidate', method='POST', params=query_params)
@@ -534,9 +539,7 @@ class CDSGolden:
             if dm_id is None:
                 raise ValueError('dm_name or dm_id should be set.')
 
-        if worker_type not in _MACHINE_FLAVORS and worker_type is not None:
-            raise ValueError(
-                f'worker_type should be: {_MACHINE_FLAVORS}\n, you used {worker_type}')
+        check_worker_type(worker_type=worker_type)
 
         query_params = {
             "entityTemplateId": dm_id,
