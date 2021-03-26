@@ -75,7 +75,9 @@ class Carol:
                  organization=None, environment=None, host=None, user=None, password=None, api_key=None):
 
         self.connector_id = connector_id
-        auth = self.__get_auth(connector_id=connector_id, username=user, password=password, app_oauth=api_key)
+
+        if auth is None:
+            auth = self.__get_auth(connector_id=connector_id, username=user, password=password, app_oauth=api_key)
 
         if domain is None:
             domain = os.getenv('CAROLTENANT')
