@@ -139,7 +139,7 @@ class Carol:
         if app_oauth and connector_id:
             return ApiKeyAuth(app_oauth)
 
-        raise ValueError("either `auth` or `username/password` or `oauth` or pycarol env variables must be set.")
+        raise ValueError("either `auth` or `username/password` or `api_key` or pycarol env variables must be set.")
 
 
     @property
