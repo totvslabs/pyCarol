@@ -111,7 +111,7 @@ class CarolAPI:
         carol = CarolAPI()
         carol.add_module('new_module', 'ANewModule', allow_args=True)
 
-        carol.new_module(extra_arg, new_kwarg='foo').method()
+        carol.new_module(extra_arg, new_kwarg='foo').do_something()
     
     """
 
