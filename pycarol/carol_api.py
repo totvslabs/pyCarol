@@ -102,7 +102,7 @@ class CarolAPI:
             carol = CarolAPI()
             carol.add_module('new_module', 'ANewModule')
 
-    Note that this module will receita pycarol.Carol as the first argument. If the module require extra arguments,
+    Note that this module will receive pycarol.Carol as the first argument. If the module require extra arguments,
     use:
 
     .. code:: python
