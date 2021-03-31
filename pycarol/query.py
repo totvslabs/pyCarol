@@ -430,6 +430,8 @@ class ParQuery:
         self._multiplier = None
         self.carol = carol
         self.return_df = return_df
+        if return_df:
+            import pandas as pd
         self.backend = backend
         self.verbose = verbose
         self.n_jobs = n_jobs

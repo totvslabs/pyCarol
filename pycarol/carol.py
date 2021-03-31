@@ -14,7 +14,7 @@ from .exceptions import CarolApiResponseException, InvalidToken
 
 class Carol:
     """
-    This class handle all Carol`s API calls It will handle all API calls,
+    Handles all Carol`s API calls It will handle all API calls,
     for a given authentication method. :param domain: `str`.
 
     Args:
