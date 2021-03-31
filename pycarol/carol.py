@@ -47,6 +47,13 @@ class Carol:
                 2. else host={organization}.{environment}
 
             See Carol._set_host.
+        
+         user:  `str` default `None`
+            User
+         password: `str` default `None`
+            User passowrd
+         api_key:  `str` default `None`
+            Carol's Api Key
 
     OBS:
         In case all parameters are `None`, pycarol will try yo find their values in the environment variables.
@@ -65,20 +72,12 @@ class Carol:
     """
 
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
-                 organization=None, environment=None, host=None):
+                 organization=None, environment=None, host=None, user=None, password=None, api_key=None):
+
+        self.connector_id = connector_id
 
         if auth is None:
-            carol_user = os.getenv('CAROLUSER')
-            carol_pw = os.getenv('CAROLPWD')
-
-            if carol_user and carol_pw:
-                auth = PwdAuth(user=carol_user, password=carol_pw)
-            else:
-                auth_token = os.getenv('CAROLAPPOAUTH')
-                connector_id = os.getenv('CAROLCONNECTORID')
-                auth = ApiKeyAuth(auth_token)
-            if auth is None:
-                raise ValueError("either `auth` method or pycarol env variables must be set.")
+            auth = self.__get_auth(connector_id=connector_id, username=user, password=password, app_oauth=api_key)
 
         if domain is None:
             domain = os.getenv('CAROLTENANT')
@@ -88,12 +87,11 @@ class Carol:
         if app_name is None:
             app_name = os.getenv('CAROLAPPNAME', ' ')
 
-
-        if connector_id is None:
+        if self.connector_id is None:
             if auth.connector_id is None:
-                connector_id = __CONNECTOR_PYCAROL__
+                self.connector_id = __CONNECTOR_PYCAROL__
             else:
-                connector_id = auth.connector_id
+                self.connector_id = auth.connector_id
 
         if domain is None or app_name is None or auth is None:
             raise ValueError("domain, app_name and auth must be specified as parameters, either " +
@@ -113,7 +111,6 @@ class Carol:
         self.host = self._set_host(domain=self.domain, organization=self.organization,
                                    environment=self.environment, host=host)
         self._tenant = None
-        self.connector_id = connector_id
         self.auth = auth
         self.auth.set_connector_id(self.connector_id)
         self.auth.login(self)
@@ -121,6 +118,28 @@ class Carol:
 
         self.org = None
 
+    def __get_auth(self, connector_id=None, username=None, password=None, app_oauth=None):
+
+        if username is None:
+            username = os.getenv('CAROLUSER')
+
+        if password is None:
+            password = os.getenv('CAROLPWD')
+
+        if username and password:
+            return PwdAuth(user=username, password=password)
+            
+        if app_oauth is None:
+            app_oauth = os.getenv('CAROLAPPOAUTH')
+        
+        if connector_id is None:
+            connector_id = os.getenv('CAROLCONNECTORID', __CONNECTOR_PYCAROL__)
+            self.connector_id = connector_id
+        
+        if app_oauth and connector_id:
+            return ApiKeyAuth(app_oauth)
+
+        raise ValueError("either `auth` or `username/password` or `api_key` or pycarol env variables must be set.")
 
 
     @property
@@ -392,26 +411,6 @@ class Carol:
                              params = {"connectorId": connector_id})
 
         return resp
-
-    def copy_token(self):
-        """
-        Copy token to clipboard
-
-        Returns:
-            None
-        """
-
-        import pyperclip
-        if isinstance(self.auth, PwdAuth):
-            token = self.auth._token.access_token
-            pyperclip.copy(token)
-            print("Copied auth token to clipboard: " + token)
-        elif isinstance(self.auth, ApiKeyAuth):
-            token = self.auth.api_key
-            pyperclip.copy(token)
-            print("Copied API Key to clipboard: " + token)
-        else:
-            raise Exception("Auth object not set. Can't fetch token.")
 
     def switch_org_level(self):
 
