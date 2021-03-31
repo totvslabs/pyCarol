@@ -26,7 +26,7 @@ CAROL_KNOWN_MODULES = {
 }
 
 
-class CarolAPI:
+class CarolAPI(Carol):
     """Encapsulates some pycarol modules
 
     Args:
@@ -118,11 +118,14 @@ class CarolAPI:
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
                  organization=None, environment=None, host=None, user=None, password=None, api_key=None):
 
-        self.carol = Carol(domain=domain, app_name=app_name, auth=auth, connector_id=connector_id, port=port, verbose=verbose,
-                           organization=organization, environment=environment, host=host, user=user, password=password, api_key=api_key)
+        super(CarolAPI, self).__init__(domain=domain, app_name=app_name, auth=auth, connector_id=connector_id, port=port, verbose=verbose,
+                                       organization=organization, environment=environment, host=host, user=user, password=password, api_key=api_key)
+
         
         self._all_modules = set()
         self._create_context()
+
+        
 
     def _create_context(self):
 
@@ -143,8 +146,8 @@ class CarolAPI:
             allow_args (bool): use functools.partial to allow passing arguments when calling the module. 
         """
         if allow_args:
-            module = partial(module, self.carol)
+            module = partial(module, self)
             setattr(self, module_name, module)
         else:
-            setattr(self, module_name, module(self.carol))
+            setattr(self, module_name, module(self))
         self._all_modules.update([module_name])
