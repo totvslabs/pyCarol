@@ -118,8 +118,8 @@ class CarolAPI:
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
                  organization=None, environment=None, host=None, user=None, password=None, api_key=None):
 
-        self.carol = Carol(domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
-                           organization=None, environment=None, host=None, user=None, password=None, api_key=None)
+        self.carol = Carol(domain=domain, app_name=app_name, auth=auth, connector_id=connector_id, port=port, verbose=verbose,
+                           organization=organization, environment=environment, host=host, user=user, password=password, api_key=api_key)
         
         self._all_modules = set()
         self._create_context()
