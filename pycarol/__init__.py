@@ -47,3 +47,4 @@ from .auth.PwdKeyAuth import PwdKeyAuth
 from .cds import CDSGolden, CDSStaging
 from .apps import Apps
 from .subscription import Subscription
+from .carol_api import CarolAPI
