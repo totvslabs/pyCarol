@@ -8,6 +8,7 @@ from .query import Query
 from .storage import Storage
 from .carolina import Carolina
 from .tasks import Tasks
+from .subscription import Subscription
 from functools import partial
 
 from .subscription import Subscription
@@ -20,9 +21,10 @@ CAROL_KNOWN_MODULES = {
     'cds_golden': CDSGolden,
     'cds_staging': CDSStaging,
     'query': Query,
-    'storage': Storage,
-    'carolina': Carolina,
+    # 'storage': Storage,  #Had to remove these two because they have google client that is unpickleable. This breaks if trying to use in any multiprocessing lib.
+    # 'carolina': Carolina,
     'task': Tasks,
+    'subscription': Subscription
 }
 
 
