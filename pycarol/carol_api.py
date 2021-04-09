@@ -21,7 +21,7 @@ CAROL_KNOWN_MODULES = {
     'cds_golden': CDSGolden,
     'cds_staging': CDSStaging,
     'query': Query,
-    # 'storage': Storage,  #Had to remove these two because they have google client that are unpickleable. This breaks if trying to use in any multiprocessing lib.
+    # 'storage': Storage,  #Had to remove these two because they have google client that is unpickleable. This breaks if trying to use in any multiprocessing lib.
     # 'carolina': Carolina,
     'task': Tasks,
     'subscription': Subscription
