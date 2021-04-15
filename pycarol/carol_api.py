@@ -24,7 +24,8 @@ CAROL_KNOWN_MODULES = {
     # 'storage': Storage,  #Had to remove these two because they have google client that is unpickleable. This breaks if trying to use in any multiprocessing lib.
     # 'carolina': Carolina,
     'task': Tasks,
-    'subscription': Subscription
+    'subscription': Subscription,
+    'connector': Connectors,
 }
 
 
@@ -61,7 +62,7 @@ class CarolAPI(Carol):
                 2. else host={organization}.{environment}
 
             See Carol._set_host.
-        
+
          user:  `str` default `None`
             User
          password: `str` default `None`
@@ -114,7 +115,7 @@ class CarolAPI(Carol):
         carol.add_module('new_module', 'ANewModule', allow_args=True)
 
         carol.new_module(extra_arg, new_kwarg='foo').do_something()
-    
+
     """
 
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
@@ -123,11 +124,8 @@ class CarolAPI(Carol):
         super(CarolAPI, self).__init__(domain=domain, app_name=app_name, auth=auth, connector_id=connector_id, port=port, verbose=verbose,
                                        organization=organization, environment=environment, host=host, user=user, password=password, api_key=api_key)
 
-        
         self._all_modules = set()
         self._create_context()
-
-        
 
     def _create_context(self):
 
@@ -135,7 +133,7 @@ class CarolAPI(Carol):
 
             if module is Query:
                 allow_args = True
-            else: 
+            else:
                 allow_args = False
 
             self.add_module(module_name, module, allow_args=allow_args)

@@ -17,7 +17,6 @@ class Connectors:
         self.carol = carol
 
     def create(self, name, label=None, group_name="Others", overwrite=False):
-
         """
         Create a connector
 
@@ -131,14 +130,16 @@ class Connectors:
         """
 
         if connector_id is None and mdm_id is not None:
-            _deprecation_msgs("mdm_id is deprecated and will be removed, use connector_id")
+            _deprecation_msgs(
+                "mdm_id is deprecated and will be removed, use connector_id")
 
         connector_id = connector_id if connector_id else mdm_id
 
         if connector_id is None:
             raise ValueError('Connector Id must be set')
 
-        self.carol.call_api(f'v1/connectors/{connector_id}?forceDeletion={force_deletion}', method='DELETE')
+        self.carol.call_api(
+            f'v1/connectors/{connector_id}?forceDeletion={force_deletion}', method='DELETE')
 
     def get_all(self, offset=0, page_size=-1, sort_order='ASC', sort_by=None, include_connectors=False,
                 include_mappings=False, include_consumption=False, print_status=True, save_results=False,
@@ -236,7 +237,8 @@ class Connectors:
             else:
                 assert connector_id
 
-            response = self.carol.call_api('v1/connectors/{}/stats'.format(connector_id))
+            response = self.carol.call_api(
+                'v1/connectors/{}/stats'.format(connector_id))
 
         self._conn_stats = response['aggs']
         return {key: list(value['stagingEntityStats'].keys()) for key, value in self._conn_stats.items()}
@@ -279,10 +281,12 @@ class Connectors:
         if staging_name:
             conn = d.get(staging_name, None)
             if conn is None:
-                raise ValueError('There is no staging named {}'.format(staging_name))
+                raise ValueError(
+                    'There is no staging named {}'.format(staging_name))
 
             elif len(conn) > 1:
-                print('More than one connector with the staging {}'.format(staging_name))
+                print('More than one connector with the staging {}'.format(
+                    staging_name))
                 return conn
 
     def get_dm_mappings(self, connector_id=None, connector_name=None, staging_name=None,
@@ -332,8 +336,10 @@ class Connectors:
 
         else:
             if connector_id is None and connector_name is None:
-                raise ValueError('Either connector_id or connector_name must be set if `all_connectors=False`. ')
-            connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+                raise ValueError(
+                    'Either connector_id or connector_name must be set if `all_connectors=False`. ')
+            connector_id = connector_id if connector_id else self.get_by_name(connector_name)[
+                'mdmId']
 
             if dm_name is not None:
                 url_dm = f"v1/entities/templates/name/{dm_name}"
@@ -379,7 +385,6 @@ class Connectors:
             offset=0, page_size=1000, sort_order='ASC',
             sort_by=None, print_status=False, errors='raise'
     ):
-
         """
         Get all Entity Mappings.
 
@@ -410,7 +415,8 @@ class Connectors:
             List of dict with mappings,
         """
 
-        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)[
+            'mdmId']
 
         template_data = []
         count = offset
@@ -458,12 +464,15 @@ class Connectors:
                             reverse_mapping=False,
                             process_cds=True, ):
 
-        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)[
+            'mdmId']
 
         if entity_mapping_id is None:
             if staging_name is None:
-                raise ValueError("Either staging_name or entity_mapping_id must be set.")
-            entity_mappings = self.get_entity_mappings(connector_id=connector_id, staging_name=staging_name)
+                raise ValueError(
+                    "Either staging_name or entity_mapping_id must be set.")
+            entity_mappings = self.get_entity_mappings(
+                connector_id=connector_id, staging_name=staging_name)
             entity_mappings = [i['mdmId'] for i in entity_mappings]
         else:
             if isinstance(entity_mapping_id, str):
@@ -471,7 +480,8 @@ class Connectors:
             elif isinstance(entity_mapping_id, list):
                 entity_mappings = entity_mapping_id
             else:
-                raise ValueError('entity_mapping_id must be string of list of string.')
+                raise ValueError(
+                    'entity_mapping_id must be string of list of string.')
 
         responses = {}
         for _mapping in entity_mappings:
@@ -561,8 +571,10 @@ class Connectors:
     def _play_pause_etl(self, kind, staging_name=None,
                         connector_name=None, connector_id=None, ):
 
-        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
-        resp = self.carol.call_api(path=f'v1/etl/staging/{connector_id}/{staging_name}/{kind}', method='POST')
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)[
+            'mdmId']
+        resp = self.carol.call_api(
+            path=f'v1/etl/staging/{connector_id}/{staging_name}/{kind}', method='POST')
 
         return resp
 
@@ -637,7 +649,31 @@ class Connectors:
 
         """
 
-
-        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)[
+            'mdmId']
 
         return self.carol.call_api(path=f"v1/etl/connector/{connector_id}")
+
+    def get_all_stagings(self, connector_name=None, connector_id=None):
+        """
+        Get all stagings from a connector.
+
+        Args:
+
+            connector_name: `str`, `str`, default `None`
+                Connector Name
+            connector_id: `str`, `str`, default `None`
+                Connector ID
+
+        Returns: list
+            List of staging tables.
+
+        """
+        if connector_name is not None:
+            connector_id = self.get_by_name(connector_name)['mdmId']
+        elif connector_id is None:
+            raise ValueError(
+                'Either `connector_id` or `connnector_name` should be set.')
+
+        c = self.carol.call_api(path=f"v1/staging/connectors/{connector_id}/tables")
+        return sorted(c)
