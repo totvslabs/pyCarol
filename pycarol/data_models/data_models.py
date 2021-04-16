@@ -719,6 +719,9 @@ class DataModel:
     def generate_SQL_tables(self,):
         """Geneates SQL tables for all data models. 
 
+        The tables created will be named:
+        `dm_{datamodel_name}`. 
+
         Returns:
             dict: Carol's response
         """

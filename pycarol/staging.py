@@ -734,7 +734,10 @@ class Staging:
 
 
     def generate_SQL_tables(self, connector_id=None, connector_name=None):
-        """ Generates SQL tables from a connector
+        """ Generates SQL tables from a connector.
+
+        The tables created will be named:
+        `stg_{connector_id}_{staging_name}`. 
 
         Args:
             connector_id (str, optional): Connector ID. Defaults to None.
