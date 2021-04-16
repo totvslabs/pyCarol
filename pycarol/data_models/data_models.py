@@ -68,10 +68,10 @@ class DataModel:
         query = self.carol.call_api(url, method='GET')
         return query
 
-
     def _build_query_params(self):
         if self.sort_by is None:
-            self.query_params = {"offset": self.offset, "pageSize": str(self.page_size), "sortOrder": self.sort_order}
+            self.query_params = {"offset": self.offset, "pageSize": str(
+                self.page_size), "sortOrder": self.sort_order}
         else:
             self.query_params = {"offset": self.offset, "pageSize": str(self.page_size), "sortOrder": self.sort_order,
                                  "sortBy": self.sort_by}
@@ -82,7 +82,8 @@ class DataModel:
             if field.get('mdmMappingDataType', None) not in ['NESTED', 'OBJECT']:
                 f.update({field['mdmName']: field['mdmMappingDataType']})
             else:
-                f[field['mdmName']] = self._get_name_type_data_models(field['mdmFields'])
+                f[field['mdmName']] = self._get_name_type_data_models(
+                    field['mdmFields'])
         return f
 
     def _get(self, id, by='id'):
@@ -97,7 +98,8 @@ class DataModel:
         # TODO: Add 'Not Found' and `is in Deleted state`
         resp = self.carol.call_api(url, method='GET')
         self.entity_template_ = {resp['mdmName']: resp}
-        self.fields_dict.update({resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
+        self.fields_dict.update(
+            {resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
 
     def fetch_parquet(
@@ -107,7 +109,6 @@ class DataModel:
             max_hits=None, cds=True, max_workers=None, file_pattern=None,
             return_callback_result=False
     ):
-
         """
         Fetch parquet from Golden.
 
@@ -143,7 +144,8 @@ class DataModel:
             """
 
         if backend not in ('dask', 'pandas'):
-            raise ValueError(f"Backend options are 'dask','pandas' {backend} was given")
+            raise ValueError(
+                f"Backend options are 'dask','pandas' {backend} was given")
 
         if return_metadata:
             # It can be costly to get all meta from a golden. So er should alway ask for the info we want.
@@ -154,7 +156,8 @@ class DataModel:
         if callback and not callable(callback):
             raise TypeError(f'"{callback}" object is not callable')
 
-        all_cols = list(self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields']))
+        all_cols = list(self._get_name_type_DMs(
+            self.get_by_name(dm_name)['mdmFields']))
         if not columns:  # if an empty list was sent.
             columns = all_cols
 
@@ -163,10 +166,12 @@ class DataModel:
 
         _diff_cols = set(columns) - set(all_cols)
         if len(_diff_cols) > 0:
-            warnings.warn(f"It seems there was used columns not in this data model: {_diff_cols}", UserWarning)
+            warnings.warn(
+                f"It seems there was used columns not in this data model: {_diff_cols}", UserWarning)
 
         if return_dask_graph and backend != 'dask':
-            warnings.warn('`return_dask_graph` has no use when `backend!=dask`')
+            warnings.warn(
+                '`return_dask_graph` has no use when `backend!=dask`')
 
         if not cds:
             _deprecation_msgs("`cds` option will be removed from pycarol 3.33. Consider use `cds=True`"
@@ -197,7 +202,8 @@ class DataModel:
                                storage_space=storage_space, file_pattern=file_pattern)
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
-                _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
+                _field_types = self._get_name_type_DMs(
+                    self.get_by_name(dm_name)['mdmFields'])
                 cols_keys = list(_field_types)
                 if return_metadata:
                     cols_keys.extend(_meta_cols)
@@ -209,23 +215,27 @@ class DataModel:
                 for key, value in _field_types.items():
                     if isinstance(value, dict):
                         value = "STRING"  # If nested we receive as a `STR`
-                    d.loc[:, key] = d.loc[:, key].astype(_DATA_MODEL_TYPES_MAPPING.get(value.lower(), str), copy=False)
+                    d.loc[:, key] = d.loc[:, key].astype(
+                        _DATA_MODEL_TYPES_MAPPING.get(value.lower(), str), copy=False)
                 if columns:
                     columns = list(set(columns))
                     d = d[list(set(columns))]
                 return d
 
         else:
-            raise ValueError(f'backend should be either "dask" or "pandas" you entered {backend}')
+            raise ValueError(
+                f'backend should be either "dask" or "pandas" you entered {backend}')
 
         if (return_callback_result) and (callback is not None):
             return d
 
         if merge_records:
             if (not return_dask_graph) or (backend == 'pandas'):
-                d = drop_duplicated_parquet(d, untie_field=_CAROL_METADATA_UNTIE_GOLDEN)
+                d = drop_duplicated_parquet(
+                    d, untie_field=_CAROL_METADATA_UNTIE_GOLDEN)
             else:
-                d = drop_duplicated_parquet_dask(d, untie_field=_CAROL_METADATA_UNTIE_GOLDEN)
+                d = drop_duplicated_parquet_dask(
+                    d, untie_field=_CAROL_METADATA_UNTIE_GOLDEN)
 
         if not return_metadata:
             to_drop = set(_meta_cols).intersection(set(d.columns))
@@ -236,7 +246,6 @@ class DataModel:
     def get_all(self, offset=0, page_size=-1, sort_order='ASC',
                 sort_by=None, print_status=False,
                 save_file=None, only_published=False):
-
         """ 
         Fetch all datamodels definition. 
 
@@ -257,7 +266,7 @@ class DataModel:
             only_published: `bool`, default `False`
                 Get only published data models. 
 
-        
+
         """
 
         self.offset = offset
@@ -280,14 +289,16 @@ class DataModel:
             url_filter = "v1/entities/templates/published"
         else:
             url_filter = "v1/entities/templates"
-        
+
         while count < self.total_hits:
-            
-            query = self.carol.call_api(url_filter, params=self.query_params, method='GET')
+
+            query = self.carol.call_api(
+                url_filter, params=self.query_params, method='GET')
 
             if query['count'] == 0:
                 print('There are no more results.')
-                print('Expecting {}, reponse = {}'.format(self.total_hits, count))
+                print('Expecting {}, reponse = {}'.format(
+                    self.total_hits, count))
                 break
             count += query['count']
             if set_param:
@@ -392,7 +403,8 @@ class DataModel:
             if field.get('mdmMappingDataType', None) not in ['NESTED', 'OBJECT']:
                 f.update({field['mdmName']: field['mdmMappingDataType']})
             else:
-                f[field['mdmName']] = self._get_name_type_DMs(field['mdmFields'])
+                f[field['mdmName']] = self._get_name_type_DMs(
+                    field['mdmFields'])
         return f
 
     def _get_dm_export_stats(self):
@@ -436,7 +448,8 @@ class DataModel:
             'queryDescription': {"a": "REJECTED", "q": "*", "p": "1", "o": "ASC", "r": "[]"},
             'deleteRecords': delete_records
         }
-        result = self.carol.call_api(f'v1/entities/templates/{dm_id}/reprocess', method='POST', params=params)
+        result = self.carol.call_api(
+            f'v1/entities/templates/{dm_id}/reprocess', method='POST', params=params)
 
         return result
 
@@ -456,7 +469,8 @@ class DataModel:
         """
 
         if copy_or_move not in ["copy", "move"]:
-            ValueError(f'copy_or_move should be "copy" or "move". {copy_or_move} was used')
+            ValueError(
+                f'copy_or_move should be "copy" or "move". {copy_or_move} was used')
 
         if copy_or_move == 'copy':
             copy_or_move = False
@@ -470,12 +484,12 @@ class DataModel:
         query_params = {"recordType": record_type, "fuzzy": "false",
                         "deleteRecords": copy_or_move}
 
-        result = self.carol.call_api(url_filter, data=query_filter, params=query_params, method='POST')
+        result = self.carol.call_api(
+            url_filter, data=query_filter, params=query_params, method='POST')
         return result
 
     def send_data(self, data, dm_name=None, dm_id=None, step_size=500, gzip=False, delete_old_records=False,
                   print_stats=True, max_workers=2, async_send=False):
-
         """
         :param data: pandas data frame, json.
             Data to be send to Carol
@@ -554,14 +568,14 @@ class DataModel:
                                                compress_gzip=self.gzip):
 
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers,
-                                    content_type=content_type, status_forcelist=[502, 429, 502],
+                                    content_type=content_type, status_forcelist=[
+                                        502, 429, 502],
                                     method_whitelist=frozenset(['POST']))
                 if print_stats:
                     print('{}/{} sent'.format(cont, data_size), end='\r')
 
     def create_mapping(self, staging_name, connector_id=None, connector_name=None, dm_name=None, dm_id=None,
                        publish=False):
-
         """
 
         This method will create the link between the staging and a data model. If Publish=True it will publish how it is.
@@ -616,7 +630,6 @@ class DataModel:
             max_hits=None, max_workers=None, file_pattern=None,
             return_callback_result=False
     ):
-
         """
         Fetch rejected records from Golden.
 
@@ -645,13 +658,15 @@ class DataModel:
                 """
 
         if backend not in ('dask', 'pandas'):
-            raise ValueError(f"Backend options are 'dask','pandas' {backend} was given")
+            raise ValueError(
+                f"Backend options are 'dask','pandas' {backend} was given")
 
         if callback and not callable(callback):
             raise TypeError(f'"{callback}" object is not callable')
 
         if return_dask_graph and backend != 'dask':
-            warnings.warn('`return_dask_graph` has no use when `backend!=dask`')
+            warnings.warn(
+                '`return_dask_graph` has no use when `backend!=dask`')
 
         import_type = 'golden_rejected'
 
@@ -680,23 +695,47 @@ class DataModel:
             )
             if d is None:
                 warnings.warn("No data to fetch!", UserWarning)
-                _field_types = self._get_name_type_DMs(self.get_by_name(dm_name)['mdmFields'])
+                _field_types = self._get_name_type_DMs(
+                    self.get_by_name(dm_name)['mdmFields'])
                 cols_keys = list(_field_types)
 
                 d = pd.DataFrame(columns=cols_keys)
                 for key, value in _field_types.items():
                     if isinstance(value, dict):
                         value = "STRING"  # If nested we receive as a `STR`
-                    d.loc[:, key] = d.loc[:, key].astype(_DATA_MODEL_TYPES_MAPPING.get(value.lower(), str), copy=False)
+                    d.loc[:, key] = d.loc[:, key].astype(
+                        _DATA_MODEL_TYPES_MAPPING.get(value.lower(), str), copy=False)
                 return d
 
         else:
-            raise ValueError(f'backend should be either "dask" or "pandas" you entered {backend}')
+            raise ValueError(
+                f'backend should be either "dask" or "pandas" you entered {backend}')
 
         if (return_callback_result) and (callback is not None):
             return d
 
         return d
+
+    def generate_SQL_tables(self,):
+        """Geneates SQL tables for all data models. 
+
+        The tables created will be named:
+        `dm_{datamodel_name}`. 
+
+        Returns:
+            dict: Carol's response
+        """
+
+        return self.carol.call_api(path='v1/admin/entities/templates/generateSqlTables', method='POST')
+
+    def remove_SQL_tables(self,):
+        """Removes SQL tables for all data models. 
+
+        Returns:
+            dict: Carol's response
+        """
+
+        return self.carol.call_api(path='v1/admin/entities/templates/removeSqlTables', method='POST') 
 
 
 class entIntType(object):
@@ -769,20 +808,24 @@ class CreateDataModel(object):
 
         while True:
             url = 'v1/entities/templates/snapshot'
-            resp = self.carol.call_api(path=url, method='POST', data=snapshot, errors='ignore')
+            resp = self.carol.call_api(
+                path=url, method='POST', data=snapshot, errors='ignore')
 
             if ('already exists' in resp.get('errorMessage', 'asdf')) and (overwrite):
                 del_DM = DataModel(self.carol)
                 del_DM.get_by_name(snapshot['entityTemplateName'])
-                dm_id = del_DM.entity_template_.get(snapshot['entityTemplateName']).get('mdmId', None)
+                dm_id = del_DM.entity_template_.get(
+                    snapshot['entityTemplateName']).get('mdmId', None)
                 if dm_id is None:  # if None
                     continue
-                entity_space = del_DM.entity_template_.get(snapshot['entityTemplateName'])['mdmEntitySpace']
+                entity_space = del_DM.entity_template_.get(
+                    snapshot['entityTemplateName'])['mdmEntitySpace']
                 del_DM.delete(dm_id=dm_id, entity_space=entity_space)
                 time.sleep(0.5)  # waint for deletion
                 _count += 1
                 if _count > 5:
-                    print(f"Something wrong coping {snapshot['entityTemplateName']}")
+                    print(
+                        f"Something wrong coping {snapshot['entityTemplateName']}")
                     print(f"Data model was not copied: {resp}")
                     return
                 continue
@@ -862,7 +905,8 @@ class CreateDataModel(object):
         self.transaction_data_model = transaction_data_model
 
         assert ((vertical_names is not None) or (vertical_ids is not None))
-        assert ((entity_template_type_ids is not None) or (entity_template_type_names is not None))
+        assert ((entity_template_type_ids is not None)
+                or (entity_template_type_names is not None))
 
         self.vertical_names = vertical_names
         self.vertical_ids = vertical_ids
@@ -881,15 +925,18 @@ class CreateDataModel(object):
 
         while True:
             url_filter = "v1/entities/templates"
-            resp = self.carol.call_api(url_filter, data=payload, method='POST', errors='ignore')
+            resp = self.carol.call_api(
+                url_filter, data=payload, method='POST', errors='ignore')
             # error handler for token
             if ('already exists' in resp.get('errorMessage', [])) and (overwrite):
                 del_DM = DataModel(self.carol)
                 del_DM.get_by_name(self.dm_name)
-                dm_id = del_DM.entity_template_.get(self.dm_name).get('mdmId', None)
+                dm_id = del_DM.entity_template_.get(
+                    self.dm_name).get('mdmId', None)
                 if dm_id is None:  # if None
                     continue
-                entity_space = del_DM.entity_template_.get(self.dm_name)['mdmEntitySpace']
+                entity_space = del_DM.entity_template_.get(self.dm_name)[
+                    'mdmEntitySpace']
                 del_DM.delete(dm_id=dm_id, entity_space=entity_space)
                 time.sleep(0.5)  # waint for deletion
                 continue
@@ -919,7 +966,8 @@ class CreateDataModel(object):
                 return
             self.dm_id = dm_id
             _, template_ = est_.entity_template_.popitem()
-            self.current_fields = [i for i in template_['mdmFieldsFull'].keys()]
+            self.current_fields = [
+                i for i in template_['mdmFieldsFull'].keys()]
             if field_name.lower() in self.current_fields:
                 print("'{}' already in the template".format(field_name))
                 return
@@ -962,7 +1010,8 @@ class CreateDataModel(object):
             assert profile_title is not None, "To publish the data model, `profile_title` has to be set."
             if isinstance(profile_title, str):
                 profile_title = [profile_title]
-            assert all([i in json_sample for i in profile_title]), "all profile title values should be in `json_sample`"
+            assert all([i in json_sample for i in profile_title]
+                       ), "all profile title values should be in `json_sample`"
 
         self.label_map = label_map
         self.description_map = description_map
@@ -1000,7 +1049,8 @@ class CreateDataModel(object):
             else:
                 if not entity_type.ent_type == 'nested':
 
-                    current_label, current_description = self._labels_and_desc(prop)
+                    current_label, current_description = self._labels_and_desc(
+                        prop)
                     self.fields.create(mdm_name=prop, mdm_mpping_data_type=entity_type.ent_type,
                                        mdm_field_type='PRIMITIVE', admin=True,
                                        mdm_label=current_label, mdm_description=current_description)
