@@ -75,7 +75,7 @@ def get_staging_prefix(carol, staging_prefix, connector_name, connector_id):
     return staging_prefix, connector_name, connector_id
 
 
-def get_dm_relationship_constraints(carol, connector_name, dm_prefix='DM_',):
+def get_dm_relationship_constraints(carol, connector_name=None, connector_id=None, dm_prefix='DM_', staging_prefix=None):
     """
     Create relationship between data models based on their relationship constraints
 
@@ -91,10 +91,11 @@ def get_dm_relationship_constraints(carol, connector_name, dm_prefix='DM_',):
         dictionary { "dm1" : {"dm2", "dm3"}} where "dm1" depends on "dm2"" and "dm3"
 
     """
+    staging_prefix, connector_name, connector_id = get_staging_prefix(
+        carol, staging_prefix=staging_prefix,
+        connector_name=connector_name, connector_id=connector_id
+    )
 
-    if connector_name is None:
-        raise ValueError('connector_name cannot be None.')
-    # get mappings from a DM.
     conn = Connectors(carol)
     conn_to_create = conn.get_all(
         include_mappings=True, include_connectors=True, include_consumption=True)
@@ -115,7 +116,7 @@ def get_dm_relationship_constraints(carol, connector_name, dm_prefix='DM_',):
         # if there are more than one staging mapping to a DM I need to restrict them too, sinse process staging mean
         # create golden records.
         for parent_staging in dm_mapping[dm_prefix + i]:
-            relationship_constraints[parent_staging].update(
+            relationship_constraints[staging_prefix+parent_staging].update(
                 [dm_prefix + j['mdmTargetEntityName'] for j in snap])
 
     return relationship_constraints
