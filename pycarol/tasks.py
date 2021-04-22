@@ -1,5 +1,6 @@
 import os
 
+
 class Tasks:
     def __init__(self, carol, task_id=None):
         self.carol = carol
@@ -31,6 +32,8 @@ class Tasks:
         self.tenant_id = json_task.get('mdmTenantId')
         self.process_after = json_task.get('mdmProcessAfter')
         self.data = json_task.get('mdmData')
+        self.raw = json_task
+        self.task_progress_data = json_task.get('mdmTaskProgressData', {})
 
     def get_by_task_id_in_env(self):
         task_id = os.getenv('LONGTASKID')
@@ -54,7 +57,8 @@ class Tasks:
             task_id = self.task_id
             assert task_id, "Task ID should be set because it has not been set in env by Carol."
 
-        json_task = self.carol.call_api('v1/tasks/{}'.format(task_id), status_forcelist=(500, 502, 503, 504, 524))
+        json_task = self.carol.call_api(
+            'v1/tasks/{}'.format(task_id), status_forcelist=(500, 502, 503, 504, 524))
         self._set_task_by_json(json_task)
         return self
 
@@ -180,7 +184,8 @@ class Tasks:
 
         params = {"force": force}
 
-        resp = self.carol.call_api('v1/tasks/{}/cancel'.format(task_id), method="POST", params=params)
+        resp = self.carol.call_api(
+            'v1/tasks/{}/cancel'.format(task_id), method="POST", params=params)
         return resp['mdmTaskStatus'] == 'CANCELED'
 
     def fail(self, task_id=None, message=''):
@@ -203,5 +208,6 @@ class Tasks:
 
         params = {"message": message}
 
-        resp = self.carol.call_api('v1/tasks/{}/fail'.format(task_id), method="POST", params=params)
+        resp = self.carol.call_api(
+            'v1/tasks/{}/fail'.format(task_id), method="POST", params=params)
         return resp['mdmTaskStatus'] == 'FAILED'
