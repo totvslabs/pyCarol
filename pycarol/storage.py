@@ -1,6 +1,7 @@
 from .carolina import Carolina
 from datetime import datetime, timedelta
 
+
 class Storage:
 
     """
@@ -30,7 +31,7 @@ class Storage:
            (Carolina.token.get('app_name', '') == self.carol.app_name) and \
            (datetime.utcnow() + timedelta(minutes=1) < datetime.fromtimestamp(Carolina.token.get('expirationTimestamp', 1)/1000.0)):
             pass
-            #return
+            # return
         else:
             Carolina.token = None
 
@@ -43,7 +44,10 @@ class Storage:
             raise NotImplemented(f"Only 'GCP-CS' backend implemented in this version. "
                                  f"You are trying to use {self.carolina.engine }")
 
-    def save(self, name, obj, format='pickle', parquet=False, cache=True, chunk_size=None):
+    def save(
+        self, name, obj, format='pickle', parquet=False, cache=True, chunk_size=None, storage_space='app',
+        storage_space_params=None,
+    ):
         """
 
         Args:
@@ -66,6 +70,19 @@ class Storage:
             chunk_size: `int` default `None`
                 The size of a chunk of data whenever iterating (in bytes).
                 This must be a multiple of 256 KB per the API specification.
+            storage_space: `str` default `app`
+                Which bucket to get. Possible values:
+
+                    1. "golden": Data Model golden records.
+                    2. "staging": Staging records path
+                    3. "staging_master": Staging records from Master
+                    4. "staging_rejected": Staging records from Rejected
+                    5. "view": Data Model View records
+                    6. "app": App  bucket
+                    7. "golden_cds": CDS golden records
+                    8. "staging_cds": Staging Intake.
+            storage_space_params `dict` default `None`
+                Params needed for the given `storage_space` 
 
         Usage:
 
@@ -130,10 +147,15 @@ class Storage:
 
 
         """
-        self.backend.save(name, obj, format, parquet, cache, chunk_size)
+        self.backend.save(
+            name, obj, format, parquet, cache, chunk_size,
+            storage_space=storage_space,
+            storage_space_params=storage_space_params,
+        )
 
     def load(self, name, format='pickle', parquet=False, cache=True, storage_space='app_storage', columns=None,
-             chunk_size=None):
+             chunk_size=None,
+             ):
         """
 
         Args:
