@@ -1,6 +1,7 @@
 #!/bin/sh
 set -e
-set -x
+
+test -z "$DEBUG" || set -x
 
 # ensure to checkout to the right tag before creating the image
 test -n "${BUILDKITE_TAG}" && {
@@ -9,7 +10,7 @@ test -n "${BUILDKITE_TAG}" && {
 	git checkout "tags/${BUILDKITE_TAG}"
 
 	# # push the package to pypi
-	# make setup package deploy
+	make setup package deploy
 
 	# this is required as we need the desired version on pypi for
 	# docker image that will fetch the image from there
@@ -17,8 +18,7 @@ test -n "${BUILDKITE_TAG}" && {
 	export COUNTER
 	COUNTER=0
 	while true; do
-		curl -N 'https://pypi.org/project/pycarol/' | grep -oE 'pycarol\s*(\d.+)'
-		version=$(curl -s -N 'https://pypi.org/project/pycarol/' | grep -oE 'pycarol\s*(\d.+)')
+		version=$(curl -s -N 'https://pypi.org/project/pycarol/' | grep -oE 'pycarol[[:space:]][[:digit:]].+')
 		if [ "pycarol ${BUILDKITE_TAG}" = "${version}" ];  then
 			echo Find Version $version
     		break
