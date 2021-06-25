@@ -18,13 +18,17 @@ test -n "${BUILDKITE_TAG}" && {
 	export COUNTER
 	COUNTER=0
 	while true; do
-		pip3 search pycarol | grep -q "${BUILDKITE_TAG}" && break
+		version=$(curl -s -N 'https://pypi.org/project/pycarol/' | grep -oE 'pycarol\s*(\d.+)')
+		if [ "pycarol ${BUILDKITE_TAG}" = "${version}" ];  then
+    		break
+		fi
 		# 5 minutes limit
 		test "${COUNTER}" -gt 100 && {
 			echo "ERROR: ${BUILDKITE_TAG} couldn't be found in time on PyPI"
 			exit 1
 		}
 		COUNTER=$((COUNTER+1))
+		echo $COUNTER
 		sleep 3
 	done
 
