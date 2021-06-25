@@ -1,7 +1,6 @@
 #!/bin/sh
 set -e
-
-test -z "$DEBUG" || set -x
+set -x
 
 # ensure to checkout to the right tag before creating the image
 test -n "${BUILDKITE_TAG}" && {
