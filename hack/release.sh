@@ -9,7 +9,7 @@ test -n "${BUILDKITE_TAG}" && {
 	git fetch origin --tags
 	git checkout "tags/${BUILDKITE_TAG}"
 
-	# push the package to pypi
+	# # push the package to pypi
 	make setup package deploy
 
 	# this is required as we need the desired version on pypi for
@@ -20,6 +20,7 @@ test -n "${BUILDKITE_TAG}" && {
 	while true; do
 		version=$(curl -s -N 'https://pypi.org/project/pycarol/' | grep -oE 'pycarol\s*(\d.+)')
 		if [ "pycarol ${BUILDKITE_TAG}" = "${version}" ];  then
+			echo Find Version $version
     		break
 		fi
 		# 5 minutes limit
