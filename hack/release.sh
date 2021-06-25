@@ -9,7 +9,7 @@ test -n "${BUILDKITE_TAG}" && {
 	git checkout "tags/${BUILDKITE_TAG}"
 
 	# # push the package to pypi
-	make setup package deploy
+	# make setup package deploy
 
 	# this is required as we need the desired version on pypi for
 	# docker image that will fetch the image from there
