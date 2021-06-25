@@ -20,18 +20,6 @@ setup:
 release:
 	@./hack/release.sh
 
-docker:
-	@echo "~~~ Building Docker Image"
-	@docker build \
-		--build-arg PYCAROL_VERSION=$(PYCAROL_VERSION) \
-		--file Dockerfile \
-		--tag pycarol:$(TAG) .
-
-hub:
-	@echo "~~~ Pushing to Docker Hub"
-	@docker tag pycarol:$(TAG) totvslabs/pycarol:$(TAG)
-	@docker push totvslabs/pycarol:$(TAG)
-
 clean:
 	@rm -rf dist/*
 
