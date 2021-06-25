@@ -17,7 +17,7 @@ test -n "${BUILDKITE_TAG}" && {
 	export COUNTER
 	COUNTER=0
 	while true; do
-		curl -N 'https://pypi.org/project/pycarol/' | grep -oE 'pycarol\s*(\d.+)
+		curl -N 'https://pypi.org/project/pycarol/' | grep -oE 'pycarol\s*(\d.+)'
 		version=$(curl -s -N 'https://pypi.org/project/pycarol/' | grep -oE 'pycarol\s*(\d.+)')
 		if [ "pycarol ${BUILDKITE_TAG}" = "${version}" ];  then
 			echo Find Version $version
