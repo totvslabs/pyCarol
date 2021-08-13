@@ -374,7 +374,7 @@ class StorageGCPCS:
         blobs_rejected = list(bucket_rejected.list_blobs(prefix=path_rejected))
 
         br = [{'storage_space': 'golden_rejected', 'name': i.name} for i in blobs_rejected if
-              i.name.endswith('.json.gz')]
+              i.name.endswith('.parquet')]
         return br
 
     def files_storage_list(self, prefix='pipeline/', print_paths=False):
