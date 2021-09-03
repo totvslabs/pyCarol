@@ -336,6 +336,29 @@ We can use pyCarol to access the settings of your Carol App.
 The settings will be returned as a dictionary where the keys are the parameter names and the values are
 the value for that parameter. Please note that your app must be created in Carol.
 
+
+Useful Functions
+--------------------
+
+1. ``track_tasks``: Track a list of tasks.
+
+.. code:: python
+  from pycarol import Carol
+  from pycarol.functions import track_tasks
+  carol = Carol()
+  def callback(task_list):
+    print(task_list)
+  track_tasks(carol=carol, task_list=['task_id_1', 'task_id_2'], callback=callback)
+
+2. ``pause_dm_mappings``: Pause datamodels mappings.
+
+.. code:: python
+  from pycarol import Carol
+  from pycarol.functions import pause_dm_mappings
+  carol = Carol()
+  pause_dm_mappings(carol, connector_name='connector_name', dm_list=['dm1','dm2'])
+  
+
 Release process
 ----------------
 1. Open a PR with your change for `master` branch;

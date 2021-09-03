@@ -58,3 +58,28 @@ def track_tasks(carol, task_list, retry_count=3, logger=None, callback=None, pol
             logger.debug('Waiting for tasks')
         if callable(callback):
             callback(task_status)
+
+
+def pause_dm_mappings(carol, dm_list, connector_name=None, connector_id=None, do_not_pause_staging_list=None):
+    """Pause mappings from a connetor based on alist of Datamodels.
+
+    Args:
+        carol (pycal.Carol): Carol instance
+        dm_list (list): list of Datamodels to pause
+        connector_name (str): connector name
+        connector_name (str): connector id
+        do_not_pause_staging_list (list, optional): List of stagings to do not pause. Defaults to None.
+    """
+
+    do_not_pause_staging_list = do_not_pause_staging_list if do_not_pause_staging_list else ['']
+    conn = Connectors(carol)
+    mappings = conn.get_dm_mappings(connector_name=connector_name, connector_id=connector_id )
+    mappings = mappings = [i['mdmId'] for i in mappings if
+                           (i['mdmRunningState'] == 'RUNNING') and
+                           (i['mdmMasterEntityName'] in dm_list) and
+                           (i['mdmStagingType'] not in do_not_pause_staging_list)
+                           ]
+
+    _ = conn.pause_mapping(
+        connector_name=connector_name, entity_mapping_id=mappings, 
+        connector_id=connector_id)
