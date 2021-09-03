@@ -343,20 +343,22 @@ Useful Functions
 1. ``track_tasks``: Track a list of tasks.
 
 .. code:: python
-  from pycarol import Carol
-  from pycarol.functions import track_tasks
-  carol = Carol()
-  def callback(task_list):
-    print(task_list)
-  track_tasks(carol=carol, task_list=['task_id_1', 'task_id_2'], callback=callback)
+
+    from pycarol import Carol
+    from pycarol.functions import track_tasks
+    carol = Carol()
+    def callback(task_list):
+      print(task_list)
+    track_tasks(carol=carol, task_list=['task_id_1', 'task_id_2'], callback=callback)
 
 2. ``pause_dm_mappings``: Pause datamodels mappings.
 
 .. code:: python
-  from pycarol import Carol
-  from pycarol.functions import pause_dm_mappings
-  carol = Carol()
-  pause_dm_mappings(carol, connector_name='connector_name', dm_list=['dm1','dm2'])
+
+    from pycarol import Carol
+    from pycarol.functions import pause_dm_mappings
+    carol = Carol()
+    pause_dm_mappings(carol, connector_name='connector_name', dm_list=['dm1','dm2'])
   
 
 Release process
