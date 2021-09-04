@@ -379,6 +379,16 @@ Useful Functions
     from pycarol.functions import resume_process
     carol = Carol()
     resume_process(carol, staging_name='staging_name', connector_name='connector_name')
+
+5. ``pause_etls``: Pause ETLs from a list of stagings
+  
+  .. code:: python
+
+      from pycarol import Carol
+      from pycarol.functions import resume_process
+      carol = Carol()
+      etl_list = ['staging1', 'staging2', 'staging3']
+      pause_etls(carol, connector_name='rui', etl_list=etl_list,)
   
 
 Release process

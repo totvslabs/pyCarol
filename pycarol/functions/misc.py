@@ -75,7 +75,7 @@ def track_tasks(carol, task_list, retry_count=3, logger=None, callback=None, pol
 
 
 def pause_dm_mappings(carol, dm_list, connector_name=None, connector_id=None, do_not_pause_staging_list=None):
-    """Pause mappings from a connetor based on alist of Datamodels.
+    """Pause mappings from a connetor based on a list of Datamodels.
 
     Args:
 
@@ -203,3 +203,49 @@ def resume_process(carol, staging_name, connector_name=None, connector_id=None, 
     # wait for mapping effect.
     time.sleep(delay)
     return mappings_list
+
+
+def pause_etls(carol, etl_list, connector_name=None, connector_id=None, logger=None):
+    """Pause ETLs from a connetor based on a list of ETLs.
+
+    Args:
+
+        carol (pycarol.Carol): Carol instance
+        etl_list (list): ETLs to pause
+        connector_name (str, optional): Connector Name. Defaults to None.
+        connector_id (str, optional): Connector ID. Defaults to None.
+        logger (logging.logger, optional): Logger. Defaults to None.
+
+    Usage:
+
+    .. code:: python
+
+        from pycarol import Carol
+        from pycarol.functions import resume_process
+        carol = Carol()
+        etl_list = ['staging1', 'staging2', 'staging3']
+        pause_etls(carol, connector_name='rui', etl_list=etl_list,)
+
+    Returns:
+
+        list: list of paused ETLs
+
+    """
+    if logger is None:
+        logger = logging.getLogger(carol.domain)
+
+    conn = Connectors(carol)
+    if connector_id is None and connector_name is None:
+        raise ValueError('Either connector_id or connector_name must be set.')
+    connector_id = connector_id if connector_id else conn.get_by_name(connector_name)['mdmId']
+
+    r = {}
+    for staging_name in etl_list:
+        logger.debug(f'Pausing {staging_name} ETLs')
+        r[staging_name] = conn.pause_etl(connector_name=connector_name, staging_name=staging_name)
+
+    if not all(i['success'] for _, i in r.items()):
+        logger.error(f'Some ETLs were not paused. {r}')
+        raise ValueError(f'Some ETLs were not paused. {r}')
+
+    return r

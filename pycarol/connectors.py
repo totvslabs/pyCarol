@@ -1,6 +1,7 @@
 import json
 from collections import defaultdict
 from .utils.deprecation_msgs import _deprecation_msgs
+from .utils.miscellaneous import unroll_list, find_keys
 
 
 class Connectors:
@@ -677,3 +678,40 @@ class Connectors:
 
         c = self.carol.call_api(path=f"v1/staging/connectors/{connector_id}/tables")
         return sorted(c)
+
+    def pause_single_staging_etl(self, staging_name, output_list, connector_name=None, connector_id=None):
+        """Pause a single staging ETL based on its output.
+
+        Args:
+
+            staging_name (str): Staging name
+            output_list (list): List of output staging names
+            connector_name (str, optional): Connector name. Defaults to None.
+            connector_id (str, optional): Connector ID. Defaults to None.
+
+        Returns:
+    
+            list: Carol's response
+        """
+
+        if connector_id is None and connector_name is None:
+            raise ValueError('Either connector_id or connector_name must be set.')
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+
+        url = f'v1/etl/connector/{connector_id}/sourceEntity/{staging_name}/published'
+        all_etls = self.carol.call_api(url, )
+
+        r = []
+        for etl in all_etls:
+            if len(set(output_list) - set(unroll_list(list(find_keys(etl, 'mdmParameterValues'))))) == 0:
+                mdm_id = etl['mdmId']
+                print(f'pausing etl {mdm_id} for {staging_name}')
+
+                url = f'v1/etl/{mdm_id}/PRODUCTION/pause'
+                resp = self.carol.call_api(url, method='PUT')
+
+                if not resp['success']:
+                    raise ValueError(
+                        f'Problem starting ETL {connector_name}/{staging_name}\n {resp}')
+                r.append(resp)
+        return r
