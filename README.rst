@@ -359,6 +359,26 @@ Useful Functions
     from pycarol.functions import pause_dm_mappings
     carol = Carol()
     pause_dm_mappings(carol, connector_name='connector_name', dm_list=['dm1','dm2'])
+
+
+3. ``check_mapping``: Check if a staging has mappings
+
+.. code:: python
+
+    from pycarol import Carol
+    from pycarol.functions import check_mapping
+    carol = Carol()
+    check_mapping(carol, staging_name='staging_name', connector_name='connector_name')
+
+
+4. ``resume_process``: Resume ETLs and mappings from a staging
+
+.. code:: python
+
+    from pycarol import Carol
+    from pycarol.functions import resume_process
+    carol = Carol()
+    resume_process(carol, staging_name='staging_name', connector_name='connector_name')
   
 
 Release process
