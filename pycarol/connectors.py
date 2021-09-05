@@ -715,3 +715,60 @@ class Connectors:
                         f'Problem starting ETL {connector_name}/{staging_name}\n {resp}')
                 r.append(resp)
         return r
+
+
+    def drop_single_etl(self, staging_name, output_list, connector_name=None, connector_id=None):
+        """
+        Drop ETL based on the outputs of a given ETL.
+
+        Args:
+            login: login: pycarol.Carol
+                Carol() instance.
+            staging_name: str
+                staging to drop etls from
+            output_list: list
+                output list of the etl to drop. It will only drop the ETL if all the outputs are present.
+            connector_name: str
+                connector_name to drop etls from
+            connector_id: str
+                connector_id to drop etls from
+
+        Returns: None
+
+        """
+
+        if connector_id is None and connector_name is None:
+            raise ValueError('Either connector_id or connector_name must be set.')
+        connector_id = connector_id if connector_id else self.get_by_name(connector_name)['mdmId']
+
+        url = f'v1/etl/connector/{connector_id}/sourceEntity/{staging_name}'
+        all_etls = self.carol.call_api(url, )
+
+        for etl in all_etls:
+            if len(set(output_list) - set(unroll_list(list(find_keys(etl, 'mdmParameterValues'))))) == 0:
+                mdm_id = etl['mdmId']
+                print(f'deleting etl {mdm_id} for {staging_name}')
+                self.drop_etls([mdm_id])
+
+    def drop_etls(self, etl_list):
+        """
+        Drop ETLs from ETL list.
+
+        Args:
+            login: login: pycarol.Carol
+                Carol() instance.
+            etl_list: list
+                list of ETLs mdm_ids to delete.
+
+        Returns: None
+
+        """
+        for mdm_id in etl_list:
+            try:
+                # Delete drafts.
+                self.carol.call_api(f'v2/etl/{mdm_id}', method='DELETE',
+                            params={'entitySpace': 'WORKING'})
+            except Exception:
+                pass
+            self.carol.call_api(f'v2/etl/{mdm_id}', method='DELETE',
+                        params={'entitySpace': 'PRODUCTION'})

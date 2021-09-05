@@ -2,9 +2,12 @@ import logging
 from collections import defaultdict
 import random
 import time
+from itertools import chain
+
 from pycarol import (
-    Carol, ApiKeyAuth, PwdAuth, Tasks, Staging, Connectors, CDSStaging, Subscription, DataModel, Apps
+    Carol, ApiKeyAuth, PwdAuth, Tasks, Staging, Connectors, CDSStaging, Subscription, DataModel, Apps, CDSGolden
 )
+from pycarol.query import delete_golden
 
 def track_tasks(carol, task_list, retry_count=3, logger=None, callback=None, polling_delay=5):
     """Track a list of taks from carol, waiting for errors/completeness. 
@@ -249,3 +252,77 @@ def pause_etls(carol, etl_list, connector_name=None, connector_id=None, logger=N
         raise ValueError(f'Some ETLs were not paused. {r}')
 
     return r
+
+def delele_all_golden_data(carol, dm_name):
+    """Delete golden files from a datamodel in all storages.
+
+    Args:
+        carol (pycarol.Carol): Carol instance
+        dm_name (str): Data Model name
+
+    Returns:
+        list: list of tasks created
+    """
+    
+    cds_CDSGolden = CDSGolden(carol)
+    t = []
+    dm_id = DataModel(carol).get_by_name(dm_name)['mdmId']
+    task = cds_CDSGolden.delete_rejected(dm_id=dm_id, )
+
+    t += [task]
+    task = cds_CDSGolden.delete(dm_id=dm_id, )
+    delete_golden(carol, dm_name)
+    t += [task['taskId'], ]
+    return t
+
+def par_delete_golden(carol, dm_list, n_jobs=5):
+    """
+    Deletes golden files from a list of datamodels in parallel.
+
+    Args:
+        carol (pycarol.Carol): Carol instance
+        dm_list (list): List of datamodels
+        n_jobs (int, optional): Number of parallel jobs. Defaults to 5.
+
+    Returns:
+        list: list of tasks created
+    """
+    from joblib import Parallel, delayed
+    tasks = Parallel(n_jobs=n_jobs)(delayed(delele_all_golden_data)(carol, i)
+                                    for i in dm_list)
+    return list(chain(*tasks))
+
+
+def delete_staging_data(carol, staging_name, connector_name):
+    """Delete a staging.
+
+    Args:
+        carol (pycarol.Carol): Login instance
+        staging_name (str): Staging name
+        connector_name (str): Connector name
+    """ 
+
+    t = []
+    cds_ = CDSStaging(carol)
+    task = cds_.delete(staging_name=staging_name,
+                        connector_name=connector_name)
+    t += [task['taskId'], ]
+    return t
+
+def par_delete_staging(carol, staging_list, connector_name, n_jobs=5):
+    """
+    Deletes staging files from a list of datamodels in parallel.
+
+    Args:
+        carol (pycarol.Carol): Login instance
+        staging_list (list): List of datamodels
+        connector_name (str): Connector name
+        n_jobs (int, optional): Number of parallel jobs. Defaults to 5.
+
+    Returns:
+        list: list of tasks created
+    """
+    from joblib import Parallel, delayed
+    tasks = Parallel(n_jobs=n_jobs)(delayed(delete_staging_data)(carol, i, connector_name)
+                                    for i in staging_list)
+    return list(chain(*tasks))
