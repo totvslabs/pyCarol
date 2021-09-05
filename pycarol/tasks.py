@@ -211,3 +211,15 @@ class Tasks:
         resp = self.carol.call_api(
             'v1/tasks/{}/fail'.format(task_id), method="POST", params=params)
         return resp['mdmTaskStatus'] == 'FAILED'
+
+    def reprocess(self, task_id=None,): 
+        """Reprocess a task
+
+        Args:
+            task_id (str, optional): Task id to reprocess. Defaults to None.
+        """
+        if task_id is None:
+            task_id = self.task_id
+            assert task_id, "Task ID should be set because it has not been set in env by Carol."
+
+        return self.carol.call_api(path=f'v1/tasks/{task_id}/reprocess', method='POST')

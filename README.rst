@@ -336,6 +336,61 @@ We can use pyCarol to access the settings of your Carol App.
 The settings will be returned as a dictionary where the keys are the parameter names and the values are
 the value for that parameter. Please note that your app must be created in Carol.
 
+
+Useful Functions
+--------------------
+
+1. ``track_tasks``: Track a list of tasks.
+
+.. code:: python
+
+    from pycarol import Carol
+    from pycarol.functions import track_tasks
+    carol = Carol()
+    def callback(task_list):
+      print(task_list)
+    track_tasks(carol=carol, task_list=['task_id_1', 'task_id_2'], callback=callback)
+
+2. ``pause_dm_mappings``: Pause datamodels mappings.
+
+.. code:: python
+
+    from pycarol import Carol
+    from pycarol.functions import pause_dm_mappings
+    carol = Carol()
+    pause_dm_mappings(carol, connector_name='connector_name', dm_list=['dm1','dm2'])
+
+
+3. ``check_mapping``: Check if a staging has mappings
+
+.. code:: python
+
+    from pycarol import Carol
+    from pycarol.functions import check_mapping
+    carol = Carol()
+    check_mapping(carol, staging_name='staging_name', connector_name='connector_name')
+
+
+4. ``resume_process``: Resume ETLs and mappings from a staging
+
+.. code:: python
+
+    from pycarol import Carol
+    from pycarol.functions import resume_process
+    carol = Carol()
+    resume_process(carol, staging_name='staging_name', connector_name='connector_name')
+
+5. ``pause_etls``: Pause ETLs from a list of stagings
+  
+  .. code:: python
+
+      from pycarol import Carol
+      from pycarol.functions import resume_process
+      carol = Carol()
+      etl_list = ['staging1', 'staging2', 'staging3']
+      pause_etls(carol, connector_name='rui', etl_list=etl_list,)
+  
+
 Release process
 ----------------
 1. Open a PR with your change for `master` branch;

@@ -58,7 +58,7 @@ class CarolHandler(logging.StreamHandler):
     If no TASK ID is passed it works as a Console Handler.
     """
 
-    def __init__(self, carol=None):
+    def __init__(self, carol=None, task_id=None):
         """
 
         """
@@ -82,7 +82,7 @@ class CarolHandler(logging.StreamHandler):
 
         self.carol = carol
         self._task = Tasks(self.carol)
-        self.task_id = os.getenv('LONGTASKID', None)
+        self.task_id = task_id or os.getenv('LONGTASKID', None)
         self._task.task_id = self.task_id
         self._first_pending = True
 
