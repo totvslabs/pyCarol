@@ -113,6 +113,8 @@ class Carol:
         self._tenant = None
         self.auth = auth
         self.auth.set_connector_id(self.connector_id)
+        self.session = None
+
         self.auth.login(self)
         self.response = None
 
@@ -275,6 +277,8 @@ class Carol:
             Dict with API response.
 
         """
+        if session is not None:
+            self.session = session
 
         extra_headers = extra_headers or {}
         url = f'https://{self.host}:{self.port}/api/{path}'
@@ -310,11 +314,12 @@ class Carol:
 
         __count = 0
         while True:
-            if session is None:
-                session = self._retry_session(retries=retries, session=session, backoff_factor=backoff_factor,
-                                              status_forcelist=status_forcelist, method_whitelist=method_whitelist)
+            if self.session is None:
+                self.session = self._retry_session(
+                    retries=retries, session=session, backoff_factor=backoff_factor,
+                    status_forcelist=status_forcelist, method_whitelist=method_whitelist)
 
-            response = session.request(method=method, url=url, data=data, json=data_json,
+            response = self.session.request(method=method, url=url, data=data, json=data_json,
                                        headers=headers, params=params, files=files, **kwds)
 
             if self.verbose:
