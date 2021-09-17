@@ -46,18 +46,13 @@ def _import_dask(
     elif import_type == 'staging_cds':
         url = storage.build_url_parquet_staging_cds(staging_name=staging_name, connector_id=connector_id)
     elif import_type == 'golden_rejected':
-        is_parquet = False
         url = storage.build_url_parquet_golden_rejected_cds(dm_name=dm_name)
     else:
         raise KeyError('import_type should be `golden`,`staging`, `view`, `staging_cds`, `golden_cds`, `view_cds`,'
                        '`golden_rejected`')
 
-    if is_parquet:
-        url = url + file_pattern + "*.parquet"
-        d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns, engine=engine)
-    else:
-        url = url + file_pattern + "*.json.gz"
-        d = dd.read_json(url, storage_options=storage.get_dask_options(), compression='gzip')
+    url = url + file_pattern + "*.parquet"
+    d = dd.read_parquet(url, storage_options=storage.get_dask_options(), columns=columns, engine=engine)
     d = d.rename(columns=mapping_columns)
     if return_dask_graph:
         return d
@@ -120,26 +115,8 @@ def _import_pandas(storage, dm_name=None, connector_id=None, columns=None, mappi
             buffer = storage.load(file['name'], format='raw', cache=False, storage_space=file['storage_space'])
             if file['name'].endswith('.parquet'):
                 result = pd.read_parquet(buffer, columns=columns)
-            elif file['name'].endswith('.json.gz'):
-                buffer.seek(0)
-                try:
-                    result = [json.loads(f) for f in gzip.GzipFile(fileobj=buffer).readlines()]
-                except OSError as e:
-                    buffer.seek(0)
-                    result = (json.loads(f) for f in buffer.readlines())
-                except json.decoder.JSONDecodeError:
-                    buffer.seek(0)
-                    result = gzip.GzipFile(fileobj=buffer).read().decode()
-                    result = json.loads("[" + (result.replace("}{","},{")) + "]")
-                except Exception as e:
-                    print(f"Error fetching {file['name']}")
-                    raise e
-
-                result = pd.DataFrame(result)
-                if 'mdmMasterFieldAndValues' in result.columns:
-                    result = pd.concat([pd.DataFrame(result.pop('mdmMasterFieldAndValues').tolist(), ), result], axis=1)
             else:
-                ValueError('Supported files are `parquet` and `json.gz`')
+                ValueError('Supported files are `parquet`')
 
             if mapping_columns is not None:
                 # fix columns names (we replace `-` for `_` due to parquet limitations.
@@ -165,24 +142,8 @@ def _download_files(file, storage, storage_space, columns, mapping_columns, call
     buffer = storage.open(filename)
     if file['name'].endswith('.parquet'):
         result = pd.read_parquet(buffer, columns=columns)
-    elif file['name'].endswith('.json.gz'):
-        buffer.seek(0)
-        try:
-            result = [json.loads(f) for f in gzip.GzipFile(fileobj=buffer).readlines()]
-        except OSError:
-            buffer.seek(0)
-            result = (json.loads(f) for f in buffer.readlines())
-        except json.decoder.JSONDecodeError:
-            buffer.seek(0)
-            result = gzip.GzipFile(fileobj=buffer).read().decode()
-            result = json.loads("[" + (result.replace("}{", "},{")) + "]")
-        except Exception as e:
-            print(f"Error fetching {file['name']}")
-            raise e
-        result = pd.DataFrame(result)
-        if 'mdmMasterFieldAndValues' in result.columns:
-            result = pd.concat([pd.DataFrame(result.pop('mdmMasterFieldAndValues').tolist(), ), result], axis=1)
-
+    else:
+        ValueError('Supported files are `parquet`')
     if mapping_columns is not None:
         result.rename(columns=mapping_columns, inplace=True)
     if callback:
