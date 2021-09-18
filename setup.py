@@ -1,11 +1,10 @@
 import codecs
-import os
+from pathlib import Path
 import re
 
 from setuptools import setup, find_packages
 
-here = os.path.abspath(os.path.dirname(__file__))
-
+here = Path(__file__).absolute().parent
 
 min_requires = [
     "deprecated",
@@ -15,10 +14,6 @@ min_requires = [
     "google-cloud-bigquery",
     "google-cloud-core>=1.4.1",
     "google-cloud-storage",
-    "joblib>=0.11",
-    "numpy>=1.16.3",
-    "pandas>=0.23.4,!=1.0.4",
-    "pyarrow>=0.15.1,<1.0.0",
     "python-dotenv",
     "requests",
     "retry",
@@ -26,16 +21,15 @@ min_requires = [
     "urllib3",
 ]
 
+dataframe_requires = [
+    "pandas>=0.23.4,!=1.0.4",
+    "numpy>=1.16.3",
+    "joblib>=0.11",
+    "pyarrow>=0.15.1,<1.0.0",
+]
 extras_require = {
-    "pipeline": min_requires
-    + [
-        "luigi",
-        "papermill",
-        "pandas>=0.23.4,!=1.0.4",
-        "numpy>=1.16.3",
-        "joblib>=0.11",
-        "pyarrow>=0.15.1,<1.0.0",
-    ],
+    "dataframe": min_requires + dataframe_requires,
+    "pipeline": min_requires + dataframe_requires + ["luigi" + "papermill"],
     "onlineapp": min_requires + ["flask>=1.0.2", "redis"],
     "dask": min_requires + ["dask[complete]"],
     "dev": min_requires + ["pytest", "bumpversion", "sphinx-rtd-theme", "sphinx"],
@@ -43,10 +37,10 @@ extras_require = {
 extras_require["complete"] = sorted({v for req in extras_require.values() for v in req})
 
 
-def read(*parts):
+def read(parts):
     # intentionally *not* adding an encoding option to open, See:
     #   https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
-    with codecs.open(os.path.join(here, *parts), "r") as fp:
+    with codecs.open(here / parts, "r") as fp:
         return fp.read()
 
 
@@ -60,8 +54,8 @@ with open("README.rst") as fobj:
     long_description = readme_note + fobj.read()
 
 
-def find_version(*file_paths):
-    version_file = read(*file_paths)
+def find_version(file_paths):
+    version_file = read(file_paths)
     version_match = re.search(
         r"^__version__ = ['\"]([^'\"]*)['\"]",
         version_file,
@@ -77,7 +71,7 @@ setup(
     name="pycarol",
     setup_requires=["wheel"],
     packages=find_packages(exclude=["docs", "doc"]),
-    version=find_version("pycarol", "__init__.py"),
+    version=find_version("pycarol/__init__.py"),
     license="TOTVS",
     description="Carol Python API and Tools",
     long_description=long_description,
@@ -90,7 +84,7 @@ setup(
     install_requires=min_requires,
     extras_require=extras_require,
     classifiers=[
-        # Chose either "3 - Alpha", 
+        # Chose either "3 - Alpha",
         # "4 - Beta" or "5 - Production/Stable" as the current state of your package
         "Development Status :: 5 - Production/Stable",
         # Define that your audience are developers
