@@ -26,9 +26,9 @@ def _setup_login() -> pycarol.Carol:
 
 
 def test_query():
+    carol = _setup_login()
     service_account = _setup_service_account()
-    client = pycarol.bigquery.generate_client(service_account)
-    result = pycarol.bigquery.query(client, TEST_QUERY1)
+    result = pycarol.bigquery.query(carol, TEST_QUERY1, service_account).to_dataframe()
     assert isinstance(result, pd.DataFrame), "result must be a Pandas DataFrame."
     assert not result.empty, "result must not be empty."
 
