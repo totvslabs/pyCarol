@@ -1,25 +1,33 @@
+"""Front-end for all SQL-related operations."""
 from contextlib import contextmanager
 import itertools
 import json
 import typing as T
 import warnings
 
-import pandas as pd
+try:  # dataframe
+    import pandas as pd
+except ModuleNotFoundError:
+    ...
+try:  # extra
+    from websocket import create_connection
+
+    WEBSOCKET_IMPORTED = True
+except ModuleNotFoundError:
+    WEBSOCKET_IMPORTED = False
 
 from pycarol import Carol, PwdAuth, PwdKeyAuth
 from . import bigquery
 
 
 @contextmanager
-def SQLSocket(carol, *args, **kw):
+def SQLSocket(carol: Carol, *args, **kw):
     """Create Socket connection to Carol.
 
     Args:
         carol (Carol): Carol instance.
     """
-    try:
-        from websocket import create_connection
-    except ModuleNotFoundError:
+    if not WEBSOCKET_IMPORTED:
         warnings.warn(
             """
             websocket-client is not installed.
@@ -49,17 +57,17 @@ def SQLSocket(carol, *args, **kw):
 
 
 class SQL:
-    def __init__(self, carol):
+    def __init__(self, carol: Carol):
         self.carol = carol
         warnings.warn("Experimental feature. The API might change without notice.")
 
     def query(
         self,
-        query,
-        params=None,
-        method="sync",
-        dataframe=True,
-        service_account=None,
+        query: str,
+        params: T.Optional[T.List] = None,
+        method: str = "sync",
+        dataframe: bool = True,
+        service_account: T.Optional[T.Dict[str, str]] = None,
         **kw,
     ):
         """Execute SQL Query.
@@ -81,23 +89,22 @@ class SQL:
         """
         methods = ("sync", "socket", "bigquery")
 
+        params = params or []
+        payload = {"preparedStatement": query, "params": params}
         if method == "socket":
-            params = params or []
-            payload = {"preparedStatement": query, "params": params}
             results = _socket_query(self.carol, payload, **kw)
         elif method == "sync":
-            params = params or []
-            payload = {"preparedStatement": query, "params": params}
             results = _sync_query(self.carol, payload)
         elif method == "bigquery":
-            return _bigquery_query(
-                self.carol, query, service_account=service_account
-            )
+            results = bigquery.query(self.carol, query, service_account)
         else:
             raise ValueError(f"'method' must be either: {methods}")
 
         if dataframe:
             return pd.DataFrame(results)
+        if not dataframe and method == "bigquery":
+            records = [dict(row) for row in results]
+            return json.dumps(str(records))
 
         return results
 
@@ -124,25 +131,3 @@ def _sync_query(carol: Carol, payload):
     if not results[0]["success"]:
         raise ValueError(f"{results[0]['error']}")
     return list(itertools.chain(*[i["results"] for i in results]))
-
-
-def _bigquery_query(
-    carol: Carol,
-    query: str,
-    service_account: T.Optional[T.Dict[str, str]] = None,
-) -> pd.DataFrame:
-    """Run query for datamodel.
-
-    Args:
-        query: BigQuery SQL query.
-        service_account: in case you have a service account for accessing BigQuery.
-
-    Returns:
-        Query result.
-    """
-    if service_account is None:  # must call carol to get service account
-        raise NotImplementedError("You must pass a service_account. Not implemented.")
-
-    query = bigquery.prepare_query(carol, query)
-    client = bigquery.generate_client(service_account)
-    return bigquery.query(client, query)
