@@ -8,28 +8,25 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 
 min_requires = [
-    "google-cloud-bigquery",
-    "google-auth-httplib2",
+    "deprecated",
+    "gcsfs>=0.3.0,<0.7",
     "google-auth",
+    "google-auth-httplib2",
+    "google-cloud-bigquery",
     "google-cloud-core>=1.4.1",
     "google-cloud-storage",
+    "joblib>=0.11",
+    "numpy>=1.16.3",
+    "pandas>=0.23.4,!=1.0.4",
+    "pyarrow>=0.15.1,<1.0.0",
+    "python-dotenv",
     "requests",
+    "retry",
     "tqdm",
     "urllib3",
-    "deprecated",
-    "python-dotenv",
-    "gcsfs>=0.3.0,<0.7",
-    "retry",
 ]
 
 extras_require = {
-    "dataframe": min_requires
-    + [
-        "pandas>=0.23.4,!=1.0.4",
-        "numpy>=1.16.3",
-        "joblib>=0.11",
-        "pyarrow>=0.15.1,<1.0.0",
-    ],
     "pipeline": min_requires
     + [
         "luigi",
