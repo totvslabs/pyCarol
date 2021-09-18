@@ -2,6 +2,8 @@ import json
 import typing as T
 
 from dotenv import load_dotenv
+import pandas as pd
+
 import pycarol
 
 SA_FILEPATH = "/home/jro/wk/totvs/sa.json"
@@ -27,14 +29,17 @@ def test_query():
     service_account = _setup_service_account()
     client = pycarol.bigquery.generate_client(service_account)
     result = pycarol.bigquery.query(client, TEST_QUERY1)
-    print(result)
+    assert isinstance(result, pd.DataFrame), "result must be a Pandas DataFrame."
+    assert not result.empty, "result must not be empty."
 
 
 def test_staging_pure_query():
     carol = _setup_login()
     service_account = _setup_service_account()
-    result = pycarol.Staging(carol).query(TEST_QUERY1, service_account=service_account)
-    print(result)
+    sql = pycarol.SQL(carol)
+    result = sql.query(TEST_QUERY1, method="bigquery", service_account=service_account)
+    assert isinstance(result, pd.DataFrame), "result must be a Pandas DataFrame."
+    assert not result.empty, "result must not be empty."
 
 
 def test_staging_templated_query():
@@ -45,8 +50,10 @@ def test_staging_templated_query():
     """
     carol = _setup_login()
     service_account = _setup_service_account()
-    result = pycarol.Staging(carol).query(test_query, service_account=service_account)
-    print(result)
+    sql = pycarol.SQL(carol)
+    result = sql.query(test_query, method="bigquery", service_account=service_account)
+    assert isinstance(result, pd.DataFrame), "result must be a Pandas DataFrame."
+    assert not result.empty, "result must not be empty."
 
 
 def test_model_templated_query():
@@ -57,8 +64,10 @@ def test_model_templated_query():
     """
     carol = _setup_login()
     service_account = _setup_service_account()
-    result = pycarol.Staging(carol).query(test_query, service_account=service_account)
-    print(result)
+    sql = pycarol.SQL(carol)
+    result = sql.query(test_query, method="bigquery", service_account=service_account)
+    assert isinstance(result, pd.DataFrame), "result must be a Pandas DataFrame."
+    assert not result.empty, "result must not be empty."
 
 
 def test_mix_templated_query():
@@ -72,13 +81,15 @@ def test_mix_templated_query():
     """
     carol = _setup_login()
     service_account = _setup_service_account()
-    result = pycarol.Staging(carol).query(test_query, service_account=service_account)
-    print(result)
+    sql = pycarol.SQL(carol)
+    result = sql.query(test_query, method="bigquery", service_account=service_account)
+    assert isinstance(result, pd.DataFrame), "result must be a Pandas DataFrame."
+    assert not result.empty, "result must not be empty."
 
 
 if __name__ == "__main__":
-    # test_query()
-    # test_staging_pure_query()
-    # test_staging_templated_query()
-    # test_model_templated_query()
+    test_query()
+    test_staging_pure_query()
+    test_staging_templated_query()
+    test_model_templated_query()
     test_mix_templated_query()
