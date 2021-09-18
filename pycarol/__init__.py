@@ -49,3 +49,4 @@ from .apps import Apps
 from .subscription import Subscription
 from .carol_api import CarolAPI
 from . import bigquery
+from .sql import SQL
