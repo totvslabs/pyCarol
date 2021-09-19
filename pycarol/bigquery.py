@@ -3,7 +3,6 @@ import re
 import typing as T
 
 from google.cloud import bigquery
-from google.cloud.bigquery.job.query import QueryJob
 from google.oauth2.service_account import Credentials
 
 from .carol import Carol
@@ -25,7 +24,7 @@ def query(
     carol: Carol,
     query_: str,
     service_account: T.Optional[T.Dict[str, str]] = None,
-) -> QueryJob:
+):
     """Run query for datamodel.
 
     Args:
