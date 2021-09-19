@@ -103,8 +103,7 @@ class SQL:
         if dataframe:
             return pd.DataFrame(results)
         if not dataframe and method == "bigquery":
-            records = [dict(row) for row in results]
-            return json.dumps(str(records))
+            return [dict(row) for row in results]
 
         return results
 

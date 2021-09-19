@@ -42,6 +42,17 @@ def test_staging_pure_query():
     assert not result.empty, "result must not be empty."
 
 
+def test_staging_pure_query_dict():
+    carol = _setup_login()
+    service_account = _setup_service_account()
+    sql = pycarol.SQL(carol)
+    result = sql.query(
+        TEST_QUERY1, method="bigquery", service_account=service_account, dataframe=False
+    )
+    assert isinstance(result, pd.DataFrame), "result must be a Pandas DataFrame."
+    assert not result.empty, "result must not be empty."
+
+
 def test_staging_templated_query():
     test_query = """
         SELECT *
@@ -90,6 +101,7 @@ def test_mix_templated_query():
 if __name__ == "__main__":
     test_query()
     test_staging_pure_query()
+    test_staging_pure_query_dict()
     test_staging_templated_query()
     test_model_templated_query()
     test_mix_templated_query()
