@@ -11,7 +11,7 @@ min_requires = [
     "gcsfs>=0.3.0,<0.7",
     "google-auth",
     "google-auth-httplib2",
-    "google-cloud-bigquery",
+    "google-cloud-bigquery>=2.26.0",
     "google-cloud-core>=1.4.1",
     "google-cloud-storage",
     "python-dotenv",

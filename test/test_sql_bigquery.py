@@ -49,8 +49,8 @@ def test_staging_pure_query_dict():
     result = sql.query(
         TEST_QUERY1, method="bigquery", service_account=service_account, dataframe=False
     )
-    assert isinstance(result, pd.DataFrame), "result must be a Pandas DataFrame."
-    assert not result.empty, "result must not be empty."
+    assert isinstance(result, T.List), "result must be a list."
+    assert len(result) > 1, "result must not be empty."
 
 
 def test_staging_templated_query():
