@@ -1,5 +1,5 @@
 {
-  "batch": {
+  "online": {
     "processes": [
       {
         "name": "streamlit_ner",
@@ -29,11 +29,11 @@
     {
       "dockerName": "streamlit_ner",
       "dockerTag": "1.0.0",
-      "gitBranch": "master",
-      "gitPath": "/",
+      "gitBranch": "tutorial-mendes",
+      "gitPath": "/tutorial/streamlit/",
       "instanceType": "c1.nano",
       "gitDockerfileName": "Dockerfile", 
-      "gitRepoUrl": "https://github.com/felipebmendes/support-assistant-test-service.git"
+      "gitRepoUrl": "https://github.com/totvslabs/pyCarol"
     }
   ]
 }
