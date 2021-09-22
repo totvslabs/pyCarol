@@ -9,6 +9,6 @@ RUN python -m spacy download en_core_web_sm
 
 ADD . /app
 
-EXPOSE 5500
+EXPOSE 5000
 
-CMD streamlit run --server.port 5500 app.py
+CMD streamlit run --server.port 5000 app.py
