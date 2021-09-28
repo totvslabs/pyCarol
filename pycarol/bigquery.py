@@ -15,12 +15,6 @@ def get_service_account() -> T.Dict[str, str]:
     ...
 
 
-def generate_client(service_account: T.Dict[str, str]) -> bigquery.Client:
-    """Generate client from credentials."""
-    credentials = Credentials.from_service_account_info(service_account)
-    return bigquery.Client(project="labs-app-mdm-production", credentials=credentials)
-
-
 def query(
     carol: Carol,
     query_: str,
@@ -38,12 +32,15 @@ def query(
     if service_account is None:  # must call carol to get service account
         raise NotImplementedError("You must pass a service_account. Not implemented.")
 
-    query_ = prepare_query(carol, query_)
-    client = generate_client(service_account)
-    return client.query(query_)
+    query_ = _prepare_query(carol, query_)
+    client = _generate_client(service_account)
+    tenant_id = carol.tenant["mdmId"]
+    dataset_id = f"labs-app-mdm-production.{tenant_id}"
+    job_config = bigquery.QueryJobConfig(default_dataset=dataset_id)
+    return client.query(query_, job_config=job_config)
 
 
-def prepare_query(
+def _prepare_query(
     carol: Carol,
     query_: str,
 ) -> str:
@@ -66,7 +63,6 @@ def prepare_query(
         return query_
 
     connectors = Connectors(carol)
-    tenant_id = carol.tenant["mdmId"]
     connector_names = {name for name, _ in template_vars if name is not None}
     connector_map = {
         name: connectors.get_by_name(name)["mdmId"] for name in connector_names
@@ -79,9 +75,9 @@ def prepare_query(
     for connector_name, table_name in staging_vars:
         key = f"{connector_name}.{table_name}"
         connector_id = connector_map[connector_name]
-        replace_map[key] = f"`{tenant_id}.stg_{connector_id}_{table_name}`"
+        replace_map[key] = f"`stg_{connector_id}_{table_name}`"
     for _, table_name in model_vars:
-        replace_map[table_name] = f"`{tenant_id}.dm_{table_name}`"
+        replace_map[table_name] = f"`dm_{table_name}`"
 
     def _replace_func(match) -> str:
         if match.group(2) in replace_map:
@@ -89,6 +85,12 @@ def prepare_query(
         raise ValueError()
 
     return re.sub(r"({{\s*([0-9A-z\.]+)\s*}})", _replace_func, query_)
+
+
+def _generate_client(service_account: T.Dict[str, str]) -> bigquery.Client:
+    """Generate client from credentials."""
+    credentials = Credentials.from_service_account_info(service_account)
+    return bigquery.Client(project="labs-app-mdm-production", credentials=credentials)
 
 
 REGEX = re.compile(
