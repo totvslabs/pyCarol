@@ -10,7 +10,7 @@ try:  # dataframe
 except ModuleNotFoundError:
     ...
 try:  # extra
-    from websocket import create_connection
+    from websocket import create_connection  # pylint: disable=import-error
 
     WEBSOCKET_IMPORTED = True
 except ModuleNotFoundError:
