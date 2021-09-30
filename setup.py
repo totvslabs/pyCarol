@@ -29,7 +29,7 @@ dataframe_requires = [
 ]
 extras_require = {
     "dataframe": min_requires + dataframe_requires,
-    "pipeline": min_requires + dataframe_requires + ["luigi" + "papermill"],
+    "pipeline": min_requires + dataframe_requires + ["luigi", "papermill"],
     "onlineapp": min_requires + ["flask>=1.0.2", "redis"],
     "dask": min_requires + ["dask[complete]"],
     "dev": min_requires + ["pytest", "bumpversion", "sphinx-rtd-theme", "sphinx"],
