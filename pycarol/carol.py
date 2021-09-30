@@ -111,6 +111,7 @@ class Carol:
         self.host = self._set_host(domain=self.domain, organization=self.organization,
                                    environment=self.environment, host=host)
         self._tenant = None
+        self._current_user = None
         self.auth = auth
         self.auth.set_connector_id(self.connector_id)
         self.session = None
@@ -142,6 +143,20 @@ class Carol:
             return ApiKeyAuth(app_oauth)
 
         raise ValueError("either `auth` or `username/password` or `api_key` or pycarol env variables must be set.")
+
+    @property
+    def current_user(self, force=False):
+        """
+        Returns the current user.
+        
+        Args:
+            force: `bool` default `False`.
+                If True will force the request to fetch current user.
+        """
+
+        if self._current_user is None or force:
+            self._current_user = self.call_api('v2/users/current', )
+        return self._current_user
 
 
     @property
