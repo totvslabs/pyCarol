@@ -1,68 +1,41 @@
 {
-    "batch": {
-        "processes": [
-            {
-                "name": "bhptrainmodelnb",
-                "algorithmName": "train",
-                "namespace": "",
-                "algorithmTitle": {
-                    "pt-br": "BHP Train Model NB",
-                    "en-US": "BHP Train Model NB"
-                },
-                "algorithmDescription": {
-                    "pt-br": "BHP Train Model NB",
-                    "en-US": "BHP Train Model NB"
-                },
-                "instanceProperties": {
-                    "profile": "",
-                    "properties": {
-                        "dockerImage": "bhptrainmodelnb/bhptrainmodelnb:1.0.0",
-                        "instanceType": "c1.small"
-                    },
-                    "environments": {}
-                }
-            },
-            {
-                "name": "bhppredictnb",
-                "algorithmName": "predict",
-                "namespace": "",
-                "algorithmTitle": {
-                    "pt-br": "BHP Predict NB",
-                    "en-US": "BHP Predict NB"
-                },
-                "algorithmDescription": {
-                    "pt-br": "BHP Predict NB",
-                    "en-US": "BHP Predict NB"
-                },
-                "instanceProperties": {
-                    "profile": "",
-                    "properties": {
-                        "dockerImage": "bhptrainmodelnb/bhppredictnb:1.0.0",
-                        "instanceType": "c1.small"
-                    },
-                    "environments": {}
-                }
-            }
-        ]
-    },
-    "docker": [
-        {
-            "dockerName": "bhptrainmodelnb",
-            "dockerTag": "1.0.0",
-            "gitBranch": "tutorial",
-            "gitPath": "/tutorial/code/checkpoint3/",
-            "instanceType": "c1.small",
-            "gitDockerfileName": "Dockerfile",
-            "gitRepoUrl": "https://github.com/totvslabs/pyCarol"
+  "batch": {
+    "processes": [
+      {
+        "name": "assistantknowledgebasebatch",
+        "algorithmName": "main",
+        "namespace": "",
+        "algorithmTitle": {
+          "pt-br": "Assistant Knowledgebase Batch",
+          "en-US": "Assistant Knowledgebase Batch"
         },
-        {
-            "dockerName": "bhppredictnb",
-            "dockerTag": "1.0.0",
-            "gitBranch": "tutorial",
-            "gitPath": "/tutorial/code/checkpoint3/",
-            "instanceType": "c1.small",
-            "gitDockerfileName": "Dockerfile",
-            "gitRepoUrl": "https://github.com/totvslabs/pyCarol"
+        "algorithmDescription": {
+          "pt-br": "Assistant Knowledgebase Batch",
+          "en-US": "Assistant Knowledgebase Batch"
+        },
+        "instanceProperties": {
+          "profile": "",
+          "properties": {
+            "dockerImage": "knowledgebasebatch/assistantknowledgebasebatch:1.0.0",
+            "instanceType": "c1.small"
+          },
+          "environments": {
+            "ENV": "PROD",
+            "LOCALSCHEDULER": "True"
+          }
         }
+      }
     ]
+  },
+  "docker": [
+    {
+      "dockerName": "assistantknowledgebasebatch",
+      "dockerTag": "1.0.0",
+      "gitBranch": "master",
+      "gitPath": "/GeneralPurpose/Assistant_Knowledgebase_Batch/",
+      "instanceType": "c1.small",
+      "gitDockerfileName": "Dockerfile", 
+      "gitRepoUrl": "https://github.com/totvslabs/carolina-assistant"
+    }
+  ]
 }

@@ -6,6 +6,5 @@ ADD requirements.txt /app/
 RUN pip install -r requirements.txt
 
 ADD . /app
-RUN rm -rf tmp
 
-CMD ["python", "run.py"]
+CMD ["python", "/app/post_audit/run.py"]
