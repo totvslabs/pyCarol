@@ -368,7 +368,7 @@ class Carol:
                     continue
                 else:
                     raise Exception('Too many retries to refresh token.\n', response.text, response.status_code)
-            elif (response.status_code == 404):
+            elif response.status_code == 404:
                 raise CarolApiResponseException(response.text, response.status_code)
 
             raise Exception(response.text, response.status_code)
@@ -440,7 +440,7 @@ class Carol:
     def switch_org_level(self):
         """
         Switch organization level.
-        
+
         """
 
         org = self._current_org()
@@ -621,3 +621,14 @@ class Carol:
             "org_id": org.get('mdmId'),
             "org_level": self._is_org_level
         }
+
+    def get_tenants_for_user(self):
+        """
+        Get all tenants for the current user.
+
+        Returns: `list`
+            List of tenants.
+
+        """
+
+        return self.call_api("v1/users/assignedTenantsForCurrentUser", method='GET')
