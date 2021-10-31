@@ -54,6 +54,8 @@ class Carol:
             User passowrd
          api_key:  `str` default `None`
             Carol's Api Key
+        org_level: `bool` default `False`
+            If True, will log-in at organization level.
 
     OBS:
         In case all parameters are `None`, pycarol will try yo find their values in the environment variables.
@@ -72,17 +74,20 @@ class Carol:
     """
 
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
-                 organization=None, environment=None, host=None, user=None, password=None, api_key=None):
+                 organization=None, environment=None, host=None, user=None, password=None, api_key=None, org_level=False):
 
         self.connector_id = connector_id
 
         if auth is None:
             auth = self.__get_auth(connector_id=connector_id, username=user, password=password, app_oauth=api_key)
 
-        if domain is None:
+        if (domain is None) and (not org_level):
             domain = os.getenv('CAROLTENANT')
             if domain is None:
                 raise ValueError("`domain` must be set.")
+
+        if org_level:
+            domain = None
 
         if app_name is None:
             app_name = os.getenv('CAROLAPPNAME', ' ')
@@ -93,7 +98,7 @@ class Carol:
             else:
                 self.connector_id = auth.connector_id
 
-        if domain is None or app_name is None or auth is None:
+        if (domain is None and not org_level) or app_name is None or auth is None:
             raise ValueError("domain, app_name and auth must be specified as parameters, either " +
                              "in the environment variables CAROLTENANT, CAROLAPPNAME, CAROLAPPOAUTH" +
                              " or CAROLUSER+CAROLPWD and  CAROLCONNECTORID")
@@ -115,6 +120,7 @@ class Carol:
         self.auth = auth
         self.auth.set_connector_id(self.connector_id)
         self.session = None
+        self._is_org_level = org_level
 
         self.auth.login(self)
         self.response = None
@@ -161,7 +167,7 @@ class Carol:
 
     @property
     def tenant(self):
-        if self._tenant is None:
+        if self._tenant is None and not self._is_org_level:
             self._tenant = Tenant(self).get_tenant_by_domain(self.domain)
         return self._tenant
 
@@ -197,7 +203,6 @@ class Carol:
             return f"{organization}.{environment}"
         else:
             return f"{domain}.{environment}"
-        pass
 
     @staticmethod
     def _retry_session(retries=5, session=None, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504, 524),
@@ -433,9 +438,14 @@ class Carol:
         return resp
 
     def switch_org_level(self):
+        """
+        Switch organization level.
+        
+        """
 
         org = self._current_org()
         self.auth.switch_org_context(org['mdmId'])
+        self._is_org_level = True
 
     def switch_environment(self, env_name=None, env_id=None, app_name=None, org_name=None, org_id=None):
         """
@@ -479,7 +489,8 @@ class Carol:
 
         if (org_id is not None and org_id != current['org_id']) or (org_name is not None and org_name != current['org_name'] ):
             # Switch to org context.
-            self.switch_org_level()
+            if not current['org_level']:
+                self.switch_org_level()
             if org_id is None:
                 org_id = Organization(self).get_organization_info(org_name)['mdmId']
             # Switch org.
@@ -487,14 +498,16 @@ class Carol:
 
         if env_name:
             env_id = Tenant(self).get_tenant_by_domain(env_name)['mdmId']
-        elif env_id is None:
-            raise ValueError('Either `env_name` or `env_id` must be set.')
-
-        self.auth.switch_context(env_id=env_id)
+        if env_id is not None:
+            self.auth.switch_context(env_id=env_id)
+            self._tenant = self._current_env()
+            self._is_org_level = False
+        else:
+            self._tenant = None
+            self._is_org_level = True
 
         self.domain = env_name
         self.app_name = app_name # TODO: Today we cannot use CDS without a valid app name.
-        self._tenant = self._current_env()
         self.organization = self._current_org()['mdmName']
 
         self.host = self._set_host(domain=self.domain, organization=self.organization,
@@ -537,8 +550,6 @@ class Carol:
 
         if env_name:
             env_id = Tenant(self).get_tenant_by_domain(env_name)['mdmId']
-        elif env_id is None:
-            raise ValueError('Either `env_name` or `env_id` must be set.')
 
         class SwitchContext(object):
 
@@ -564,7 +575,7 @@ class Carol:
 
 
     def _current_env(self):
-        return self.call_api('v1/tenants/current')
+        return self.call_api('v1/tenants/current', errors='ignore')
 
     def _current_org(self):
         return self.call_api('v1/organizations/current')
@@ -598,9 +609,15 @@ class Carol:
         if level.lower() == 'org' or level.lower() == 'all':
             org = self._current_org()
 
+        if env.get('mdmName') is None:
+            self._is_org_level = True
+        else:
+            self._is_org_level = False
+
         return {
             "env_name": env.get('mdmName'),
             "env_id": env.get('mdmId'),
             "org_name": org.get('mdmName'),
             "org_id": org.get('mdmId'),
+            "org_level": self._is_org_level
         }
