@@ -61,7 +61,7 @@ class TrainModel(Task):
                                  max_iter=self.model_epochs).fit(X_train, y_train["target"].values)
 
         logger.info(f'Making predictions for {X_test.shape[0]} records on test set.')
-        y_pred_train = mlp_model.predict(y_train)
+        y_pred_train = mlp_model.predict(X_train)
         y_pred_test = mlp_model.predict(X_test)
 
         logger.info(f'Saving model to storage.')
