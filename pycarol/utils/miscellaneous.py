@@ -187,3 +187,40 @@ def zip_folder(path_to_zip):
             z.write(f, arcname=f.relative_to(path_to_zip.parents[0]))
 
     return zip_file
+
+def find_keys(node, kv):
+    """Find values of a key in a nested dictionary.
+
+    Args:
+
+        node (dict): Dictionary to search.
+        kv (str): key to search.
+
+    Yields:
+        str: values.
+
+    """
+    if isinstance(node, list):
+        for i in node:
+            yield from find_keys(i, kv)
+    elif isinstance(node, dict):
+        if kv in node:
+            yield node[kv]
+        for j in node.values():
+            yield from find_keys(j, kv)
+                
+def unroll_list(l):
+    """Unroll a list of lists.
+
+    Args:
+        l (list): list of list to unroll.
+
+    Yields:
+        list: unrolled list.
+    """
+
+    if isinstance(l, list):
+        for i in l:
+            yield from unroll_list(i)
+    else:
+        yield l
