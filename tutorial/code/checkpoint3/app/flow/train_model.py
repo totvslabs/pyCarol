@@ -64,10 +64,6 @@ class TrainModel(Task):
         y_pred_train = mlp_model.predict(X_train)
         y_pred_test = mlp_model.predict(X_test)
 
-        logger.info(f'Saving model to storage.')
-        stg = Storage(login)
-        stg.save("bhp_mlp_regressor", mlp_model, format='pickle')
-
         # Transforming all to lists
         y_train = list(y_train["target"].values)
         y_test = list(y_test["target"].values)
