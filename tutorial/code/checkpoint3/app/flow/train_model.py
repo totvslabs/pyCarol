@@ -67,8 +67,8 @@ class TrainModel(Task):
         # Transforming all to lists
         y_train = list(y_train["target"].values)
         y_test = list(y_test["target"].values)
-        y_pred_train = list(y_pred_train["target"].values)
-        y_pred_test = list(y_pred_test["target"].values)
+        y_pred_train = list(y_pred_train)
+        y_pred_test = list(y_pred_test)
 
         # Returning the model and real/predictions 
         # pairs for train and test (used on validation)
