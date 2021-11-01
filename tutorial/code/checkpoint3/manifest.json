@@ -2,21 +2,21 @@
   "batch": {
     "processes": [
       {
-        "name": "assistantknowledgebasebatch",
+        "name": "bhptrainmodellg",
         "algorithmName": "main",
         "namespace": "",
         "algorithmTitle": {
-          "pt-br": "Assistant Knowledgebase Batch",
-          "en-US": "Assistant Knowledgebase Batch"
+          "pt-br": "BHP Train Model LG",
+          "en-US": "BHP Train Model LG"
         },
         "algorithmDescription": {
-          "pt-br": "Assistant Knowledgebase Batch",
-          "en-US": "Assistant Knowledgebase Batch"
+          "pt-br": "BHP Train Model LG",
+          "en-US": "BHP Train Model LG"
         },
         "instanceProperties": {
           "profile": "",
           "properties": {
-            "dockerImage": "knowledgebasebatch/assistantknowledgebasebatch:1.0.0",
+            "dockerImage": "bhptrainmodellg/bhptrainmodellg:1.0.0",
             "instanceType": "c1.small"
           },
           "environments": {
@@ -29,13 +29,13 @@
   },
   "docker": [
     {
-      "dockerName": "assistantknowledgebasebatch",
+      "dockerName": "bhptrainmodellg",
       "dockerTag": "1.0.0",
-      "gitBranch": "master",
-      "gitPath": "/GeneralPurpose/Assistant_Knowledgebase_Batch/",
+      "gitBranch": "tutorial",
+      "gitPath": "/tutorial/code/checkpoint3/",
       "instanceType": "c1.small",
       "gitDockerfileName": "Dockerfile", 
-      "gitRepoUrl": "https://github.com/totvslabs/carolina-assistant"
+      "gitRepoUrl": "https://github.com/totvslabs/pyCarol"
     }
   ]
 }
