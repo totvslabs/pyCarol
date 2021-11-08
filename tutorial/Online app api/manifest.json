@@ -1,0 +1,37 @@
+{
+  "online": {
+    "processes": [
+      {
+        "name": "sentence_similarity_api",
+        "algorithmName": "main",
+        "namespace": "",
+        "algorithmTitle": {
+          "pt-br": "Sentence Similarity Api",
+          "en-US": "Sentence Similarity Api"
+        },
+        "algorithmDescription": {
+          "pt-br": "Sentence Similarity Api",
+          "en-US": "Sentence Similarity Api"
+        },
+        "instanceProperties": {
+          "profile": "",
+          "properties": {
+            "dockerImage": "searchsupportdocs/sentence_similarity_api:1.0.0",
+            "instanceType": "c1.medium"
+          }
+        }
+      }
+    ]
+  },
+  "docker": [
+    {
+      "dockerName": "sentence_similarity_api",
+      "dockerTag": "1.0.0",
+      "gitBranch": "master",
+      "gitPath": "/",
+      "instanceType": "c1.medium",
+      "gitDockerfileName": "Dockerfile", 
+      "gitRepoUrl": "https://github.com/felipebmendes/sentence_similarity_api.git"
+    }
+  ]
+}
