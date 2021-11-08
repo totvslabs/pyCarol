@@ -1,5 +1,3 @@
-# Introduction
-
 # Carol environment: how to get started
 
 If you need to know more about the process of creating Apps on Carol please refer to []().

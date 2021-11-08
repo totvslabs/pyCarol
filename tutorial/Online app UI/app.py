@@ -23,6 +23,14 @@ model_app_name = _settings.get('model_app_name')
 app_name = os.environ.get('CAROLAPPNAME')
 
 def load_model():
+    '''
+        
+        Load the trained model from a Carol app storage.
+
+        Return:
+            model: the trained Boston House Price model
+
+    '''
     global model
     global model_filename
     global model_app_name
@@ -35,6 +43,19 @@ def load_model():
     return model
 
 def model_predict(crim, zn, indus, chas, nox, rm, age, dis, rad, tax, pratio, b, lstat):
+    '''
+        Use the loaded model and the features sent by the consumer to predict the price of a house.
+
+        Args:
+
+            model: the trained Boston House Price model
+            crim, zn, indus, chas, nox, rm, age, dis, rad, tax, pratio, b, lstat
+
+        Returns: 
+        
+            price: predicted price of a house
+                float.
+    '''
     global model
     if model is None:
         model = load_model()
