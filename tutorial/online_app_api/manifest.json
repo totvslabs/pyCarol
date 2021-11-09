@@ -16,7 +16,7 @@
         "instanceProperties": {
           "profile": "",
           "properties": {
-            "dockerImage": "boston_house_price_api:1.0.0",
+            "dockerName": "boston_house_price_api",
             "instanceType": "c1.small"
           }
         }

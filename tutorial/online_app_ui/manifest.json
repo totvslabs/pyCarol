@@ -16,7 +16,7 @@
         "instanceProperties": {
           "profile": "",
           "properties": {
-            "dockerImage": "online_app_ui:1.0.0",
+            "dockerName": "online_app_ui",
             "instanceType": "c1.small"
           },
           "environments": {
