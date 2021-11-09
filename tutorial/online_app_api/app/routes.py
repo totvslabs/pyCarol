@@ -68,7 +68,7 @@ def validate_authorization_token(authorization_token):
     Log in to Carol using a Authorization token (web token).
 
     Returns:
-        Whether the login using the token succedeed or not.
+        Whether the login using the token succeded or not.
             boolean
     '''
 
@@ -82,6 +82,19 @@ def validate_authorization_token(authorization_token):
         return False
 
 def validate_api_key(api_key, connector_id):
+    '''
+    Log in to Carol using an api key (connector token).
+    
+    Args:
+        api_key: key to access Carol's apis (connector token)
+            string.
+        connector_id: connector id attached to the api key
+            string.
+
+    Returns:
+        Whether the login using the combination of api_key and connector_id succeeded or not.
+            boolean
+    '''
     aux_login = Carol(domain=env_name,
               app_name=app_name,
               organization=org_name,
@@ -96,6 +109,19 @@ def validate_api_key(api_key, connector_id):
 
 
 def validate_user(user, pwd):
+    '''
+    Log in to Carol using username and password.
+    
+    Args:
+        user: email to access Carol
+            string.
+        pwd: password to access Carol
+            string.
+
+    Returns:
+        Whether the login using the combination of user and password succeeded or not.
+            boolean
+    '''
     aux_login = Carol(domain=env_name,
               app_name=app_name,
               organization=org_name,
@@ -108,8 +134,9 @@ def validate_user(user, pwd):
         return False
 
 
-# We want to validate if the consumer is authorize to access some of our endpoints. Because of that we create this decorator.
+# We want to validate if the consumer is authorize to access some of our endpoints. Because of that we created this decorator.
 # It validates if the information sent in the authorization header is valid in Carol.
+# If you want your endpoint to be validated you just need to add @requires_auth before the method's name of that endpoint.
 def requires_auth(f):
     '''
     Determine if the access token is valid in Carol.
@@ -162,7 +189,7 @@ def load_model():
 # Route for getting the price of a house predicted by the ML model based on the provided features.
 @server_bp.route('/house_price', methods=['POST'])
 @requires_auth
-def validate():
+def house_price():
 
     # Here we defined the contract of our api. If the consumer sends something in their request that is not defined in this contract
     # they will get an error with status code 422.
@@ -229,6 +256,17 @@ def handle_error(err):
     '''
     We check whether the request and its inputs were sent as we defined in the contract of each endpoint.
     In case is not valid we sent back an error message with status code 422.
+
+    Args:
+        err: error instance.
+
+    Returns:
+        error message
+            json
+        status code
+            int
+        headers
+            json
     '''
     headers = err.data.get("headers", None)
     messages = err.data.get("messages", ["Invalid request."])
@@ -236,13 +274,17 @@ def handle_error(err):
     if headers:
         return jsonify(messages), err.code, headers
     else:
-        return jsonify(messages), err.code
+        return jsonify(messages), err.code, headers
 
 
 def validate_numbers(val):
     '''
-    Check whether the value is sent by the consumer is not negative.
+    Check whether the value sent by the consumer is negative or not.
     In case it is negative we sent back an error message with status code 422.
+
+    Args:
+        val: endpoint input
+            any.
     '''
     if isinstance(val, float):
         if val < 0.0:
