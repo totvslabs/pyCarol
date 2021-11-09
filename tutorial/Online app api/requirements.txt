@@ -6,3 +6,4 @@ flask-wtf
 gunicorn
 pycarol[dataframe]>=2.40.1
 webargs
+sklearn

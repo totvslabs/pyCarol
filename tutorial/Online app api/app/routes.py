@@ -5,10 +5,10 @@ import logging
 import pandas as pd
 import os
 from flask import Blueprint, jsonify, request
-from pycarol import Carol, Storage, Apps
+from pycarol import Carol, Apps, ApiKeyAuth, PwdKeyAuth, PwdAuth
+import json
 from webargs import fields, ValidationError
 from webargs.flaskparser import parser
-import re
 from functools import wraps
 from .functions import Functions
 
@@ -34,6 +34,10 @@ model_filename = _settings.get('model_filename')
 model_app_name = _settings.get('model_app_name')
 # Reading the name of current name sent to our code by the Carol platform.
 app_name = os.environ.get('CAROLAPPNAME')
+# Reading the name of current enviroment sent to our code by the Carol platform.
+env_name = os.environ.get('CAROLTENANT')
+# Reading the name of current organization sent to our code by the Carol platform.
+org_name = os.environ.get('CAROLORGANIZATION')
 
 # We instantiate the class Functions in which we stored all the functions that we want to use in our api.
 functions = Functions(carol)
@@ -45,21 +49,91 @@ logger.info('Loading model: Done.')
 
 logger.debug('App started.')
 
+def error_authentication_message(message=None):
+    '''
+    Create an error message with 401 status code.
+
+    Returns:
+        resp: Response with error message and status code 401.
+            json
+    '''
+    if not message:
+        message = 'Authorization, or X-Auth-Key and X-Auth-ConnectorId is invalid. Please authenticate.'
+    resp = jsonify({"message": message})
+    resp.status_code = 401
+    return resp
+
+def validate_authorization_token(authorization_token):
+    '''
+    Log in to Carol using a Authorization token (web token).
+
+    Returns:
+        Whether the login using the token succedeed or not.
+            boolean
+    '''
+
+    try:
+        Carol(domain=env_name,
+              app_name=app_name,
+              organization=org_name,
+              auth=PwdKeyAuth(authorization_token))
+        return True
+    except:
+        return False
+
+def validate_api_key(api_key, connector_id):
+    aux_login = Carol(domain=env_name,
+              app_name=app_name,
+              organization=org_name,
+              auth=ApiKeyAuth(api_key),
+              connector_id=connector_id)
+
+    try:
+        aux_login.get_current()
+        return True
+    except:
+        return False
+
+
+def validate_user(user, pwd):
+    aux_login = Carol(domain=env_name,
+              app_name=app_name,
+              organization=org_name,
+              auth=PwdAuth(user, pwd))
+
+    try:
+        aux_login.get_current()
+        return True
+    except:
+        return False
+
+
 # We want to validate if the consumer is authorize to access some of our endpoints. Because of that we create this decorator.
 # It validates if the information sent in the authorization header is valid in Carol.
 def requires_auth(f):
     '''
-    Determine if the access token is valid.
+    Determine if the access token is valid in Carol.
+    It returns an error message with 401 status code in case the token is not valid.
     '''
     @wraps(f)
     def decorated(*args, **kwargs):
+        headers = request.headers
         auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
-            resp = jsonify({"message": "Please authenticate."})
-            resp.status_code = 401
-            resp.headers["WWW-Authenticate"] = 'Basic realm="Example"'
-            return resp
-        kwargs["user"] = User.get(User.email == auth.username)
+        if not headers and not auth:
+            return error_authentication_message()
+        elif not headers.get('Authorization') and not headers.get('X-Auth-Key') and not headers.get('X-Auth-ConnectorId') \
+            and not auth:
+            return error_authentication_message()
+        elif headers.get('Authorization') and 'Basic' not in headers.get('Authorization') and not validate_authorization_token(headers.get('Authorization')):
+            return error_authentication_message()
+        elif (headers.get('X-Auth-Key') and not headers.get('X-Auth-ConnectorId')) or (not headers.get('X-Auth-Key') and headers.get('X-Auth-ConnectorId')):
+            return error_authentication_message()
+        elif headers.get('X-Auth-Key') and headers.get('X-Auth-ConnectorId') and not validate_api_key(headers.get('X-Auth-Key'), headers.get('X-Auth-ConnectorId')):
+            return error_authentication_message()
+        elif auth and not validate_user(auth.username, auth.password):
+            return error_authentication_message()
+
+
         return f(*args, **kwargs)
 
     return decorated
@@ -91,29 +165,37 @@ def load_model():
 def validate():
 
     # Here we defined the contract of our api. If the consumer sends something in their request that is not defined in this contract
-    # they will get an error with status code 400.
+    # they will get an error with status code 422.
     # We are using the marshmallow package for that. To see other type of fields please refer to https://marshmallow.readthedocs.io/en/stable/marshmallow.fields.html#marshmallow.fields.Field
+    # The validate parameter is set with the name of the method in which we validate the content of that specific field.
+    # The missing parameter sets a default value in case the specific input is not sent by the consumer.
     query_arg = {
-        "ZN": fields.Str(required=True, 
+        "crim": fields.Float(required=True, validate=validate_numbers,
+            description='Per capita crime rate by town.'),
+        "zn": fields.Float(required=True, validate=validate_numbers,
             description='Proportion of residential land zoned for lots over 25,000 sq.ft.'),
-        "INDUS": fields.Str(required=True, 
+        "indus": fields.Float(required=True, validate=validate_numbers, 
             description='Proportion of non-retail business acres per town.'),
-        "CHAS": fields.Str(required=True, 
+        "chas": fields.Integer(required=False, missing=0, validate=validate_numbers, 
             description='Charles River dummy variable (= 1 if tract bounds river; 0 otherwise).'),
-        "NOX": fields.Str(required=True, 
+        "nox": fields.Float(required=True, validate=validate_numbers, 
             description='Nitric oxides concentration (parts per 10 million)..'),
-        "RM": fields.Str(required=True, 
+        "rm": fields.Float(required=True, validate=validate_numbers, 
             description='Average number of rooms per dwelling.'),
-        "AGE": fields.Str(required=True, 
+        "age": fields.Float(required=True, validate=validate_numbers, 
             description='Proportion of owner-occupied units built prior to 1940.'),
-        "DIS": fields.Str(required=True, 
+        "dis": fields.Float(required=True, validate=validate_numbers, 
             description='Weighted distances to ﬁve Boston employment centers.'),
-        "RAD": fields.Str(required=True, 
+        "rad": fields.Integer(required=True, validate=validate_numbers, 
             description='Full-value property-tax rate per $10,000.'),
-        "TAX": fields.Str(required=True, 
+        "tax": fields.Float(required=True, validate=validate_numbers, 
             description='Proportion of residential land zoned for lots over 25,000 sq.ft.'),
-        "PTRATIO": fields.Str(required=True, 
+        "ptratio": fields.Float(required=True, validate=validate_numbers, 
             description='Pupil-teacher ratio by town 12. B: 1000(Bk−0.63)2 where Bk is the proportion of blacks by town 13. LSTAT: % lower status of the population.'),
+        "b": fields.Float(required=True, validate=validate_numbers, 
+            description='1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town.'),
+        "lstat": fields.Float(required=True, validate=validate_numbers, 
+            description=r'% lower status of the population.'),
     }
 
     # When parsing the request we validate its inputs and the values sent by the api consumer is stored in a dictionary, which here we call args.
@@ -129,13 +211,13 @@ def validate():
     dis = args['dis']
     rad = args['rad']
     tax = args['tax']
-    pratio = args['pratio']
+    ptratio = args['ptratio']
     b = args['b']
     lstat = args['lstat']
 
     # We finally predict the price of the house using the model_predict method that we created in the functions class.
     global model
-    price = functions.model_predict(model, crim, zn, indus, chas, nox, rm, age, dis, rad, tax, pratio, b, lstat)
+    price = functions.model_predict(model, crim, zn, indus, chas, nox, rm, age, dis, rad, tax, ptratio, b, lstat)
 
     # Once we got the house price we sent it back to the consumer using a json structure.
     return jsonify({'price': price})
@@ -146,7 +228,7 @@ def validate():
 def handle_error(err):
     '''
     We check whether the request and its inputs were sent as we defined in the contract of each endpoint.
-    In case is not valid we sent back an error message with status code 400.
+    In case is not valid we sent back an error message with status code 422.
     '''
     headers = err.data.get("headers", None)
     messages = err.data.get("messages", ["Invalid request."])
@@ -157,19 +239,14 @@ def handle_error(err):
         return jsonify(messages), err.code
 
 
-def validate_filter(val):
+def validate_numbers(val):
     '''
-    Check whether the value is valid or not.
-    In case is not valid we sent back an error message with status code 400.
+    Check whether the value is sent by the consumer is not negative.
+    In case it is negative we sent back an error message with status code 422.
     '''
-    logger.debug('Validating filter')
-    filter_columns = []
-    filters = list(val)
-    for filter in filters:
-        filter_field = filter.get('filter_field')
-        if filter_field:
-            filter_columns.append(filter_field)
-        else:
-            raise ValidationError("The key 'filter_field' must be filled when you are using filters.") 
-    if filters and any(c not in df.columns for c in filter_columns):
-        raise ValidationError("One or more columns that you are trying to filter does not exist in the documents base.")
+    if isinstance(val, float):
+        if val < 0.0:
+            raise ValidationError("All float parameters must be greater than 0.0.") 
+    elif isinstance(val, int):
+        if val < 0:
+            raise ValidationError("All integer parameters must be greater than 0.") 

@@ -59,7 +59,7 @@ def model_predict(crim, zn, indus, chas, nox, rm, age, dis, rad, tax, pratio, b,
     global model
     if model is None:
         model = load_model()
-    price = model.predict([[crim, zn, indus, chas, nox, rm, age, dis, rad, tax, pratio, b, lstat]])
+    price = model.predict([[crim, zn, indus, chas, nox, rm, age, dis, rad, tax, ptratio, b, lstat]])
     return round(float(price), 2)
 
 # Loads the model saved in the storage by the app in which this model has been trained.
@@ -85,14 +85,13 @@ age = form.number_input('Proportion of owner-occupied units built prior to 1940.
 dis = form.number_input('Weighted distances to five Boston employment centres.', format='%f', min_value=0.0)
 rad = form.number_input('Index of accessibility to radial highways.', format='%d', min_value=1)
 tax = form.number_input('Full-value property-tax rate per $10,000', format='%f', min_value=0.0) 
-pratio = form.number_input('Pupil-teacher ratio by town', format='%f', min_value=0.0, help='Eg: If ratio is 15 students to 1 teacher then insert 15.')
+ptratio = form.number_input('Pupil-teacher ratio by town', format='%f', min_value=0.0, help='Eg: If ratio is 15 students to 1 teacher then insert 15.')
 b = form.number_input('1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town.', format='%f', min_value=0.0)
 lstat = form.number_input(r'% lower status of the population', format='%f', min_value=0.0) 
-#medv = form.number_input('Median value of owner-occupied homes in $1000\'s.', format='%f', min_value=0.0)
 submit_button = form.form_submit_button(label='Search')
 
 # When a user clicks on the submit button we predict and present in the screen the price of the house based on the information
 # that they have inputed in the interface.
 if submit_button:
-    price = model_predict(crim, zn, indus, chas, nox, rm, age, dis, rad, tax, pratio, b, lstat)
+    price = model_predict(crim, zn, indus, chas, nox, rm, age, dis, rad, tax, ptratio, b, lstat)
     st.write(f'Predicted selling price for home: ${price}')

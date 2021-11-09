@@ -34,6 +34,21 @@ The `app/` folder is where we place our code. In `functions.py` we organize all 
 
 The necessary packages to our api are saved in a `requirements.txt` file and they will be installed when the Dockerfile is run on the docker build process.
 
+In our case we have these packages in `requirements.txt`:
+```
+pandas==1.2.5
+flask
+flask-cors
+flask-login
+flask-wtf
+gunicorn
+pycarol[dataframe]>=2.40.1
+webargs
+sklearn
+```
+
+With the exception of the sklearn package all the other packages must be used when you are creating an online app.
+
 The `gunicorn.conf.py` is where we set the [configurations](https://docs.gunicorn.org/en/stable/settings.html#settings) (for instance, number of worker processes, the socket to bind, etc.) for the gunicorn server.
 
 `Dockerfile`:
@@ -78,10 +93,14 @@ CAROLTENANT=mltutorial
 ALGORITHM_NAME=bhponlineapp
 ```
 
-CAROLAPPNAME: the name of the app created in Carol. To see how you can create an app in Carol please refer to []()
-CAROLAPPOAUTH: the api key (access token) created in Carol. To see how you can create an api key please refer to [Generating an access token]()
+CAROLAPPNAME: the name of the app created in Carol. To see how you can create an app in Carol please refer to [Creating a Carol App]().
+
+CAROLAPPOAUTH: the api key (access token) created in Carol. To see how you can create an api key please refer to [Generating an access token](https://tdn.totvs.com/pages/releaseview.action?pageId=552107176#id-2.Autentica%C3%A7%C3%A3o-ConnectorToken(APIKey)).
+
 CAROLCONNECTORID: the connector id attached to the api key added in CAROLAPPOAUTH.
+
 CAROLORGANIZATION: the name of the organization in which your app has been created.
+
 CAROLTENANT: the name of the environment in which your app has been created.
 
 
@@ -122,3 +141,132 @@ Here we use the `.env` file that simulates the injection of enviroment variables
 In the real scenario this process happens when we Run a process in a Carol app.
 
 ## Deploying our app in Carol
+
+To deploy our app in Carol we first need to create a `manifest.json` file
+
+The `manifest.json` for an online app follows the structure:
+
+```
+{
+  "online": {
+    "processes": [
+      {
+        "name": "boston_house_price_api",
+        "algorithmName": "main",
+        "namespace": "",
+        "algorithmTitle": {
+          "pt-br": "Boston House Price API",
+          "en-US": "Boston House Price API"
+        },
+        "algorithmDescription": {
+          "pt-br": "Boston House Price API",
+          "en-US": "Boston House Price API"
+        },
+        "instanceProperties": {
+          "profile": "",
+          "properties": {
+            "dockerImage": "boston_house_price_api:1.0.0",
+            "instanceType": "c1.small"
+          }
+        }
+      }
+    ]
+  },
+  "docker": [
+    {
+      "dockerName": "boston_house_price_api",
+      "dockerTag": "1.0.0",
+      "gitBranch": "tutorial-mendes",
+      "gitPath": "/tutorial/Online%20app%20api/",
+      "instanceType": "c1.small",
+      "gitDockerfileName": "Dockerfile", 
+      "gitRepoUrl": "https://github.com/totvslabs/pyCarol.git"
+    }
+  ]
+}
+```
+
+To understand which of the manifest's fields please refer to [Manifest file](https://docs.carol.ai/docs/manifest-file)
+
+Once we have the `manifest.json` ready we need to upload it in our Carol App.
+
+Firstly, we go to our Carol App page.
+
+
+![res/opening_app.png](res/opening_app.png)
+
+
+Always make sure that you are in the Developer view.
+
+
+![res/developer_section.png](res/developer_section.png)
+
+
+In the `Files` section we click on `Upload File` and we choose the `manifest.json` file that we have just created.
+
+
+![res/files_section.png](res/files_section.png)
+
+
+Once the file is uploaded, its name will be presented in the Files.
+
+
+![res/file_uploaded.png](res/file_uploaded.png)
+
+
+Now, we can [Build our app](https://docs.carol.ai/docs/building-docker-image-on-carol#carol-app-flow-github).
+
+Then, when the build process is complete we can start our app by clicking on `Run` in the `Process` section.
+
+
+![res/run_app.png](res/run_app.png)
+
+
+The app will remain running until it is stopped by clicking on the `Stop` button.
+
+## Testing our API:
+
+Since we added a `@requires_auth` decorator in our endpoints we will need to send some kind of authentication information in our request so our api can authenticate us with Carol.
+
+For a better understanding on how to authenticate with Carol please refer to [Authentication](https://tdn.totvs.com/pages/releaseview.action?pageId=552107176)
+
+Using the record below as the input let's see three different ways of sending a request to our api:
+
+```
+sample = {'age': 82.0,
+ 'b': 232.6,
+ 'chas': 0.0,
+ 'crim': 1.38799,
+ 'dis': 3.99,
+ 'indus': 8.14,
+ 'lstat': 27.71,
+ 'nox': 0.538,
+ 'ptratio': 21.0,
+ 'rad': 4.0,
+ 'rm': 5.95,
+ 'tax': 307.0,
+ 'zn': 0.0}
+```
+
+### 1. Using a Bearer token
+
+```
+headers={'Authorization': <BEARER TOKEN>}
+
+r = requests.post('http://localhost:5000/house_price', json=sample, headers=headers)
+```
+
+### 2. Using user and password
+
+```
+user = <EMAIL IN CAROL>
+password = <PASSWORD TO LOG IN TO CAROL>
+r = requests.post('http://localhost:5000/house_price', json=sample, auth=(user, password))
+```
+
+### 2. Using an api key (connector token)
+
+```
+headers={'X-Auth-Key': <API KEY>, 'X-Auth-ConnectorId': <CONNECTOR ID ATTACHED TO THE API KEY>}
+r = requests.post('http://localhost:5000/house_price', json=sample, headers=headers)
+```
