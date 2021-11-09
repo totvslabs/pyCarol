@@ -248,12 +248,26 @@ sample = {'age': 82.0,
  'zn': 0.0}
 ```
 
+If your testing your api locally then your URL will be:
+
+```
+url = http://localhost:5000/house_price'
+```
+
+If your api has already been deployed to Carol and you want to test it, then your URL will be the URL presented in the `Services App` (see Figure below).
+
+For instance:
+
+```
+url = https://mltutorial-onlineappapi.apps.carol.ai/house_price'
+```
+
 ### 1. Using a Bearer token
 
 ```
 headers={'Authorization': <BEARER TOKEN>}
 
-r = requests.post('http://localhost:5000/house_price', json=sample, headers=headers)
+r = requests.post(url, json=sample, headers=headers)
 ```
 
 ### 2. Using user and password
@@ -261,12 +275,12 @@ r = requests.post('http://localhost:5000/house_price', json=sample, headers=head
 ```
 user = <EMAIL IN CAROL>
 password = <PASSWORD TO LOG IN TO CAROL>
-r = requests.post('http://localhost:5000/house_price', json=sample, auth=(user, password))
+r = requests.post(url, json=sample, auth=(user, password))
 ```
 
 ### 2. Using an api key (connector token)
 
 ```
 headers={'X-Auth-Key': <API KEY>, 'X-Auth-ConnectorId': <CONNECTOR ID ATTACHED TO THE API KEY>}
-r = requests.post('http://localhost:5000/house_price', json=sample, headers=headers)
+r = requests.post(url, json=sample, headers=headers)
 ```

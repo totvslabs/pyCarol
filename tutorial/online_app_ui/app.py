@@ -88,7 +88,7 @@ tax = form.number_input('Full-value property-tax rate per $10,000', format='%f',
 ptratio = form.number_input('Pupil-teacher ratio by town', format='%f', min_value=0.0, help='Eg: If ratio is 15 students to 1 teacher then insert 15.')
 b = form.number_input('1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town.', format='%f', min_value=0.0)
 lstat = form.number_input(r'% lower status of the population', format='%f', min_value=0.0) 
-submit_button = form.form_submit_button(label='Search')
+submit_button = form.form_submit_button(label='Predict house price')
 
 # When a user clicks on the submit button we predict and present in the screen the price of the house based on the information
 # that they have inputed in the interface.
