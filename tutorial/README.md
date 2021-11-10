@@ -14,16 +14,16 @@ We hope this tutorial brings you up to speed and help you build powerfull tools 
 
 ## Outline
 
-[1. Introduction](chapters/ch1_introduction/README.md)
+[1. Introduction](chapters/ch1_introduction/)
 
-[2. Copying data to Carol](chapters/ch2_ingestion/README.md)
+[2. Copying data to Carol](chapters/ch2_ingestion/)
 
-[3. Creating a data model](chapters/ch3_datamodel/README.md)
+[3. Creating a data model](chapters/ch3_datamodel/)
 
-[4. Training the model: a minimal batch app](chapters/ch4_basic_batchapp/README.md)
+[4. Training the model: a minimal batch app](chapters/ch4_basic_batchapp/)
 
-[5. Training the model: task orchestration with Luigi](chapters/ch5_enhanced_batchapp/README.md)
+[5. Training the model: task orchestration with Luigi](chapters/ch5_enhanced_batchapp/)
 
-[6. The Prediction API](chapters/ch6_online_api/README.md)
+[6. The Prediction API](chapters/ch6_online_api/)
 
-[7. Building a simple UI](chapters/ch7_user_interface/README.md)
+[7. Building a simple UI](chapters/ch7_user_interface/)
