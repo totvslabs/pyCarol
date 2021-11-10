@@ -8,7 +8,7 @@ On your first access to the Carol environment you will be presented to the scree
 - **C**: The left panel shows the different components available on Carol. On this tutorial we will be be focusing mostly on `Connectors`, `Data Models` and `Carol Apps`.
 - **D**: On this pop-up you have the user and environement admin configurations. Through this drop down you can, for example, revise access tokens defined on the environment. This topic is covered later on this document.
 
-![res/Introduction/Untitled.png](res/Introduction/Untitled.png)
+![../res/ch1_fig1.png](../res/ch1_fig1.png)
 
 Figure 1: Welcome screen on Carol
 
@@ -22,29 +22,29 @@ Carol organizes its datasets in **connectors**. Connectors can be viewed as a pa
 
 To create a new connector click on the `Connectors` icon on the left panel, then on `All` option, and then on the `Add a Connector` button (see figure 2). 
 
-![res/Introduction/Untitled%201.png](res/Introduction/Untitled%201.png)
+![../res/ch1_fig2.png](../res/ch1_fig2.png)
 
 Figure 2: Openning the create connector wizard.
 
 The platform will conduct you through an wizard process, where you first need to set the name of your project (figure 3).
 
-![res/Introduction/Untitled%202.png](res/Introduction/Untitled%202.png)
+![../res/ch1_fig3.png](../res/ch1_fig3.png)
 
 Figure 3: Choosing a name for your project
 
 The following step is to choose which technology will be used to fetch your data from the source systems. There are several connector types available for your choice, and even new ones can be configured depending on the project. For this simple exercise we will manage the data ingestion through external code, using the PyCarol python library, therefore we can proceed by selecting the `Custom` connector type (figure 4).
 
-![res/Introduction/Untitled%203.png](res/Introduction/Untitled%203.png)
+![../res/ch1_fig4.png](../res/ch1_fig4.png)
 
 Figure 4: All connector types available on Carol platform to the moment.
 
 The following two steps you need to set a label for your connector (figure 5) and then confirm its creation (figure 6). It is a good practice to avoid spaces when setting the connector name, which can be accomplished by using *snake cased* (ex.: Bostom_House_Prices) or *pascal cased* (ex.: BostomHousePrices) names.
 
-![res/Introduction/Untitled%204.png](res/Introduction/Untitled%204.png)
+![../res/ch1_fig5.png](../res/ch1_fig5.png)
 
 Figure 5: Naming your connector
 
-![res/Introduction/Untitled%205.png](res/Introduction/Untitled%205.png)
+![../res/ch1_fig6.png](../res/ch1_fig6.png)
 
 Figure 6: Confirming the creation of your new connector
 
@@ -56,13 +56,13 @@ For most of the steps on the tutorial we will be accessing the Carol environment
 
 On the user / environment configurations drop down, on the top right, click on `Environment Admin`. Now select the `Tokens` sheet and the click on the `Create token` button.  The steps are ilustrated on figure 7.
 
-![res/Introduction/Untitled%206.png](res/Introduction/Untitled%206.png)
+![../res/ch1_fig7.png](../res/ch1_fig7.png)
 
 Figure 7: Sequence of steps to create a new token.
 
 It is enough for you to select a connector and give a brief description of the purpose for the access token. After clicking on Generate you will be presented with the `connector id` and the access `token` strings (figure 8). Take note of these values, the `Connector Id` can still be viewed after you click on `Done`, but the access `Token` won't be available anymore. 
 
-![res/Introduction/Untitled%207.png](res/Introduction/Untitled%207.png)
+![../res/ch1_fig8.png](../res/ch1_fig8.png)
 
 Figure 8: Revising the generated token
 
@@ -74,7 +74,7 @@ Carol Apps gives you the flexibility to implement different types of application
 
 To create an app, it doesn't matter if it is an online, batch or web app for now, go to the Carol Apps icon on the left panel, then select `Developed Apps` and then click on `Create a new App` (see figure 9). You might not have the `Developed Apps` option available yet, in that case contact you administrator and ask for the permission.
 
-![res/Introduction/Untitled%208.png](res/Introduction/Untitled%208.png)
+![../res/ch1_fig9.png](../res/ch1_fig9.png)
 
 Figure 9: Creating an Carol App
 
@@ -87,7 +87,7 @@ After clicking on `Create a new App` you will be prompted with a couple of infos
 
 After filling the required info you can go on and click on  the `Create App` button. The page on *figure 10* will be presented with you App admin information. On this page you can start by revising the platform URL for your app and its version (*3*). 
 
-![res/Introduction/Untitled%209.png](res/Introduction/Untitled%209.png)
+![../res/ch1_fig10.png](../res/ch1_fig10.png)
 
 Figure 10: App admin web page
 
@@ -100,4 +100,5 @@ The last two tabs, `Process` and `Logs`, are the panels where you can control th
 An alternative for writing plain code and building an app is to use the `JupyterLab` functionality. When you click on this button, an instance Jupyter Lab will be started on Carol's cloud and you can run your code on a remote machine, The notebooks can be used to simplify prototypes and tests bypassing authentication details, since it is already running on top of your app configurations, and building steps.
 
 [Go back to main page](../../)
+
 [Go to next chapter](../ch2_ingestion/)

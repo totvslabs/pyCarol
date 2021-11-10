@@ -279,4 +279,5 @@ Below are are presented some well known problems when developing/ deploying Caro
 - **Code issues**: Code issues rarely impacts the building process, but they usually arises when running the app. Several type of issues may arise when running the process, a good practice is to debug extensively the code locally before deploying, but even after that you find errors when running it on Carol you can debug the errors using the `Logs` tab on your app's panel.
 
 [Go back to main page](../../)
+
 [Go to next chapter](../ch5_enhanced_batchapp/)

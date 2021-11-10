@@ -51,4 +51,5 @@ Figure 18: Linking the data model fields to the staging columns
 After the mapping is completed you can click on the `Publish` button to start the data flow. Carol backend runs storage optimizations behind the scenes to grant data consistency and fast access, you will be notified that your request is being processed (small red bell on the top right of the screen). This process usually takes from a few seconds to a couple of minutes depending on the number of records/ columns on your table.
 
 [Go back to main page](../../)
+
 [Go to next chapter](../ch4_basic_batchapp/)
