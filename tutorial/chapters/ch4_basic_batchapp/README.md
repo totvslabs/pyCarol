@@ -118,7 +118,7 @@ tmp = ax.set(xlabel='Real Value', ylabel='Prediction Error')
 
 The resulting plot is presented on *figure 19*.
 
-![res/Training_the_model_a_minimal_batch_app/Untitled.png](res/Training_the_model_a_minimal_batch_app/Untitled.png)
+![../res/ch4_fig1.png](../res/ch4_fig1.png)
 
 Figure 19: The residual plot achieved by the MLP model we trained
 
@@ -170,7 +170,7 @@ seaborn
 
 In the *manifest.json* there are two main sections, the first defining how the app runs (*1*) and the second defining how it is built (*2*). For the namings on (*1.1*) the only caution is that `algorithmTitle` and `algorithmDescription`fields accept any string, while `name` allows only lowercased strings without spaces or special characters.
 
-![res/Training_the_model_a_minimal_batch_app/Untitled%201.png](res/Training_the_model_a_minimal_batch_app/Untitled%201.png)
+![../res/ch4_fig2.png](../res/ch4_fig2.png)
 
 Figure 19: Main sections on the manifest.json file
 
@@ -225,13 +225,13 @@ The only remaining step now is to deploy our app in Carol, so that we can run it
 
 > **Note**: pay attention at this point and make sure the `name` you assign to your app corresponds to the same used on the `manifest.json` file, on `property/dockerImage`.
 
-![res/Training_the_model_a_minimal_batch_app/Untitled%202.png](res/Training_the_model_a_minimal_batch_app/Untitled%202.png)
+![../res/ch4_fig3.png](../res/ch4_fig3.png)
 
 Figure 20: Creating an App on Carol to deploy our code.
 
 Now select the `File` tab, click on `Upload File` button, select the `manifest.json`  file we've created previously and then click on `Open`(*figure 21*).
 
-![res/Training_the_model_a_minimal_batch_app/Untitled%203.png](res/Training_the_model_a_minimal_batch_app/Untitled%203.png)
+![../res/ch4_fig4.png](../res/ch4_fig4.png)
 
 Figure 21: Loading the manifest file to the platform.
 
@@ -241,19 +241,19 @@ To run the build click on the `Build` button, the next screen will ask you for y
 
 > [https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token)
 
-![res/Training_the_model_a_minimal_batch_app/Untitled%204.png](res/Training_the_model_a_minimal_batch_app/Untitled%204.png)
+![../res/ch4_fig5.png](../res/ch4_fig5.png)
 
 Figure 22: Build: providing the github token
 
 On the next screen just make sure your app version and instance type for the build are correct, then click on `Build Image`.
 
-![res/Training_the_model_a_minimal_batch_app/Untitled%205.png](res/Training_the_model_a_minimal_batch_app/Untitled%205.png)
+![../res/ch4_fig6.png](../res/ch4_fig6.png)
 
 Figure 23: Revising and running the buid.
 
 The process for building the app usually takes from 5 to 15 minutes to perform the setup. If everything goes well you will see the screen on *figure 24*.
 
-![res/Training_the_model_a_minimal_batch_app/Untitled%206.png](res/Training_the_model_a_minimal_batch_app/Untitled%206.png)
+![../res/ch4_fig7.png](../res/ch4_fig7.png)
 
 Figure 24: Image successfully built
 
@@ -261,7 +261,7 @@ Figure 24: Image successfully built
 
 On the `Process` tab on your app's panel, there are two ways of setting up a execution for your app, as pointed on *figure 25*: (*1*) Run it manually by clicking on the `Run` button; (*2*) Schedule single or recurrent executions through the `Add a Schedule` option. 
 
-![res/Training_the_model_a_minimal_batch_app/Untitled%207.png](res/Training_the_model_a_minimal_batch_app/Untitled%207.png)
+![../res/ch4_fig8.png](../res/ch4_fig8.png)
 
 Figure 25: Running your app
 
