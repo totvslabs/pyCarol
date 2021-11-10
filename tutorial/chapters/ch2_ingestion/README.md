@@ -61,7 +61,7 @@ On this example we are simply passing the credentials directly through the code,
 
 If everything went well on your data ingestion, now you should be able to see your staging on the user interface by clicking on `connectors` on the left panel, selecting your connector. You can view sample records by clicking on `View sample data` (figure 11).
 
-![res/Copying_data_to_Carol/Untitled.png](res/Copying_data_to_Carol/Untitled.png)
+![../res/ch2_fig1.png](../res/ch2_fig1.png)
 
 Figure 11: Checking sample records on the Carol platform.
 
