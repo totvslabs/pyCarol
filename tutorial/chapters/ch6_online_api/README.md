@@ -233,3 +233,7 @@ Then you can check if the data model has also received the predictions and that 
 ![send_data1.png](res/Predicting/send_data1.png)
 
 ## Troubleshooting
+
+
+[Go back to main page](../../)
+[Go to next chapter](../ch7_user_interface/)

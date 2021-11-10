@@ -250,3 +250,6 @@ requirements.txt
 ```
 
 The deploy follows the same steps described on the minimal batch app. The final project is available on github: [https://github.com/totvslabs/pyCarol/tree/tutorial/tutorial/code/checkpoint3](https://github.com/totvslabs/pyCarol/tree/tutorial/tutorial/code/checkpoint3).
+
+[Go back to main page](../../)
+[Go to next chapter](../ch6_online_api/)

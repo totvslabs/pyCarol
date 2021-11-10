@@ -99,4 +99,5 @@ The last two tabs, `Process` and `Logs`, are the panels where you can control th
 
 An alternative for writing plain code and building an app is to use the `JupyterLab` functionality. When you click on this button, an instance Jupyter Lab will be started on Carol's cloud and you can run your code on a remote machine, The notebooks can be used to simplify prototypes and tests bypassing authentication details, since it is already running on top of your app configurations, and building steps.
 
-[Go back to summary](../../)
+[Go back to main page](../../)
+[Go to next chapter](../ch2_ingestion/)

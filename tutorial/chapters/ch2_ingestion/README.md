@@ -76,3 +76,6 @@ A couple of well known problems when loading data to Carol are given below:
 - **Bad crosswalk**: It happens when the columns provided as the crosswalk parameter doesn't holds the unique property for the records.
 
 - **Inconsistent schema**: If the staging has been already created before with columns and data types it may result in conflicts when loading new data. In that case it is recomended, whenever it is possible, to drop the previous staging and reload the full data.
+
+[Go back to main page](../../)
+[Go to next chapter](../ch3_datamodel/)
