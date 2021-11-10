@@ -12,7 +12,7 @@ The chapters 6 and 7 are dedicated to examplify how to publicate your code as a 
 
 We hope this tutorial brings you up to speed and help you build powerfull tools on Carol!
 
-## Outline
+## Chapters
 
 [1. Introduction](chapters/ch1_introduction/)
 

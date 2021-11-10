@@ -1,4 +1,4 @@
-FROM totvslabs/pycarol:2.40.0
+FROM python:3.8
 
 RUN mkdir /app
 WORKDIR /app
@@ -7,4 +7,6 @@ RUN pip install -r requirements.txt
 
 ADD . /app
 
-CMD ["python", "/app/post_audit/run.py"]
+EXPOSE 5000
+
+CMD streamlit run --server.port 5000 app.py

@@ -1,4 +1,9 @@
-pycarol[complete]
+pandas==1.2.5
+flask
+flask-cors
+flask-login
+flask-wtf
+gunicorn
+pycarol[dataframe]>=2.40.1
+webargs
 sklearn
-runipy
-seaborn

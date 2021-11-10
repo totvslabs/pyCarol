@@ -1,240 +1,276 @@
-# Predicting
+# Carol environment: how to get started
 
-In the previous section we learned how to create a minimal batch app with a single process that trains a regression model. That model was stored in the Carol App storage and can now be used to make predictions. Let's now add another process to that app for that purpose. Notice that a single app may contain as many processes as you need.
+If you need to know more about the process of creating Apps on Carol please refer to []().
 
-## Preparing the Carol environment to store the predictions
+# Online app
 
-Until now, we have had a connector for loading the dataset, with one table. We are going to create a second connector only for inputting predictions. These predictions will later be merged with the dataset into the data model.
+An online app is a server that runs on top of Carol. In this tutorial we will be covering the creation of an online app api.
 
-### Creating a connector
+Our online app is created using the [Flask](https://flask.palletsprojects.com/en/2.0.x/) and [Marshmallow](https://marshmallow.readthedocs.io/en/stable/quickstart.html#) frameworks and it runs using a [gunicorn server](https://gunicorn.org/).
 
-And let's use "model" as connector name, indicating it will receive data coming from the model:
+On this example we present a simple online app api that loads the Boston House Prices model trained in the [batch app tutorial]().
 
-![creating connector1.png](res/Predicting/creating_connector1.png)
+Our endpoints allow us to predict a house price sending in the request some information about the house in question as well as allows us to reload the model loaded in the memory in case it has been retrained.
 
-Select the custom type. It will allow us to add any custom staging tables that we need.
+# Online app api structure
 
-![creating connector2.png](res/Predicting/creating_connector2.png)
+An online app usually have the follow structure:
 
-
-
-![creating connector3.png](res/Predicting/creating_connector3.png)
-
-### Creating the staging table
-
-Let's create a staging table to receive all predictions
-
-![staging1.png](res/Predicting/staging1.png)
-
-![staging2.png](res/Predicting/staging2.png)
-
-Remember to add an identifier to the staging table: this is mandatory. After adding the fields, save the changes.
-
-![staging3.png](res/Predicting/staging3.png)
-
-### Adjusting the data model to store the predictions
-
-The predictions sent to the staging need to be merged with the corresponding records. Create a new field called prediction.
-
-![datamodel1.png](res/Predicting/datamodel1.png)
-
-Now add the newly created field and add to this data model. Notice that once a field is created you may add it to other models as well.
-
-![datamodel2.png](res/Predicting/datamodel2.png)
-We also need to create a merge rule in the Boston House Price data model. This will ensure that records with the same primary key that come from different staging tables will be merged into a single record.
-
-![datamodel3.png](res/Predicting/datamodel3.png)
-
-Finish by publishing your changes. If you do not publish them, they will not have any impact, but they will be saved as a draft in case you want to finish them later.
-
-![datamodel4.png](res/Predicting/datamodel4.png)
-
-### Creating the mapping
-
-Go back to the staging table and let's add a mapping to the Boston House Price data model. Hover over the staging name. The "Map" button should appear. Then choose the target data model.
-
-![mapping1.png](res/Predicting/mapping1.png)
-
-![mapping2.png](res/Predicting/mapping2.png)
-![mapping3.png](res/Predicting/mapping3.png)
-Check that there is a mapping from the "sample" staging field to the "# Record" model field.
-![mapping4.png](res/Predicting/mapping4.png)
-
-Remember to publish the changes so that the mapping is effective.
-
-## Writing the prediction notebook
-
-Let's create another Jupyter Notebook with the prediction flow. This notebook will be a standalone code (with no dependencies on the previous code), which will allow us to run it on a complete separately Docker container.
-
-The notebook starts by usual imports and getting a Carol object:
 ```
-from pycarol import Carol, Staging, Storage
+app/
+    __init__.py
+    functions.py
+    routes.py
+Dockerfile
+manifest.json
+requirements.txt
+gunicorn.conf.py
+main.py
+```
+
+The `main.py` will be the Docker image entrypoint, it is where we create the app and enable the CORS policy so we can make cross-origin AJAX possible.
+
+The `app/` folder is where we place our code. In `functions.py` we organize all the classes and methods that we want to use in our api. While in the `routes.py` we write the endpoints (routes) as well as their possible validations.
+
+The necessary packages to our api are saved in a `requirements.txt` file and they will be installed when the Dockerfile is run on the docker build process.
+
+In our case we have these packages in `requirements.txt`:
+```
+pandas==1.2.5
+flask
+flask-cors
+flask-login
+flask-wtf
+gunicorn
+pycarol[dataframe]>=2.40.1
+webargs
+sklearn
+```
+
+With the exception of the sklearn package all the other packages must be used when you are creating an online app.
+
+The `gunicorn.conf.py` is where we set the [configurations](https://docs.gunicorn.org/en/stable/settings.html#settings) (for instance, number of worker processes, the socket to bind, etc.) for the gunicorn server.
+
+`Dockerfile`:
+Our Dockerfile simply copy the files from our repository to a container and install the packages that we have added to `requirements.txt`. Finally, we expose the port 5000 which is the default port for online apps in Carol and we start the gunicorn server.
+
+```
+FROM python:3.8
+
+RUN mkdir /app
+WORKDIR /app
+ADD requirements.txt /app/
+RUN pip install -r requirements.txt
+
+ADD . /app
+
+EXPOSE 5000
+
+CMD gunicorn -c /app/gunicorn.conf.py main:application
+```
+
+
+This forementioned structure covers much of the cases that you may need. Therefore, we usually only add endpoints to `route.py`, classes and methods to `functions.py` and packages to `requirements.txt`. Keeping the `Dockerfile`, `gunicorn.conf.py`, and `main.py` as they are.
+
+## Setting up a dev environment
+
+When Carol runs a process, it injects into the Docker container some environment variables that will be read when we call:
+```
 login = Carol()
 ```
 
-Then we fetch the data:
+When running our app locally we have to inject these variables ourselves.
+
+For that, we create an .env file with the following content:
+
 ```
-staging = Staging(login)
-
-conn = "boston_house_price"
-stag = "samples"
-
-X_cols = ["CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT", "sample"]
-roi_cols = X_cols
-
-data = staging.fetch_parquet(staging_name=stag,
-                connector_name=conn,
-                cds=True,
-                columns=roi_cols            
-                )
+# datascience.carol.ai/mltutorial
+CAROLAPPNAME=bhponlineapp
+CAROLAPPOAUTH=<put your token here>
+CAROLCONNECTORID=d69c6f0ea6334838a75a38b543c0214b
+CAROLORGANIZATION=datascience
+CAROLTENANT=mltutorial
+ALGORITHM_NAME=bhponlineapp
 ```
 
-We then filter only the test set for prediction:
-```
-from sklearn.model_selection import train_test_split
+CAROLAPPNAME: the name of the app created in Carol. To see how you can create an app in Carol please refer to [Creating a Carol App]().
 
-_, X_test = train_test_split(data[X_cols], test_size=0.20, random_state=1)
-```
+CAROLAPPOAUTH: the api key (access token) created in Carol. To see how you can create an api key please refer to [Generating an access token](https://tdn.totvs.com/pages/releaseview.action?pageId=552107176#id-2.Autentica%C3%A7%C3%A3o-ConnectorToken(APIKey)).
 
-The model is loaded from Carol:
-```
-stg = Storage(login)
-mlp_model = stg.load("bhp_mlp_regressor", format='pickle')
-```
+CAROLCONNECTORID: the connector id attached to the api key added in CAROLAPPOAUTH.
 
-Then we predict and prepare the Pandas dataframe for sending it to Carol:
-```
-test_cols = ["CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT"]
-y_pred = mlp_model.predict(X_test[test_cols])
+CAROLORGANIZATION: the name of the organization in which your app has been created.
 
-import pandas as pd
-predictions = X_test[["sample"]].copy()
-predictions["predicted_value"] = y_pred
-predictions["prediction_date"] = pd.Timestamp.now()
-```
+CAROLTENANT: the name of the environment in which your app has been created.
 
-Finally we send the predictions to our connector:
+
+## Running our app locally
+
+Carol runs its apps inside Docker containers for that we need to have built images created from our app code.
+
+When we want to run our app locally and simulate what Carol does in the real scenario we use the following docker commands:
+
+### Building the docker image:
+
+It creates a docker image using the recipe we have created in our Dockerfile.
+
+We build an image by running:
+
 ```
-staging = Staging(login)
-staging.send_data(
-    "predictions",
-    data=predictions,
-    connector_name="model",
-)
+docker build -t <docker name> .
 ```
 
-## Writing the docker file
-We will have a second docker image build exclusively for making predictions. In the following section we are going to learn that we can have a single docker image for all processes (if it makes sense to do so).
+In `<docker name>` you can add any name that relates to your app.
 
-The Dockerfile is similar to the train one, except for the name of the notebook:
+In the real scenario this process happens when we Build a Carol app.
+
+### Building the docker image:
+
+It runs the docker image created in the previous step.
+
+We run an image by running:
+
 ```
-CMD ["runipy", "bhp_predict.ipynb"]
+docker run --rm -it -p 5000:5000 --env-file .env <docker name>
 ```
 
-## Setting the manifest
-Now we need to inform the Carol App that we have a new process. That is stored in the manifest.json file.
+In `<docker name>` you need to call the same name defined in the build process.
 
-We need to first create another process in the processes list and then add the docker information:
+Here we use the `.env` file that simulates the injection of enviroment variables.
+
+In the real scenario this process happens when we Run a process in a Carol app.
+
+## Deploying our app in Carol
+
+To deploy our app in Carol we first need to create a `manifest.json` file
+
+The `manifest.json` for an online app follows the structure:
+
 ```
 {
-    "batch": {
-        "processes": [
-            {
-                "name": "bhptrainmodelnb",
-                "algorithmName": "train",
-                "namespace": "",
-                "algorithmTitle": {
-                    "pt-br": "BHP Train Model NB",
-                    "en-US": "BHP Train Model NB"
-                },
-                "algorithmDescription": {
-                    "pt-br": "BHP Train Model NB",
-                    "en-US": "BHP Train Model NB"
-                },
-                "instanceProperties": {
-                    "profile": "",
-                    "properties": {
-                        "dockerImage": "bhptrainmodelnb/bhptrainmodelnb:1.0.0",
-                        "instanceType": "c1.small"
-                    },
-                    "environments": {}
-                }
-            },
-            {
-                "name": "bhppredictnb",
-                "algorithmName": "predict",
-                "namespace": "",
-                "algorithmTitle": {
-                    "pt-br": "BHP Predict NB",
-                    "en-US": "BHP Predict NB"
-                },
-                "algorithmDescription": {
-                    "pt-br": "BHP Predict NB",
-                    "en-US": "BHP Predict NB"
-                },
-                "instanceProperties": {
-                    "profile": "",
-                    "properties": {
-                        "dockerImage": "bhptrainmodelnb/bhppredictnb:1.0.0",
-                        "instanceType": "c1.small"
-                    },
-                    "environments": {}
-                }
-            }
-        ]
-    },
-    "docker": [
-        {
-            "dockerName": "bhptrainmodelnb",
-            "dockerTag": "1.0.0",
-            "gitBranch": "master",
-            "gitPath": "/",
-            "instanceType": "c1.small",
-            "gitDockerfileName": "Dockerfile",
-            "gitRepoUrl": "https://github.com/JuvenalDuarte/bostonhouseprice_jupyter_batchapp"
+  "online": {
+    "processes": [
+      {
+        "name": "boston_house_price_api",
+        "algorithmName": "main",
+        "namespace": "",
+        "algorithmTitle": {
+          "pt-br": "Boston House Price API",
+          "en-US": "Boston House Price API"
         },
-        {
-            "dockerName": "bhptestnb",
-            "dockerTag": "1.0.0",
-            "gitBranch": "master",
-            "gitPath": "/",
-            "instanceType": "c1.small",
-            "gitDockerfileName": "Dockerfile",
-            "gitRepoUrl": "https://github.com/JuvenalDuarte/bostonhouseprice_jupyter_batchapp"
+        "algorithmDescription": {
+          "pt-br": "Boston House Price API",
+          "en-US": "Boston House Price API"
+        },
+        "instanceProperties": {
+          "profile": "",
+          "properties": {
+            "dockerImage": "boston_house_price_api:1.0.0",
+            "instanceType": "c1.small"
+          }
         }
+      }
     ]
+  },
+  "docker": [
+    {
+      "dockerName": "boston_house_price_api",
+      "dockerTag": "1.0.0",
+      "gitBranch": "tutorial-mendes",
+      "gitPath": "/tutorial/Online%20app%20api/",
+      "instanceType": "c1.small",
+      "gitDockerfileName": "Dockerfile", 
+      "gitRepoUrl": "https://github.com/totvslabs/pyCarol.git"
+    }
+  ]
 }
 ```
 
-Check that the predict process is listed in the App:
+To understand which of the manifest's fields please refer to [Manifest file](https://docs.carol.ai/docs/manifest-file)
 
-![manifest.png](res/Predicting/manifest.png)
+Once we have the `manifest.json` ready we need to upload it in our Carol App.
 
-## Building the image
+Firstly, we go to our Carol App page.
 
-For building the image, repeat the same steps performed in the "Training the model" section. Remember that you first need to update the manifest.json file on the Carol App files, then build the correct image.
+![../res/ch6_fig1.png](../res/ch6_fig1.png)
 
-## Running the prediction
+Always make sure that you are in the Developer view.
 
-Running the process is simple, just click the run button.
+![../res/ch6_fig2.png](../res/ch6_fig2.png)
 
-![run1.png](res/Predicting/run1.png)
+In the `Files` section we click on `Upload File` and we choose the `manifest.json` file that we have just created.
 
-You may see the running process in the activities:
+![../res/ch6_fig3.png](../res/ch6_fig3.png)
 
-![run2.png](res/Predicting/run2.png)
+Once the file is uploaded, its name will be presented in the Files.
 
-You can check that the staging table has received all predictions:
+![../res/ch6_fig4.png](../res/ch6_fig4.png)
 
-![send_data1.png](res/Predicting/send_data1.png)
+Now, we can [Build our app](https://docs.carol.ai/docs/building-docker-image-on-carol#carol-app-flow-github).
 
-Then you can check if the data model has also received the predictions and that they are already merged. Please note that it may take a while to the merge to happen, so in the meanwhile you may see the old record plus a pending merge record with your new changes.
+Then, when the build process is complete we can start our app by clicking on `Run` in the `Process` section.
 
-![send_data1.png](res/Predicting/send_data1.png)
+![../res/ch6_fig5.png](../res/ch6_fig5.png)
 
-## Troubleshooting
+The app will remain running until it is stopped by clicking on the `Stop` button.
 
+## Testing our API:
 
-[Go back to main page](../../)
+Since we added a `@requires_auth` decorator in our endpoints we will need to send some kind of authentication information in our request so our api can authenticate us with Carol.
 
-[Go to next chapter](../ch7_user_interface/)
+For a better understanding on how to authenticate with Carol please refer to [Authentication](https://tdn.totvs.com/pages/releaseview.action?pageId=552107176)
+
+Using the record below as the input let's see three different ways of sending a request to our api:
+
+```
+sample = {'age': 82.0,
+ 'b': 232.6,
+ 'chas': 0.0,
+ 'crim': 1.38799,
+ 'dis': 3.99,
+ 'indus': 8.14,
+ 'lstat': 27.71,
+ 'nox': 0.538,
+ 'ptratio': 21.0,
+ 'rad': 4.0,
+ 'rm': 5.95,
+ 'tax': 307.0,
+ 'zn': 0.0}
+```
+
+If your testing your api locally then your URL will be:
+
+```
+url = http://localhost:5000/house_price'
+```
+
+If your api has already been deployed to Carol and you want to test it, then your URL will be the URL presented in the `Services App` (see Figure below).
+
+For instance:
+
+```
+url = https://mltutorial-onlineappapi.apps.carol.ai/house_price'
+```
+
+### 1. Using a Bearer token
+
+```
+headers={'Authorization': <BEARER TOKEN>}
+
+r = requests.post(url, json=sample, headers=headers)
+```
+
+### 2. Using user and password
+
+```
+user = <EMAIL IN CAROL>
+password = <PASSWORD TO LOG IN TO CAROL>
+r = requests.post(url, json=sample, auth=(user, password))
+```
+
+### 2. Using an api key (connector token)
+
+```
+headers={'X-Auth-Key': <API KEY>, 'X-Auth-ConnectorId': <CONNECTOR ID ATTACHED TO THE API KEY>}
+r = requests.post(url, json=sample, headers=headers)
+```

@@ -1,4 +1,4 @@
-FROM totvslabs/pycarol:2.40.0
+FROM python:3.8
 
 RUN mkdir /app
 WORKDIR /app
@@ -7,4 +7,6 @@ RUN pip install -r requirements.txt
 
 ADD . /app
 
-CMD ["runipy", "bhp_predict.ipynb"]
+EXPOSE 5000
+
+CMD gunicorn -c /app/gunicorn.conf.py main:application
