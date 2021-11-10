@@ -98,3 +98,5 @@ The last two tabs, `Process` and `Logs`, are the panels where you can control th
  The section (*1*) on *figure 10* is used for building and releasing your code. This topic is covered in details on [https://docs.carol.ai/docs/carol-app-dev](https://docs.carol.ai/docs/carol-app-dev), but essentially the type of App you are developing will be dependent on how you structure the files on the `Files` panel on section (*2*), After building, Carol will automatically reorganize your admin screen according to the App type: *batch*, *online* or *web*.
 
 An alternative for writing plain code and building an app is to use the `JupyterLab` functionality. When you click on this button, an instance Jupyter Lab will be started on Carol's cloud and you can run your code on a remote machine, The notebooks can be used to simplify prototypes and tests bypassing authentication details, since it is already running on top of your app configurations, and building steps.
+
+[Go back to summary](../../)
