@@ -1,20 +1,18 @@
-# Carol environment: how to get started
+# Online app: Serving requests through a REST API
 
-If you need to know more about the process of creating Apps on Carol please refer to []().
+On the previous chapters we have seen how to work with batch apps, which are used to perform punctual tasks, either by manual or scheduled execution. Carol has a second concept of applications: online apps. 
 
-# Online app
+An online app is a server that runs on top of Carol. By server we mean it keeps running indefinitely until the process is manually stoped, handling requests from different applications / users and returning the processed results according to well established protocols.  In this tutorial we will be covering the creation of an online app API for the BHP problem, to produce house price predictions given user provided house characteristics. The predictions are built through the model trained in the [batch app](../ch5_enhanced_batchapp) chapter.
 
-An online app is a server that runs on top of Carol. In this tutorial we will be covering the creation of an online app api.
+Our online app is created using the [Flask](https://flask.palletsprojects.com/en/2.0.x/) library to help on handling the different REST routes, and [Marshmallow](https://marshmallow.readthedocs.io/en/stable/quickstart.html#) framework to help with object serialization. The [gunicorn server](https://gunicorn.org/) acts as a container for the service, helping on the control of app instances and parallel requests handling, as well as state management and fail recovery. 
 
-Our online app is created using the [Flask](https://flask.palletsprojects.com/en/2.0.x/) and [Marshmallow](https://marshmallow.readthedocs.io/en/stable/quickstart.html#) frameworks and it runs using a [gunicorn server](https://gunicorn.org/).
+On the REST architecture, all the functionalities/ services provided by our app must answer at an URL, an endpoint. Our endpoints allow us to predict a house price by sending in the request some information about the house in question, it also allows us to reload the model in the memory, in case it has been retrained. In short, all the communication happens through POST/GET requests to the endpoints, being the first used when data must be submitted and the second when no extra data is required besides the endpoint. 
 
-On this example we present a simple online app api that loads the Boston House Prices model trained in the [batch app tutorial]().
+The format chosen for communication is JSON, which is used both to pass parameters to requests and the format the results are provided. 
 
-Our endpoints allow us to predict a house price sending in the request some information about the house in question as well as allows us to reload the model loaded in the memory in case it has been retrained.
+# Online app api files structure
 
-# Online app api structure
-
-An online app usually have the follow structure:
+An online app usually have the structure presented below. Some of these files are known from the batch apps we've studied on the previous chapter, some will have small changes and some are now.
 
 ```
 app/
@@ -28,13 +26,12 @@ gunicorn.conf.py
 main.py
 ```
 
-The `main.py` will be the Docker image entrypoint, it is where we create the app and enable the CORS policy so we can make cross-origin AJAX possible.
+Starting with the code itself, the flies on `app/` defines all the business logic and services provided by our API.  In `functions.py` we organize all the classes and methods that we want to use in our api. While in the `routes.py` we write the endpoints (routes) as well as their possible validations. The `main.py` will be the Docker image entrypoint, This file is mostly based on Flask definitions, it enables the CORS policy so we can make cross-origin AJAX possible.
 
-The `app/` folder is where we place our code. In `functions.py` we organize all the classes and methods that we want to use in our api. While in the `routes.py` we write the endpoints (routes) as well as their possible validations.
+The `manifest.json` file is used to build the app on Carol, and it is very similar to the definitions we make for the batch app, the only difference in this case is that we set `instanceProperties/preemptible` to be `False`. If this flag is set to `True` (default), the Carol backend may eventually stop and restart the app on a different virtual machine for resources management, which may possibly lead to high availability issues if the API provides a critical service. For more information about Manifest files please refer to the official Carol [docs]](https://docs.carol.ai/docs/manifest-file).
 
-The necessary packages to our api are saved in a `requirements.txt` file and they will be installed when the Dockerfile is run on the docker build process.
+As we've seen on the previous Apps, the necessary packages to our api are defined in a `requirements.txt` file, they will be installed when the Dockerfile is run on the docker build process. For this example we have the following packages in `requirements.txt`: 
 
-In our case we have these packages in `requirements.txt`:
 ```
 pandas==1.2.5
 flask
@@ -47,12 +44,11 @@ webargs
 sklearn
 ```
 
-With the exception of the sklearn package all the other packages must be used when you are creating an online app.
+> **Note**: With the exception of the sklearn package, all the other packages must be used when you are creating an online app.
 
-The `gunicorn.conf.py` is where we set the [configurations](https://docs.gunicorn.org/en/stable/settings.html#settings) (for instance, number of worker processes, the socket to bind, etc.) for the gunicorn server.
+The `gunicorn.conf.py` is where we set the configurations (for instance, number of worker processes, the socket to bind, etc.) for the gunicorn server. The available parameters on gunicorn are comprehensive, for more information please refer to the official [configurations](https://docs.gunicorn.org/en/stable/settings.html#settings) manual.
 
-`Dockerfile`:
-Our Dockerfile simply copy the files from our repository to a container and install the packages that we have added to `requirements.txt`. Finally, we expose the port 5000 which is the default port for online apps in Carol and we start the gunicorn server.
+On the `Dockerfile` the definitions are pretty similar to the ones on the batch app. We simply copy the files from our repository to a container, install the packages that we have added to `requirements.txt` and finally, we expose the port 5000, which is the default port for online apps in Carol, and we start the gunicorn server. These last two steps are the different ones for from the batch app, and it is how carol distinghishes between an Online and a Batch app.
 
 ```
 FROM python:3.8
@@ -69,124 +65,62 @@ EXPOSE 5000
 CMD gunicorn -c /app/gunicorn.conf.py main:application
 ```
 
-
 This forementioned structure covers much of the cases that you may need. Therefore, we usually only add endpoints to `route.py`, classes and methods to `functions.py` and packages to `requirements.txt`. Keeping the `Dockerfile`, `gunicorn.conf.py`, and `main.py` as they are.
 
-## Setting up a dev environment
+# Code: defining service routes
 
-When Carol runs a process, it injects into the Docker container some environment variables that will be read when we call:
-```
-login = Carol()
-```
-
-When running our app locally we have to inject these variables ourselves.
-
-For that, we create an .env file with the following content:
+The heart of our online app, with the business logic, is defined on `route.py`, this file get as complex as the number of services and their own complexity. Every service is implemented as an anotated function, as in the example below:
 
 ```
-# datascience.carol.ai/mltutorial
-CAROLAPPNAME=bhponlineapp
-CAROLAPPOAUTH=<put your token here>
-CAROLCONNECTORID=d69c6f0ea6334838a75a38b543c0214b
-CAROLORGANIZATION=datascience
-CAROLTENANT=mltutorial
-ALGORITHM_NAME=bhponlineapp
+@server_bp.route('/house_price', methods=['POST'])
+@requires_auth
+def house_price():
 ```
 
-CAROLAPPNAME: the name of the app created in Carol. To see how you can create an app in Carol please refer to [Creating a Carol App]().
+The `@server_bp.route` annotation describes to Flask on which endpoint the code implemented on the function below will respond, as well as which type of requests it is allowed to answer, POST in this case. The `@requires_auth` decorator sinalise to Flask that this functionality is dependent on authentication, which is a pre-requisite. The code that follows is nothing but the function definition itself, with all the logic we want to be executed.
 
-CAROLAPPOAUTH: the api key (access token) created in Carol. To see how you can create an api key please refer to [Generating an access token](https://tdn.totvs.com/pages/releaseview.action?pageId=552107176#id-2.Autentica%C3%A7%C3%A3o-ConnectorToken(APIKey)).
-
-CAROLCONNECTORID: the connector id attached to the api key added in CAROLAPPOAUTH.
-
-CAROLORGANIZATION: the name of the organization in which your app has been created.
-
-CAROLTENANT: the name of the environment in which your app has been created.
-
-
-## Running our app locally
-
-Carol runs its apps inside Docker containers for that we need to have built images created from our app code.
-
-When we want to run our app locally and simulate what Carol does in the real scenario we use the following docker commands:
-
-### Building the docker image:
-
-It creates a docker image using the recipe we have created in our Dockerfile.
-
-We build an image by running:
+As a POST endpoint, we must be prepared to receive and process parameters. Flask helps us with this through the `webargs` class: every parameter is defined as an entry on the `query_arg` dict, giving its type, decription, validation function and telling wether it is mandatory or optional. Once the dict with expected parameters is defined, we look for these parameters on the requests by calling `parser.parse(query_arg, request)`.
 
 ```
-docker build -t <docker name> .
-```
-
-In `<docker name>` you can add any name that relates to your app.
-
-In the real scenario this process happens when we Build a Carol app.
-
-### Building the docker image:
-
-It runs the docker image created in the previous step.
-
-We run an image by running:
-
-```
-docker run --rm -it -p 5000:5000 --env-file .env <docker name>
-```
-
-In `<docker name>` you need to call the same name defined in the build process.
-
-Here we use the `.env` file that simulates the injection of enviroment variables.
-
-In the real scenario this process happens when we Run a process in a Carol app.
-
-## Deploying our app in Carol
-
-To deploy our app in Carol we first need to create a `manifest.json` file
-
-The `manifest.json` for an online app follows the structure:
-
-```
-{
-  "online": {
-    "processes": [
-      {
-        "name": "boston_house_price_api",
-        "algorithmName": "main",
-        "namespace": "",
-        "algorithmTitle": {
-          "pt-br": "Boston House Price API",
-          "en-US": "Boston House Price API"
-        },
-        "algorithmDescription": {
-          "pt-br": "Boston House Price API",
-          "en-US": "Boston House Price API"
-        },
-        "instanceProperties": {
-          "profile": "",
-          "properties": {
-            "dockerImage": "boston_house_price_api:1.0.0",
-            "instanceType": "c1.small"
-          }
-        }
-      }
-    ]
-  },
-  "docker": [
-    {
-      "dockerName": "boston_house_price_api",
-      "dockerTag": "1.0.0",
-      "gitBranch": "tutorial-mendes",
-      "gitPath": "/tutorial/Online%20app%20api/",
-      "instanceType": "c1.small",
-      "gitDockerfileName": "Dockerfile", 
-      "gitRepoUrl": "https://github.com/totvslabs/pyCarol.git"
-    }
-  ]
+query_arg = {
+    "crim": fields.Float(required=True, validate=validate_numbers,
+        description='Per capita crime rate by town.'),
+    "zn": fields.Float(required=True, validate=validate_numbers,
+        description='Proportion of residential land zoned for lots over 25,000 sq.ft.'),
+...
+    "rad": fields.Integer(required=True, validate=validate_numbers, 
+        description='Full-value property-tax rate per $10,000.'),
+    "tax": fields.Float(required=True, validate=validate_numbers, 
+        description='Proportion of residential land zoned for lots over 25,000 sq.ft.'),
+    "ptratio": fields.Float(required=True, validate=validate_numbers, 
+        description='Pupil-teacher ratio by town 12. B: 1000(Bk−0.63)2 where Bk is the proportion of blacks by town 13. LSTAT: % lower status of the population.'),
+    "b": fields.Float(required=True, validate=validate_numbers, 
+        description='1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town.'),
+    "lstat": fields.Float(required=True, validate=validate_numbers, 
+        description=r'% lower status of the population.'),
 }
+
+# When parsing the request we validate its inputs and the values sent by the api consumer is stored in a dictionary, which here we call args.
+args = parser.parse(query_arg, request)
 ```
 
-To understand which of the manifest's fields please refer to [Manifest file](https://docs.carol.ai/docs/manifest-file)
+After we implement all the business logic, we need to return the results to the user. The results are passed simply by calling the `jsonify` function from flask over a dict containing the desired features.
+
+```
+return jsonify({'price': price})
+```
+
+Another interesting decoration offered by Flask is the errorhanddler, which helps handling situations when the server goes to unexpected states. On the example below we define a routine to handle both HTTP 422 and 400 errors.
+
+```
+@server_bp.errorhandler(422)
+@server_bp.errorhandler(400)
+def handle_error(err):
+```
+
+The same logic examplified here can be extended to produce as many services on your app.
+
+# Deploying the Online App
 
 Once we have the `manifest.json` ready we need to upload it in our Carol App.
 
@@ -214,13 +148,11 @@ Then, when the build process is complete we can start our app by clicking on `Ru
 
 The app will remain running until it is stopped by clicking on the `Stop` button.
 
-## Testing our API:
+# Testing our API:
 
-Since we added a `@requires_auth` decorator in our endpoints we will need to send some kind of authentication information in our request so our api can authenticate us with Carol.
+Since we added a `@requires_auth` decorator in our endpoints we will need to send some kind of authentication information in our request so our api can authenticate us with Carol. For a better understanding on how to authenticate with Carol please refer to [Authentication](https://tdn.totvs.com/pages/releaseview.action?pageId=552107176)
 
-For a better understanding on how to authenticate with Carol please refer to [Authentication](https://tdn.totvs.com/pages/releaseview.action?pageId=552107176)
-
-Using the record below as the input let's see three different ways of sending a request to our api:
+Using the record below as the input, let's see three different ways of sending a request to our api:
 
 ```
 sample = {'age': 82.0,
@@ -238,7 +170,7 @@ sample = {'age': 82.0,
  'zn': 0.0}
 ```
 
-If your testing your api locally then your URL will be:
+If your testing your api locally (see how to do it on the [appendix](../ch8_appendix/)), then your URL will be:
 
 ```
 url = http://localhost:5000/house_price'
@@ -252,7 +184,9 @@ For instance:
 url = https://mltutorial-onlineappapi.apps.carol.ai/house_price'
 ```
 
-### 1. Using a Bearer token
+The options are:
+
+- **Using a Bearer token**:
 
 ```
 headers={'Authorization': <BEARER TOKEN>}
@@ -260,7 +194,7 @@ headers={'Authorization': <BEARER TOKEN>}
 r = requests.post(url, json=sample, headers=headers)
 ```
 
-### 2. Using user and password
+- **Using user and password**:
 
 ```
 user = <EMAIL IN CAROL>
@@ -268,9 +202,13 @@ password = <PASSWORD TO LOG IN TO CAROL>
 r = requests.post(url, json=sample, auth=(user, password))
 ```
 
-### 2. Using an api key (connector token)
+- **Using an api key (connector token)**:
 
 ```
 headers={'X-Auth-Key': <API KEY>, 'X-Auth-ConnectorId': <CONNECTOR ID ATTACHED TO THE API KEY>}
 r = requests.post(url, json=sample, headers=headers)
 ```
+
+[Go back to main page](../../)
+
+[Go to next chapter](../ch7_user_interface/)

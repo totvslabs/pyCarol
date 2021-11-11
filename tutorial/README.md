@@ -27,3 +27,5 @@ We hope this tutorial brings you up to speed and help you build powerfull tools 
 [6. The Prediction API](chapters/ch6_online_api/)
 
 [7. Building a simple UI](chapters/ch7_user_interface/)
+
+[7. Appendix](chapters/ch8_appendix/)
