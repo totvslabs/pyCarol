@@ -29,11 +29,11 @@
     {
       "dockerName": "online_app_ui",
       "dockerTag": "1.0.0",
-      "gitBranch": "tutorial-mendes",
-      "gitPath": "/tutorial/online_app_ui/",
+      "gitBranch": "master",
+      "gitPath": "/tutorial/chapters/ch7_user_interface/",
       "instanceType": "c1.nano",
       "gitDockerfileName": "Dockerfile", 
-      "gitRepoUrl": "https://github.com/totvslabs/pyCarol"
+      "gitRepoUrl": "https://github.com/totvslabs/pyCarol.git"
     }
   ]
 }

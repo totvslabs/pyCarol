@@ -30,10 +30,10 @@
       "dockerName": "bhptrainmodelnb",
       "dockerTag": "1.0.0",
       "gitBranch": "master",
-      "gitPath": "/",
+      "gitPath": "/tutorial/chapters/ch4_basic_batchapp/",
       "instanceType": "c1.small",
       "gitDockerfileName": "Dockerfile", 
-      "gitRepoUrl": "https://github.com/JuvenalDuarte/bostonhouseprice_jupyter_batchapp"
+      "gitRepoUrl": "https://github.com/totvslabs/pyCarol.git"
     }
   ]
 }

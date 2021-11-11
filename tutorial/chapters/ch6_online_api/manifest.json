@@ -17,6 +17,7 @@
           "profile": "",
           "properties": {
             "dockerName": "boston_house_price_api",
+            "preemptible": false,
             "instanceType": "c1.small"
           }
         }
@@ -27,8 +28,8 @@
     {
       "dockerName": "boston_house_price_api",
       "dockerTag": "1.0.0",
-      "gitBranch": "tutorial-mendes",
-      "gitPath": "/tutorial/online_app_api/",
+      "gitBranch": "master",
+      "gitPath": "/tutorial/chapters/ch6_online_api/",
       "instanceType": "c1.small",
       "gitDockerfileName": "Dockerfile", 
       "gitRepoUrl": "https://github.com/totvslabs/pyCarol.git"

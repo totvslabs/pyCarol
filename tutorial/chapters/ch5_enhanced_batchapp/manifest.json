@@ -31,11 +31,11 @@
     {
       "dockerName": "bhptrainmodellg",
       "dockerTag": "1.0.0",
-      "gitBranch": "tutorial",
-      "gitPath": "/tutorial/code/checkpoint3/",
+      "gitBranch": "master",
+      "gitPath": "/tutorial/chapters/ch5_enhanced_batchapp/",
       "instanceType": "c1.small",
       "gitDockerfileName": "Dockerfile", 
-      "gitRepoUrl": "https://github.com/totvslabs/pyCarol"
+      "gitRepoUrl": "https://github.com/totvslabs/pyCarol.git"
     }
   ]
 }
