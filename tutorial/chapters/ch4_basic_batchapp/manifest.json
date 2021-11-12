@@ -1,0 +1,39 @@
+{
+  "batch": {
+    "processes": [
+      {
+        "name": "bhptrainmodelnb",
+        "algorithmName": "main",
+        "namespace": "",
+        "algorithmTitle": {
+          "pt-br": "BHP Train Model NB",
+          "en-US": "BHP Train Model NB"
+        },
+        "algorithmDescription": {
+          "pt-br": "BHP Train Model NB",
+          "en-US": "BHP Train Model NB"
+        },
+        "instanceProperties": {
+          "profile": "",
+          "properties": {
+            "dockerName": "bhptrainmodelnb",
+            "instanceType": "c1.small"
+          },
+          "environments": {
+          }
+        }
+      }
+    ]
+  },
+  "docker": [
+    {
+      "dockerName": "bhptrainmodelnb",
+      "dockerTag": "1.0.0",
+      "gitBranch": "master",
+      "gitPath": "/tutorial/chapters/ch4_basic_batchapp/",
+      "instanceType": "c1.small",
+      "gitDockerfileName": "Dockerfile", 
+      "gitRepoUrl": "https://github.com/totvslabs/pyCarol.git"
+    }
+  ]
+}

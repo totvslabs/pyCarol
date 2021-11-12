@@ -1,0 +1,38 @@
+{
+  "online": {
+    "processes": [
+      {
+        "name": "boston_house_price_api",
+        "algorithmName": "main",
+        "namespace": "",
+        "algorithmTitle": {
+          "pt-br": "Boston House Price API",
+          "en-US": "Boston House Price API"
+        },
+        "algorithmDescription": {
+          "pt-br": "Boston House Price API",
+          "en-US": "Boston House Price API"
+        },
+        "instanceProperties": {
+          "profile": "",
+          "properties": {
+            "dockerName": "boston_house_price_api",
+            "preemptible": false,
+            "instanceType": "c1.small"
+          }
+        }
+      }
+    ]
+  },
+  "docker": [
+    {
+      "dockerName": "boston_house_price_api",
+      "dockerTag": "1.0.0",
+      "gitBranch": "master",
+      "gitPath": "/tutorial/chapters/ch6_online_api/",
+      "instanceType": "c1.small",
+      "gitDockerfileName": "Dockerfile", 
+      "gitRepoUrl": "https://github.com/totvslabs/pyCarol.git"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "batch": {
+    "processes": [
+      {
+        "name": "bhptrainmodellg",
+        "algorithmName": "main",
+        "namespace": "",
+        "algorithmTitle": {
+          "pt-br": "BHP Train Model LG",
+          "en-US": "BHP Train Model LG"
+        },
+        "algorithmDescription": {
+          "pt-br": "BHP Train Model LG",
+          "en-US": "BHP Train Model LG"
+        },
+        "instanceProperties": {
+          "profile": "",
+          "properties": {
+            "dockerName": "bhptrainmodellg",
+            "instanceType": "c1.small"
+          },
+          "environments": {
+            "ENV": "PROD",
+            "LOCALSCHEDULER": "True"
+          }
+        }
+      }
+    ]
+  },
+  "docker": [
+    {
+      "dockerName": "bhptrainmodellg",
+      "dockerTag": "1.0.0",
+      "gitBranch": "master",
+      "gitPath": "/tutorial/chapters/ch5_enhanced_batchapp/",
+      "instanceType": "c1.small",
+      "gitDockerfileName": "Dockerfile", 
+      "gitRepoUrl": "https://github.com/totvslabs/pyCarol.git"
+    }
+  ]
+}
