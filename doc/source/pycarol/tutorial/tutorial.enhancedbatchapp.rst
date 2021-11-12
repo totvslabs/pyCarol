@@ -10,7 +10,7 @@ may include much more complex task pipelines.
 If we look back to our previous code we can identify at least three
 different steps:
 
-1. **Data ingestion**: We need to download the records from carol to
+1. **Data ingestion**: We need to download the records from Carol to
    train/ validate the model.
 2. **Model training**: We use the data to train the model.
 3. **Model evaluation**: We generate basic metrics for our new model
@@ -20,7 +20,7 @@ different steps:
     given that **Model evaluation** depends both on the **Data
     ingestion** and **Model training**.
 
-Once these tasks are split and chained, it becomes easiear to debug
+Once these tasks are split and chained, it becomes easier to debug
 which parts of the process went well, where it crashed and which steps
 are still pending. The main goal of the Luigi package (see docs
 `here <https://luigi.readthedocs.io/en/stable/>`__) is to orchestrate
@@ -67,10 +67,10 @@ logic is fairly simple, we can implement it directly on the flow source
 files.
 
     The name of these folders are free of choice, but this is the naming
-    convetion along TOTVS Labs apps.
+    convention along TOTVS Labs apps.
 
 Organizing the code we should have something like the structure
-presented below. Appart from the main tasks' source code we need to have
+presented below. Apart from the main tasks' source code we need to have
 the ```init.py`` <http://init.py>`__ files, to make sure code from
 different files can be shared, also we add the ``commons.py`` to handle
 all the App parameters and constants. We also added another task,
@@ -90,7 +90,7 @@ all the App parameters and constants. We also added another task,
     /app/functions/**init**.py
 
 The full source code is available at
-`this <https://github.com/totvslabs/pyCarol/tree/tutorial/tutorial/code/checkpoint3>`__
+`this <https://github.com/totvslabs/pyCarol/tree/master/tutorial/chapters/ch5_enhanced_batchapp>`__
 github link, but a few snippets are worth being explained further. We
 will have a look at them at the following chapters.
 
@@ -221,8 +221,9 @@ A couple of things to pay special attention at the code:
    will be made available for the following tasks as well. Notice that
    in the example we use ``PickleTarget``, which works for most of the
    situations, but if the output variables are not serializable, or have
-   more efficient ways of doing it, have a look at the suported target
-   types provided by Luigi.
+   more efficient ways of doing it, have a look at the 
+   `suported target types <https://luigi.readthedocs.io/en/stable/workflows.html>`__ 
+   provided by Luigi.
 -  If parameters are defined on the ``commons.py`` source we can load
    them through ``luigi.Parameter()`` command (different data formats
    are available, refer to the
@@ -336,6 +337,5 @@ The final directory structure should be:
     [run.py](http://run.py/)
 
 The deploy follows the same steps described on the minimal batch app.
-The final project is available on github:
-
-https://github.com/totvslabs/pyCarol/tree/master/tutorial/chapters/ch5_enhanced_batchapp.
+The final project is available on 
+`github <https://github.com/totvslabs/pyCarol/tree/master/tutorial/chapters/ch5_enhanced_batchapp>`__.

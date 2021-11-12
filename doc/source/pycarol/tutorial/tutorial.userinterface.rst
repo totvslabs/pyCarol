@@ -4,7 +4,7 @@ Online app: Building a simple GUI with Streamlit
 On the previous chapter we've seen how to create an online app to
 respond to POST and GET requests, through a REST architecture and JSON
 communication pattern. On this chapter we will see how make a simple web
-interface to make the user interaction more pleasent.
+interface to make the user interaction more pleasant.
 
 This online app is powered by the `streamlit <https://streamlit.io/>`__
 library, which is a framework for easily create web apps based on data.
@@ -64,9 +64,8 @@ description to the user.
 Next we add a form so that the user is able to fill all attributes for
 the house he wants to evaluate. Notice that first we create a form, then
 we add all the input fields and finally we add a submit button. A
-``form`` is a particular component on streamlit that allows to freeze
-the execution until the submit button is trigered, only then code
-following will be executed.
+``form`` is a particular component on streamlit that freezes the execution 
+until the submit button is triggered, only then the code following will be executed.
 
 ::
 

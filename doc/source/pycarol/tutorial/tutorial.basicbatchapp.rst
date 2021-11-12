@@ -4,7 +4,7 @@ Training the model: a minimal batch app
 Now that we have our data ready, the next goal is to setup a process to
 fetch the records, train and evaluate a regression model and deploy it
 to perform predictions. In this chapter we will review how to create a
-bare minimal app to do it using a jupyter notebook, also covering how to
+bare minimal app to do it using a Jupyter notebook, also covering how to
 deploy the notebook in docker container to have an executable app.
 
 Writing the notebook
@@ -61,7 +61,7 @@ latest parameters available to the function are up to date in the code
                                                              cds=True,
                                                              columns=roi_cols)
 
-In this example we use a very simple training process just ot ilustrate
+In this example we use a very simple training process just to ilustrate
 the goal: split the data into a training and testing parts and fit a
 Multilayer Perceptron (MLPRegressor), with default parameters, on the
 training set.
@@ -180,7 +180,7 @@ The whole code is available at `this <https://github.com/totvslabs/pyCarol/tree/
 Files for the batch app
 -----------------------
 
-Appart from the code, there are a couple of other files which we need to
+Apart from the code, there are a couple of other files which we need to
 revise to be able to build our app inside Carol, they are:
 
 -  *requirements.txt*: This file is nothing but a list of modules used
@@ -191,7 +191,7 @@ revise to be able to build our app inside Carol, they are:
 
 Starting with *requirements.txt*, we want to fill it with the python
 modules on the list below. During the build docker will asure we have
-these libs are installed on the environment, you can also enforce the
+these libs installed on the environment, you can also enforce the
 lib version as in ``pandas==1.2.5``. This is a way of fixing problems
 with new releases and grant the app behaves the same way no matter which
 environment it is deployed.
@@ -235,14 +235,14 @@ needed to build our app. The fields are:
 
 -  ``dockerName``: The name of the docker container where the code is
    going to run. For convention we set it as the same name in
-   ``batch/process/name``, lowercased and without spaces or scpecial
+   ``batch/process/name``, lowercased and without spaces or special
    characters.
 -  ``dockerTag``: Used for version control.
 -  ``gitRepoUrl``: To build the app all the files need to be placed at a
    version control repository. The link to the repository must be
    provided in this field.
 -  ``gitBranch``: The version control branch where the files resides.
--  ``gitPath``: Use ``/`` when the app files are on the root path or the
+-  ``gitPath``: Use ``/`` when the Dockerfile is on the root path or the
    corresponding path otherwise.
 -  ``instanceType``: The cloud machine used to build the code.
 -  ``gitDockerfileName``: The docker file name on your repository.
@@ -356,14 +356,14 @@ Troubleshooting
 Below are are presented some well known problems when developing/
 deploying Carol Apps:
 
--  **``instanceType`` not big enough**: Correctly sizing resources is
+-  **``instanceType`` is not big enough**: Correctly sizing resources is
    essential to control costs when running apps. On the other hand, if
    the process is memory or CPU intensive, your process may run out of
    resources either on build or on execution. For the build it is common
    to run out of memory if dependencies include heavy packages, such as
    pytorch, requiring at least ``c1.small`` (5Gb RAM).
 -  **Wrong ``gitRepoUrl``, ``gitBranch`` or ``gitPath``**: When handling
-   big repositories you can easially get confused and end up building
+   big repositories you can easily get confused and end up building
    the wrong version of your code. Another subtle problem is that recent
    github repositories use ``master`` to refer to the head branch, while
    old ones refer as ``main``.
@@ -371,7 +371,7 @@ deploying Carol Apps:
    libs as on local tests**: We often run on the situation where tests
    work fine on the local machine, but fails when running it remotely.
    Docker containers aim to help with such problems, but to do so the
-   build process must be well defined. If your are reading any file from
+   build process must be well defined. If you are reading any file from
    your local disk, make sure this file is also deployed together on
    your build. If you are using a lib with constant updates, make sure
    to explicitly set the lib version on your requirements to the same

@@ -134,7 +134,7 @@ Code: defining service routes
 
 The heart of our online app, with the business logic, is defined on
 ``route.py``, this file get as complex as the number of services and
-their own complexity. Every service is implemented as an anotated
+their own complexity. Every service is implemented as an annotated
 function, as in the example below:
 
 ::
@@ -154,7 +154,7 @@ logic we want to be executed.
 As a POST endpoint, we must be prepared to receive and process
 parameters. Flask helps us with this through the ``webargs`` class:
 every parameter is defined as an entry on the ``query_arg`` dict, giving
-its type, decription, validation function and telling wether it is
+its type, description, validation function and telling whether it is
 mandatory or optional. Once the dict with expected parameters is
 defined, we look for these parameters on the requests by calling
 ``parser.parse(query_arg, request)``.

@@ -10,12 +10,12 @@ noticed.
 
 -  **A**: The URL is composed by the ``organization level id`` followed
    by ``.carol.ai``, then appended with the ``environment id``. The
-   working environment will also the be shown on **B**.
+   working environment will also be shown on **B**.
 -  **C**: The left panel shows the different components available on
    Carol. On this tutorial we will be be focusing mostly on
    ``Connectors``, ``Data Models`` and ``Carol Apps``.
--  **D**: On this pop-up you have the user and environement admin
-   configurations. Through this drop down you can, for example, revise
+-  **D**: On this pop-up you have the user and environment admin
+   configurations. Through this dropdown you can, for example, revise
    access tokens defined on the environment. This topic is covered later
    on this document.
 
@@ -23,18 +23,18 @@ noticed.
    :alt: ../../imgs/tutorial_ch1\_fig1.png
 Figure 1: Welcome screen on Carol
 
-Further material on each of the individual components can be found on on
+Further material on each of the individual components can be found on
 the official documentation: https://docs.carol.ai/docs.
 
 Creating a connector to store your data
 ---------------------------------------
 
 Even though it is not mandatory, it is a good practice to load your
-dataset into the Carol Platform. Once on carol, the data can be easilly
+dataset into the Carol Platform. Once on carol, the data can be easily
 integrated, transformed, validated and consumed by your Carol Apps.
 
 Carol organizes its datasets in **connectors**. Connectors can be viewed
-as a parallel for databases on convetional SGBDs, or as sheets on
+as a parallel for databases on conventional SGBDs, or as sheets on
 spreadsheets softwares. Inside the connectors you can store data in one
 or more **stagings**, where the actual tabular data will reside. These
 components are further described on https://docs.carol.ai/docs.
@@ -47,7 +47,7 @@ button (see figure 2).
    :alt: ../../imgs/tutorial_ch1\_fig2.png
 Figure 2: Openning the create connector wizard.
 
-The platform will conduct you through an wizard process, where you first
+The platform will conduct you through a wizard process, where you first
 need to set the name of your project (figure 3).
 
 .. figure:: ../../imgs/tutorial_ch1_fig3.png
@@ -58,8 +58,8 @@ The following step is to choose which technology will be used to fetch
 your data from the source systems. There are several connector types
 available for your choice, and even new ones can be configured depending
 on the project. For this simple exercise we will manage the data
-ingestion through external code, using the PyCarol python library,
-therefore we can proceed by selecting the ``Custom`` connector type
+ingestion through external code, using the PyCarol python library.
+Therefore we can proceed by selecting the ``Custom`` connector type
 (figure 4).
 
 .. figure:: ../../imgs/tutorial_ch1_fig4.png
@@ -69,18 +69,18 @@ Figure 4: All connector types available on Carol platform to the moment.
 The following two steps you need to set a label for your connector
 (figure 5) and then confirm its creation (figure 6). It is a good
 practice to avoid spaces when setting the connector name, which can be
-accomplished by using *snake cased* (ex.: Bostom\_House\_Prices) or
-*pascal cased* (ex.: BostomHousePrices) names.
+accomplished by using *snake case* (ex.: Bostom\_House\_Prices) or
+*pascal case* (ex.: BostomHousePrices) names.
 
 .. figure:: ../../imgs/tutorial_ch1_fig5.png
    :alt: ../../imgs/tutorial_ch1\_fig5.png
-Figure 5: Naming your connector
+Figure 5: Naming your connector.
 
 .. figure:: ../../imgs/tutorial_ch1_fig6.png
    :alt: ../../imgs/tutorial_ch1\_fig6.png
-Figure 6: Confirming the creation of your new connector
+Figure 6: Confirming the creation of your new connector.
 
-Now your connector has been created and is ready to receive data. If
+Now your connector has been created and it is ready to receive data. If
 your data is complex enough, it may be worth spliting on different
 connectors or stagings and joined together later through a data model.
 In general tables from the same data source should be stored under the
@@ -96,7 +96,7 @@ to be able to do so we first need to create an access token to the
 environment. The access token sets the security level to asure only
 authorized applications can interact with your environment and data.
 
-On the user / environment configurations drop down, on the top right,
+On the user / environment configurations dropdown, on the top right,
 click on ``Environment Admin``. Now select the ``Tokens`` sheet and the
 click on the ``Create token`` button. The steps are ilustrated on figure
 7.
@@ -114,7 +114,7 @@ available anymore.
 
 .. figure:: ../../imgs/tutorial_ch1_fig8.png
    :alt: ../../imgs/tutorial_ch1\_fig8.png
-Figure 8: Revising the generated token
+Figure 8: Revising the generated token.
 
 If for any reason the access ``Token`` is lost, it is recommended to
 revoke and create a new one in sequence.
@@ -135,7 +135,7 @@ that case contact you administrator and ask for the permission.
 
 .. figure:: ../../imgs/tutorial_ch1_fig9.png
    :alt: ../../imgs/tutorial_ch1\_fig9.png
-Figure 9: Creating an Carol App
+Figure 9: Creating an Carol App.
 
 After clicking on ``Create a new App`` you will be prompted with a
 couple of infos to be filled:
@@ -164,8 +164,8 @@ you deploy your app to other environments.
 The last two tabs, ``Process`` and ``Logs``, are the panels where you
 can control the execution of your App and check for debug information.
 On ``Process`` your can either make a single execution (or schedule
-recurrent ones) for online batches or you can start a server process for
-online and web Apps. The logs are always presented time ordered on the
+recurrent ones) for batch apps or you can start a server process for
+online and web apps. The logs are always presented time ordered on the
 ``Logs`` panel.
 
 The section (*1*) on *figure 10* is used for building and releasing your
@@ -175,10 +175,3 @@ App you are developing will be dependent on how you structure the files
 on the ``Files`` panel on section (*2*), After building, Carol will
 automatically reorganize your admin screen according to the App type:
 *batch*, *online* or *web*.
-
-An alternative for writing plain code and building an app is to use the
-``JupyterLab`` functionality. When you click on this button, an instance
-Jupyter Lab will be started on Carol's cloud and you can run your code
-on a remote machine, The notebooks can be used to simplify prototypes
-and tests bypassing authentication details, since it is already running
-on top of your app configurations, and building steps.

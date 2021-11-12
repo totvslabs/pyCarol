@@ -45,7 +45,7 @@ Mapping data from the staging to the model
 So far our **model** and our **staging** are distinct entities inside
 Carol. To complete our data flow we need to create a mapping rule in
 order to the data to flow from the staging to the data model. There are
-different ways of doing it, a straight forward one is by clicking on the
+different ways of doing it, a straightforward  one is by clicking on the
 Connector icon in the left panel, then on the name of the source staging
 and then on ``Map & Cleanse`` button (*figure 15*).
 
@@ -73,13 +73,13 @@ case we will create it from scratch with the
    :alt: ../../imgs/tutorial_ch3\_fig6.png
 Figure 17: Choosing the mapping rules input type.
 
-The mappings need to be added one by one, by clicking the the ``Edit``
+The mappings need to be added one by one, by clicking the ``Edit``
 button. The interface already splits the list of mapped and unmapped
 fields to facilitate the linkage process (*figure 18*).
 
 .. figure:: ../../imgs/tutorial_ch3_fig7.png
    :alt: ../../imgs/tutorial_ch3\_fig7.png
-Figure 18: Linking the data model fields to the staging columns
+Figure 18: Linking the data model fields to the staging columns.
 
 After the mapping is completed you can click on the ``Publish`` button
 to start the data flow. Carol backend runs storage optimizations behind
