@@ -12,6 +12,7 @@ pyCarol
     pipeline
     tools
     auth
+    tutorial
 
 .. autosummary::
     :toctree: generated
