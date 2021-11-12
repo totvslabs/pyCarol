@@ -1,6 +1,6 @@
 # Introduction
 
-# Carol environment: how to get started
+## Carol environment: how to get started
 
 On your first access to the Carol environment you will be presented to the screen on Figure 1. On the picture there are several elements to be noticed. 
 
@@ -14,7 +14,7 @@ Figure 1: Welcome screen on Carol
 
 Further material on each of the individual components can be found on on the official documentation: [https://docs.carol.ai/docs](https://docs.carol.ai/docs). 
 
-# Creating a connector to store your data
+## Creating a connector to store your data
 
 Even though it is not mandatory, it is a good practice to load your dataset into the Carol Platform. Once on carol, the data can be easilly integrated, transformed, validated and consumed by your Carol Apps.
 
@@ -50,7 +50,7 @@ Figure 6: Confirming the creation of your new connector
 
 Now your connector has been created and is ready to receive data. If your data is complex enough, it may be worth spliting on different connectors or stagings and joined together later through a data model. In general tables from the same data source should be stored under the same connector but in different stagings. When handling multiple data sources different connectors should be used.
 
-# Generating an access token
+## Generating an access token
 
 For most of the steps on the tutorial we will be accessing the Carol environment not through the GUI, but through scripts and code. In order to be able to do so we first need to create an access token to the environment. The access token sets the security level to asure only authorized applications can interact with your environment and data. 
 
@@ -68,7 +68,7 @@ Figure 8: Revising the generated token
 
 If for any reason the access `Token` is lost, it is recommended to revoke and create a new one in sequence.
 
-# Creating your first Carol App
+## Creating your first Carol App
 
 Carol Apps gives you the flexibility to implement different types of applications to interact with your data,  providing useful solutions for your business. When we create an app inside Carol, the platform will create all the necessary backend in order to be able to run your code.
 

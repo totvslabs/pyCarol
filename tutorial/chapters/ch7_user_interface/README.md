@@ -1,20 +1,12 @@
-# Carol environment: how to get started
+# Online app: Building a simple GUI with Streamlit
 
-If you need to know more about the process of creating Apps on Carol please refer to []().
+On the previous chapter we've seen how to create an online app to respond to POST and GET requests, through a REST architecture and JSON communication pattern. On this chapter we will see how make a simple web interface to make the user interaction more pleasent. 
 
-# Online app
+This online app is powered by the [streamlit](https://streamlit.io/) library, which is a framework for easily create web apps based on data. With Streamlit we will build a form interface that, once submited, the form data is packed, evaluated by the model and then the result (the house price prediction) is presented to the user.
 
-An online app is a server that runs on top of Carol. In this tutorial we will be covering the creation of an online app with a user interface.
+## Online app api files structure
 
-Our online app is created using [streamlit](https://streamlit.io/), which is framework for easily create web apps based on data.
-
-On this example we present a simple online app UI that loads the Boston House Prices model trained in the [batch app tutorial]().
-
-Our UI allow us to add all information from a house and it presents a price for that house predicted by our model.
-
-# Online app UI structure
-
-An online app UI usually have the follow structure:
+For this example we will use the files below. The `manifest.json` will follow the same configuration as the previous Online App, the `requirements.txt` will also be very similar, but with less dependencies and adding `streamlit` lib on it.
 
 ```
 app.py
@@ -23,93 +15,60 @@ manifest.json
 requirements.txt
 ```
 
-The `app.py` will be the Docker image entrypoint, it is where we create the web app using streamlit.
-
-The necessary packages to our api are saved in a `requirements.txt` file and they will be installed when the Dockerfile is run on the docker build process.
-
-`Dockerfile`:
-Our Dockerfile simply copy the files from our repository to a container and install the packages that we have added to `requirements.txt`. Finally, we expose the port 5000 which is the default port for online apps in Carol and we start the streamlit server.
+The `app.py` will be the Docker image entrypoint, it is where we create the web app using streamlit. The `Dockerfile` is close to the one generated for the Online API, the only difference is the `CMD` command, which now launches our App with the `streamlit run` command.
 
 ```
-FROM python:3.8
-
-RUN mkdir /app
-WORKDIR /app
-ADD requirements.txt /app/
-RUN pip install -r requirements.txt
-
-ADD . /app
-
+...
 EXPOSE 5000
-
 CMD streamlit run --server.port 5000 app.py
 ```
 
-
 This forementioned structure covers much of the cases that you may need. Therefore, we usually only add our logic to `app.py`, and packages to `requirements.txt`. Keeping the `Dockerfile` as it is.
 
-## Setting up a dev environment
+## Code: Streamlit basics
 
-When Carol runs a process, it injects into the Docker container some environment variables that will be read when we call:
-```
-login = Carol()
-```
+Streamlit provides a very simple way to create graphical interfaces: you just need to instantiate classes for the desired components and configure its parameters. Once the parameters are in place, every user interaction will triger the whole script to be reexecuted.
 
-When running our app locally we have to inject these variables ourselves.
-
-For that, we create an .env file with the following content:
+The code below simply adds a header to our web page and provides a brief description to the user.
 
 ```
-# datascience.carol.ai/mltutorial
-CAROLAPPNAME=bhponlineapp
-CAROLAPPOAUTH=<put your token here>
-CAROLCONNECTORID=d69c6f0ea6334838a75a38b543c0214b
-CAROLORGANIZATION=datascience
-CAROLTENANT=mltutorial
-ALGORITHM_NAME=bhponlineapp
+# Add title on the page.
+st.title("Boston House Prices")
+
+# Add a text in our page.
+st.write("Here, we can help you to find at what price it's recommended that you sell home.")
 ```
 
-CAROLAPPNAME: the name of the app created in Carol. To see how you can create an app in Carol please refer to []()
-CAROLAPPOAUTH: the api key (access token) created in Carol. To see how you can create an api key please refer to [Generating an access token]()
-CAROLCONNECTORID: the connector id attached to the api key added in CAROLAPPOAUTH.
-CAROLORGANIZATION: the name of the organization in which your app has been created.
-CAROLTENANT: the name of the environment in which your app has been created.
+Next we add a form so that the user is able to fill all attributes for the house he wants to evaluate. Notice that first we create a form, then we add all the input fields and finally we add a submit button. A `form` is a particular component on streamlit that allows to freeze the execution until the submit button is trigered, only then code following will be executed.
 
-
-## Running our app locally
-
-Carol runs its apps inside Docker containers for that we need to have built images created from our app code.
-
-When we want to run our app locally and simulate what Carol does in the real scenario we use the following docker commands:
-
-### Building the docker image:
-
-It creates a docker image using the recipe we have created in our Dockerfile.
-
-We build an image by running:
 
 ```
-docker build -t <docker name> .
+# Creates a form and all the necessary fields to be completed by user.
+form = st.form(key='my_form')
+
+crim = form.number_input('Per capita crime rate by town', format='%f', min_value=0) 
+zn = form.number_input('Proportion of residential land zoned for lots over 25,000 sq.ft.', format='%f', min_value=0.0)
+indus = form.number_input('Proportion of non-retail business acres per town.', format='%f', min_value=0.0)
+...
+b = form.number_input('1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town.', format='%f', min_value=0.0)
+lstat = form.number_input(r'% lower status of the population', format='%f', min_value=0.0) 
+
+submit_button = form.form_submit_button(label='Predict house price')
 ```
 
-In `<docker name>` you can add any name that relates to your app.
-
-In the real scenario this process happens when we Build a Carol app.
-
-### Building the docker image:
-
-It runs the docker image created in the previous step.
-
-We run an image by running:
+Finally, after submitted, the user receives the model prediction.
 
 ```
-docker run --rm -it -p 5000:5000 --env-file .env <docker name>
+# When a user clicks on the submit button we predict and present in the screen the price of the house based on the information
+# that they have inputed in the interface.
+if submit_button:
+    price = model_predict(crim, zn, indus, chas, nox, rm, age, dis, rad, tax, ptratio, b, lstat)
+    st.write(f'Predicted selling price for home: ${price}')
 ```
-
-In `<docker name>` you need to call the same name defined in the build process.
-
-Here we use the `.env` file that simulates the injection of enviroment variables.
-
-In the real scenario this process happens when we Run a process in a Carol app.
 
 ## Deploying our app in Carol
+
+To deploy your app follow the same steps described on the [previous chapter](../ch6_online_api/).
+
+[Go back to main page](../../)
+

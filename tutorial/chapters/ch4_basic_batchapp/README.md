@@ -2,7 +2,7 @@
 
 Now that we have our data ready, the next goal is to setup a process to fetch the records, train and evaluate a regression model and deploy it to perform predictions. In this chapter we will review how to create a bare minimal app to do it using a jupyter notebook, also covering how to deploy the notebook in docker container to have an executable app.
 
-# Writing the notebook
+## Writing the notebook
 
 Similar to when we were loading data into Carol, to fetch data we have also to start by making a connection to Carol feeding our credentials. As our goal is to run the code inside a batch app we can skip the full authentication and use the simplified version.
 
@@ -151,7 +151,7 @@ The whole code is available at:
 
 > [https://github.com/JuvenalDuarte/bostonhouseprice_jupyter_batchapp/blob/master/bhp_trainmodel.ipynb](https://github.com/JuvenalDuarte/bostonhouseprice_jupyter_batchapp/blob/master/bhp_trainmodel.ipynb).
 
-# Files for the batch app
+## Files for the batch app
 
 Appart from the code, there are a couple of other files which we need to revise to be able to build our app inside Carol, they are:
 
@@ -219,7 +219,7 @@ Together with the notebook, the final setup on git should be as in:
 
 > [https://github.com/JuvenalDuarte/bostonhouseprice_jupyter_batchapp](https://github.com/JuvenalDuarte/bostonhouseprice_jupyter_batchapp).
 
-# Deploying to Carol
+## Deploying to Carol
 
 The only remaining step now is to deploy our app in Carol, so that we can run it whenever we want with a single click. We start by creating a new app through the UI, as in *figure 20*.
 
@@ -257,7 +257,7 @@ The process for building the app usually takes from 5 to 15 minutes to perform t
 
 Figure 24: Image successfully built
 
-# Running the app
+## Running the app
 
 On the `Process` tab on your app's panel, there are two ways of setting up a execution for your app, as pointed on *figure 25*: (*1*) Run it manually by clicking on the `Run` button; (*2*) Schedule single or recurrent executions through the `Add a Schedule` option. 
 
@@ -269,7 +269,7 @@ Once started a pop-up screen will open informing you on whether the process is s
 
 Finally, the `Logs` tab on the app's panel will print the output of your code. Remember to mantain your app's verbosity at a reasonable level.
 
-# Troubleshooting
+## Troubleshooting
 
 Below are are presented some well known problems when developing/ deploying Carol Apps:
 

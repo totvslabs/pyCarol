@@ -1,7 +1,6 @@
 # Appendix
 
-
-## Setting up a local dev environment
+## 1. Setting up a local dev environment
 
 When Carol runs a process, it injects into the Docker container some environment variables that will be read when we call:
 ```

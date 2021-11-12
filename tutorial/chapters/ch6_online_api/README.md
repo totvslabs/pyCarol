@@ -10,7 +10,7 @@ On the REST architecture, all the functionalities/ services provided by our app 
 
 The format chosen for communication is JSON, which is used both to pass parameters to requests and the format the results are provided. 
 
-# Online app api files structure
+## Online app api files structure
 
 An online app usually have the structure presented below. Some of these files are known from the batch apps we've studied on the previous chapter, some will have small changes and some are now.
 
@@ -67,7 +67,7 @@ CMD gunicorn -c /app/gunicorn.conf.py main:application
 
 This forementioned structure covers much of the cases that you may need. Therefore, we usually only add endpoints to `route.py`, classes and methods to `functions.py` and packages to `requirements.txt`. Keeping the `Dockerfile`, `gunicorn.conf.py`, and `main.py` as they are.
 
-# Code: defining service routes
+## Code: defining service routes
 
 The heart of our online app, with the business logic, is defined on `route.py`, this file get as complex as the number of services and their own complexity. Every service is implemented as an anotated function, as in the example below:
 
@@ -120,7 +120,7 @@ def handle_error(err):
 
 The same logic examplified here can be extended to produce as many services on your app.
 
-# Deploying the Online App
+## Deploying the Online App
 
 Once we have the `manifest.json` ready we need to upload it in our Carol App.
 
@@ -148,7 +148,7 @@ Then, when the build process is complete we can start our app by clicking on `Ru
 
 The app will remain running until it is stopped by clicking on the `Stop` button.
 
-# Testing our API:
+## Testing our API:
 
 Since we added a `@requires_auth` decorator in our endpoints we will need to send some kind of authentication information in our request so our api can authenticate us with Carol. For a better understanding on how to authenticate with Carol please refer to [Authentication](https://tdn.totvs.com/pages/releaseview.action?pageId=552107176)
 

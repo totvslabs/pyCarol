@@ -22,7 +22,7 @@ If all went well on the model creation, you can go ahead and proceed with model 
 
 Figure 14: Publishing your data model
 
-# Mapping data from the staging to the model
+## Mapping data from the staging to the model
 
 So far our **model** and our **staging** are distinct entities inside Carol. To complete our data flow we need to create a mapping rule in order to the data to flow from the staging to the data model. There are different ways of doing it, a straight forward one is by clicking on the Connector icon in the left panel, then on the name of the source staging and then on `Map & Cleanse` button (*figure 15*).
 

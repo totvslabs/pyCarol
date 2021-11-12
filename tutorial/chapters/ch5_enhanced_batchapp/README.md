@@ -22,7 +22,7 @@ The way Luigi controls reexecutions is by the following rules:
 
 Now let's see how can we transform the example to take advantage of Luigi orchestration.
 
-# Adjusting the code
+## Adjusting the code
 
 Let's start by revising, organizing and adjusting our code. A good practice to organize code on Luigi-based apps is to have the following directories:
 
@@ -168,7 +168,7 @@ A couple of things to pay special attention at the code:
 > If, for any reason, you need the task to be reexecuted forcibly, no matter if all inputs remain the same, you can do it by importing the `datetime` parameter. That will cause the app to replicate files on the storage, which will never be cleaned. For this reason this approach is only recommended if the task doesn't generates outputs or if they will be managed by third part apps.
 > 
 
-# Other files for a Luigi batch app
+## Other files for a Luigi batch app
 
 Once our code is ready, we just need to revise a couple of auxiliar files to make sure the app is built and executed as expected. The *requirements.txt* and *manifest.json* will be defined just like we did on the previous app, just revise them to make sure dependencies are updated.
 
