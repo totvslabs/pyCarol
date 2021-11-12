@@ -41,8 +41,6 @@ deploy:
 test:
 	@echo "~~~ Testing pyCarol"
 	# coverage --collect-only run -m unittest discover
-	@echo "This is a temporary step. CHECK THOSES TESTS"
-	@nosetests --with-coverage3 --collect-only
 
 sonar: test
 	@echo "~~~ Scanning Code of pyCarol"

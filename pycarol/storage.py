@@ -18,7 +18,7 @@ class Storage:
 
         Args:
 
-            carol: `class: pycraol.Carol`
+            carol: `class: pycarol.Carol`
         """
 
         self.carol = carol

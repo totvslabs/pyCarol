@@ -16,7 +16,7 @@ pyCarol
 
 .. autosummary::
     :toctree: generated
-
+    
     pycarol.apps
     pycarol.carol
     pycarol.carolina
@@ -30,3 +30,4 @@ pyCarol
     pycarol.storage
     pycarol.tasks
     pycarol.tenant
+    pycarol.functions.misc

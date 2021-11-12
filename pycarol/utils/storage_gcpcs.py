@@ -7,6 +7,7 @@ from ..utils.miscellaneous import prettify_path, _attach_path, _FILE_MARKER
 from retry import retry
 from google.resumable_media import DataCorruption
 from google.api_core.exceptions import GatewayTimeout, ServiceUnavailable
+from google.api_core.retry import Retry
 
 CDS_RETRY_LIST = (GatewayTimeout, DataCorruption, ServiceUnavailable)
 
@@ -26,6 +27,7 @@ class StorageGCPCS:
         storage_space_params=None
     ):
         """
+        Upload object to GCS.
 
         Args:
 
@@ -69,6 +71,7 @@ class StorageGCPCS:
         bucket = self._get_app_storage_bucket(storage_space=storage_space)
         blob = bucket.blob(remote_file_name, chunk_size=chunk_size)
 
+        retry_policy = Retry()
         if parquet:
             import pandas as pd
             if not isinstance(obj, pd.DataFrame):
@@ -83,10 +86,9 @@ class StorageGCPCS:
                 with BytesIO() as buffer:
                     joblib.dump(obj, buffer)
                     buffer.seek(0)
-                    blob.upload_from_file(buffer)
+                    blob.upload_from_file(buffer, retry=retry_policy)
                 return
-            else:
-                joblib.dump(obj, local_file_name)
+            joblib.dump(obj, local_file_name)
         elif format == 'pickle':
             with gzip.open(local_file_name, 'wb') as f:
                 pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
@@ -95,7 +97,7 @@ class StorageGCPCS:
         else:
             raise ValueError("Supported formats are pickle, joblib or file")
 
-        blob.upload_from_filename(filename=local_file_name)
+        blob.upload_from_filename(filename=local_file_name, retry=retry_policy)
         os.utime(local_file_name, None)
 
     @retry(CDS_RETRY_LIST, tries=5)
@@ -374,7 +376,7 @@ class StorageGCPCS:
         blobs_rejected = list(bucket_rejected.list_blobs(prefix=path_rejected))
 
         br = [{'storage_space': 'golden_rejected', 'name': i.name} for i in blobs_rejected if
-              i.name.endswith('.json.gz')]
+              i.name.endswith('.parquet')]
         return br
 
     def files_storage_list(self, prefix='pipeline/', print_paths=False):
