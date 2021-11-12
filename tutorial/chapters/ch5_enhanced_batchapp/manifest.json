@@ -16,7 +16,7 @@
         "instanceProperties": {
           "profile": "",
           "properties": {
-            "dockerImage": "bhptrainmodellg/bhptrainmodellg:1.0.0",
+            "dockerName": "bhptrainmodellg",
             "instanceType": "c1.small"
           },
           "environments": {
