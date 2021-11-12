@@ -52,8 +52,7 @@ Organizing the code we should have something like the structure presented below.
 /app/functions/**init**.py
 ```
 
-### IS THIS THE CORRECT URL?
-The full source code is available at [this](https://github.com/totvslabs/pyCarol/tree/tutorial/tutorial/code/checkpoint3) github link, but a few snippets are worth being explained further. We will have a look at them at the following chapters.
+The full source code is available at [this](https://github.com/totvslabs/pyCarol/tree/master/tutorial/chapters/ch5_enhanced_batchapp) github link, but a few snippets are worth being explained further. We will have a look at them at the following chapters.
 
 ## Accessing App Settings
 
@@ -163,8 +162,7 @@ A couple of things to pay special attention at the code:
 
 - The annotation `@inherit_list` is used to tell Luigi which tasks must be completed before starting the current one.
 - You can choose any name for the task, but it must inherit from `pycarol.pipeline.Task`.
-### ADD URL
-- The actual code to be executed (business logic) is implemented on the `easy_run` function. In this function you can access outputs from the previous tasks defined on `@inherit_list` through the parameter `inputs`, provided as a list. Whatever is returned by this function will be made available for the following tasks as well. Notice that in the example we use `PickleTarget`, which works for most of the situations, but if the output variables are not serializable, or have more efficient ways of doing it, have a look at the supported target types <ADD LINK> provided by Luigi.
+- The actual code to be executed (business logic) is implemented on the `easy_run` function. In this function you can access outputs from the previous tasks defined on `@inherit_list` through the parameter `inputs`, provided as a list. Whatever is returned by this function will be made available for the following tasks as well. Notice that in the example we use `PickleTarget`, which works for most of the situations, but if the output variables are not serializable, or have more efficient ways of doing it, have a look at the supported [target types](https://luigi.readthedocs.io/en/stable/workflows.html) provided by Luigi.
 - If parameters are defined on the `commons.py` source we can load them through `luigi.Parameter()` command (different data formats are available, refer to the [manual](https://luigi.readthedocs.io/en/stable/parameters.html#:~:text=only%20inside%20task.-,Parameter%20types,-In%20the%20examples) for more information). Notice that task will be triggered only if either these parameters have values changed or the outputs from previous tasks differ from previous executions.
 
 > If, for any reason, you need the task to be reexecuted forcibly, no matter if all inputs remain the same, you can do it by importing the `datetime` parameter. That will cause the app to replicate files on the storage, which will never be cleaned. For this reason this approach is only recommended if the task doesn't generates outputs or if they will be managed by third part apps.
@@ -252,7 +250,7 @@ requirements.txt
 ```
 
 ### IS THIS THE RIGHT URL?
-The deploy follows the same steps described on the minimal batch app. The final project is available on github: [https://github.com/totvslabs/pyCarol/tree/tutorial/tutorial/code/checkpoint3](https://github.com/totvslabs/pyCarol/tree/tutorial/tutorial/code/checkpoint3).
+The deploy follows the same steps described on the minimal batch app. The final project is available on github, at [this](https://github.com/totvslabs/pyCarol/tree/master/tutorial/chapters/ch5_enhanced_batchapp) link.
 
 [Go back to main page](../../)
 

@@ -65,8 +65,7 @@ If everything went well on your data ingestion, now you should be able to see yo
 
 Figure 11: Checking sample records on the Carol platform.
 
-### ADD URL
-You can find the full notebook used in this exercise on <put the link to git>.
+You can find the full notebook used in this exercise on [this](https://github.com/totvslabs/pyCarol/tree/tutorial_revision/tutorial/chapters/ch2_ingestion) github repository.
 
 > **Note**: The same approach can be used to load any tabular data into Carol, just make sure you have your dataset stored on a dataframe and use PyCarol to help on the loading process.
 

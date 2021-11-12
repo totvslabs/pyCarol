@@ -147,9 +147,7 @@ login.switch_environment(org_name="another_org_level",
 
 In some situations you may be interested in publishing the model to an app in another environment, perhaps even in a different organization level. In that case you can use the `switch_environment` method. One of the advantages is that access control will be managed automatically: if the user running the process has access granted to the target environment the process will run smothly, otherwise the batch will fail with denied authentication.
 
-The whole code is available at:
-
-> [https://github.com/JuvenalDuarte/bostonhouseprice_jupyter_batchapp/blob/master/bhp_trainmodel.ipynb](https://github.com/JuvenalDuarte/bostonhouseprice_jupyter_batchapp/blob/master/bhp_trainmodel.ipynb).
+The whole code is available at [this](https://github.com/totvslabs/pyCarol/blob/master/tutorial/chapters/ch4_basic_batchapp/bhp_trainmodel.ipynb) link.
 
 ## Files for the batch app
 
@@ -215,9 +213,7 @@ ADD . /app
 CMD ["runipy", "bhp_trainmodel.ipynb"]
 ```
 
-Together with the notebook, the final setup on git should be as in:
-
-> [https://github.com/JuvenalDuarte/bostonhouseprice_jupyter_batchapp](https://github.com/JuvenalDuarte/bostonhouseprice_jupyter_batchapp).
+Together with the notebook, the final setup on git should be as in [this]](https://github.com/totvslabs/pyCarol/tree/master/tutorial/chapters/ch4_basic_batchapp) repository.
 
 ## Deploying to Carol
 
