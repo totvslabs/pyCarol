@@ -172,10 +172,10 @@ In the *manifest.json* there are two main sections, the first defining how the a
 
 Figure 19: Main sections on the manifest.json file
 
-On the `instanceProperties` section (*1.2*) we define on which type of cloud instance and which parameters to use when running the app. The first important field is `property/dockerImage`, which should follow the following standard:
+On the `instanceProperties` section (*1.2*) we define on which type of cloud instance and which parameters to use when running the app. The first important field is `property/dockerName`, which should follow the following standard:
 
 ```json
-"dockerImage": "yourcarolappname/yourbatchprocessesname:yourappversion"
+"dockerName": "yourcarolappname"
 ```
 
 Next you define the size of the machine you want to use when executing your code on `property/instanceType`. A complete list of instance types available are covered in the official documentation, at:
@@ -219,7 +219,7 @@ Together with the notebook, the final setup on git should be as in [this]](https
 
 The only remaining step now is to deploy our app in Carol, so that we can run it whenever we want with a single click. We start by creating a new app through the UI, as in *figure 20*.
 
-> **Note**: pay attention at this point and make sure the `name` you assign to your app corresponds to the same used on the `manifest.json` file, on `property/dockerImage`.
+> **Note**: pay attention at this point and make sure the `name` you assign to your app corresponds to the same used on the `manifest.json` file, on `property/dockerName`.
 
 ![../res/ch4_fig3.png](../res/ch4_fig3.png)
 

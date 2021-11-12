@@ -217,12 +217,12 @@ Figure 19: Main sections on the manifest.json file
 
 On the ``instanceProperties`` section (*1.2*) we define on which type of
 cloud instance and which parameters to use when running the app. The
-first important field is ``property/dockerImage``, which should follow
+first important field is ``property/dockerName``, which should follow
 the following standard:
 
 .. code:: json
 
-    "dockerImage": "yourcarolappname/yourbatchprocessesname:yourappversion"
+    "dockerName": "yourcarolappname"
 
 Next you define the size of the machine you want to use when executing
 your code on ``property/instanceType``. A complete list of instance
@@ -285,7 +285,7 @@ new app through the UI, as in *figure 20*.
 
     **Note**: pay attention at this point and make sure the ``name`` you
     assign to your app corresponds to the same used on the
-    ``manifest.json`` file, on ``property/dockerImage``.
+    ``manifest.json`` file, on ``property/dockerName``.
 
 .. figure:: ../../imgs/tutorial_ch4_fig3.png
    :alt: ../../imgs/tutorial_ch4\_fig3.png

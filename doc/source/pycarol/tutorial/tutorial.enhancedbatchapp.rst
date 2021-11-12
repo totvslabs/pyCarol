@@ -71,7 +71,7 @@ files.
 
 Organizing the code we should have something like the structure
 presented below. Apart from the main tasks' source code we need to have
-the ```init.py`` <http://init.py>`__ files, to make sure code from
+the ``__init__.py`` files, to make sure code from
 different files can be shared, also we add the ``commons.py`` to handle
 all the App parameters and constants. We also added another task,
 ``deploy_model.py``, to handle model deployment.
@@ -80,14 +80,14 @@ all the App parameters and constants. We also added another task,
 
     /app/
     /app/flow/
-    /app/flow/**init**.py
+    /app/flow/__init__.py
     /app/flow/commons.py
     /app/flow/ingestion.py
     /app/flow/train_model.py
     /app/flow/evaluate_model.py
     /app/flow/deploy_model.py
     /app/functions/
-    /app/functions/**init**.py
+    /app/functions/__init__.py
 
 The full source code is available at
 `this <https://github.com/totvslabs/pyCarol/tree/master/tutorial/chapters/ch5_enhanced_batchapp>`__
@@ -320,21 +320,20 @@ The final directory structure should be:
 
     /app/
     /app/flow/
-    /app/flow/init.py
+    /app/flow/__init__.py
     /app/flow/commons.py
     /app/flow/ingestion.py
     /app/flow/train_model.py
     /app/flow/evaluate_model.py
     /app/flow/deploy_model.py
     /app/functions/
-    /app/functions/init.py
-    [init.py](http://init.py/)
+    /app/functions/__init__.py
     Dockerfile
     logging.cfg
     luigi.cfg
     manifest.json
     requirements.txt
-    [run.py](http://run.py/)
+    run.py
 
 The deploy follows the same steps described on the minimal batch app.
 The final project is available on 
