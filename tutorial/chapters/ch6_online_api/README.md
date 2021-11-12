@@ -69,7 +69,7 @@ This forementioned structure covers much of the cases that you may need. Therefo
 
 ## Code: defining service routes
 
-The heart of our online app, with the business logic, is defined on `route.py`, this file get as complex as the number of services and their own complexity. Every service is implemented as an anotated function, as in the example below:
+The heart of our online app, with the business logic, is defined on `route.py`, this file get as complex as the number of services and their own complexity. Every service is implemented as an annotated function, as in the example below:
 
 ```
 @server_bp.route('/house_price', methods=['POST'])
@@ -79,7 +79,7 @@ def house_price():
 
 The `@server_bp.route` annotation describes to Flask on which endpoint the code implemented on the function below will respond, as well as which type of requests it is allowed to answer, POST in this case. The `@requires_auth` decorator sinalise to Flask that this functionality is dependent on authentication, which is a pre-requisite. The code that follows is nothing but the function definition itself, with all the logic we want to be executed.
 
-As a POST endpoint, we must be prepared to receive and process parameters. Flask helps us with this through the `webargs` class: every parameter is defined as an entry on the `query_arg` dict, giving its type, decription, validation function and telling wether it is mandatory or optional. Once the dict with expected parameters is defined, we look for these parameters on the requests by calling `parser.parse(query_arg, request)`.
+As a POST endpoint, we must be prepared to receive and process parameters. Flask helps us with this through the `webargs` class: every parameter is defined as an entry on the `query_arg` dict, giving its type, description, validation function and telling whether it is mandatory or optional. Once the dict with expected parameters is defined, we look for these parameters on the requests by calling `parser.parse(query_arg, request)`.
 
 ```
 query_arg = {

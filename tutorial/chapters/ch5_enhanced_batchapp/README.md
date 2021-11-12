@@ -4,14 +4,14 @@ In the [previous chapter](https://www.notion.so/Training-the-model-a-minimal-bat
 
 If we look back to our previous code we can identify at least three different steps:
 
-1. ***Data ingestion***: We need to download the records from carol to train/ validate the model.
+1. ***Data ingestion***: We need to download the records from Carol to train/ validate the model.
 2. ***Model training***: We use the data to train the model.
 3. ***Model evaluation***: We generate basic metrics for our new model to check its performance.
 
 > Notice that these tasks are already ordered in terms of dependency, given that ***Model evaluation*** depends both on the ***Data ingestion*** and ***Model training***.
 > 
 
-Once these tasks are split and chained, it becomes easiear to debug which parts of the process went well, where it crashed and which steps are still pending. The main goal of the Luigi package (see docs [here](https://luigi.readthedocs.io/en/stable/)) is to orchestrate these tasks and make sure concluded steps from previous executions can be reused whenever it is possible. 
+Once these tasks are split and chained, it becomes easier to debug which parts of the process went well, where it crashed and which steps are still pending. The main goal of the Luigi package (see docs [here](https://luigi.readthedocs.io/en/stable/)) is to orchestrate these tasks and make sure concluded steps from previous executions can be reused whenever it is possible. 
 
 This behaviour is specially usefull when dealing with long running tasks. Imagine, for example, that your data ingestion comprises loading and transforming 50M records, suppose this task takes one hour to process. Suppose also that training your model takes another five hours of intense GPU consumption. Now picture the bash crashing on the model evaluation step. If all parameters remain the same and you are using Luigi, only the final part, model evaluation, will need to be reprocessed, otherwise another six hours will be spent to reprocess the exact same results.
 
@@ -34,10 +34,10 @@ Let's start by revising, organizing and adjusting our code. A good practice to o
 
 The `app` folder is were we store all of our code files. Inside this directory we have `flow` and `functions`, where we place the tasks (Luigi classes) and business logic respectively. In our case, as the logic is fairly simple, we can implement it directly on the flow source files.
 
-> The name of these folders are free of choice, but this is the naming convetion along TOTVS Labs apps.
+> The name of these folders are free of choice, but this is the naming convention along TOTVS Labs apps.
 > 
 
-Organizing the code we should have something like the structure presented below. Appart from the main tasks' source code we need to have the [`init.py`](http://init.py) files, to make sure code from different files can be shared, also we add the `commons.py` to handle all the App parameters and constants. We also added another task, `deploy_model.py`, to handle model deployment.
+Organizing the code we should have something like the structure presented below. Apart from the main tasks' source code we need to have the [`init.py`](http://init.py) files, to make sure code from different files can be shared, also we add the `commons.py` to handle all the App parameters and constants. We also added another task, `deploy_model.py`, to handle model deployment.
 
 ```bash
 /app/
@@ -52,6 +52,7 @@ Organizing the code we should have something like the structure presented below.
 /app/functions/**init**.py
 ```
 
+### IS THIS THE CORRECT URL?
 The full source code is available at [this](https://github.com/totvslabs/pyCarol/tree/tutorial/tutorial/code/checkpoint3) github link, but a few snippets are worth being explained further. We will have a look at them at the following chapters.
 
 ## Accessing App Settings
@@ -162,7 +163,8 @@ A couple of things to pay special attention at the code:
 
 - The annotation `@inherit_list` is used to tell Luigi which tasks must be completed before starting the current one.
 - You can choose any name for the task, but it must inherit from `pycarol.pipeline.Task`.
-- The actual code to be executed (business logic) is implemented on the `easy_run` function. In this function you can access outputs from the previous tasks defined on `@inherit_list` through the parameter `inputs`, provided as a list. Whatever is returned by this function will be made available for the following tasks as well. Notice that in the example we use `PickleTarget`, which works for most of the situations, but if the output variables are not serializable, or have more efficient ways of doing it, have a look at the suported target types <ADD LINK> provided by Luigi.
+### ADD URL
+- The actual code to be executed (business logic) is implemented on the `easy_run` function. In this function you can access outputs from the previous tasks defined on `@inherit_list` through the parameter `inputs`, provided as a list. Whatever is returned by this function will be made available for the following tasks as well. Notice that in the example we use `PickleTarget`, which works for most of the situations, but if the output variables are not serializable, or have more efficient ways of doing it, have a look at the supported target types <ADD LINK> provided by Luigi.
 - If parameters are defined on the `commons.py` source we can load them through `luigi.Parameter()` command (different data formats are available, refer to the [manual](https://luigi.readthedocs.io/en/stable/parameters.html#:~:text=only%20inside%20task.-,Parameter%20types,-In%20the%20examples) for more information). Notice that task will be triggered only if either these parameters have values changed or the outputs from previous tasks differ from previous executions.
 
 > If, for any reason, you need the task to be reexecuted forcibly, no matter if all inputs remain the same, you can do it by importing the `datetime` parameter. That will cause the app to replicate files on the storage, which will never be cleaned. For this reason this approach is only recommended if the task doesn't generates outputs or if they will be managed by third part apps.
@@ -249,6 +251,7 @@ requirements.txt
 [run.py](http://run.py/)
 ```
 
+### IS THIS THE RIGHT URL?
 The deploy follows the same steps described on the minimal batch app. The final project is available on github: [https://github.com/totvslabs/pyCarol/tree/tutorial/tutorial/code/checkpoint3](https://github.com/totvslabs/pyCarol/tree/tutorial/tutorial/code/checkpoint3).
 
 [Go back to main page](../../)
