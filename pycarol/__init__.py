@@ -5,7 +5,7 @@
 import os
 import tempfile
 
-__version__ = '2.45.5'
+__version__ = '2.47.8'
 
 __TEMP_STORAGE__ = os.path.join(tempfile.gettempdir(), 'carolina/cache')
 
@@ -48,3 +48,5 @@ from .cds import CDSGolden, CDSStaging
 from .apps import Apps
 from .subscription import Subscription
 from .carol_api import CarolAPI
+from . import bigquery
+from .sql import SQL

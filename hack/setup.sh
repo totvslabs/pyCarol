@@ -33,7 +33,7 @@ pip3 install --upgrade pip
 pip3 install --upgrade setuptools
 pip3 --quiet install -r requirements.txt
 # TODO(amalucelli): bump the versions of each dependency
-pip3 --quiet install nose coverage nose-cover3 twine
+pip3 --quiet install coverage twine
 
 mkdir -p bin
 

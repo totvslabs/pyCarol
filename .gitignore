@@ -4,9 +4,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+tst
 # C extensions
 *.so
+workspace.code-workspace
 
 # Distribution / packaging
 .Python
