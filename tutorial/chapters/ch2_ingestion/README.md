@@ -31,7 +31,7 @@ boston_dataframe["sample"] = boston_dataframe.index
 
 ## Sending it to carol
 
-We start by defining a connection to the carol platform. To make the connection, though, we need to setup the security authorization to the environment, which is made through the access **Token**. We've created this security token on the previous chapter, if you are not familiar with it, please, check the Introduction page.
+We start by defining a connection to the Carol platform. To make the connection, though, we need to setup the security authorization to the environment, which is made through the access **Token**. We've created this security token on the previous chapter, if you are not familiar with it, please, check the Introduction page.
 
 ```python
 from pycarol import Carol, Staging, ApiKeyAuth
@@ -55,27 +55,28 @@ organization='datascience')
 '''
 ```
 
-On this example we are simply passing the credentials directly through the code, which is not the best approach for long term solution, specially if this code needs to go through version control servers. A better solution is to store these credentials in expernal files, preferably encrypted, and load them at run time.
+On this example we are simply passing the credentials directly through the code, which is not the best approach for long term solution, specially if this code needs to go through version control servers. A better solution is to store these credentials in external files, preferably encrypted, and load them at run time.
 
-> **Note**: When running similar code inside a Carol App the authentication may be omitted, since it can be infereed through the user running the app. The simplified code for apps would be as the commented code below. Even domain, app_name and organization parameters can be supressed when running inside apps, in that case they will be retrieved from the environment the app is running on.
+> **Note**: When running similar code inside a Carol App the authentication may be omitted, since it can be inferred through the user running the app. The simplified code for apps would be as the commented code below. Even domain, app_name and organization parameters can be supressed when running inside apps, in that case they will be retrieved from the environment the app is running on.
 
-If everything went well on your data ingestion, now you should be able to see your staging on the user interface by clicking on `connectors` on the left panel, selecting your connector. You can view sample records by clicking on `View sample data` (figure 11).
+If everything went well on your data ingestion, now you should be able to see your staging on the user interface by clicking on `Connectors` on the left panel, selecting your connector. You can view sample records by clicking on `View sample data` (figure 11).
 
 ![../res/ch2_fig1.png](../res/ch2_fig1.png)
 
 Figure 11: Checking sample records on the Carol platform.
 
+### ADD URL
 You can find the full notebook used in this exercise on <put the link to git>.
 
-> **Note**: The same approach can be use to load any tabular data into Carol, just make sure you have your dataset stored on a dataframe and use PyCarol to help on the loading process.
+> **Note**: The same approach can be used to load any tabular data into Carol, just make sure you have your dataset stored on a dataframe and use PyCarol to help on the loading process.
 
 ## Troubleshooting
 
-A couple of well known problems when loading data to Carol are given below:
+A couple of well-known problems when loading data to Carol are given below:
 
-- **Bad crosswalk**: It happens when the columns provided as the crosswalk parameter doesn't holds the unique property for the records.
+- **Bad crosswalk**: It happens when the columns provided as the crosswalk parameter doesn't hold the unique property for the records.
 
-- **Inconsistent schema**: If the staging has been already created before with columns and data types it may result in conflicts when loading new data. In that case it is recomended, whenever it is possible, to drop the previous staging and reload the full data.
+- **Inconsistent schema**: If the staging has been already created with columns and data types it may result in conflicts when loading new data. In that case it is recommended, whenever it is possible, to drop the previous staging and reload the full data.
 
 [Go back to main page](../../)
 

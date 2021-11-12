@@ -1,6 +1,6 @@
 # Training the model: a minimal batch app
 
-Now that we have our data ready, the next goal is to setup a process to fetch the records, train and evaluate a regression model and deploy it to perform predictions. In this chapter we will review how to create a bare minimal app to do it using a jupyter notebook, also covering how to deploy the notebook in docker container to have an executable app.
+Now that we have our data ready, the next goal is to setup a process to fetch the records, train, and evaluate a regression model and deploy it to perform predictions. In this chapter we will review how to create a bare minimal app to do it using a Jupyter notebook, also covering how to deploy the notebook in docker container to have an executable app.
 
 ## Writing the notebook
 
@@ -51,7 +51,7 @@ data = staging.fetch_parquet(staging_name=stag,
 														 columns=roi_cols)
 ```
 
-In this example we use a very simple training process just ot ilustrate the goal: split the data into a training and testing parts and fit a Multilayer Perceptron (MLPRegressor), with default parameters, on the training set.
+In this example we use a very simple training process just to ilustrate the goal: split the data into a training and testing parts and fit a Multilayer Perceptron (MLPRegressor), with default parameters, on the training set.
 
 ```python
 from sklearn.model_selection import train_test_split
@@ -153,13 +153,13 @@ The whole code is available at:
 
 ## Files for the batch app
 
-Appart from the code, there are a couple of other files which we need to revise to be able to build our app inside Carol, they are:
+Apart from the code, there are a couple of other files which we need to revise to be able to build our app inside Carol, they are:
 
 - *requirements.txt*: This file is nothing but a list of modules used in our application.
 - *manifest.json*: Brings definitions on how the app needs to be built and how it will run.
 - *Dockerfile*: Sets the docker commands necessary to build the app.
 
-Starting with *requirements.txt*, we want to fill it with the python modules on the list below. During the build docker will asure we have these libs are installed on the environment, you can also enforce the lib version as in `pandas==1.2.5`. This is a way of fixing problems with new releases and grant the app behaves the same way no matter which environment it is deployed.
+Starting with *requirements.txt*, we want to fill it with the python modules on the list below. During the build docker will asure we have these libs installed on the environment, you can also enforce the lib version as in `pandas==1.2.5`. This is a way of fixing problems with new releases and grant the app behaves the same way no matter which environment it is deployed.
 
 ```python
 pycarol[complete]
@@ -186,11 +186,11 @@ Next you define the size of the machine you want to use when executing your code
 
 On the `docker` section (*2*) we set the necessary configurations needed to build our app. The fields are:
 
-- `dockerName`: The name of the docker container where the code is going to run. For convention we set it as the same name in `batch/process/name`, lowercased and without spaces or scpecial characters.
+- `dockerName`: The name of the docker container where the code is going to run. For convention we set it as the same name in `batch/process/name`, lowercased and without spaces or special characters.
 - `dockerTag`: Used for version control.
 - `gitRepoUrl`: To build the app all the files need to be placed at a version control repository. The link to the repository must be provided in this field.
 - `gitBranch`: The version control branch where the files resides.
-- `gitPath`: Use `/` when the app files are on the root path or the corresponding path otherwise.
+- `gitPath`: Use `/` when the Dockerfile is on the root path or the corresponding path otherwise.
 - `instanceType`: The cloud machine used to build the code.
 - `gitDockerfileName`: The docker file name on your repository.
 
@@ -229,7 +229,7 @@ The only remaining step now is to deploy our app in Carol, so that we can run it
 
 Figure 20: Creating an App on Carol to deploy our code.
 
-Now select the `File` tab, click on `Upload File` button, select the `manifest.json`  file we've created previously and then click on `Open`(*figure 21*).
+Now select the `File` tab, click on `Upload File` button, select the `manifest.json` file we've created previously and then click on `Open`(*figure 21*).
 
 ![../res/ch4_fig4.png](../res/ch4_fig4.png)
 
@@ -273,9 +273,9 @@ Finally, the `Logs` tab on the app's panel will print the output of your code. R
 
 Below are are presented some well known problems when developing/ deploying Carol Apps:
 
-- **`instanceType` not big enough**: Correctly sizing resources is essential to control costs when running apps. On the other hand, if the process is memory or CPU intensive, your process may run out of resources either on build or on execution. For the build it is common to run out of memory if dependencies include heavy packages, such as pytorch, requiring at least `c1.small` (5Gb RAM).
-- **Wrong `gitRepoUrl`, `gitBranch` or `gitPath`**: When handling big repositories you can easially get confused and end up building the wrong version of your code. Another subtle problem is that recent github repositories use `master` to refer to the head branch, while old ones refer as `main`.
-- **The docker container doesn't replicates all the environment files / libs as on local tests**: We often run on the situation where tests work fine on the local machine, but fails when running it remotely. Docker containers aim to help with such problems, but to do so the build process must be well defined. If your are reading any file from your local disk, make sure this file is also deployed together on your build. If you are using a lib with constant updates, make sure to explicitly set the lib version on your requirements to the same version on your local machine.
+- **`instanceType` is not big enough**: Correctly sizing resources is essential to control costs when running apps. On the other hand, if the process is memory or CPU intensive, your process may run out of resources either on build or on execution. For the build it is common to run out of memory if dependencies include heavy packages, such as pytorch, requiring at least `c1.small` (5Gb RAM).
+- **Wrong `gitRepoUrl`, `gitBranch` or `gitPath`**: When handling big repositories you can easily get confused and end up building the wrong version of your code. Another subtle problem is that recent github repositories use `master` to refer to the head branch, while old ones refer as `main`.
+- **The docker container doesn't replicates all the environment files / libs as on local tests**: We often run on the situation where tests work fine on the local machine, but fails when running it remotely. Docker containers aim to help with such problems, but to do so the build process must be well defined. If you are reading any file from your local disk, make sure this file is also deployed together on your build. If you are using a lib with constant updates, make sure to explicitly set the lib version on your requirements to the same version on your local machine.
 - **Code issues**: Code issues rarely impacts the building process, but they usually arises when running the app. Several type of issues may arise when running the process, a good practice is to debug extensively the code locally before deploying, but even after that you find errors when running it on Carol you can debug the errors using the `Logs` tab on your app's panel.
 
 [Go back to main page](../../)

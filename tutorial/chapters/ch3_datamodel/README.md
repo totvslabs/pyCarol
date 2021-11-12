@@ -10,7 +10,7 @@ To create the data model click on the Data Model icon on the left Panel, then on
 
 Figure 12: Adding a new data model
 
-At first glance the data model will be empty. We can add the fields of our dataset by clicking on the `Add Field` button. Even though there are several out of the shelf attributes ready to be selected, on this example we wil be creating new fields customized for this dataset,  so click on `Create New` button. Just add all the fields at once, together with their data type and descriptions, and click on `Create new fields` (*figure 13*).
+At first glance the data model will be empty. We can add the fields of our dataset by clicking on the `Add Field` button. Even though there are several out of the shelf attributes ready to be selected, on this example we wil be creating new fields customized for this dataset, so click on `Create New` button. Just add all the fields at once, together with their data type and descriptions, and click on `Create new fields` (*figure 13*).
 
 ![../res/ch3_fig2.png](../res/ch3_fig2.png)
 
@@ -24,7 +24,7 @@ Figure 14: Publishing your data model
 
 ## Mapping data from the staging to the model
 
-So far our **model** and our **staging** are distinct entities inside Carol. To complete our data flow we need to create a mapping rule in order to the data to flow from the staging to the data model. There are different ways of doing it, a straight forward one is by clicking on the Connector icon in the left panel, then on the name of the source staging and then on `Map & Cleanse` button (*figure 15*).
+So far our **model** and our **staging** are distinct entities inside Carol. To complete our data flow we need to create a mapping rule in order to the data to flow from the staging to the data model. There are different ways of doing it, a straightforward one is by clicking on the `Connector` icon in the left panel, then on the name of the source staging and then on `Map & Cleanse` button (*figure 15*).
 
 ![../res/ch3_fig4.png](../res/ch3_fig4.png)
 
@@ -42,11 +42,11 @@ If you have already a mapping linking the source staging fields to the data mode
 
 Figure 17: Choosing the mapping rules input type.
 
-The mappings need to be added one by one, by clicking the the `Edit` button. The interface already splits the list of mapped and unmapped fields to facilitate the linkage process (*figure 18*).
+The mappings need to be added one by one, by clicking the `Edit` button. The interface already splits the list of mapped and unmapped fields to facilitate the linkage process (*figure 18*).
 
 ![../res/ch3_fig7.png](../res/ch3_fig7.png)
 
-Figure 18: Linking the data model fields to the staging columns
+Figure 18: Linking the data model fields to the staging columns.
 
 After the mapping is completed you can click on the `Publish` button to start the data flow. Carol backend runs storage optimizations behind the scenes to grant data consistency and fast access, you will be notified that your request is being processed (small red bell on the top right of the screen). This process usually takes from a few seconds to a couple of minutes depending on the number of records/ columns on your table.
 

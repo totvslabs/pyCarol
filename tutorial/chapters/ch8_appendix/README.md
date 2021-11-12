@@ -64,7 +64,7 @@ docker run --rm -it -p 5000:5000 --env-file .env <docker name>
 
 In `<docker name>` you need to call the same name defined in the build process.
 
-Here we use the `.env` file that simulates the injection of enviroment variables.
+Here we use the `.env` file that simulates the injection of environment variables.
 
 In the real scenario this process happens when we Run a process in a Carol app.
 

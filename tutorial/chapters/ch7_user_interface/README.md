@@ -1,6 +1,6 @@
 # Online app: Building a simple GUI with Streamlit
 
-On the previous chapter we've seen how to create an online app to respond to POST and GET requests, through a REST architecture and JSON communication pattern. On this chapter we will see how make a simple web interface to make the user interaction more pleasent. 
+On the previous chapter we've seen how to create an online app to respond to POST and GET requests, through a REST architecture and JSON communication pattern. On this chapter we will see how make a simple web interface to make the user interaction more pleasant. 
 
 This online app is powered by the [streamlit](https://streamlit.io/) library, which is a framework for easily create web apps based on data. With Streamlit we will build a form interface that, once submited, the form data is packed, evaluated by the model and then the result (the house price prediction) is presented to the user.
 
@@ -39,7 +39,7 @@ st.title("Boston House Prices")
 st.write("Here, we can help you to find at what price it's recommended that you sell home.")
 ```
 
-Next we add a form so that the user is able to fill all attributes for the house he wants to evaluate. Notice that first we create a form, then we add all the input fields and finally we add a submit button. A `form` is a particular component on streamlit that allows to freeze the execution until the submit button is trigered, only then code following will be executed.
+Next we add a form so that the user is able to fill all attributes for the house he wants to evaluate. Notice that first we create a form, then we add all the input fields and finally we add a submit button. A `form` is a particular component on streamlit that freezes the execution until the submit button is triggered, only then the code following will be executed.
 
 
 ```
