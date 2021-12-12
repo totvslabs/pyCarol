@@ -604,6 +604,6 @@ class CDSGolden:
             'sendRealtime': send_realtime_records,
             'useDataflow': use_dataflow,
         }
-        extra_headers = {'Content-Type': 'text/plain'}
+        content_type = 'text/plain'
 
-        return self.carol.call_api(path='v2/bigQuery/processQuery', method='POST', data=query, params=query_params, extra_headers=extra_headers)
+        return self.carol.call_api(path='v2/bigQuery/processQuery', method='POST', data=query, params=query_params, content_type=content_type)
