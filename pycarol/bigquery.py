@@ -19,12 +19,14 @@ def query(
     carol: Carol,
     query_: str,
     service_account: T.Optional[T.Dict[str, str]] = None,
+    dataset_id: T.Optional[str] = None,
 ) -> QueryJob:
     """Run query for datamodel.
 
     Args:
         query_: BigQuery SQL query.
         service_account: in case you have a service account for accessing BigQuery.
+        dataset_id: BigQuery dataset ID.
 
     Returns:
         Query result.
@@ -35,7 +37,7 @@ def query(
     query_ = _prepare_query(carol, query_)
     client = _generate_client(service_account)
     tenant_id = carol.tenant["mdmId"]
-    dataset_id = f"labs-app-mdm-production.{tenant_id}"
+    dataset_id = dataset_id or f"labs-app-mdm-production.{tenant_id}"
     job_config = bigquery.QueryJobConfig(default_dataset=dataset_id)
     return client.query(query_, job_config=job_config)
 

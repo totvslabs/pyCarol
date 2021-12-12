@@ -80,6 +80,7 @@ class SQL:
             method: `str` default `sync`
                 if sync runs the query synchronously and returns the result
                 if socket runs the query using web socket and returns the result
+                if bigquery runs the query using bigquery and returns the result
             dataframe: `bool` default `True`
                 if True returns a pandas dataframe
             service_account: in case you have a service account for accessing BigQuery.
@@ -100,10 +101,10 @@ class SQL:
         else:
             raise ValueError(f"'method' must be either: {methods}")
 
+        if method == "bigquery":
+            results = [dict(row) for row in results]
         if dataframe:
             return pd.DataFrame(results)
-        if not dataframe and method == "bigquery":
-            return [dict(row) for row in results]
 
         return results
 
