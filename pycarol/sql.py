@@ -68,6 +68,7 @@ class SQL:
         method: str = "sync",
         dataframe: bool = True,
         service_account: T.Optional[T.Dict[str, str]] = None,
+        dataset_id: T.Optional[str] = None,
         **kw,
     ):
         """Execute SQL Query.
@@ -84,6 +85,7 @@ class SQL:
             dataframe: `bool` default `True`
                 if True returns a pandas dataframe
             service_account: in case you have a service account for accessing BigQuery.
+            dataset_id: overwrites the default dataset_id when using bigquery.
             **kw: `dict`
         Returns:
 
@@ -97,7 +99,7 @@ class SQL:
         elif method == "sync":
             results = _sync_query(self.carol, payload)
         elif method == "bigquery":
-            results = bigquery.query(self.carol, query, service_account)
+            results = bigquery.query(self.carol, query, service_account, dataset_id=dataset_id)
         else:
             raise ValueError(f"'method' must be either: {methods}")
 
