@@ -68,6 +68,7 @@ class SQL:
         method: str = "sync",
         dataframe: bool = True,
         service_account: T.Optional[T.Dict[str, str]] = None,
+        dataset_id: T.Optional[str] = None,
         **kw,
     ):
         """Execute SQL Query.
@@ -80,9 +81,11 @@ class SQL:
             method: `str` default `sync`
                 if sync runs the query synchronously and returns the result
                 if socket runs the query using web socket and returns the result
+                if bigquery runs the query using bigquery and returns the result
             dataframe: `bool` default `True`
                 if True returns a pandas dataframe
             service_account: in case you have a service account for accessing BigQuery.
+            dataset_id: overwrites the default dataset_id when using bigquery.
             **kw: `dict`
         Returns:
 
@@ -96,14 +99,14 @@ class SQL:
         elif method == "sync":
             results = _sync_query(self.carol, payload)
         elif method == "bigquery":
-            results = bigquery.query(self.carol, query, service_account)
+            results = bigquery.query(self.carol, query, service_account, dataset_id=dataset_id)
         else:
             raise ValueError(f"'method' must be either: {methods}")
 
+        if method == "bigquery":
+            results = [dict(row) for row in results]
         if dataframe:
             return pd.DataFrame(results)
-        if not dataframe and method == "bigquery":
-            return [dict(row) for row in results]
 
         return results
 
