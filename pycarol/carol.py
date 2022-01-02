@@ -448,7 +448,7 @@ class Carol:
         """
         if self._is_org_level:
             warnings.warn(
-                "already in org lavel.",
+                "already in org level.",
                 UserWarning, stacklevel=3
             )
             return
