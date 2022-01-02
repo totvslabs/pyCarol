@@ -1,3 +1,4 @@
+import warnings
 from urllib3.util.retry import Retry
 import requests
 from requests.adapters import HTTPAdapter
@@ -151,7 +152,7 @@ class Carol:
         raise ValueError("either `auth` or `username/password` or `api_key` or pycarol env variables must be set.")
 
     @property
-    def current_user(self, force=False):
+    def current_user(self):
         """
         Returns the current user.
         
@@ -160,8 +161,11 @@ class Carol:
                 If True will force the request to fetch current user.
         """
 
-        if self._current_user is None or force:
-            self._current_user = self.call_api('v2/users/current', )
+        if self._current_user is None:
+            if self._is_org_level:
+                self._current_user = self.call_api('v2/orgUsers/current', )
+            else:
+                self._current_user = self.call_api('v2/users/current', )
         return self._current_user
 
 
@@ -442,7 +446,12 @@ class Carol:
         Switch organization level.
 
         """
-
+        if self._is_org_level:
+            warnings.warn(
+                "already in org level.",
+                UserWarning, stacklevel=3
+            )
+            return
         org = self._current_org()
         self.auth.switch_org_context(org['mdmId'])
         self._is_org_level = True
