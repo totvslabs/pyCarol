@@ -252,7 +252,7 @@ class Carol:
     def call_api(self, path, method=None, data=None, auth=True, params=None, content_type='application/json', retries=8,
                  session=None, backoff_factor=0.5, status_forcelist=(502, 503, 504, 524), downloadable=False,
                  method_whitelist=frozenset(['HEAD', 'TRACE', 'GET', 'PUT', 'OPTIONS', 'DELETE', 'POST']), errors='raise',
-                 extra_headers=None, files=None,
+                 extra_headers=None, files=None, prefix_path='/api/',
                  **kwds):
         """
         This method handles all the API calls.
@@ -294,6 +294,8 @@ class Carol:
                 extra headers to be sent.
             files: `dict` default `None`
                 Used when uploading files to carol. This will be sent to :class: `requests.request`
+            prefix_path: `str` default `/api/`
+                Prefix path to be used to create the final url 'https://{self.host}:{self.port}{prefix_path}{path}.
             kwds: `dict` default `None`
                 Extra parameters to be sent to :class: `requests.request`
 
@@ -305,7 +307,7 @@ class Carol:
             self.session = session
 
         extra_headers = extra_headers or {}
-        url = f'https://{self.host}:{self.port}/api/{path}'
+        url = f'https://{self.host}:{self.port}{prefix_path}{path}'
 
         if method is None:
             if data is None:
