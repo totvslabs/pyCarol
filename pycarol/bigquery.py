@@ -59,10 +59,21 @@ class BQ:
 
         Args:
             expiration_time (int): Time in hours for credentials to expire. Max value 120.
-            force (bool): Force to get new credentials.
+            force (bool): Force to get new credentials skiping any cache.
 
         Returns:
             dict: Service account
+
+        .. code:: python
+
+
+            from pycarol import Carol
+            from pycarol.bigquery import BQ
+
+            bq = BQ(Carol())
+            service_account = bq.get_credential(expiration_time=120)
+
+
         """
 
         if force or self.is_expired():
@@ -90,7 +101,7 @@ class BQ:
         dataset_id: T.Optional[str] = None,
         return_dataframe: bool = True,
     ):
-        """Run query for datamodel.
+        """Run query for datamodel. This will generate a SA if necessary.
 
         Args:
             query: BigQuery SQL query.
@@ -101,6 +112,19 @@ class BQ:
 
         Returns:
             Query result.
+
+        Usage:
+
+        .. code:: python
+
+
+            from pycarol import Carol
+            from pycarol.bigquery import BQ
+
+            bq = BQ(Carol())
+            query = 'select * from invoice limit 10'	
+            df = bq.query(query, return_dataframe=True)
+
         """
 
         self.service_account = self.get_credential()
