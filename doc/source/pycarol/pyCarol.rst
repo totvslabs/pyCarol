@@ -12,6 +12,7 @@ pyCarol
     pipeline
     tools
     auth
+    big_query
     tutorial
 
 .. autosummary::
