@@ -14,6 +14,8 @@ except ImportError:
 
 from .carol import Carol
 from .connectors import Connectors
+import math
+import itertools
 
 
 class BQ:
@@ -140,6 +142,118 @@ class BQ:
         else:
             return results
 
+    def paginated_query(
+        self,
+        query: str,
+        page_size=500, 
+        dataset_id: T.Optional[str] = None,
+        return_dataframe: bool = True,
+    ):
+        """Run query for datamodel and prepare paginated results. This will generate a SA if necessary.
+
+        Args:
+            query: BigQuery SQL query.
+            page_size: The number of records per page. If not provided defaults to 500.
+            dataset_id: BigQuery dataset ID.
+                if None it will use the default dataset_id.
+            return_dataframe: Return dataframe.
+                Return dataframe if True.
+
+        Returns:
+            Query results for the first page and control variables as a tuple: (results, control_dict)
+
+        Usage:
+
+        .. code:: python
+
+
+            from pycarol import Carol
+            from pycarol.bigquery import BQ
+
+            bq = BQ(Carol())
+            query = 'select * from invoice limit 10'	
+            df_first_page, c = bq.paginated_query(query, page_size=2, return_dataframe=True)
+
+        """
+
+        self.service_account = self.get_credential()
+        self.client = self._generate_client()
+
+        dataset_id = dataset_id or self.dataset_id
+        job_config = bigquery.QueryJobConfig(default_dataset=dataset_id)
+        job = self.client.query(query, job_config=job_config)
+
+        # Enforce query execution to make sure materialized view 
+        # is created.
+        job.result()
+
+        return self.fetch_page(job_id=job.job_id, page_size=page_size, return_dataframe=return_dataframe)
+
+    def fetch_page(
+        self,
+        job_id=None,
+        page_size=500, 
+        page=0, 
+        return_dataframe: bool = True,
+    ):
+        """Run query for datamodel and prepare paginated results. This will generate a SA if necessary.
+
+        Args:
+            job_id: The ID for the previously executed query.
+            page_size: The number of records per page. If not provided defaults to 500.
+            page: Which page of results to be returned. If the page number is out of bounds and error will be raised.
+            return_dataframe: Return dataframe. Return dataframe if True.
+
+        Returns:
+            Query results for the selected page (or page zero, if omitted) and control variables as a tuple: (results, control_dict)
+
+        Usage:
+
+        .. code:: python
+
+
+            from pycarol import Carol
+            from pycarol.bigquery import BQ
+
+            bq = BQ(Carol())
+            query = 'select * from invoice limit 10'	
+            df_first_page, c = bq.paginated_query(query, page_size=2, return_dataframe=True)
+            df_second_page, c = bq.fetch_page(job_id=c["job_id"], page_size=2, page=1, return_dataframe=True)
+
+        """
+
+        self.service_account = self.get_credential()
+        self.client = self._generate_client()
+
+        # Finding the job through the id
+        job = self.client.get_job(job_id)
+
+        # Retrieve the temp table where the results have been written to
+        destination = self.client.get_table(job.destination)
+
+        # Get iterator through chuncks of data
+        rows = self.client.list_rows(destination, page_size=page_size)
+
+        # Retrieving the given page of data from iterator
+        # Next would bring the next element, using itertools
+        # allows retrieving any page within the range
+        p = next(itertools.islice(rows.pages, page, None))
+
+        # Assure results are stored as list of dicts
+        page_results = list(p)
+
+        # Convert to json like to dataframe if flag is set
+        if return_dataframe:
+            field_names = [field.name for field in rows.schema]
+            page_results = pd.DataFrame(data=[list(x.values()) for x in page_results], columns=field_names)
+
+        # Summarize control variables
+        control = {"job_id": job.job_id,
+                "total_records": rows.total_rows,
+                "total_pages": math.ceil(rows.total_rows/page_size),
+                "current_page": page}
+
+        return page_results, control
 
 def query(
     carol: Carol,
