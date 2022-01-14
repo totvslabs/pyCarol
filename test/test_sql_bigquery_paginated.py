@@ -6,8 +6,7 @@ import pandas as pd
 
 import pycarol
 
-SA_FILEPATH = "/mnt/c/Users/juvenal.jose/Documents/bigquery.json"
-
+SA_FILEPATH = None
 TEST_QUERY1 = """
     SELECT *
     FROM `4c2c9090e7c611e893bf0e900682978b.dm_clockinrecords`
@@ -73,6 +72,6 @@ def test_fetch_page():
     assert df_back_to_sec.equals(df_second_page), "going back and forth through the iterator should bring the same results for the same page"
 
 
-if __name__ == "__main__":
-    test_paginated_query()
-    test_fetch_page()
+#if __name__ == "__main__":
+    #test_paginated_query()
+    #test_fetch_page()
