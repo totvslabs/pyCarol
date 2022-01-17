@@ -17,7 +17,6 @@ from .connectors import Connectors
 import math
 import itertools
 
-
 class BQ:
 
     token = None
@@ -42,6 +41,15 @@ class BQ:
         project = service_account["project_id"]
         client = bigquery.Client(project=project, credentials=credentials)
         return client
+
+    def query_job(self, query, dataset_id=None):
+            self.service_account = self.get_credential()
+            self.client = self._generate_client()
+
+            dataset_id = dataset_id or self.dataset_id
+            job_config = bigquery.QueryJobConfig(default_dataset=dataset_id)
+            job = self.client.query(query, job_config=job_config)
+            return job
 
     def is_expired(self):
 
@@ -129,14 +137,9 @@ class BQ:
 
         """
 
-        self.service_account = self.get_credential()
-        self.client = self._generate_client()
+        job = self.query_job(query, dataset_id)
+        results = [dict(row) for row in job.result()]
 
-        dataset_id = dataset_id or self.dataset_id
-        job_config = bigquery.QueryJobConfig(default_dataset=dataset_id)
-        results = self.client.query(query, job_config=job_config)
-
-        results = [dict(row) for row in results]
         if return_dataframe:
             return pd.DataFrame(results)
         else:
@@ -176,12 +179,7 @@ class BQ:
 
         """
 
-        self.service_account = self.get_credential()
-        self.client = self._generate_client()
-
-        dataset_id = dataset_id or self.dataset_id
-        job_config = bigquery.QueryJobConfig(default_dataset=dataset_id)
-        job = self.client.query(query, job_config=job_config)
+        job = self.query_job(query, dataset_id)
 
         # Enforce query execution to make sure materialized view 
         # is created.
