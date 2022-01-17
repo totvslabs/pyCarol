@@ -6,6 +6,11 @@ PyCarol offers a helper to work with data on Google Big Query layer, the
 through the ``query()`` method, or to fetch data in chuncks through the
 ``paginated_query`` and ``fetch_page`` methods.
 
+Another option for handling paginated queries is to use the 
+``pycarol.bigqueryjob.BQJob`` class, which provides a way of storing
+requests status and avoids passing too many parameters on methods calls.
+This class also enables users to handle both paginated and full requests.
+
 Retrieving full content at once
 -------------------------------
 
@@ -101,3 +106,54 @@ A few points to be considered:
    therefore the parameter ``page_size`` must always be provided on
    ``paginated_query`` and ``fetch_page``, It also must be consistent
    through the calls.
+
+Using BQJob
+-----------------
+
+As mentioned before, performing paginated queries through the BQ class requires 
+the user to manage the control variables, such as the ``job_id`` and ``page_size``, 
+at the client side. Another way is to work with objects of type ``BQJob``.
+
+``BQJob`` encapsulates the whole control management, but a new object must be 
+created for every new query (or whenever the query parameters are changed, such as 
+``page_size``). Below is given an example of how to instantiate a ``BQJob`` object, 
+as well as how to navigate on the results records.
+
+.. code:: python
+
+   bqj = pycarol.bigqueryjob.BQJob(carol=login, service_account=service_account,
+                           query=TEST_QUERY1, page_size=200, return_dataframe=True)
+
+   # The control variables, stored only for reference
+   qcontrol = bqj.getPaginationControl()
+
+   # Get the next page of results (the fisrt one, in this case)
+   pg0 = bqj.fetch_next_page()
+
+   # Get the second page
+   pg1 = bqj.fetch_next_page()
+
+   # Get the first page again
+   pgp = bqj.fetch_previous_page()
+
+   assert pgp.equals(pg0), "These dataframes should be equal."
+
+   # Jumping directly to page four
+   pg4 = bqj.fetch_page(page=4)
+
+   # Retrieving all records at once
+   all_records = bqj.fetch_all()
+
+Notes:
+
+-  Calling ``fetch_next_page`` on the last page will return the same page (last)
+   no matter how many times it is called. The same goes with ``fetch_previous_page``,
+   which will return always the first page.
+
+-  Using ``fetch_page`` will update the control variables to point the provided page 
+   as the last one consumed, changing the flow for ``fetch_next_page`` and 
+   ``fetch_previous_page``.
+
+-  ``fetch_all`` can be used the recover all records with a single call.
+
+-  If not provided, ``page_size`` will default to the total of records on the results.
