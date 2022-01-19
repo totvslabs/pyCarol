@@ -1,5 +1,6 @@
 from string import Formatter
 from datetime import datetime, timedelta
+import threading
 
 class Carolina:
     """
@@ -13,9 +14,12 @@ class Carolina:
     token = None
 
     def __init__(self, carol):
+
+        self.backend_lock = threading.Lock()
+
         self.carol = carol
-        self.client = None
         self.engine = None
+        self.client = None
         self.token = None
         self.expires_at = None
         self.cds_app_storage_path = None
@@ -25,49 +29,62 @@ class Carolina:
         self.cds_staging_rejected_path = None
 
     def init_if_needed(self):
+        """
+        Checks if backend credentials / object is still valid. This method is thread safe by using lock.
+
+        Returns:
+            True if backend has been reinitialized, false if it is still valid.
+
+        """
         expired = False
-        if self.client:
-            # Check if the token is not expired for at least another minute.. we do a little margin to avoid time difference issues
-            if self.expires_at is None or datetime.utcnow() + timedelta(minutes=1) < self.expires_at:
-                return
-            else:
-                expired = True
 
-        if Carolina.token is None or expired or Carolina.token.get('tenant_name', '') != self.carol.tenant['mdmName'] \
-                or Carolina.token.get('app_name', '') != self.carol.app_name \
-                or (datetime.utcnow() + timedelta(minutes=1)
-                    >= datetime.fromtimestamp(Carolina.token.get('expirationTimestamp', 1)/1000.0)):
-            token = self.carol.call_api('v1/storage/storage/token', params={'carolAppName': self.carol.app_name})
-            token['tenant_name'] = self.carol.tenant['mdmName']
-            token['app_name'] = self.carol.app_name
-            Carolina.token = token
+        # locks all instance variables to prevent inconsistencies
+        with self.backend_lock:
+            if self.client:
+                # Check if the token is not expired for at least another minute.. we do a little margin to avoid time difference issues
+                if self.expires_at is None or datetime.utcnow() + timedelta(minutes=1) < self.expires_at:
+                    return False
+                else:
+                    expired = True
 
-        token = Carolina.token
-        self.engine = token['engine']
+            if Carolina.token is None or expired or Carolina.token.get('tenant_name', '') != self.carol.tenant['mdmName'] \
+                    or Carolina.token.get('app_name', '') != self.carol.app_name \
+                    or (datetime.utcnow() + timedelta(minutes=1)
+                        >= datetime.fromtimestamp(Carolina.token.get('expirationTimestamp', 1)/1000.0)):
+                token = self.carol.call_api('v1/storage/storage/token', params={'carolAppName': self.carol.app_name})
+                token['tenant_name'] = self.carol.tenant['mdmName']
+                token['app_name'] = self.carol.app_name
+                Carolina.token = token
 
-        if token.get('expirationTimestamp', None) is not None:
-            self.expires_at = datetime.fromtimestamp(token['expirationTimestamp'] / 1000.0)
+            token = Carolina.token
+            self.engine = token['engine']
 
-        self.cds_app_storage_path = token['cdsAppStoragePath']
-        self.cds_golden_path = token['cdsGoldenPath']
-        self.cds_staging_path = token['cdsStagingPath']
-        self.cds_staging_master_path = token['cdsStagingMasterPath']
-        self.cds_staging_rejected_path = token['cdsStagingRejectedPath']
-        self.cds_view_path = token['cdsViewPath']
+            if token.get('expirationTimestamp', None) is not None:
+                self.expires_at = datetime.fromtimestamp(token['expirationTimestamp'] / 1000.0)
 
-        self.cds_golden_intake_path = token['cdsIntakeGoldenPath']
-        self.cds_staging_intake_path = token['cdsIntakeStagingPath']
+            self.cds_app_storage_path = token['cdsAppStoragePath']
+            self.cds_golden_path = token['cdsGoldenPath']
+            self.cds_staging_path = token['cdsStagingPath']
+            self.cds_staging_master_path = token['cdsStagingMasterPath']
+            self.cds_staging_rejected_path = token['cdsStagingRejectedPath']
+            self.cds_view_path = token['cdsViewPath']
 
-        self.cds_golden_rejected_intake_path = token['cdsRejectedPath']
+            self.cds_golden_intake_path = token['cdsIntakeGoldenPath']
+            self.cds_staging_intake_path = token['cdsIntakeStagingPath']
 
-        self.cds_view_intake_path = token['cdsIntakeViewPath']
+            self.cds_golden_rejected_intake_path = token['cdsRejectedPath']
 
-        if self.engine == 'GCP-CS':
-            self._init_gcp(token)
+            self.cds_view_intake_path = token['cdsIntakeViewPath']
+
+            if self.engine == 'GCP-CS':
+                self._init_gcp(token)
+
+        return true
 
     def _init_gcp(self, token):
         """
-        Initialize GCP back-end
+        Initialize GCP back-end.
+        Warning: this method is not thread safe and should not be called directly, use init_if_needed instead.
 
         Args:
             token: `dict`
@@ -88,6 +105,7 @@ class Carolina:
 
         self.token = token['token']
         gcp_credentials = service_account.Credentials.from_service_account_info(token['token'])
+    
         self.client = storage.Client(credentials=gcp_credentials, project=token['token']['project_id'])
 
     def get_client(self):

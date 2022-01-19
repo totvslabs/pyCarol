@@ -22,27 +22,33 @@ class Storage:
         """
 
         self.carol = carol
+        self.carolina = Carolina(self.carol)
         self._init_if_needed()
-        self.carolina = None
+        self.backend_lock = threading.Lock()
 
     def _init_if_needed(self):
-        # TODO: This if seems to be useless. It can be handled in `carolina.init_if_needed()`
-        if (Carolina.token is not None) and (Carolina.token.get('tenant_name', '') == self.carol.tenant['mdmName']) and \
-           (Carolina.token.get('app_name', '') == self.carol.app_name) and \
-           (datetime.utcnow() + timedelta(minutes=1) < datetime.fromtimestamp(Carolina.token.get('expirationTimestamp', 1)/1000.0)):
-            pass
-            # return
-        else:
-            Carolina.token = None
+        """
+            Check if backend has been reinitialized. If so, also reinit the GCP storage object
 
-        self.carolina = Carolina(self.carol)
-        self.carolina.init_if_needed()
-        if self.carolina.engine == 'GCP-CS':
-            from .utils.storage_gcpcs import StorageGCPCS
-            self.backend = StorageGCPCS(self.carol, self.carolina)
+        Returns:
+            True if storage object has been reinitialized, false if it is still valid.
+
+        """
+        if self.carolina.init_if_needed():
+
+            if self.carolina.engine == 'GCP-CS':
+                from .utils.storage_gcpcs import StorageGCPCS
+
+                with self.backend_lock:
+                    self.backend = StorageGCPCS(self.carol, self.carolina)
+            else:
+                raise NotImplemented(f"Only 'GCP-CS' backend implemented in this version. "
+                                    f"You are trying to use {self.carolina.engine }")
+
+            return True
+
         else:
-            raise NotImplemented(f"Only 'GCP-CS' backend implemented in this version. "
-                                 f"You are trying to use {self.carolina.engine }")
+            return False
 
     def save(
         self, name, obj, format='pickle', parquet=False, cache=True, chunk_size=None, storage_space='app',
@@ -147,6 +153,7 @@ class Storage:
 
 
         """
+        self._init_if_needed()
         self.backend.save(
             name, obj, format, parquet, cache, chunk_size,
             storage_space=storage_space,
@@ -236,6 +243,7 @@ class Storage:
 
 
         """
+        self._init_if_needed()
         return self.backend.load(name=name, format=format, parquet=parquet, cache=cache, storage_space=storage_space,
                                  columns=columns, chunk_size=chunk_size)
 
@@ -253,7 +261,7 @@ class Storage:
         Returns: list of files paths.
 
         """
-
+        self._init_if_needed()
         return self.backend.files_storage_list(prefix=prefix, print_paths=print_paths)
 
     def exists(self, name):
@@ -269,6 +277,7 @@ class Storage:
         Returns: `bool`
 
         """
+        self._init_if_needed()
         return self.backend.exists(name)
 
     def delete(self, name):
@@ -284,49 +293,65 @@ class Storage:
         Returns:
 
         """
+        self._init_if_needed()
         self.backend.delete(name)
 
     def build_url_parquet_golden(self, dm_name):
+        self._init_if_needed()
         return self.backend.build_url_parquet_golden(dm_name)
 
     def build_url_parquet_golden_cds(self, dm_name):
+        ]self._init_if_needed()
         return self.backend.build_url_dask_parquet_golden_cds(dm_name)
 
     def build_url_parquet_staging(self, staging_name, connector_id):
+        self._init_if_needed()
         return self.backend.build_url_parquet_staging(staging_name, connector_id)
 
     def build_url_parquet_staging_cds(self, staging_name, connector_id):
+        self._init_if_needed()
         return self.backend.build_url_dask_parquet_staging_cds(staging_name, connector_id)
 
     def build_url_parquet_staging_master(self, staging_name, connector_id):
+        self._init_if_needed()
         return self.backend.build_url_parquet_staging_master(staging_name, connector_id)
 
     def build_url_parquet_staging_rejected(self, staging_name, connector_id):
+        self._init_if_needed()
         return self.backend.build_url_parquet_staging_rejected(staging_name, connector_id)
 
     def build_url_parquet_golden_rejected_cds(self, dm_name):
+        self._init_if_needed()
         return self.backend.build_url_parquet_golden_rejected_cds(dm_name)
 
     def get_dask_options(self):
+        self._init_if_needed()
         return self.backend.get_dask_options()
 
     def get_golden_file_paths(self, dm_name):
+        self._init_if_needed()
         return self.backend.get_golden_file_paths(dm_name)
 
     def get_view_file_paths(self, view_name):
+        self._init_if_needed()
         return self.backend.get_view_file_paths(view_name)
 
     def get_staging_file_paths(self, staging_name, connector_id):
+        self._init_if_needed()
         return self.backend.get_staging_file_paths(staging_name, connector_id)
 
     def get_golden_rejected_cds_file_paths(self, dm_name, file_pattern=None):
+        self._init_if_needed()
         return self.backend.get_golden_rejected_cds_file_paths(dm_name, file_pattern=file_pattern)
 
     def get_staging_cds_file_paths(self, staging_name, connector_id, file_pattern=None):
+        self._init_if_needed()
         return self.backend.get_staging_cds_file_paths(staging_name, connector_id, file_pattern=file_pattern)
 
     def get_golden_cds_file_paths(self, dm_name, file_pattern=None):
+        self._init_if_needed()
         return self.backend.get_golden_cds_file_paths(dm_name, file_pattern=file_pattern)
 
     def get_view_cds_file_paths(self, dm_name):
+        self._init_if_needed()
         return self.backend.get_view_cds_file_paths(dm_name)
