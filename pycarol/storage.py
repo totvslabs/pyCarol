@@ -1,6 +1,6 @@
 from .carolina import Carolina
 from datetime import datetime, timedelta
-
+import threading
 
 class Storage:
 
@@ -23,8 +23,8 @@ class Storage:
 
         self.carol = carol
         self.carolina = Carolina(self.carol)
-        self._init_if_needed()
         self.backend_lock = threading.Lock()
+        self._init_if_needed()
 
     def _init_if_needed(self):
         """
@@ -301,7 +301,7 @@ class Storage:
         return self.backend.build_url_parquet_golden(dm_name)
 
     def build_url_parquet_golden_cds(self, dm_name):
-        ]self._init_if_needed()
+        self._init_if_needed()
         return self.backend.build_url_dask_parquet_golden_cds(dm_name)
 
     def build_url_parquet_staging(self, staging_name, connector_id):
