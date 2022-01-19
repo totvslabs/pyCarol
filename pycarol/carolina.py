@@ -12,10 +12,9 @@ class Carolina:
     """
 
     token = None
+    backend_lock = threading.Lock()
 
     def __init__(self, carol):
-
-        self.backend_lock = threading.Lock()
 
         self.carol = carol
         self.engine = None
@@ -39,7 +38,7 @@ class Carolina:
         expired = False
 
         # locks all instance variables to prevent inconsistencies
-        with self.backend_lock:
+        with Carolina.backend_lock:
             if self.client:
                 # Check if the token is not expired for at least another minute.. we do a little margin to avoid time difference issues
                 if self.expires_at is None or datetime.utcnow() + timedelta(minutes=1) < self.expires_at:
@@ -79,7 +78,7 @@ class Carolina:
             if self.engine == 'GCP-CS':
                 self._init_gcp(token)
 
-        return true
+        return True
 
     def _init_gcp(self, token):
         """
