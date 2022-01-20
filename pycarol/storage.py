@@ -1,6 +1,5 @@
 from .carolina import Carolina
 from datetime import datetime, timedelta
-import threading
 
 class Storage:
 
@@ -244,7 +243,6 @@ class Storage:
         Returns: list of files paths.
 
         """
-        self._init_if_needed()
         return self.backend.files_storage_list(prefix=prefix, print_paths=print_paths)
 
     def exists(self, name):
@@ -260,7 +258,6 @@ class Storage:
         Returns: `bool`
 
         """
-        self._init_if_needed()
         return self.backend.exists(name)
 
     def delete(self, name):
@@ -276,65 +273,49 @@ class Storage:
         Returns:
 
         """
-        self._init_if_needed()
         self.backend.delete(name)
 
     def build_url_parquet_golden(self, dm_name):
-        self._init_if_needed()
         return self.backend.build_url_parquet_golden(dm_name)
 
     def build_url_parquet_golden_cds(self, dm_name):
-        self._init_if_needed()
         return self.backend.build_url_dask_parquet_golden_cds(dm_name)
 
     def build_url_parquet_staging(self, staging_name, connector_id):
-        self._init_if_needed()
         return self.backend.build_url_parquet_staging(staging_name, connector_id)
 
     def build_url_parquet_staging_cds(self, staging_name, connector_id):
-        self._init_if_needed()
         return self.backend.build_url_dask_parquet_staging_cds(staging_name, connector_id)
 
     def build_url_parquet_staging_master(self, staging_name, connector_id):
-        self._init_if_needed()
         return self.backend.build_url_parquet_staging_master(staging_name, connector_id)
 
     def build_url_parquet_staging_rejected(self, staging_name, connector_id):
-        self._init_if_needed()
         return self.backend.build_url_parquet_staging_rejected(staging_name, connector_id)
 
     def build_url_parquet_golden_rejected_cds(self, dm_name):
-        self._init_if_needed()
         return self.backend.build_url_parquet_golden_rejected_cds(dm_name)
 
     def get_dask_options(self):
-        self._init_if_needed()
         return self.backend.get_dask_options()
 
     def get_golden_file_paths(self, dm_name):
-        self._init_if_needed()
         return self.backend.get_golden_file_paths(dm_name)
 
     def get_view_file_paths(self, view_name):
-        self._init_if_needed()
         return self.backend.get_view_file_paths(view_name)
 
     def get_staging_file_paths(self, staging_name, connector_id):
-        self._init_if_needed()
         return self.backend.get_staging_file_paths(staging_name, connector_id)
 
     def get_golden_rejected_cds_file_paths(self, dm_name, file_pattern=None):
-        self._init_if_needed()
         return self.backend.get_golden_rejected_cds_file_paths(dm_name, file_pattern=file_pattern)
 
     def get_staging_cds_file_paths(self, staging_name, connector_id, file_pattern=None):
-        self._init_if_needed()
         return self.backend.get_staging_cds_file_paths(staging_name, connector_id, file_pattern=file_pattern)
 
     def get_golden_cds_file_paths(self, dm_name, file_pattern=None):
-        self._init_if_needed()
         return self.backend.get_golden_cds_file_paths(dm_name, file_pattern=file_pattern)
 
     def get_view_cds_file_paths(self, dm_name):
-        self._init_if_needed()
         return self.backend.get_view_cds_file_paths(dm_name)
