@@ -42,7 +42,7 @@ class Carolina:
             if self.client:
                 # Check if the token is not expired for at least another minute.. we do a little margin to avoid time difference issues
                 if self.expires_at is None or datetime.utcnow() + timedelta(minutes=1) < self.expires_at:
-                    return False
+                    return 
                 else:
                     expired = True
 
