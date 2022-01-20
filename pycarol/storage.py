@@ -27,28 +27,12 @@ class Storage:
         self._init_if_needed()
 
     def _init_if_needed(self):
-        """
-            Check if backend has been reinitialized. If so, also reinit the GCP storage object
-
-        Returns:
-            True if storage object has been reinitialized, false if it is still valid.
-
-        """
-        if self.carolina.init_if_needed():
-
-            if self.carolina.engine == 'GCP-CS':
-                from .utils.storage_gcpcs import StorageGCPCS
-
-                with self.backend_lock:
-                    self.backend = StorageGCPCS(self.carol, self.carolina)
-            else:
-                raise NotImplemented(f"Only 'GCP-CS' backend implemented in this version. "
-                                    f"You are trying to use {self.carolina.engine }")
-
-            return True
-
+        if self.carolina.engine == 'GCP-CS':
+            from .utils.storage_gcpcs import StorageGCPCS
+            self.backend = StorageGCPCS(self.carol, self.carolina)
         else:
-            return False
+            raise NotImplemented(f"Only 'GCP-CS' backend implemented in this version. "
+                                 f"You are trying to use {self.carolina.engine }")
 
     def save(
         self, name, obj, format='pickle', parquet=False, cache=True, chunk_size=None, storage_space='app',
