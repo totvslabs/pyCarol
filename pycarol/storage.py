@@ -23,8 +23,7 @@ class Storage:
 
         self.carol = carol
         self.carolina = Carolina(self.carol)
-        self.backend_lock = threading.Lock()
-        self._init_if_needed()
+        self.carolina.init_if_needed()
 
     def _init_if_needed(self):
         if self.carolina.engine == 'GCP-CS':
