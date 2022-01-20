@@ -21,10 +21,12 @@ class Storage:
         """
 
         self.carol = carol
-        self.carolina = Carolina(self.carol)
-        self.carolina.init_if_needed()
+        self._init_if_needed()
 
     def _init_if_needed(self):
+        self.carolina = Carolina(self.carol)
+        self.carolina.init_if_needed()
+        
         if self.carolina.engine == 'GCP-CS':
             from .utils.storage_gcpcs import StorageGCPCS
             self.backend = StorageGCPCS(self.carol, self.carolina)
@@ -135,7 +137,6 @@ class Storage:
 
 
         """
-        self._init_if_needed()
         self.backend.save(
             name, obj, format, parquet, cache, chunk_size,
             storage_space=storage_space,
@@ -225,7 +226,6 @@ class Storage:
 
 
         """
-        self._init_if_needed()
         return self.backend.load(name=name, format=format, parquet=parquet, cache=cache, storage_space=storage_space,
                                  columns=columns, chunk_size=chunk_size)
 
