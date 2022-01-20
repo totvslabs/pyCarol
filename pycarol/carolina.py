@@ -78,8 +78,6 @@ class Carolina:
             if self.engine == 'GCP-CS':
                 self._init_gcp(token)
 
-        return True
-
     def _init_gcp(self, token):
         """
         Initialize GCP back-end.
