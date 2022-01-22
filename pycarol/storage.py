@@ -1,7 +1,6 @@
 from .carolina import Carolina
 from datetime import datetime, timedelta
 
-
 class Storage:
 
     """
@@ -23,25 +22,16 @@ class Storage:
 
         self.carol = carol
         self._init_if_needed()
-        self.carolina = None
 
     def _init_if_needed(self):
-        # TODO: This if seems to be useless. It can be handled in `carolina.init_if_needed()`
-        if (Carolina.token is not None) and (Carolina.token.get('tenant_name', '') == self.carol.tenant['mdmName']) and \
-           (Carolina.token.get('app_name', '') == self.carol.app_name) and \
-           (datetime.utcnow() + timedelta(minutes=1) < datetime.fromtimestamp(Carolina.token.get('expirationTimestamp', 1)/1000.0)):
-            pass
-            # return
-        else:
-            Carolina.token = None
-
         self.carolina = Carolina(self.carol)
         self.carolina.init_if_needed()
+        
         if self.carolina.engine == 'GCP-CS':
             from .utils.storage_gcpcs import StorageGCPCS
             self.backend = StorageGCPCS(self.carol, self.carolina)
         else:
-            raise NotImplemented(f"Only 'GCP-CS' backend implemented in this version. "
+            raise NotImplementedError(f"Only 'GCP-CS' backend implemented in this version. "
                                  f"You are trying to use {self.carolina.engine }")
 
     def save(
@@ -49,6 +39,7 @@ class Storage:
         storage_space_params=None,
     ):
         """
+        Save file to CDS
 
         Args:
 
@@ -157,7 +148,8 @@ class Storage:
              chunk_size=None,
              ):
         """
-
+        Load file from CDS.
+        
         Args:
 
             name: `str`.
@@ -253,7 +245,6 @@ class Storage:
         Returns: list of files paths.
 
         """
-
         return self.backend.files_storage_list(prefix=prefix, print_paths=print_paths)
 
     def exists(self, name):
