@@ -26,6 +26,11 @@ class Carolina:
         self.cds_staging_path = None
         self.cds_staging_master_path = None
         self.cds_staging_rejected_path = None
+        self.cds_view_path = None
+        self.cds_golden_intake_path = None
+        self.cds_staging_intake_path = None
+        self.cds_golden_rejected_intake_path = None
+        self.cds_view_intake_path = None
 
     def init_if_needed(self):
         """
@@ -161,36 +166,36 @@ class Carolina:
 
     def get_path(self, space, vars):
         """
-                Format the bucket path for each possible space.
+        Format the bucket path for each possible space.
 
-                Args:
+        Args:
 
-                    space:  `str`,
-                        Which bucket to get. Possible values:
+            space:  `str`,
+                Which bucket to get. Possible values:
 
-                        1. "golden": Data Model golden records.
-                        2. "staging": Staging records path
-                        3. "staging_master": Staging records from Master
-                        4. "staging_rejected": Staging records from Rejected
-                        5. "view": Data Model Relationship View records
-                        6. "app": App  bucket
-                        7. "golden_cds": CDS golden records
-                        8. "staging_cds": Staging Intake.
-                    vars: `dict`
-                        Parameters needed to format the storage path. Possible keys:
+                1. "golden": Data Model golden records.
+                2. "staging": Staging records path
+                3. "staging_master": Staging records from Master
+                4. "staging_rejected": Staging records from Rejected
+                5. "view": Data Model Relationship View records
+                6. "app": App  bucket
+                7. "golden_cds": CDS golden records
+                8. "staging_cds": Staging Intake.
+            vars: `dict`
+                Parameters needed to format the storage path. Possible keys:
 
-                        1. "tenant_id": Tenant ID.
-                        2. "connector_id": Connector ID
-                        3. "staging_type": Staging Name
-                        4. "dm_name": Data model Name
-                        5. "relationship_view_name": Relationship view name
-                        6. "app_name": App  name
+                1. "tenant_id": Tenant ID.
+                2. "connector_id": Connector ID
+                3. "staging_type": Staging Name
+                4. "dm_name": Data model Name
+                5. "relationship_view_name": Relationship view name
+                6. "app_name": App  name
 
 
-                Returns:
-                    formatted path
+        Returns:
+            formatted path
 
-                """
+        """
         vars['tenant_id'] = self.carol.tenant['mdmId']
 
         # TODO: we can use a dictionary or instead of ifs.
