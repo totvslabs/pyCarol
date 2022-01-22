@@ -31,7 +31,7 @@ class Storage:
             from .utils.storage_gcpcs import StorageGCPCS
             self.backend = StorageGCPCS(self.carol, self.carolina)
         else:
-            raise NotImplemented(f"Only 'GCP-CS' backend implemented in this version. "
+            raise NotImplementedError(f"Only 'GCP-CS' backend implemented in this version. "
                                  f"You are trying to use {self.carolina.engine }")
 
     def save(
@@ -39,6 +39,7 @@ class Storage:
         storage_space_params=None,
     ):
         """
+        Save file to CDS
 
         Args:
 
@@ -147,7 +148,8 @@ class Storage:
              chunk_size=None,
              ):
         """
-
+        Load file from CDS.
+        
         Args:
 
             name: `str`.
