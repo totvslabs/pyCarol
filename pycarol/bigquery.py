@@ -54,11 +54,11 @@ class BQ:
         else:
             return False
 
-    def get_credential(self, expiration_time: int = 120, force: bool = False) -> dict:
+    def get_credential(self, expiration_time: int = 24, force: bool = False) -> dict:
         """ Get service account for BigQuery.
 
         Args:
-            expiration_time (int): Time in hours for credentials to expire. Max value 120.
+            expiration_time (int): Time in hours for credentials to expire. Max value 24.
             force (bool): Force to get new credentials skiping any cache.
 
         Returns:
