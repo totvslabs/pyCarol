@@ -247,7 +247,7 @@ class Storage:
         """
         return self.backend.files_storage_list(prefix=prefix, print_paths=print_paths)
 
-    def exists(self, name):
+    def exists(self, name,  storage_space='app'):
         """
 
         Check if files exists in Carol Storage.
@@ -260,7 +260,7 @@ class Storage:
         Returns: `bool`
 
         """
-        return self.backend.exists(name)
+        return self.backend.exists(name, storage_space=storage_space)
 
     def delete(self, name):
         """
