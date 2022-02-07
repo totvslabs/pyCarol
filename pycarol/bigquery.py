@@ -20,8 +20,7 @@ from .storage import Storage
 from .connectors import Connectors
 from . import __TEMP_STORAGE__
 
-CACHE_FILE_NAME = '.pycarol_temp.json'
-CACHE_FILE_NAME_PATH = Path(__TEMP_STORAGE__) / CACHE_FILE_NAME
+CACHE_FILE_NAME = '.pycarol_temp_{env_id}.json'
 
 
 class BQ:
@@ -34,6 +33,9 @@ class BQ:
         self.service_account = service_account
         self._provided_sa = service_account is not None
         self.env = carol.get_current()
+        self._temp_file_name = CACHE_FILE_NAME.format(
+            env_id=self.env['env_id'])
+        self._temp_file_path = Path(__TEMP_STORAGE__) / self._temp_file_name
         self.client = None
         self.dataset_id = f"carol-{self.env['env_id'][0:20]}.{self.env['env_id']}"
         self.cache_cds = cache_cds
@@ -55,7 +57,7 @@ class BQ:
 
         if not self.is_expired():
             return
-        if CACHE_FILE_NAME_PATH.exists():
+        if self._temp_file_path.exists():
             sa = self._load_local_cache()
             sa = self._format_sa(sa)
             if sa['expiration_time'] < datetime.utcnow():
@@ -68,9 +70,9 @@ class BQ:
         if self.cache_cds:
             if not self.storage:
                 self.storage = Storage(self.carol)
-            if self.storage.exists(name=CACHE_FILE_NAME, storage_space='pycarol'):
-                sa_file = self.storage.load(name=str(CACHE_FILE_NAME),
-                                  format='file', storage_space='pycarol', cache=False)
+            if self.storage.exists(name=self._temp_file_name, storage_space='pycarol'):
+                sa_file = self.storage.load(name=str(self._temp_file_name),
+                                            format='file', storage_space='pycarol', cache=False)
                 sa = self._load_local_cache(sa_file)
                 sa = self._format_sa(sa)
 
@@ -82,13 +84,13 @@ class BQ:
                     self._save_local_cache()
 
     def _load_local_cache(self, local_cache: str = None):
-        local_cache = local_cache or CACHE_FILE_NAME_PATH
+        local_cache = local_cache or self._temp_file_path
         with open(local_cache, 'r') as f:
             sa = json.load(f)
         return sa
 
     def _save_local_cache(self):
-        with open(CACHE_FILE_NAME_PATH, "w") as f:
+        with open(self._temp_file_path, "w") as f:
             json.dump(self.service_account, f)
 
     def _save_cache(self):
@@ -98,8 +100,8 @@ class BQ:
             self._save_cds_cache()
 
     def _save_cds_cache(self):
-        if CACHE_FILE_NAME_PATH.exists():
-            self.storage.save(name=CACHE_FILE_NAME, obj=str(CACHE_FILE_NAME_PATH),
+        if self._temp_file_path.exists():
+            self.storage.save(name=self._temp_file_name, obj=str(self._temp_file_path),
                               format='file', storage_space='pycarol')
 
     def _generate_client(self) -> bigquery.Client:
