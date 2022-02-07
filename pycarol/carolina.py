@@ -1,3 +1,4 @@
+import copy
 from string import Formatter
 from datetime import datetime, timedelta
 import threading
@@ -31,6 +32,7 @@ class Carolina:
         self.cds_staging_intake_path = None
         self.cds_golden_rejected_intake_path = None
         self.cds_view_intake_path = None
+        self.cds_pycarol_storage_path = None
 
     def init_if_needed(self):
         """
@@ -77,6 +79,9 @@ class Carolina:
             self.cds_staging_intake_path = token['cdsIntakeStagingPath']
 
             self.cds_golden_rejected_intake_path = token['cdsRejectedPath']
+
+            self.cds_pycarol_storage_path = copy.deepcopy(token['cdsAppStoragePath'])
+            self.cds_pycarol_storage_path['path'] = 'carolapps/._pycarol' 
 
             self.cds_view_intake_path = token['cdsIntakeViewPath']
 
@@ -158,6 +163,8 @@ class Carolina:
             template = self.cds_view_intake_path['bucket']
         elif space == 'golden_rejected':
             template = self.cds_staging_rejected_path['bucket']
+        elif space == 'pycarol':
+            template = self.cds_pycarol_storage_path['bucket']
         else:
             raise ValueError
 
@@ -219,6 +226,8 @@ class Carolina:
             template = self.cds_view_intake_path['path'] + '/'
         elif space == 'golden_rejected':
             template = self.cds_golden_rejected_intake_path['path'] + '/'
+        elif space == 'pycarol':
+            template = self.cds_pycarol_storage_path['path'] + '/'
         else:
             raise ValueError
 

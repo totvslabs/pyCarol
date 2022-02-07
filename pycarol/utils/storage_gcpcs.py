@@ -97,7 +97,7 @@ class StorageGCPCS:
         else:
             raise ValueError("Supported formats are pickle, joblib or file")
 
-        blob.upload_from_filename(filename=local_file_name, retry=retry_policy)
+        blob.upload_from_filename(filename=local_file_name, retry=retry_policy, )
         os.utime(local_file_name, None)
 
     @retry(CDS_RETRY_LIST, tries=5)
@@ -131,6 +131,7 @@ class StorageGCPCS:
                     7. "app": App  bucket
                     8. "golden_cds": CDS golden records
                     9. "staging_cds": Staging Intake.
+                    10. "pycarol": Pycarol folder
             columns: `list` default `None`
                 Columns to fetch when using `parquet=True`
             chunk_size: `int` default `None`
@@ -143,7 +144,7 @@ class StorageGCPCS:
             remote_file_name = f"{self.carolina.get_path('app', {})}{name}"
             bucket = self._get_app_storage_bucket()
         else:
-            remote_file_name = name
+            remote_file_name = f"{self.carolina.get_path(storage_space, {})}{name}"
             bucket = self.carolina.get_client().bucket(
                 self.carolina.get_bucket_name(storage_space))
 
@@ -200,10 +201,10 @@ class StorageGCPCS:
         else:
             return None
 
-    def exists(self, name):
-        remote_file_name = f"{self.carolina.get_path('app', {})}{name}"
+    def exists(self, name, storage_space='app'):
+        remote_file_name = f"{self.carolina.get_path(storage_space, {})}{name}"
 
-        blob = self._get_app_storage_bucket().blob(remote_file_name)
+        blob = self._get_app_storage_bucket(storage_space=storage_space).blob(remote_file_name)
         return blob.exists()
 
     def delete(self, name):

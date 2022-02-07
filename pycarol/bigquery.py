@@ -3,6 +3,9 @@ import re
 import copy
 import typing as T
 from datetime import datetime, timedelta
+import json
+from pathlib import Path
+import warnings
 
 from google.cloud import bigquery
 from google.cloud.bigquery.job.query import QueryJob
@@ -13,20 +16,91 @@ except ImportError:
     pass
 
 from .carol import Carol
+from .storage import Storage
 from .connectors import Connectors
+from . import __TEMP_STORAGE__
+
+CACHE_FILE_NAME = '.pycarol_temp.json'
+CACHE_FILE_NAME_PATH = Path(__TEMP_STORAGE__) / CACHE_FILE_NAME
 
 
 class BQ:
 
     token = None
 
-    def __init__(self, carol: Carol, service_account: dict = None):
+    def __init__(self, carol: Carol, service_account: dict = None, cache_cds: bool = True):
+
         self.carol = carol
         self.service_account = service_account
         self._provided_sa = service_account is not None
         self.env = carol.get_current()
         self.client = None
         self.dataset_id = f"carol-{self.env['env_id'][0:20]}.{self.env['env_id']}"
+        self.cache_cds = cache_cds
+        self.storage = None
+        self._fetch_cache()
+
+    def _format_sa(self, sa):
+
+        expiration_estimate = datetime.strptime(
+            sa['expiration_time'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        sa = {
+            'sa': sa,
+            'expiration_time': expiration_estimate,
+            'env': copy.deepcopy(self.env)
+        }
+        return sa
+
+    def _fetch_cache(self):
+
+        if not self.is_expired():
+            return
+        if CACHE_FILE_NAME_PATH.exists():
+            sa = self._load_local_cache()
+            sa = self._format_sa(sa)
+            if sa['expiration_time'] < datetime.utcnow():
+                return None
+            else:
+                BQ.token = sa
+                self.service_account = sa['sa']
+                return
+
+        if self.cache_cds:
+            if not self.storage:
+                self.storage = Storage(self.carol)
+            if self.storage.exists(name=CACHE_FILE_NAME, storage_space='pycarol'):
+                sa_file = self.storage.load(name=str(CACHE_FILE_NAME),
+                                  format='file', storage_space='pycarol', cache=False)
+                sa = self._load_local_cache(sa_file)
+                sa = self._format_sa(sa)
+
+                if sa['expiration_time'] < datetime.utcnow():
+                    return None
+                else:
+                    BQ.token = sa
+                    self.service_account = sa['sa']
+                    self._save_local_cache()
+
+    def _load_local_cache(self, local_cache: str = None):
+        local_cache = local_cache or CACHE_FILE_NAME_PATH
+        with open(local_cache, 'r') as f:
+            sa = json.load(f)
+        return sa
+
+    def _save_local_cache(self):
+        with open(CACHE_FILE_NAME_PATH, "w") as f:
+            json.dump(self.service_account, f)
+
+    def _save_cache(self):
+
+        self._save_local_cache()
+        if self.cache_cds:
+            self._save_cds_cache()
+
+    def _save_cds_cache(self):
+        if CACHE_FILE_NAME_PATH.exists():
+            self.storage.save(name=CACHE_FILE_NAME, obj=str(CACHE_FILE_NAME_PATH),
+                              format='file', storage_space='pycarol')
 
     def _generate_client(self) -> bigquery.Client:
         """Generate client from credentials."""
@@ -77,8 +151,8 @@ class BQ:
         """
 
         if force or self.is_expired():
-            expiration_estimate = datetime.utcnow() + timedelta(hours=expiration_time)
 
+            current_time = datetime.utcnow()
             url = 'v1/create_temporary_key'
             prefix_path = '/sql/v1/api/'
             env = self.carol.get_current()
@@ -90,8 +164,19 @@ class BQ:
             self.service_account = self.carol.call_api(
                 method='POST', path=url, prefix_path=prefix_path, data=payload)
 
-            BQ.token = {'sa': self.service_account,
-                        'expiration_time': expiration_estimate, 'env': copy.deepcopy(self.env)}
+            if not 'expiration_time' in self.service_account:
+                self.service_account['expiration_time'] = datetime.strftime(
+                    current_time + timedelta(hours=expiration_time), '%Y-%m-%dT%H:%M:%S.%fZ',)
+
+            BQ.token = self._format_sa(self.service_account)
+
+            try:
+                self._save_cache()
+            except Exception as e:
+                warnings.warn(
+                    f"Failed to save cache {e}",
+                    UserWarning, stacklevel=3
+                )
 
         return self.service_account
 
