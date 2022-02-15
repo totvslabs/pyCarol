@@ -143,8 +143,12 @@ class StorageGCPCS:
         if storage_space == 'app_storage':
             remote_file_name = f"{self.carolina.get_path('app', {})}{name}"
             bucket = self._get_app_storage_bucket()
-        else:
+        elif storage_space == 'pycarol':
             remote_file_name = f"{self.carolina.get_path(storage_space, {})}{name}"
+            bucket = self.carolina.get_client().bucket(
+                self.carolina.get_bucket_name(storage_space))
+        else:
+            remote_file_name = name
             bucket = self.carolina.get_client().bucket(
                 self.carolina.get_bucket_name(storage_space))
 
