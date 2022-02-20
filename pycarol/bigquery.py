@@ -180,6 +180,8 @@ class BQ:
                     UserWarning, stacklevel=3
                 )
 
+        if self.service_account is None:
+            self.service_account = BQ.token['sa']
         return self.service_account
 
     def query(
