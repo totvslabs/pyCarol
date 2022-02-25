@@ -90,6 +90,7 @@ class BQ:
         return sa
 
     def _save_local_cache(self):
+        self._temp_file_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self._temp_file_path, "w") as f:
             json.dump(self.service_account, f)
 
@@ -101,6 +102,8 @@ class BQ:
 
     def _save_cds_cache(self):
         if self._temp_file_path.exists():
+            if self.storage is None:
+                self.storage = Storage(self.carol)
             self.storage.save(name=self._temp_file_name, obj=str(self._temp_file_path),
                               format='file', storage_space='pycarol')
 
