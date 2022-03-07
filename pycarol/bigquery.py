@@ -70,7 +70,17 @@ class BQ:
         if self.cache_cds:
             if not self.storage:
                 self.storage = Storage(self.carol)
-            if self.storage.exists(name=self._temp_file_name, storage_space='pycarol'):
+            
+            try:
+                # there is an issue with the storage.load() credentials sometimes we cannot reproduce, this will ignore the cache check if it happens.
+                cache_exists = self.storage.exists(name=self._temp_file_name, storage_space='pycarol')
+            except Exception as e:
+                warnings.warn(
+                    f"Failed to check cache {e}",
+                    UserWarning, stacklevel=3
+                )
+                return None
+            if cache_exists:
                 sa_file = self.storage.load(name=str(self._temp_file_name),
                                             format='file', storage_space='pycarol', cache=False)
                 sa = self._load_local_cache(sa_file)
