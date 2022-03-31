@@ -591,7 +591,7 @@ class CDSGolden:
             deduplicate_results: `bool` default `False`
                 If results should be deduplicated (forced to true if send_realtime_records is True)
             extra_params: `dict`
-                If a new parameter is added on carol, it is a way to make possible to add this new parameters without updating pycarol
+                If a new parameter is added on carol, it is a way to make possible to add this new parameter without updating pycarol
 
         :return: `dict`
             Task created in Carol. 
