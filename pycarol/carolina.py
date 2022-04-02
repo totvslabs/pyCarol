@@ -57,7 +57,10 @@ class Carolina:
                     or Carolina.token.get('app_name', '') != self.carol.app_name \
                     or (datetime.utcnow() + timedelta(minutes=1)
                         >= datetime.fromtimestamp(Carolina.token.get('expirationTimestamp', 1)/1000.0)):
-                token = self.carol.call_api('v1/storage/storage/token', params={'carolAppName': self.carol.app_name})
+                token = self.carol.call_api(
+                    'v1/storage/storage/token', params={'carolAppName': self.carol.app_name},
+                    status_forcelist=(500, 502, 503, 504, 524), retries=5
+                    )
                 token['tenant_name'] = self.carol.tenant['mdmName']
                 token['app_name'] = self.carol.app_name
                 Carolina.token = token

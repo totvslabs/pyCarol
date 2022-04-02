@@ -560,7 +560,7 @@ class CDSGolden:
         self, query, dm_name=None, dm_id=None,
         save_cds_data=True, delete_target_folder=False,
         send_subscriptions=True, use_dataflow=False, delete_realtime_records=False,
-        send_realtime_records=False,
+        send_realtime_records=False, save_big_query=False, clear_big_query=False, deduplicate_results=False, **extra_params
     ):
         """
         Process CDS using bigquery engine.
@@ -584,6 +584,14 @@ class CDSGolden:
                 Delete realtime records.
             send_realtime_records: `bool`, default `False`
                 Send realtime records.
+            save_big_query: `bool` default `False`
+                save the result to BigQuery table
+            clear_big_query: `bool` default `False`
+                clean BigQuery first
+            deduplicate_results: `bool` default `False`
+                If results should be deduplicated (forced to true if send_realtime_records is True)
+            extra_params: `dict`
+                If a new parameter is added on carol, it is a way to make possible to add this new parameter without updating pycarol
 
         :return: `dict`
             Task created in Carol. 
@@ -603,7 +611,12 @@ class CDSGolden:
             'clearRealtime': delete_realtime_records,
             'sendRealtime': send_realtime_records,
             'useDataflow': use_dataflow,
+            'saveBigQuery': save_big_query,
+            'clearBigQuery': clear_big_query,
+            'deduplicateResults': deduplicate_results
         }
+        query_params.update(extra_params)
+        
         content_type = 'text/plain'
 
         return self.carol.call_api(path='v2/bigQuery/processQuery', method='POST', data=query, params=query_params, content_type=content_type)
