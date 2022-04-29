@@ -19,6 +19,7 @@ min_requires = [
     "retry",
     "tqdm",
     "urllib3",
+    'beautifulsoup4',
 ]
 
 dataframe_requires = [
