@@ -44,6 +44,7 @@ from .logger import CarolHandler
 from .auth.PwdAuth import PwdAuth
 from .auth.ApiKeyAuth import ApiKeyAuth
 from .auth.PwdKeyAuth import PwdKeyAuth
+from .auth.PwdFluig import PwdFluig
 from .cds import CDSGolden, CDSStaging
 from .apps import Apps
 from .subscription import Subscription

@@ -77,6 +77,7 @@ class Carol:
     def __init__(self, domain=None, app_name=None, auth=None, connector_id=None, port=443, verbose=False,
                  organization=None, environment=None, host=None, user=None, password=None, api_key=None, org_level=False):
 
+        self._user_agent = f'pyCarol/{__version__}'
         self.connector_id = connector_id
 
         if auth is None:
@@ -336,7 +337,7 @@ class Carol:
                 data = None
 
         headers.update(extra_headers)
-        headers.update({'User-Agent': f'pyCarol/{__version__}'})
+        headers.update({'User-Agent': self._user_agent})
 
         __count = 0
         while True:
