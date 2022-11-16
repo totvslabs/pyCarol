@@ -1,8 +1,9 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-
-from .miscellaneous import stream_data
 import threading
+
+from ..carol import _retry_session
+from .miscellaneous import stream_data
 
 
 class AtomicCounter:
@@ -90,8 +91,8 @@ async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
 
     counter = AtomicCounter(total=len(data))
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        session = carol._retry_session(status_forcelist=[502, 429, 524, 408, 504, 598, 520, 503, 500],
-                                       method_whitelist=frozenset(['POST']))
+        session = _retry_session(status_forcelist=[502, 429, 524, 408, 504, 598, 520, 503, 500],
+                                 method_whitelist=frozenset(['POST']))
         # Set any session parameters here before calling `send_a`
         loop = asyncio.get_event_loop()
         tasks = [
