@@ -14,14 +14,19 @@ class InvalidToken(Exception):
 
 class MissingInfoCarolException(ValueError):
 
-    """When some information is missing to Carol.__init__."""
+    """Custom exception to handle Carol missing information on Carol.__init__."""
 
     pass
 
 
 class DeprecatedEnvVarException(Exception):
 
-    """When some environment variable is deprecated."""
+    """Custom exception to handle deprecated environment variables.
+    
+    Args:
+        old_var (str): Deprecated environment variable.
+        new_var (str): Environment variable to be replaced.
+    """
 
     def __init__(self, old_var: str, new_var: str):
         msg = f"""

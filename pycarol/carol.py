@@ -386,7 +386,7 @@ class Carol:
         return resp
 
     def api_key_revoke(self, connector_id: str) -> ResponseType:
-        """Revoke API key for ta given connector_id.
+        """Revoke API key for the given connector_id.
 
         Args:
             connector_id: Connector Id which API key was created.
