@@ -12,3 +12,4 @@ requests
 retry
 tqdm
 urllib3
+sphinx_rtd_theme

@@ -133,9 +133,43 @@ and then
     carol = Carol()
 
 
-Filter queries
----------------
+Ingesting data
+--------------
 
+From both Staging Tables and Data Models (CDS Layer)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use this method when you need to read most of the records and columns from the source.
+
+.. code:: python
+
+    from pycarol import Carol, Staging
+
+    staging = Staging(Carol())
+    df = staging.fetch_parquet(
+        staging_name="execution_history", 
+        connector_name="model"
+    )
+
+From both Staging Tables and Data Models (BQ Layer)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use this method when you need to read only a subset of records and columns or when 
+data transformation is needed.
+
+.. code:: python
+
+    from pycarol import Carol
+    from pycarol.bigquery import BQ
+
+    bq = BQ(Carol())
+    query_str = "SELECT * FROM stg_connectorname_table_name"
+    results = bq.query(query_str)
+
+From Data Models (RT Layer): Filter queries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use this when you need low latency (only if RT layer is enabled).
 
 .. code:: python
 
@@ -176,9 +210,8 @@ If one wants all the response use ``only_hits = False``. Also, if your filter ha
     query.results
 
 
-
-Named queries
--------------
+From Data Models (RT Layer): Named queries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code:: python
 

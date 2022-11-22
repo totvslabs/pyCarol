@@ -19,7 +19,7 @@ min_requires = [
     "retry",
     "tqdm",
     "urllib3",
-    'beautifulsoup4',
+    "beautifulsoup4",
 ]
 
 dataframe_requires = [
@@ -28,12 +28,24 @@ dataframe_requires = [
     "joblib>=0.11",
     "pyarrow>=0.15.1,<1.0.0",
 ]
+dev_requirements = [
+    "black",
+    "bumpversion",
+    "flake8",
+    "mypy",
+    "pydocstyle",
+    "pylint",
+    "pytest",
+    "sphinx-rtd-theme",
+    "sphinx",
+    "types-requests",
+]
 extras_require = {
     "dataframe": min_requires + dataframe_requires,
     "pipeline": min_requires + dataframe_requires + ["luigi", "papermill"],
     "onlineapp": min_requires + ["flask>=1.0.2", "redis"],
     "dask": min_requires + ["dask[complete]"],
-    "dev": min_requires + ["pytest", "bumpversion", "sphinx-rtd-theme", "sphinx"],
+    "dev": min_requires + dev_requirements,
 }
 extras_require["complete"] = sorted({v for req in extras_require.values() for v in req})
 
