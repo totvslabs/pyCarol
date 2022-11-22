@@ -22,10 +22,10 @@ class MissingInfoCarolException(ValueError):
 class DeprecatedEnvVarException(Exception):
 
     """Custom exception to handle deprecated environment variables.
-    
+
     Args:
-        old_var (str): Deprecated environment variable.
-        new_var (str): Environment variable to be replaced.
+        old_var: Deprecated environment variable.
+        new_var: Environment variable to be replaced.
     """
 
     def __init__(self, old_var: str, new_var: str):
