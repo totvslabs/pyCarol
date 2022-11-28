@@ -34,3 +34,10 @@ class DeprecatedEnvVarException(Exception):
             Please replace it by {new_var}.
         """
         super().__init__(msg)
+
+
+class NoServiceAccountException(Exception):
+
+    """Custom exception to handle missing BQ service account."""
+
+    pass
