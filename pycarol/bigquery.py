@@ -252,7 +252,7 @@ def _save_cds_cache(storage: Storage, tmp_filepath: Path) -> None:
     )
 
 
-def _format_sa(sa: T.Dict, env) -> T.Dict:
+def _format_sa(sa: T.Dict, env: T.Dict) -> T.Dict:
     expiration_estimate = datetime.strptime(
         sa["expiration_time"], "%Y-%m-%dT%H:%M:%S.%fZ"
     )
@@ -273,7 +273,7 @@ def _load_local_cache(
     return service_account
 
 
-def _get_tmp_key(expiration_time, carol: Carol) -> T.Dict[str, T.Any]:
+def _get_tmp_key(expiration_time: int, carol: Carol) -> T.Dict[str, T.Any]:
     url = "v1/create_temporary_key"
     prefix_path = "/sql/v1/api/"
     env = carol.get_current()
