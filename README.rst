@@ -383,53 +383,15 @@ Useful Functions
     def callback(task_list):
       print(task_list)
     track_tasks(carol=carol, task_list=['task_id_1', 'task_id_2'], callback=callback)
-
-2. ``pause_dm_mappings``: Pause datamodels mappings.
-
-.. code:: python
-
-    from pycarol import Carol
-    from pycarol.functions import pause_dm_mappings
-    carol = Carol()
-    pause_dm_mappings(carol, connector_name='connector_name', dm_list=['dm1','dm2'])
-
-
-3. ``check_mapping``: Check if a staging has mappings
-
-.. code:: python
-
-    from pycarol import Carol
-    from pycarol.functions import check_mapping
-    carol = Carol()
-    check_mapping(carol, staging_name='staging_name', connector_name='connector_name')
-
-
-4. ``resume_process``: Resume ETLs and mappings from a staging
-
-.. code:: python
-
-    from pycarol import Carol
-    from pycarol.functions import resume_process
-    carol = Carol()
-    resume_process(carol, staging_name='staging_name', connector_name='connector_name')
-
-5. ``pause_etls``: Pause ETLs from a list of stagings
-  
-  .. code:: python
-
-      from pycarol import Carol
-      from pycarol.functions import resume_process
-      carol = Carol()
-      etl_list = ['staging1', 'staging2', 'staging3']
-      pause_etls(carol, connector_name='rui', etl_list=etl_list,)
   
 
 Release process
 ----------------
 1. Open a PR with your change for `master` branch;
 2. Once approved, merge into `master`;
-3. Locally, checkout to `master` branch;
-4. make bump_patch/bump_minor depending on the type of version. THis will create a commit with the new version.;
-5. Push your commit and tag;
-6. Create a new Release.
+3. Locally, :code:`git checkout master`
+4. Make new version (this will create a commit with the new version)
+ a. :code:`make bump_patch` or :code:`make bump_minor`
+5. Locally, :code:`git push origin master`
+6. Locally, :code:`git push origin <name of new tag>`
 
