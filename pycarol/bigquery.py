@@ -117,7 +117,7 @@ class BQ:
     def get_credential(
         self, expiration_time: int = 24, force: bool = False
     ) -> T.Dict[str, T.Any]:
-        """Get service account for BigQuery.
+        """Get service account for BigQuery and cache it.
 
         Args:
             expiration_time: Time in hours for credentials to expire. Max value 24.
