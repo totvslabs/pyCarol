@@ -344,7 +344,7 @@ class Carol:
                     response.text,
                     response.status_code,
                 )
-            elif response.status_code == 404:
+            if response.status_code == 404:
                 raise exceptions.CarolApiResponseException(
                     response.text, response.status_code
                 )
