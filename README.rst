@@ -391,7 +391,9 @@ Release process
 2. Once approved, merge into `master`;
 3. Locally, :code:`git checkout master`
 4. Make new version (this will create a commit with the new version)
- a. :code:`make bump_patch` or :code:`make bump_minor`
+
+  a. :code:`make bump_patch` or :code:`make bump_minor`
+
 5. Locally, :code:`git push origin master`
 6. Locally, :code:`git push origin <name of new tag>`
 
