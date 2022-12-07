@@ -36,7 +36,6 @@ package: clean
 
 deploy:
 	@echo "~~~ Publishing pyCarol on PyPI"
-	@twine check dist/*.tag.gz
 	@twine upload dist/*.tar.gz --verbose
 
 test:
