@@ -8,6 +8,7 @@ here = Path(__file__).absolute().parent
 
 min_requires = [
     "deprecated",
+    "deprecation",
     "gcsfs>=0.3.0,<0.7",
     "google-auth",
     "google-auth-httplib2",
