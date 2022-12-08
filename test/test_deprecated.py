@@ -1,8 +1,12 @@
 """ Tests for deprecated features inside pyCarol
 
 """
+from unittest import mock
 import warnings
-import pytest
+
+import deprecation
+
+import pycarol
 
 
 def test_luigi_extension_deprecated():
@@ -11,3 +15,9 @@ def test_luigi_extension_deprecated():
         warnings.simplefilter("default", category=DeprecationWarning)
         import pycarol.luigi_extension
         assert "luigi_extension is deprecated" in str(w[0].message)
+
+
+@deprecation.fail_if_not_removed
+def test_sql_deprecated() -> None:
+    carol = mock.MagicMock()
+    pycarol.SQL(carol)

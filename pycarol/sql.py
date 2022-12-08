@@ -18,8 +18,14 @@ except ModuleNotFoundError:
 
 from pycarol import Carol, PwdAuth, PwdKeyAuth
 from . import bigquery
+from .utils.deprecation_msgs import deprecated
 
 
+@deprecated(
+    deprecated_in="2.54.6",
+    removed_in="2.54.7",
+    details="SQL is not supported by Carol.",
+)
 @contextmanager
 def SQLSocket(carol: Carol, *args, **kw):
     """Create Socket connection to Carol.
@@ -57,10 +63,23 @@ def SQLSocket(carol: Carol, *args, **kw):
 
 
 class SQL:
+
+    """Handles SQL queries."""
+
+    @deprecated(
+        deprecated_in="2.54.6",
+        removed_in="2.54.7",
+        details="SQL is not supported by Carol.",
+    )
     def __init__(self, carol: Carol):
         self.carol = carol
         warnings.warn("Experimental feature. The API might change without notice.")
 
+    @deprecated(
+        deprecated_in="2.54.6",
+        removed_in="2.54.7",
+        details="SQL is not supported by Carol.",
+    )
     def query(
         self,
         query: str,
@@ -99,7 +118,9 @@ class SQL:
         elif method == "sync":
             results = _sync_query(self.carol, payload)
         elif method == "bigquery":
-            results = bigquery.query(self.carol, query, service_account, dataset_id=dataset_id)
+            results = bigquery.query(
+                self.carol, query, service_account, dataset_id=dataset_id
+            )
         else:
             raise ValueError(f"'method' must be either: {methods}")
 
@@ -111,6 +132,11 @@ class SQL:
         return results
 
 
+@deprecated(
+    deprecated_in="2.54.6",
+    removed_in="2.54.7",
+    details="SQL is not supported by Carol.",
+)
 def _socket_query(carol: Carol, payload, **kwargs):
     last_result = False
     results = []
@@ -128,6 +154,11 @@ def _socket_query(carol: Carol, payload, **kwargs):
     return results
 
 
+@deprecated(
+    deprecated_in="2.54.6",
+    removed_in="2.54.7",
+    details="SQL is not supported by Carol.",
+)
 def _sync_query(carol: Carol, payload):
     results = carol.call_api(path="v2/sql/querySync", method="POST", data=payload)
     if not results[0]["success"]:
