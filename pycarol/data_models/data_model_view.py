@@ -117,38 +117,6 @@ class DataModelView:
         return self
 
 
-    def export(self, view_name=None, view_id=None, sync_view=True, full_export=False,
-               delete_previous=False, export_format='PARQUET'):
-        """
-
-        @DEPRECATED. This function was removed in pycarol 3.34
-
-        Export datamodel to s3
-
-        This method will trigger or pause the export of the data in the datamodel to
-        s3
-
-        :param view_name: `str`, default `None`
-            View Name
-        :param view_id: `str`, default `None`
-            View id
-        :param sync_view: `bool`, default `True`
-            Sync the view
-        :param full_export: `bool`, default `True`
-            Do a resync of the view
-        :param delete_previous: `bool`, default `False`
-            Delete previous exported files.
-        :param export_format: `str`, default `PARQUET`
-            Format of the data to be exported. Possible values are:
-                "PARQUET", "CSV", "JSON", "EXCEL"
-        :return: None
-        """
-
-        _deprecation_msgs("This function was removed from pyCarol")
-        return None
-
-
-
     def fetch_parquet(self, view_name, merge_records=True, backend='pandas', return_dask_graph=False,
                       columns=None, return_metadata=False, callback=None, max_hits=None,
                       cds=False, max_workers=None, return_callback_result=False):
@@ -239,40 +207,3 @@ class DataModelView:
             d = d.drop(labels=to_drop, axis=1)
 
         return d
-
-
-    def export_all(self, sync_view=True, full_export=False, delete_previous=False):
-        """
-
-        @DEPRECATED. This function was removed in pycarol 3.34
-        Export all data model view
-
-        This method will trigger or pause the export of the data in the data model view to CDS
-
-        :param sync_view: `bool`, default `True`
-            Sync the data model view
-        :param full_export: `bool`, default `True`
-            Do a resync of the data model view
-        :param delete_previous: `bool`, default `False`
-            Delete previous exported files.
-        :return: None
-        """
-
-        _deprecation_msgs("This function was removed from pyCarol")
-        return None
-
-
-    def _get_view_export_stats(self):
-        """
-        @DEPRECATED. This function was removed in pycarol 3.34
-
-        Get export status for views
-
-        :return: `dict`
-            dict with the information of which data model view is exporting its data.
-        """
-
-        _deprecation_msgs("This function was removed from pyCarol")
-        return None
-
-
