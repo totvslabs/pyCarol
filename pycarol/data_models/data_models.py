@@ -337,53 +337,6 @@ class DataModel:
         self.snapshot_ = {resp['entityTemplateName']: resp}
         return resp
 
-    def export(self, dm_name=None, dm_id=None, sync_dm=True, full_export=False, delete_previous=False):
-        """
-
-        @DEPRECATED. This function was removed in pycarol 3.34
-
-        Export data models
-
-        This method will trigger or pause the export of the data in the datamodel to
-        CDS
-
-        :param dm_name: `str`, default `None`
-            Data model Name
-        :param dm_id: `str`, default `None`
-            Data model id
-        :param sync_dm: `bool`, default `True`
-            Sync the data model
-        :param full_export: `bool`, default `True`
-            Do a resync of the data model
-        :param delete_previous: `bool`, default `False`
-            Delete previous exported files.
-        :return: None
-        """
-        _deprecation_msgs("This function was removed from pyCarol")
-        return None
-
-    def export_all(self, sync_dm=True, full_export=False, delete_previous=False):
-        """
-
-        @DEPRECATED. This function was removed in pycarol 3.34
-
-        Export all data models
-
-        This method will trigger or pause the export of the data in the datamodel to
-        CDS
-
-        :param sync_dm: `bool`, default `True`
-            Sync the data model
-        :param full_export: `bool`, default `True`
-            Do a resync of the data model
-        :param delete_previous: `bool`, default `False`
-            Delete previous exported files.
-        :return: None
-        """
-
-        _deprecation_msgs("This function was removed from pyCarol")
-        return None
-
     def delete(self, dm_id=None, dm_name=None, entity_space='WORKING'):
         # TODO: Check Possible entity_spaces
 
@@ -406,20 +359,6 @@ class DataModel:
                 f[field['mdmName']] = self._get_name_type_DMs(
                     field['mdmFields'])
         return f
-
-    def _get_dm_export_stats(self):
-        """
-
-        @DEPRECATED. This function was removed in pycarol 3.34
-
-        Get export status for data models
-
-        :return: `dict`
-            dict with the information of which data model is exporting its data.
-        """
-
-        _deprecation_msgs("This function was removed from pyCarol")
-        return None
 
     def reprocess_rejected(self, dm_name=None, dm_id=None, delete_records=True):
         """
