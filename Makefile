@@ -34,9 +34,14 @@ package: clean
 	@python3 setup.py sdist
 	@python3 setup.py bdist_wheel
 
+test_package:
+	@echo "~~~ Packaging pyCarol"
+	@python3 setup.py sdist
+	@python3 setup.py bdist_wheel
+	@twine check dist/*.tar.gz
+
 deploy:
 	@echo "~~~ Publishing pyCarol on PyPI"
-	@twine check dist/*.tag.gz
 	@twine upload dist/*.tar.gz --verbose
 
 test:

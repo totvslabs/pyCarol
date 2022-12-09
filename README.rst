@@ -390,10 +390,10 @@ Release process
 1. Open a PR with your change for `master` branch;
 2. Once approved, merge into `master`;
 3. Locally, :code:`git checkout master`
-4. Make new version (this will create a commit with the new version)
+4. Locally, :code:`git pull`
+5. Make new version (this will create a commit with the new version)
 
   a. :code:`make bump_patch` or :code:`make bump_minor`
 
-5. Locally, :code:`git push origin master`
 6. Locally, :code:`git push origin <name of new tag>`
-
+7. In case there are any release notes, update it
