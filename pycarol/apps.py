@@ -1,6 +1,6 @@
 """Carol app funtionalities."""
 import io
-import os
+from pathlib import Path
 import typing as T
 import zipfile
 
@@ -38,23 +38,22 @@ class Apps:
         page_size=100,
         sort_by=None,
         sort_order=None,
-    ):
+    ) -> T.Dict[str, T.Any]:
         if sort_by is None:
             return {
                 "offset": offset,
                 "pageSize": page_size,
                 "entitySpace": entity_space,
             }
-        else:
-            return {
-                "offset": offset,
-                "pageSize": page_size,
-                "sortOrder": sort_order,
-                "sortBy": sort_by,
-                "entitySpace": entity_space,
-            }
+        return {
+            "offset": offset,
+            "pageSize": page_size,
+            "sortOrder": sort_order,
+            "sortBy": sort_by,
+            "entitySpace": entity_space,
+        }
 
-    def _define_current_run(self, query):
+    def _define_current_run(self, query: T.Dict) -> None:
         self.current_app_id = query.get("mdmId")
         self.current_app_name = query.get("mdmName")
         self.current_app = {self.current_app_name: query}
@@ -83,6 +82,9 @@ class Apps:
 
         Returns:
             All apps json definition
+
+        Raises:
+            NotMapAsCallResponseException if call_api return is not a dict.
         """
         query_string = self._build_query_params(
             offset=offset,
@@ -111,6 +113,9 @@ class Apps:
 
         Returns:
             App info json definition.
+
+        Raises:
+            NotMapAsCallResponseException if call_api return is not a dict.
         """
         query_string = {"entitySpace": entity_space}
         url = f"v1/tenantApps/name/{app_name}"
@@ -134,6 +139,9 @@ class Apps:
 
         Returns:
             App info json definition.
+
+        Raises:
+            NotMapAsCallResponseException if call_api return is not a dict.
         """
         query_string = {"entitySpace": entity_space}
         url = f"v1/tenantApps/{app_id}"
@@ -168,6 +176,10 @@ class Apps:
 
         Returns:
             Settings.
+
+        Raises:
+            Exception if carol.app_name or parameter app_name are both None.
+            NotMapAsCallResponseException if call_api return is not a dict.
         """
         assert app_name or app_id or self.carol.app_name
 
@@ -204,18 +216,15 @@ class Apps:
                 }
             )
             self.full_settings.update(
-                {
-                    i["mdmName"]: i
-                    for i in query_el.get("mdmTenantAppSettingValues", {})
-                }
+                {i["mdmName"]: i for i in query_el.get("mdmTenantAppSettingValues", {})}
             )
 
         return self.app_settings
 
     def download_app(
         self,
+        app_version: str,
         app_name: T.Optional[str] = None,
-        app_version: T.Optional[str] = None,
         carolappname: T.Optional[str] = None,
         carolappversion: T.Optional[str] = None,
         file_path: str = "carol.zip",
@@ -231,6 +240,9 @@ class Apps:
             carolappversion: App Version. Deprecated. Use app_version
             file_path: Path to save the zip file.
             extract: Either extract the zip files or not.
+
+        Raises:
+            ValueError when app_version is not set.
         """
         if carolappname is not None:
             app_name = carolappname
@@ -269,6 +281,9 @@ class Apps:
 
         Returns:
             Manifest file.
+
+        Raises:
+            NotMapAsCallResponseException if call_api return is not a dict.
         """
         if app_name is None:
             app_name = self.carol.app_name
@@ -293,6 +308,9 @@ class Apps:
 
         Returns:
             Carol API response.
+
+        Raises:
+            NotMapAsCallResponseException if call_api return is not a dict.
         """
         if app_name is None:
             app_name = self.carol.app_name
@@ -313,14 +331,16 @@ class Apps:
                 initialization.
 
         Returns:
-            List of Dicts
+            List of Dicts.
+
+        Raises:
+            NotListAsCallResponseException if call_api return is not a list.
         """
         if app_name is None:
             app_name = self.carol.app_name
 
-        response = self.carol.call_api(
-            path=f"v1/compute/{app_name}/getProcessesByGitRepo", method="POST"
-        )
+        url = f"v1/compute/{app_name}/getProcessesByGitRepo"
+        response = self.carol.call_api(url, method="POST")
         if not isinstance(response, list):
             raise exceptions.NotListAsCallResponseException
 
@@ -331,7 +351,7 @@ class Apps:
         git_token: str,
         app_name: T.Optional[str] = None,
     ) -> T.List:
-        """Build App image using manifest definition.
+        """Build all images listed in the manifest definition.
 
         Args:
             git_token: Git token to be used to pull the files.
@@ -349,6 +369,7 @@ class Apps:
         self._assert_manifest_fields(manifest)
 
         tasks = []
+        url = f"v1/compute/{app_name}/buildGitDocker"
         for build in manifest:
             docker_name = build["dockerName"]
             docker_tag = build["dockerTag"]
@@ -359,22 +380,24 @@ class Apps:
                 "gitToken": git_token,
                 "instanceType": instance_type,
             }
-            response = self.carol.call_api(
-                path=f"v1/compute/{app_name}/buildGitDocker",
-                method="POST",
-                params=params,
-            )
+            response = self.carol.call_api(url, method="POST", params=params)
 
             tasks.append(response)
 
         return tasks
 
     @staticmethod
-    def _assert_manifest_fields(manifest: T.List[T.Dict]):
+    def _assert_manifest_fields(manifest: T.List[T.Dict]) -> None:
         """Assert that the fields needed to build the image exist.
 
         Args:
             manifest: list of docker definition in the manifest file.
+
+        Raises:
+            ValueError when docker definition is missing.
+
+        Raises:
+            ValueError when docker definition is missing.
         """
         fields = {"dockerName", "dockerTag", "instanceType"}
         for build in manifest:
@@ -382,7 +405,9 @@ class Apps:
             if len(set_diff) >= 1:
                 raise ValueError(f"Missing docker definition {set_diff}")
 
-    def update_setting_values(self, settings: T.Dict, app_name: T.Optional[str] = None):
+    def update_setting_values(
+        self, settings: T.Dict, app_name: T.Optional[str] = None
+    ) -> T.Dict:
         """Change Settings values in Carol.
 
         Args:
@@ -391,6 +416,10 @@ class Apps:
 
         Returns:
             Carol Response.
+
+        Raises:
+            ValueError if settings type is not a dictionary.
+            NotMapAsCallResponseException if call_api return is not a dict.
         """
         app_name = app_name or self.carol.app_name
         if app_name is None:
@@ -403,23 +432,28 @@ class Apps:
         settings_id = self._get_app_settings_config(app_id=app_id)["mdmId"]
         data = [{"mdmName": i, "mdmParameterValue": j} for i, j in settings.items()]
 
-        return self.carol.call_api(
-            path=f"v1/tenantApps/{app_id}/settings/{settings_id}?publish=true",
-            method="PUT",
-            data=data,
-        )
+        url = f"v1/tenantApps/{app_id}/settings/{settings_id}?publish=true"
+        response = self.carol.call_api(url, method="PUT", data=data)
+        if not isinstance(response, dict):
+            raise exceptions.NotMapAsCallResponseException
 
-    def _get_app_settings_config(self, app_name=None, app_id=None):
+        return response
 
-        if app_id is not None:
-            pass
-        elif app_name is None:
-            app_name = self.carol.app_name
+    def _get_app_settings_config(
+        self, app_name: T.Optional[str] = None, app_id: T.Optional[str] = None
+    ) -> T.Dict:
+        if app_id is None:
+            app_name = app_name or self.carol.app_name
+            if app_name is None:
+                raise Exception("carol.app_name is None.")
+
             app_id = self.get_by_name(app_name)["mdmId"]
 
-        return self.carol.call_api(
-            path=f"v1/tenantApps/{app_id}/settings",
-        )
+        response = self.carol.call_api(path=f"v1/tenantApps/{app_id}/settings")
+        if not isinstance(response, dict):
+            raise exceptions.NotMapAsCallResponseException
+
+        return response
 
     def start_app_process(
         self,
@@ -434,6 +468,10 @@ class Apps:
 
         Returns:
             task information.
+
+        Raises:
+            Exception if carol.app_name or parameter app_name are both None.
+            NotMapAsCallResponseException if call_api return is not a dict.
         """
         app_name = app_name or self.carol.app_name
         if app_name is None:
@@ -441,10 +479,8 @@ class Apps:
 
         app_id = self.get_by_name(app_name)["mdmId"]
         process_id = self.get_processes_info(app_name=app_name)["mdmId"]
-        response = self.carol.call_api(
-            f"v1/tenantApps/{app_id}/aiprocesses/{process_id}/execute/{process_name}",
-            method="POST",
-        )
+        url = f"v1/tenantApps/{app_id}/aiprocesses/{process_id}/execute/{process_name}"
+        response = self.carol.call_api(url, method="POST")
         if not isinstance(response, dict):
             raise exceptions.NotMapAsCallResponseException
 
@@ -455,7 +491,7 @@ class Apps:
         app_name: T.Optional[str] = None,
         entity_space: str = "WORKING",
         check_all_spaces: bool = True,
-    ):
+    ) -> T.Dict:
         """Get app processes information.
 
         Args:
@@ -465,21 +501,31 @@ class Apps:
 
         Returns:
             Process informations
+
+        Raises:
+            Exception if carol.app_name or parameter app_name are both None.
+            NotMapAsCallResponseException if call_api return is not a dict.
         """
         params = {"entitySpace": entity_space, "checkAllSpaces": check_all_spaces}
         app_name = app_name or self.carol.app_name
         if app_name is None:
             raise Exception("carol.app_name is None.")
         app_id = self.get_by_name(app_name)["mdmId"]
-        return self.carol.call_api(
-            f"v1/tenantApps/{app_id}/aiprocesses", method="GET", params=params
-        )
+        url = f"v1/tenantApps/{app_id}/aiprocesses"
+        response = self.carol.call_api(url, method="GET", params=params)
+        if not isinstance(response, dict):
+            raise exceptions.NotMapAsCallResponseException
+
+        return response
 
     def get_subscribable_carol_apps(self) -> T.List:
         """Find all available apps to install in this env.
 
         Returns:
             list of apps.
+
+        Raises:
+            NotMapAsCallResponseException if call_api return is not a dict.
         """
         url = "v1/tenantApps/subscribableCarolApps"
         response = self.carol.call_api(url, method="GET")
@@ -494,7 +540,7 @@ class Apps:
         app_version: str = None,
         connector_group: str = None,
         publish: bool = True,
-    ):
+    ) -> T.Optional[T.Dict]:
         """Install a carol app in an env.
 
         Args:
@@ -506,6 +552,9 @@ class Apps:
 
         Returns:
             Carol task.
+
+        Raises:
+            NotMapAsCallResponseException if call_api return is not a dict.
         """
         if app_name is None:
             app_name = self.carol.app_name
@@ -518,10 +567,10 @@ class Apps:
         else:
             to_install = [i for i in to_install if i["mdmAppVersion"] == app_version]
 
-        if to_install:
+        if len(to_install) > 0:
             to_install_first = to_install[0]
         else:
-            return
+            return None
 
         to_install_id = to_install_first["mdmId"]
 
@@ -532,7 +581,10 @@ class Apps:
 
         params = {"publish": publish, "connectorGroup": connector_group}
         url = f"v1/tenantApps/{updated['mdmId']}/install"
-        return self.carol.call_api(url, method="POST", params=params)
+        response = self.carol.call_api(url, method="POST", params=params)
+        if not isinstance(response, dict):
+            raise exceptions.NotMapAsCallResponseException
+        return response
 
     def get_app_details(
         self, app_name: str = None, entity_space: str = "PRODUCTION"
@@ -548,6 +600,10 @@ class Apps:
 
         Returns:
             Carol response.
+
+        Raises:
+            Exception if carol.app_name or parameter app_name are both None.
+            NotMapAsCallResponseException if call_api return is not a dict.
         """
         app_name = app_name or self.carol.app_name
         if app_name is None:
@@ -557,7 +613,7 @@ class Apps:
         to_install = self.get_subscribable_carol_apps()
         to_install = [i for i in to_install if i["mdmName"] == app_name]
 
-        if to_install:
+        if len(to_install) > 0:
             to_install_first = to_install[0]
             app_id = to_install_first["mdmId"]
         else:
@@ -585,6 +641,10 @@ class Apps:
 
         Returns:
             Carol response.
+
+        Raises:
+            Exception if carol.app_name or parameter app_name are both None.
+            NotMapAsCallResponseException if call_api return is not a dict.
         """
         app_name = app_name or self.carol.app_name
         if app_name is None:
@@ -592,17 +652,18 @@ class Apps:
 
         app_id = self.get_by_name(app_name)["mdmCarolAppId"]
 
-        if filepath.endswith((".zip", ".json")):
-            file = filepath
-        elif os.path.isdir(filepath):
-            file = zip_folder(filepath)
-        uri = f"v1/carolApps/{app_id}/files/upload"
+        if Path(filepath).is_dir():
+            filepath = zip_folder(filepath)
 
-        with open(file, "rb") as file_:
+        if not filepath.endswith((".zip", ".json")):
+            raise Exception("File must be a .zip or .json.")
+
+        with open(filepath, "rb") as file_:
             files = {"file": file_}
 
+        url = f"v1/carolApps/{app_id}/files/upload"
         response = self.carol.call_api(
-            path=uri, method="POST", files=files, content_type=None
+            url, method="POST", files=files, content_type=None
         )
         if not isinstance(response, dict):
             raise exceptions.NotMapAsCallResponseException
