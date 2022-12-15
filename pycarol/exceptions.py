@@ -41,3 +41,30 @@ class NoServiceAccountException(Exception):
     """Custom exception to handle missing BQ service account."""
 
     pass
+
+
+class NotListAsCallResponseException(Exception):
+
+    """Custom exception to handle expected type as list."""
+
+    def __init__(self):
+        msg = "Expected type for API response must be a list."
+        super().__init__(msg)
+
+
+class NotMapAsCallResponseException(Exception):
+
+    """Custom exception to handle expected type as dict."""
+
+    def __init__(self):
+        msg = "Expected type for API response must be a dict."
+        super().__init__(msg)
+
+
+class NotResponseAsCallResponseException(Exception):
+
+    """Custom exception to handle expected type as requests.Response."""
+
+    def __init__(self):
+        msg = "Expected type for API response must be a requests.Response."
+        super().__init__(msg)

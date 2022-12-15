@@ -17,7 +17,7 @@ from .organization import Organization
 from .tenant import Tenant
 
 
-ResponseType = T.Union[requests.Response, T.Dict[str, T.Any]]
+ResponseType = T.Union[requests.Response, T.Dict[str, T.Any], T.List]
 
 
 class SwitchContext:
@@ -202,7 +202,7 @@ class Carol:
         data=None,
         auth: bool = True,
         params=None,
-        content_type: str = "application/json",
+        content_type: T.Optional[str] = "application/json",
         retries: int = 8,
         session: T.Optional[requests.Session] = None,
         backoff_factor: float = 0.5,

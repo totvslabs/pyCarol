@@ -26,7 +26,6 @@ pyCarol
     pycarol.logger
     pycarol.named_query
     pycarol.query
-    pycarol.sql
     pycarol.staging
     pycarol.storage
     pycarol.tasks
