@@ -3,16 +3,20 @@ import json
 from ..utils.importers import _import_dask, _import_pandas
 from ..storage import Storage
 from ..utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
-from ..utils.deprecation_msgs import _deprecation_msgs
+from ..utils.deprecation_msgs import _deprecation_msgs, deprecated
+
 
 class DataModelView:
 
+    @deprecated("2.54.9", "2.54.10", "Data Model views are not supported anymore.")
     def __init__(self, carol):
         self.carol = carol
 
+    @deprecated("2.54.9", "2.54.10", "Data Model views are not supported anymore.")
     def get_by_name(self, view_name):
         return self._get(view_name, by='name')
 
+    @deprecated("2.54.9", "2.54.10", "Data Model views are not supported anymore.")
     def get_by_id(self, view_id):
         return self._get(view_id, by='id')
 
@@ -35,6 +39,7 @@ class DataModelView:
             self.query_params = {"offset": self.offset, "pageSize": str(self.page_size), "sortOrder": self.sort_order,
                                  "sortBy": self.sort_by}
 
+    @deprecated("2.54.9", "2.54.10", "Data Model views are not supported anymore.")
     def reprocess(self, view_name=None, view_id=None, cds=False):
         """
         Reprocess the view records.
@@ -64,6 +69,7 @@ class DataModelView:
         return self.carol.call_api(url_filter, params=query_params,
                                    method='POST')
 
+    @deprecated("2.54.9", "2.54.10", "Data Model views are not supported anymore.")
     def get_all(self, offset=0, page_size=-1, sort_order='ASC',
                 sort_by=None, print_status=False,
                 save_file=None):
@@ -116,7 +122,7 @@ class DataModelView:
             file.close()
         return self
 
-
+    @deprecated("2.54.9", "2.54.10", "Data Model views are not supported anymore.")
     def fetch_parquet(self, view_name, merge_records=True, backend='pandas', return_dask_graph=False,
                       columns=None, return_metadata=False, callback=None, max_hits=None,
                       cds=False, max_workers=None, return_callback_result=False):

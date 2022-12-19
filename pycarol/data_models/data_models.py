@@ -17,7 +17,7 @@ from ..utils import async_helpers
 from ..utils.miscellaneous import stream_data
 from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE, _REJECTED_DM_COLS, _CAROL_METADATA_UNTIE_GOLDEN
 from ..utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
-from ..utils.deprecation_msgs import _deprecation_msgs
+from ..utils.deprecation_msgs import _deprecation_msgs, deprecated
 from ..exceptions import CarolApiResponseException
 
 _DATA_MODEL_TYPES_MAPPING = {
@@ -513,6 +513,7 @@ class DataModel:
                 if print_stats:
                     print('{}/{} sent'.format(cont, data_size), end='\r')
 
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def create_mapping(self, staging_name, connector_id=None, connector_name=None, dm_name=None, dm_id=None,
                        publish=False):
         """
@@ -655,6 +656,7 @@ class DataModel:
 
         return d
 
+    @deprecated("2.54.9", "2.54.10", "Presto/Hive is no longer supported in Carol.")
     def generate_SQL_tables(self,):
         """Geneates SQL tables for all data models. 
 
@@ -667,6 +669,7 @@ class DataModel:
 
         return self.carol.call_api(path='v1/admin/entities/templates/generateSqlTables', method='POST')
 
+    @deprecated("2.54.9", "2.54.10", "Presto/Hive is no longer supported in Carol.")
     def remove_SQL_tables(self,):
         """Removes SQL tables for all data models. 
 

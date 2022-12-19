@@ -10,7 +10,7 @@ from .utils import async_helpers
 from .utils.miscellaneous import stream_data
 from . import _CAROL_METADATA_STAGING, _NEEDED_FOR_MERGE, _CAROL_METADATA_UNTIE_STAGING
 from .utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
-from .utils.deprecation_msgs import _deprecation_msgs
+from .utils.deprecation_msgs import _deprecation_msgs, deprecated
 
 _SCHEMA_TYPES_MAPPING = {
     "geopoint": str,
@@ -541,7 +541,7 @@ class Staging:
 
         return d
 
-
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def get_mapping_snapshot(self, connector_id, mapping_id, entity_space='PRODUCTION', reverse_mapping=False):
 
         self.snap = {}
@@ -553,6 +553,7 @@ class Staging:
         mapping_name = response.get('entityMappingName')
         return {mapping_name: response}
 
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def delete_mapping(self, staging_name=None, connector_id=None, connector_name=None, mapping_id=None,
                        entity_space='PRODUCTION'):
 
@@ -604,6 +605,7 @@ class Staging:
             else:
                 raise e
 
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def mapping_from_snapshot(self, mapping_snapshot, connector_id=None, connector_name=None,
                               publish=True, overwrite=False):
 
