@@ -39,7 +39,7 @@ from .query import Query
 from .storage import Storage
 from .carolina import Carolina
 from .tasks import Tasks
-from .data_models import DataModel, DataModelView
+from .data_models import DataModel
 from .logger import CarolHandler
 from .auth.PwdAuth import PwdAuth
 from .auth.ApiKeyAuth import ApiKeyAuth
