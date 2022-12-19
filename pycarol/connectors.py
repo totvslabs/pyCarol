@@ -1,6 +1,6 @@
 import json
 from collections import defaultdict
-from .utils.deprecation_msgs import _deprecation_msgs
+from .utils.deprecation_msgs import _deprecation_msgs, deprecated
 from .utils.miscellaneous import unroll_list, find_keys
 
 
@@ -290,6 +290,7 @@ class Connectors:
                     staging_name))
                 return conn
 
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def get_dm_mappings(self, connector_id=None, connector_name=None, staging_name=None,
                         dm_id=None, dm_name=None, reverse_mapping=False, offset=0, page_size=1000, sort_by=None,
                         sort_order='ASC', all_connectors=False):
@@ -380,6 +381,7 @@ class Connectors:
 
         return self.resp
 
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def get_entity_mappings(
             self, connector_name=None, connector_id=None,
             reverse_mapping=False, staging_name=None,
@@ -460,6 +462,7 @@ class Connectors:
 
         return template_data
 
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def _play_pause_mapping(self, kind, entity_mapping_id=None, staging_name=None,
                             connector_name=None, connector_id=None,
                             reverse_mapping=False,
@@ -499,6 +502,7 @@ class Connectors:
 
         return responses
 
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def play_mapping(
             self, entity_mapping_id=None, staging_name=None,
             connector_name=None, connector_id=None,
@@ -536,6 +540,7 @@ class Connectors:
 
         return responses
 
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def pause_mapping(
             self, entity_mapping_id=None, staging_name=None,
             connector_name=None, connector_id=None,
@@ -569,6 +574,7 @@ class Connectors:
 
         return responses
 
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def _play_pause_etl(self, kind, staging_name=None,
                         connector_name=None, connector_id=None, ):
 
@@ -579,6 +585,7 @@ class Connectors:
 
         return resp
 
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def play_etl(
             self, staging_name=None,
             connector_name=None, connector_id=None,
@@ -606,6 +613,7 @@ class Connectors:
 
         return responses
 
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def pause_etl(
             self, staging_name=None,
             connector_name=None, connector_id=None,
@@ -634,6 +642,7 @@ class Connectors:
 
         return responses
 
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def get_etl_information(self, connector_id=None, connector_name=None):
         """
         Get ETL Configurations for a connector
@@ -679,6 +688,7 @@ class Connectors:
         c = self.carol.call_api(path=f"v1/staging/connectors/{connector_id}/tables")
         return sorted(c)
 
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def pause_single_staging_etl(self, staging_name, output_list, connector_name=None, connector_id=None):
         """Pause a single staging ETL based on its output.
 
@@ -716,7 +726,7 @@ class Connectors:
                 r.append(resp)
         return r
 
-
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def drop_single_etl(self, staging_name, output_list, connector_name=None, connector_id=None):
         """
         Drop ETL based on the outputs of a given ETL.
@@ -750,6 +760,7 @@ class Connectors:
                 print(f'deleting etl {mdm_id} for {staging_name}')
                 self.drop_etls([mdm_id])
 
+    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
     def drop_etls(self, etl_list):
         """
         Drop ETLs from ETL list.
