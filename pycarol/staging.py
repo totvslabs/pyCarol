@@ -10,7 +10,7 @@ from .utils import async_helpers
 from .utils.miscellaneous import stream_data
 from . import _CAROL_METADATA_STAGING, _NEEDED_FOR_MERGE, _CAROL_METADATA_UNTIE_STAGING
 from .utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
-from .utils.deprecation_msgs import _deprecation_msgs, deprecated
+from .utils.deprecation_msgs import _deprecation_msgs
 
 _SCHEMA_TYPES_MAPPING = {
     "geopoint": str,
@@ -540,98 +540,3 @@ class Staging:
             d = d.drop(labels=to_drop, axis=1)
 
         return d
-
-    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
-    def get_mapping_snapshot(self, connector_id, mapping_id, entity_space='PRODUCTION', reverse_mapping=False):
-
-        self.snap = {}
-        querystring = {"entitySpace": entity_space, "reverseMapping": reverse_mapping}
-
-        url = f"v1/connectors/{connector_id}/entityMappings/{mapping_id}/snapshot"
-        response = self.carol.call_api(url, method='GET', params=querystring, )
-
-        mapping_name = response.get('entityMappingName')
-        return {mapping_name: response}
-
-    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
-    def delete_mapping(self, staging_name=None, connector_id=None, connector_name=None, mapping_id=None,
-                       entity_space='PRODUCTION'):
-
-        cc = Connectors(self.carol)
-        st = cc.get_dm_mappings(all_connectors=True)
-
-        if mapping_id is None:
-            assert staging_name is not None, "staging_name should be set."
-            if (connector_id is None) and (connector_name is not None):
-                connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
-                entity = [i['mdmId'] for i in st
-                          if (i.get('mdmConnectorId') == connector_id) and
-                          (i.get('mdmStagingType') == staging_name)]
-                assert len(entity) == 1, f'No data model mapped for {staging_name}'
-                mapping_id = entity[0]
-
-            elif connector_id is None:
-                entity = [i for i in st if (i.get('mdmStagingType') == staging_name)]
-
-                if len(entity) > 1:
-                    raise KeyError(f'There are more than one connector for staging {staging_name}')
-                elif len(entity) < 1:
-                    raise KeyError(f'No data model mapped for {staging_name}')
-                entity = entity[0]
-                connector_id = entity['mdmConnectorId']
-                mapping_id = entity['mdmId']
-            elif connector_id:
-                entity = [i['mdmId'] for i in st
-                          if (i.get('mdmConnectorId') == connector_id) and
-                          (i.get('mdmStagingType') == staging_name)]
-
-                assert len(entity) == 1, f'No mapping for {staging_name}'
-                mapping_id = entity[0]
-
-        url_mapping = f'v1/connectors/{connector_id}/entityMappings/{mapping_id}'
-        querystring = {"entitySpace": entity_space, "reverseMapping": "false"}
-
-        self.carol.call_api(url_mapping, method='DELETE', params=querystring, )
-
-    def _check_if_exists(self, connector_id, staging_name):
-        conn = Connectors(self.carol)
-
-        try:
-            mappings = conn.get_dm_mappings(connector_id=connector_id, staging_name=staging_name)
-            return mappings
-        except Exception as e:
-            if 'Entity mapping not found' in str(e):
-                return None
-            else:
-                raise e
-
-    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
-    def mapping_from_snapshot(self, mapping_snapshot, connector_id=None, connector_name=None,
-                              publish=True, overwrite=False):
-
-        if connector_name:
-            connector_id = self._connector_by_name(connector_name)
-        else:
-            assert connector_id
-
-        staging_name = mapping_snapshot.get('stagingEntityType')
-        assert staging_name, f"Snapshot incomplete, `stagingEntityType` not in snapshot"
-
-        _mappings = self._check_if_exists(connector_id=connector_id, staging_name=staging_name)
-
-        if (_mappings is not None) and overwrite:
-            _mapping_id = [i['mdmId'] for i in _mappings]
-            assert len(_mapping_id) == 1
-            _mapping_id = _mapping_id[0]
-            method = 'PUT'
-            url_mapping = f"v1/connectors/{connector_id}/entityMappings/{_mapping_id}/snapshot"
-        else:
-            method = 'POST'
-            url_mapping = f'v1/connectors/{connector_id}/entityMappings/snapshot'
-
-        resp = self.carol.call_api(url_mapping, method=method, data=mapping_snapshot)
-        _mapping_id = resp['mdmEntityMapping']['mdmId']
-
-        if publish:
-            url = f"v1/connectors/{connector_id}/entityMappings/{_mapping_id}/publish"
-            self.carol.call_api(url, method='POST')

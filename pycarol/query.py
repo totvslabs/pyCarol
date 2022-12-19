@@ -513,121 +513,6 @@ class ParQuery:
 
         return list_to_compute
 
-
-
-    def _get_staging_from_golden(self, datamodel_name=None, staging_name=None, fields=None,
-                                 connector_id=None, connector_name=None):
-        cc = Connectors(self.carol)
-        st = cc.get_dm_mappings(all_connectors=True)
-
-        if datamodel_name is None:
-            assert staging_name is not None, "staging_name should be set."
-            if (connector_id is None) and (connector_name is not None):
-                connector_id = Connectors(self.carol).get_by_name(connector_name)['mdmId']
-                entity = [i['mdmMasterEntityName'] for i in st
-                          if (i.get('mdmConnectorId') == connector_id) and
-                          (i.get('mdmStagingType') == staging_name)]
-                assert len(entity) == 1, (f'No data model mapped for {staging_name}')
-                datamodel_name = entity[0]
-
-            elif connector_id is None:
-                entity = [i for i in st if (i.get('mdmStagingType') == staging_name)]
-
-                if len(entity) > 1:
-                    raise KeyError(f'There are more than one connector for staging {staging_name}')
-                elif len(entity) < 1:
-                    raise KeyError(f'No data model mapped for {staging_name}')
-                entity = entity[0]
-                connector_id = entity['mdmConnectorId']
-                datamodel_name = entity['mdmMasterEntityName']
-            elif connector_id:
-                entity = [i['mdmMasterEntityName'] for i in st
-                          if (i.get('mdmConnectorId') == connector_id) and
-                          (i.get('mdmStagingType') == staging_name)]
-                assert len(entity) == 1, (f'No data model mapped for {staging_name}')
-                datamodel_name = entity[0]
-
-        elif staging_name is None:
-            entity = [i for i in st
-                      if (i.get('mdmMasterEntityName') == datamodel_name)]
-            if len(entity) > 1:
-                raise KeyError(
-                    f'There are more than one staging mapped for the data model {datamodel_name}\n Use "staging_name" for disambiguation ')
-            elif len(entity) < 1:
-                raise KeyError(f'No mapping fo data model {datamodel_name}')
-            entity = entity[0]
-            connector_id = entity['mdmConnectorId']
-            staging_name = entity['mdmStagingType']
-        else:
-            assert staging_name is not None, "staging_name should be set."
-            entity = [i for i in st if (i.get('mdmStagingType') == staging_name)]
-            if len(entity) > 1:
-                raise KeyError(
-                    f'There are more than one connector with this staging name\n Use "connector_id" for disambiguation ')
-            elif len(entity) < 1:
-                raise KeyError(f'No mapping for data model {datamodel_name}')
-
-            entity = entity[0]
-            connector_id = entity['mdmConnectorId']
-            staging_name = staging_name
-
-        index_type = 'MASTER'
-        self.datamodel_name = f"{datamodel_name}Master"
-        self.fields = 'mdmStagingRecord'
-        self.filter_stag = f"{connector_id}_{staging_name}"
-        only_hits = False
-        mdm_key = 'mdmCounterForEntity'
-        j = Filter.Builder() \
-            .type(self.datamodel_name) \
-            .must(TERM_FILTER(key='mdmStagingEntityName.raw',
-                              value=self.filter_stag)) \
-            .aggregation_list([MINIMUM(name='MINIMUM', params=mdm_key),
-                               MAXIMUM(name='MAXIMUM', params=mdm_key)]) \
-            .build().to_json()
-
-        min_v, max_v, sample = self._get_min_max(datamodel_name=self.datamodel_name, mdm_key=mdm_key,
-                                                 index_type=index_type, custom_filter=j)
-        if (min_v is None) and (max_v is None):
-            return []
-        chunks = ranges(min_v, max_v, self.slices)
-
-        print(f"Number of chunks: {len(chunks)}")
-        print("Getting staging from Golden, after will get from rejected too. ")
-        self.fields_to_get = [self.fields + '.' + i for i in sample.get(self.fields).keys() for j in fields if
-                              j + '_' in i]
-
-        self.custom_filter = Filter.Builder() \
-            .type(self.datamodel_name) \
-            .must(TERM_FILTER(key='mdmStagingEntityName.raw',
-                              value=self.filter_stag))
-
-        if self.backend == 'dask':
-            list_to_compute = _dask_backend(carol=self.carol, chunks=chunks, datamodel_name=self.datamodel_name,
-                                            page_size=self.page_size, index_type=index_type, fields=self.fields,
-                                            only_hits=only_hits, mdm_key=mdm_key, return_df=self.return_df,
-                                            fields_to_get=self.fields_to_get, custom_filter=self.custom_filter)
-        elif self.backend == 'joblib':
-            list_to_compute = _joblib_backend(carol=self.carol, chunks=chunks, datamodel_name=self.datamodel_name,
-                                              page_size=self.page_size, index_type=index_type, fields=self.fields,
-                                              only_hits=only_hits, mdm_key=mdm_key, return_df=self.return_df,
-                                              fields_to_get=self.fields_to_get, custom_filter=self.custom_filter,
-                                              n_jobs=self.n_jobs, verbose=self.verbose)
-        else:
-            raise KeyError
-
-        list_to_compute_rejected = self._get_staging_from_golden_rejected(datamodel_name=datamodel_name,
-                                                                          connector_id=connector_id,
-                                                                          staging_name=staging_name,
-                                                                          fields=fields)
-        print("Getting staging from rejected")
-        list_to_compute.extend(list_to_compute_rejected)
-        if self.return_df:
-            return pd.concat(list_to_compute, ignore_index=True, sort=True)
-        list_to_compute = list(itertools.chain(*list_to_compute))
-
-        return list_to_compute
-
-
     def _get_golden(self, datamodel_name=None, fields=None):
 
         index_type = 'MASTER'
@@ -707,21 +592,13 @@ class ParQuery:
 
 
     def go(self, datamodel_name=None, slices=1000, page_size=1000, staging_name=None, connector_id=None,
-           connector_name=None,
-           get_staging_from_golden=False, fields=None):
+           connector_name=None, fields=None):
         assert slices < 9999, '10k is the largest slice possible'
         self.slices = slices
         self.page_size = page_size
         if fields is None:
             fields = []
         self.custom_filter = None
-
-        if get_staging_from_golden:
-            list_to_compute = self._get_staging_from_golden(datamodel_name=datamodel_name, staging_name=staging_name,
-                                                            connector_id=connector_id, connector_name=connector_name,
-                                                            fields=fields)
-
-            return list_to_compute
 
         if datamodel_name is None:
             assert connector_id or connector_name
