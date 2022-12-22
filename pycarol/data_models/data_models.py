@@ -17,7 +17,7 @@ from ..utils import async_helpers
 from ..utils.miscellaneous import stream_data
 from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE, _REJECTED_DM_COLS, _CAROL_METADATA_UNTIE_GOLDEN
 from ..utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
-from ..utils.deprecation_msgs import _deprecation_msgs, deprecated
+from ..utils.deprecation_msgs import _deprecation_msgs
 from ..exceptions import CarolApiResponseException
 
 _DATA_MODEL_TYPES_MAPPING = {
@@ -513,57 +513,6 @@ class DataModel:
                 if print_stats:
                     print('{}/{} sent'.format(cont, data_size), end='\r')
 
-    @deprecated("2.54.9", "2.54.10", "Legacy mappings are going to be deprecated.")
-    def create_mapping(self, staging_name, connector_id=None, connector_name=None, dm_name=None, dm_id=None,
-                       publish=False):
-        """
-
-        This method will create the link between the staging and a data model. If Publish=True it will publish how it is.
-
-        :param staging_name:  `str`
-            Name of the staging to be mapped.
-        :param connector_id:  `str`, `str`, default `None`
-            Staging's connector ID
-        :param connector_name:  `str`, default `None`
-            Staging's connector name
-        :param dm_name: `int`, default `100`
-            Data Model name
-        :param dm_id: `bool`, default `True`
-            Data model ID
-        :param publish: `bool`, default `True`
-            If publish after create mapping.
-        :return: None
-        """
-
-        if connector_name:
-            _con = Connectors(self.carol)
-            connector_id = _con.get_by_name(connector_name)['mdmId']
-        else:
-            assert connector_id
-            _con = Connectors(self.carol)
-            connector_name = _con.get_by_id(connector_id)['mdmName']
-
-        if dm_name:
-            dm_id = self.get_by_name(dm_name)['mdmId']
-        else:
-            assert dm_id
-            dm_name = self.get_by_id(dm_id)['mdmName']
-
-        url = f"v1/connectors/{connector_id}/entityMappings"
-
-        payload = {"mdmMasterEntityId": dm_id,
-                   "mdmMasterEntityName": dm_name,
-                   "mdmConnectorId": connector_id,
-                   "mdmStagingType": staging_name
-                   }
-        resp = self.carol.call_api(url, data=payload)
-        if publish:
-            url = f"v1/connectors/{connector_id}/entityMappings/{resp['mdmId']}/publish"
-
-            self.carol.call_api(url, method='POST')
-
-        return resp
-
     def fetch_rejected(
             self, dm_name, backend='pandas',
             return_dask_graph=False, callback=None,
@@ -655,29 +604,6 @@ class DataModel:
             return d
 
         return d
-
-    @deprecated("2.54.9", "2.54.10", "Presto/Hive is no longer supported in Carol.")
-    def generate_SQL_tables(self,):
-        """Geneates SQL tables for all data models. 
-
-        The tables created will be named:
-        `dm_{datamodel_name}`. 
-
-        Returns:
-            dict: Carol's response
-        """
-
-        return self.carol.call_api(path='v1/admin/entities/templates/generateSqlTables', method='POST')
-
-    @deprecated("2.54.9", "2.54.10", "Presto/Hive is no longer supported in Carol.")
-    def remove_SQL_tables(self,):
-        """Removes SQL tables for all data models. 
-
-        Returns:
-            dict: Carol's response
-        """
-
-        return self.carol.call_api(path='v1/admin/entities/templates/removeSqlTables', method='POST') 
 
 
 class entIntType(object):
