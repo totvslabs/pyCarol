@@ -1,4 +1,5 @@
 beautifulsoup4==4.11.1
+deprecation==2.1.0
 docutils==0.17.1
 gcsfs>=0.3.0,<0.7
 google-auth
