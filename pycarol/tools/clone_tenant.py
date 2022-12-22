@@ -119,7 +119,7 @@ class CloneTenant(object):
         return self
 
     def copy_connectors(self, conectors_map, map_type='name', overwrite_connector=False, add_to_connector=True,
-                        change_name_dict=None, copy_mapping=True, overwrite_schema=False):
+                        change_name_dict=None, overwrite_schema=False):
         """
         Copy Connectors, Stagings and mappings.
 
@@ -221,24 +221,4 @@ class CloneTenant(object):
 
                 # TODO mappings should be copied after copied all stagings.
                 # Need t0 find how to copy ETLs.
-                if copy_mapping:
-
-                    mapping_fields = connector.get('mdmEntityMappings', None).get(schema_name)
-                    if mapping_fields is not None:
-                        mapping_fields.pop('mdmTenantId')
-                        mapping_id = mapping_fields.pop('mdmId')
-                        entity_space = mapping_fields.get('mdmEntitySpace')
-                        mapping_fields.pop('mdmCreated')
-                        mapping_fields.pop('mdmLastUpdated')
-                        connector_id = mapping_fields.pop('mdmConnectorId')
-
-                        mappings_to_get = stag.get_mapping_snapshot(connector_id=connector_id, mapping_id=mapping_id,
-                                                                    entity_space=entity_space)
-                        _, aux_map = mappings_to_get.popitem()
-                        stg_to.mapping_from_snapshot(mapping_snapshot=aux_map, connector_id=conn_id.get(connector_name),
-                                                     overwrite=overwrite_schema)
-                        self.stag_mapp_to_use[connector_name].append({"schema": aux_schema, "mapping": aux_map})
-                    else:
-                        self.stag_mapp_to_use[connector_name].append({"schema": aux_schema})
-                else:
-                    self.stag_mapp_to_use[connector_name].append({"schema": aux_schema})
+                self.stag_mapp_to_use[connector_name].append({"schema": aux_schema})

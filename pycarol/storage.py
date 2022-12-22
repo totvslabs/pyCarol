@@ -1,8 +1,6 @@
 from .carolina import Carolina
 from datetime import datetime, timedelta
 
-from .utils.deprecation_msgs import deprecated
-
 
 class Storage:
 
@@ -321,7 +319,3 @@ class Storage:
 
     def get_golden_cds_file_paths(self, dm_name, file_pattern=None):
         return self.backend.get_golden_cds_file_paths(dm_name, file_pattern=file_pattern)
-
-    @deprecated("2.54.9", "2.54.10", "Data Model views are not supported anymore.")
-    def get_view_cds_file_paths(self, dm_name):
-        return self.backend.get_view_cds_file_paths(dm_name)
