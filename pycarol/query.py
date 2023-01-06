@@ -1,13 +1,14 @@
 """Contain all the classes to query data from RT layer in Carol."""
+import copy
+from datetime import datetime
 import json
 import itertools
-from datetime import datetime
+
 from .connectors import Connectors
-from .named_query import NamedQuery
 from .filter import Filter, MAXIMUM, MINIMUM, TYPE_FILTER, TERM_FILTER
 from .filter import RANGE_FILTER as RF
+from .named_query import NamedQuery
 from .utils.miscellaneous import ranges
-import copy
 
 
 def delete_golden(carol, dm_name, now=None):
