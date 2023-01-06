@@ -5,6 +5,8 @@ import json
 import itertools
 import typing as T
 
+from retry import retry
+
 from .connectors import Connectors
 from .exceptions import NoScrollIdException, RepeatedMDMIdsException
 from .filter import Filter, MAXIMUM, MINIMUM, TYPE_FILTER, TERM_FILTER
@@ -305,14 +307,8 @@ class Query:
         self.query_errors = {}
         self.mdmId_list = []
         while count < to_get:
-            result = self.carol.call_api(
-                url_filter,
-                data=self.json_query,
-                params=self.query_params,
-                timeout=240,
-                method_whitelist=frozenset(["POST"]),
-                **self.kwargs,
-            )
+            raise_error = self.get_aggs and not self.only_hits
+            result = self._query_request(url_filter, raise_error)
 
             if set_param is True:
                 self.total_hits = result["totalHits"]
@@ -336,13 +332,12 @@ class Query:
                 errors = {
                     elem.get("mdmId", elem): elem.get("mdmErrors", elem)
                     for elem in result["hits"]
-                    if elem["mdmErrors"]
+                    if "mdmErrors" in elem and elem["mdmErrors"]
                 }
                 self.query_errors.update(errors)
 
             if self.only_hits is True:
                 result = result["hits"]
-
                 result = [
                     elem.get("mdmGoldenFieldAndValues", elem)
                     for elem in result
@@ -367,12 +362,33 @@ class Query:
             if self.save_results is True:
                 _write_results(self.filename, result)
 
+            if self.get_aggs is True and self.only_hits is False:
+                break
+
             if scroll_id is None:
                 print(result)
                 raise NoScrollIdException
 
-            if self.get_aggs is True and self.only_hits is False:
-                break
+    @retry(exceptions=NoScrollIdException, tries=5)
+    def _query_request(
+        self, url: str, raise_error: bool
+    ) -> T.Dict:
+        result = self.carol.call_api(
+            url,
+            data=self.json_query,
+            params=self.query_params,
+            timeout=240,
+            method_whitelist=frozenset(["POST"]),
+            **self.kwargs,
+        )
+
+        scroll_id = result.get("scrollId", None)
+        if raise_error is True and scroll_id is None:
+            print(result)
+            print("Retrying...")
+            raise NoScrollIdException
+
+        return result
 
     def check_total_hits(self, json_query, index_type="MASTER"):
         """
