@@ -1,9 +1,4 @@
-"""
-
-This submodule has all the classes to query data from RT layer in Carol.
-
-"""
-
+"""Contain all the classes to query data from RT layer in Carol."""
 import json
 import itertools
 from datetime import datetime
