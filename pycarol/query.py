@@ -3,8 +3,10 @@ import copy
 from datetime import datetime
 import json
 import itertools
+import typing as T
 
 from .connectors import Connectors
+from .exceptions import NoScrollIdException, RepeatedMDMIdsException
 from .filter import Filter, MAXIMUM, MINIMUM, TYPE_FILTER, TERM_FILTER
 from .filter import RANGE_FILTER as RF
 from .named_query import NamedQuery
@@ -177,6 +179,7 @@ class Query:
         self.get_times = get_times
         self.named_query = None
         self.callback = None
+        self.query_errors: T.Dict[str, T.Any] = {}
 
         # Crated to send to the Rest API
         self.query_params = None
@@ -240,7 +243,7 @@ class Query:
         if self.named_query is None:
             url_filter = "v2/queries/filter"
         else:
-            url_filter = "v2/queries/named/{}".format(self.named_query)
+            url_filter = f"v2/queries/named/{self.named_query}"
 
         result = self.carol.call_api(
             url_filter,
@@ -251,8 +254,7 @@ class Query:
             **self.kwargs,
         )
 
-        if self.only_hits:
-
+        if self.only_hits is True:
             result = result["hits"]
             return [
                 elem.get("mdmGoldenFieldAndValues", elem)
@@ -263,17 +265,14 @@ class Query:
         else:
             return result
 
-    def go(self, callback=None):
-        """
+    def go(self, callback: T.Optional[T.Callable] = None) -> "Query":
+        """Run the query.
 
         Args:
-
-            callback: `callable` object
-                This function will receive the current batch of records from the filter made.
-        Returns: `None`
-
+            callback: This function will receive the current batch of records from the
+                filter made.
+        Returns: Query self.
         """
-
         self.results = []
         if self.json_query is None:
             raise ValueError(
@@ -283,30 +282,29 @@ class Query:
         self._build_return_fields()
         self._build_query_params()
 
-        self._scrollable_query_handler(callback)
-
-        return self
-
-    def _scrollable_query_handler(self, callback=None):
         if not self.offset == 0:
             raise ValueError(
                 "It is not possible to use offset when using scroll for pagination"
             )
+        self._scrollable_query_handler(callback)
 
-        set_param = True
-        count = self.offset
-        if self.save_results:
-            file = open(self.filename, "w", encoding="utf8")
+        return self
 
+    def _scrollable_query_handler(
+        self, callback: T.Optional[T.Callable] = None
+    ) -> None:
         if self.named_query is None:
             url_filter = "v2/queries/filter"
         else:
-            url_filter = "v2/queries/named/{}".format(self.named_query)
+            url_filter = f"v2/queries/named/{self.named_query}"
 
-        to_get = float("inf")
+        count = self.offset
         downloaded = 0
+        set_param = True
+        to_get = float("inf")
+        self.query_errors = {}
+        self.mdmId_list = []
         while count < to_get:
-
             result = self.carol.call_api(
                 url_filter,
                 data=self.json_query,
@@ -316,53 +314,34 @@ class Query:
                 **self.kwargs,
             )
 
-            if set_param:
+            if set_param is True:
                 self.total_hits = result["totalHits"]
-                if self.get_all:
-                    to_get = result["totalHits"]
-                elif self.max_hits <= result["totalHits"]:
-                    to_get = self.max_hits
-                else:
-                    to_get = result["totalHits"]
-
+                to_get = min(self.max_hits, self.total_hits)
                 set_param = False
-                if self.safe_check:
-                    self.mdmId_list = []
-                if self.get_errors:
-                    self.query_errors = {}
 
             count += result["count"]
             downloaded += result["count"]
             scroll_id = result.get("scrollId", None)
-            if (scroll_id is not None) or (self.get_aggs):
-                url_filter = "v2/queries/filter/{}".format(scroll_id)
-            elif result["count"] == 0:
-                if count < self.total_hits:
-                    print(f"Total records downloaded: {count}/{self.total_hits}")
-                    print(f"Something is wrong, no scrollId to continue \n")
-                    break
-            else:
-                raise Exception("No Scroll Id to use. Something is wrong")
+            url_filter = f"v2/queries/filter/{scroll_id}"
 
-            if self.get_times:
+            if self.get_times is True:
                 self.query_times.append(result.pop("took"))
 
-            if self.only_hits:
+            if self.safe_check is True:
+                self.mdmId_list.extend([mdm_id["mdmId"] for mdm_id in result["hits"]])
+                if len(self.mdmId_list) > len(set(self.mdmId_list)):
+                    raise RepeatedMDMIdsException
 
+            if self.get_errors is True:
+                errors = {
+                    elem.get("mdmId", elem): elem.get("mdmErrors", elem)
+                    for elem in result["hits"]
+                    if elem["mdmErrors"]
+                }
+                self.query_errors.update(errors)
+
+            if self.only_hits is True:
                 result = result["hits"]
-                if self.safe_check:
-                    self.mdmId_list.extend([mdm_id["mdmId"] for mdm_id in result])
-                    if len(self.mdmId_list) > len(set(self.mdmId_list)):
-                        raise Exception("There are repeated records")
-
-                if self.get_errors:
-                    self.query_errors.update(
-                        {
-                            elem.get("mdmId", elem): elem.get("mdmErrors", elem)
-                            for elem in result
-                            if elem["mdmErrors"]
-                        }
-                    )
 
                 result = [
                     elem.get("mdmGoldenFieldAndValues", elem)
@@ -370,38 +349,30 @@ class Query:
                     if elem.get("mdmGoldenFieldAndValues", None)
                 ]  # get mdmGoldenFieldAndValues if not empty and if it exists
 
-                if not self.flush_result:
+                if self.flush_result is False:
                     self.results.extend(result)
             else:
                 result.pop("count")
                 result.pop("totalHits")
-                # result.pop('scrollId')
-                if not self.flush_result:
+
+                if self.flush_result is False:
                     self.results.append(result)
 
-                if self.get_aggs:
-                    if self.save_results:
-                        file.write(json.dumps(result, ensure_ascii=False))
-                        file.write("\n")
-                        file.flush()
-                    break
+            if callback is not None:
+                callback(result)
 
-            if callback:
-                if callable(callback):
-                    callback(result)
-                else:
-                    raise Exception(
-                        f'"{callback}" is a {type(callback)} and is not callable. This variable must be a function.'
-                    )
+            if self.print_status is True:
+                print(f"{downloaded}/{to_get}", end="\r")
 
-            if self.print_status:
-                print("{}/{}".format(downloaded, to_get), end="\r")
-            if self.save_results:
-                file.write(json.dumps(result, ensure_ascii=False))
-                file.write("\n")
-                file.flush()
-        if self.save_results:
-            file.close()
+            if self.save_results is True:
+                _write_results(self.filename, result)
+
+            if scroll_id is None:
+                print(result)
+                raise NoScrollIdException
+
+            if self.get_aggs is True and self.only_hits is False:
+                break
 
     def check_total_hits(self, json_query, index_type="MASTER"):
         """
@@ -906,3 +877,9 @@ def _par_query(
         return pd.DataFrame(query)
 
     return query
+
+
+def _write_results(filepath: str, results) -> None:
+    with open(filepath, "a", encoding="utf8") as file:
+        file.write(json.dumps(results, ensure_ascii=False))
+        file.write("\n")

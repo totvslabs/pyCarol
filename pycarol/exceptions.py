@@ -68,3 +68,21 @@ class NotResponseAsCallResponseException(Exception):
     def __init__(self):
         msg = "Expected type for API response must be a requests.Response."
         super().__init__(msg)
+
+
+class RepeatedMDMIdsException(Exception):
+
+    """Custom exception for query error when receiving multiple times same mdmId."""
+
+    def __init__(self):
+        msg = "Repeated mdmId's. Something is wrong"
+        super().__init__(msg)
+
+
+class NoScrollIdException(Exception):
+
+    """Custom exception for query error when no scrollId is present.."""
+
+    def __init__(self):
+        msg = "No scrollId. Something is wrong"
+        super().__init__(msg)
