@@ -1,5 +1,4 @@
-"""PyCarol - Connecting Carol to Python"""
-
+"""PyCarol - Connecting Carol to Python."""
 import os
 import tempfile
 
