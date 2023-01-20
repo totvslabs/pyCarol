@@ -212,10 +212,10 @@ class BQ:
 
         results = [dict(row) for row in results_job]
 
-        if "pandas" not in sys.modules:
-            return results
+        if "pandas" not in sys.modules and return_dataframe is True:
+            raise exceptions.PandasNotFoundException
 
-        if return_dataframe:
+        if return_dataframe is True:
             return pandas.DataFrame(results)
         return results
 
