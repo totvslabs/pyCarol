@@ -5,32 +5,61 @@
 import os
 import tempfile
 
-__version__ = '2.54.10'
+__version__ = "2.54.10"
 
-__TEMP_STORAGE__ = os.path.join(tempfile.gettempdir(), 'carolina/cache')
+__TEMP_STORAGE__ = os.path.join(tempfile.gettempdir(), "carolina/cache")
 
-__CONNECTOR_PYCAROL__ = 'f9953f6645f449baaccd16ab462f9b64'
+__CONNECTOR_PYCAROL__ = "f9953f6645f449baaccd16ab462f9b64"
 
-_CAROL_METADATA_STAGING = ['mdmCounterForEntity', 'mdmId', 'mdmLastUpdated', 'mdmCreated',
-                           'mdmConnectorId', 'mdmDeleted']
+_CAROL_METADATA_STAGING = [
+    "mdmCounterForEntity",
+    "mdmId",
+    "mdmLastUpdated",
+    "mdmCreated",
+    "mdmConnectorId",
+    "mdmDeleted",
+]
 
-_CAROL_METADATA_GOLDEN = ['mdmCounterForEntity', 'mdmStagingCounter', 'mdmId', 'mdmCreated', 'mdmLastUpdated',
-                          'mdmTenantId',
-                          'mdmEntityType', 'mdmSourceEntityNames', 'mdmCrosswalk', 'mdmStagingRecord',
-                          'mdmApplicationIdMasterRecordId',
-                          'mdmPreviousIds', 'mdmDeleted']
+_CAROL_METADATA_GOLDEN = [
+    "mdmCounterForEntity",
+    "mdmStagingCounter",
+    "mdmId",
+    "mdmCreated",
+    "mdmLastUpdated",
+    "mdmTenantId",
+    "mdmEntityType",
+    "mdmSourceEntityNames",
+    "mdmCrosswalk",
+    "mdmStagingRecord",
+    "mdmApplicationIdMasterRecordId",
+    "mdmPreviousIds",
+    "mdmDeleted",
+]
 
-_CAROL_METADATA_UNTIE_GOLDEN = 'mdmStagingCounter'
-_CAROL_METADATA_UNTIE_STAGING = 'mdmCounterForEntity'
+_CAROL_METADATA_UNTIE_GOLDEN = "mdmStagingCounter"
+_CAROL_METADATA_UNTIE_STAGING = "mdmCounterForEntity"
 
 
-_NEEDED_FOR_MERGE = ['mdmCounterForEntity', 'mdmId', 'mdmDeleted']
+_NEEDED_FOR_MERGE = ["mdmCounterForEntity", "mdmId", "mdmDeleted"]
 
-_REJECTED_DM_COLS = ['mdmConnectorId', 'mdmCreated', 'mdmCreatedUser', 'mdmCrosswalk',
-                     'mdmDetailFieldValues', 'mdmEntityTemplateId', 'mdmEntityType',
-                     'mdmErrors', 'mdmId', 'mdmLastUpdated', 'mdmMasterFieldAndValues',
-                     'mdmStagingApplicationId', 'mdmStagingEntityName', 'mdmStagingRecord',
-                     'mdmTenantId', 'mdmUpdatedUser']
+_REJECTED_DM_COLS = [
+    "mdmConnectorId",
+    "mdmCreated",
+    "mdmCreatedUser",
+    "mdmCrosswalk",
+    "mdmDetailFieldValues",
+    "mdmEntityTemplateId",
+    "mdmEntityType",
+    "mdmErrors",
+    "mdmId",
+    "mdmLastUpdated",
+    "mdmMasterFieldAndValues",
+    "mdmStagingApplicationId",
+    "mdmStagingEntityName",
+    "mdmStagingRecord",
+    "mdmTenantId",
+    "mdmUpdatedUser",
+]
 
 from .carol import Carol
 from .staging import Staging
