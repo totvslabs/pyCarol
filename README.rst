@@ -159,12 +159,27 @@ data transformation is needed.
 
 .. code:: python
 
-    from pycarol import Carol
-    from pycarol.bigquery import BQ
+    from pycarol import BQ, Carol
 
     bq = BQ(Carol())
     query_str = "SELECT * FROM stg_connectorname_table_name"
     results = bq.query(query_str)
+
+
+PyCarol provides access to BigQuery Storage API also. It allows for much faster reading
+times, but with limited querying capabilities. For instance, only tables are readable,
+so 'ingestion_stg_model_deep_audit' is ok, but 'stg_model_deep_audit' is not (it is a 
+view).
+
+.. code:: python
+
+    from pycarol import BQStorage, Carol
+
+    bq = BQStorage(Carol())
+    table_name = "ingestion_stg_model_deep_audit"
+    col_names = ["request_id", "version"]
+    df = bq.query(table_name, col_names, return_dataframe=True)
+
 
 From Data Models (RT Layer): Filter queries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

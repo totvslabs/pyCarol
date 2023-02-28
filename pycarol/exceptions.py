@@ -86,3 +86,17 @@ class NoScrollIdException(Exception):
     def __init__(self):
         msg = "No scrollId. Something is wrong"
         super().__init__(msg)
+
+
+class PandasNotFoundException(Exception):
+
+    """Custom exception for query error when no scrollId is present.."""
+
+    def __init__(self):
+        msg = (
+            "You are trying to get a pandas DataFrame (return_dataframe is True)."
+            " However, pandas is not installed."
+            " Please install pandas ('pip install pandas') or pass return_dataframe as"
+            " False."
+        )
+        super().__init__(msg)

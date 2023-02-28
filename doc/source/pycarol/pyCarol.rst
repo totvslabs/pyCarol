@@ -18,6 +18,7 @@ pyCarol
     :toctree: generated
     
     pycarol.apps
+    pycarol.bigquery
     pycarol.carol
     pycarol.carolina
     pycarol.cds

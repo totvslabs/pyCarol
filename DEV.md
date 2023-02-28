@@ -1,5 +1,21 @@
 # Developer Guidelines
 
+## Run tests
+
+Most unit tests are located at ./test . To run unit tests please use:
+```bash
+coverage run -m pytest
+```
+
+In order to check the results either use the textual output:
+```bash
+coverage report
+```
+either the html version
+```bash
+coverage html
+```
+
 ## Python
 
 ### Formatting
