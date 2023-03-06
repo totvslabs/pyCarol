@@ -13,6 +13,7 @@ min_requires = [
     "google-auth",
     "google-auth-httplib2",
     "google-cloud-bigquery>=2.26.0",
+    "google-cloud-bigquery-storage",
     "google-cloud-core>=1.4.1",
     "google-cloud-storage",
     "python-dotenv",
