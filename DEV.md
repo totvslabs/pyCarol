@@ -7,6 +7,11 @@ Most unit tests are located at ./test . To run unit tests please use:
 coverage run -m pytest
 ```
 
+To run a specific test:
+```bash
+pytest ./test/<test file name>
+```
+
 In order to check the results either use the textual output:
 ```bash
 coverage report
