@@ -4,11 +4,11 @@ from pathlib import Path
 from unittest import mock
 import typing as T
 
-import pandas as pd
 import pycarol
 
 
 def test_token_init() -> None:
+    """Test the initialization of the Token class in the pycarol.bigquery module."""
     token_mock = mock.MagicMock()
     service_account = {"expiration_time": "expiration_time"}
     env: T.Dict = {}
@@ -19,6 +19,7 @@ def test_token_init() -> None:
 
 
 def test_token_to_dict() -> None:
+    """Test the to_dict() method of the Token class in the pycarol.bigquery module."""
     token_mock = mock.MagicMock()
     token_mock.service_account = {}
     token_mock._env = {}
@@ -28,6 +29,7 @@ def test_token_to_dict() -> None:
 
 
 def test_token_expired() -> None:
+    """Test the expired() method of the Token class in the pycarol.bigquery module."""
     token_mock = mock.MagicMock()
     dt_format = "%Y-%m-%dT%H:%M:%S.%fZ"
     pass_date = datetime.utcnow() - timedelta(1)
@@ -38,7 +40,7 @@ def test_token_expired() -> None:
 
 @mock.patch("pycarol.bigquery.Storage")
 def test_token_manager_init(storage_mock) -> None:
-    """TokenManager __init__ with defaults."""
+    """Test the initialization of the pycarol.bigquery.TokenManager class."""
     manager_mock = mock.MagicMock()
     carol_mock = mock.MagicMock()
     carol_mock.get_current.return_value = {"env_id": 5}
@@ -54,6 +56,7 @@ def test_token_manager_init(storage_mock) -> None:
 
 
 def test_token_manager_issue_new_key() -> None:
+    """Test the _issue_new_key() method of the pycarol.bigquery.TokenManager class."""
     manager_mock = mock.MagicMock()
     manager_mock._carol = mock.MagicMock()
     manager_mock._carol.call_api.return_value = {}
@@ -62,6 +65,7 @@ def test_token_manager_issue_new_key() -> None:
 
 
 def test_token_manager_save_token_file() -> None:
+    """Test the _save_token_file() method of the pycarol.bigquery.TokenManager class."""
     manager_mock = mock.MagicMock()
     manager_mock._tmp_filepath = Path("/tmp/pycarol_test/test_sa.env")
     token_mock = mock.MagicMock()
@@ -75,6 +79,7 @@ def test_token_manager_save_token_file() -> None:
 
 
 def test_token_manager_save_token_cloud() -> None:
+    """Test the _save_token_cloud() method of the pycarol.bigquery.TokenManager."""
     manager_mock = mock.MagicMock()
     Path("/tmp/pycarol_test/test_sa.env").touch()
     pycarol.bigquery.TokenManager._save_token_cloud(manager_mock)
@@ -84,6 +89,7 @@ def test_token_manager_save_token_cloud() -> None:
 
 @mock.patch("pycarol.bigquery.Token")
 def test_token_manager_load_token_file(token_mock) -> None:
+    """Test the _load_token_file() method of the pycarol.bigquery.TokenManager class."""
     sa = {"service_account": "test", "env": "test"}
     test_path = Path("/tmp/pycarol_test/test_sa.env")
     with open(test_path, "w", encoding="utf-8") as file:
@@ -97,11 +103,13 @@ def test_token_manager_load_token_file(token_mock) -> None:
 
 
 def test_token_manager_load_token_cloud() -> None:
+    """Test the _load_token_cloud() method of the pycarol.bigquery.TokenManager."""
     manager_mock = mock.MagicMock()
     test_path = Path("/tmp/pycarol_test/test_sa.env")
     test_path.touch()
     manager_mock._storage.exists.return_value = True
     manager_mock._storage.load.return_value = "/tmp/pycarol_test/test_sa.env"
+    manager_mock._tmp_filepath = Path("/tmp/pycarol_test/test_sa2.env")
     token = pycarol.bigquery.TokenManager._load_token_cloud(manager_mock)
     assert token == manager_mock._load_token_file.return_value
 
@@ -115,6 +123,7 @@ def test_token_manager_get_forced_token(token_mock) -> None:
 
 @mock.patch("pycarol.bigquery.Token")
 def test_token_manager_get_token(token_mock) -> None:
+    """Test the get_token() method of the pycarol.bigquery.TokenManager class."""
     manager_mock = mock.MagicMock()
     token = pycarol.bigquery.TokenManager.get_token(manager_mock)
     assert token == manager_mock.get_forced_token.return_value
@@ -122,6 +131,7 @@ def test_token_manager_get_token(token_mock) -> None:
 
 @mock.patch("pycarol.bigquery.TokenManager")
 def test_bq_init(manager_mock) -> None:
+    """Test the initialization of the BQ class in the pycarol.bigquery module."""
     bq_mock = mock.MagicMock()
     carol_mock = mock.MagicMock()
     carol_mock.get_current.return_value = {"env_id": "5"}
@@ -135,13 +145,17 @@ def test_bq_init(manager_mock) -> None:
 @mock.patch("pycarol.bigquery.Credentials")
 @mock.patch("pycarol.bigquery.bigquery")
 def test_bq_generate_client(bigquery_mock, credentials_mock) -> None:
+    """Test the _generate_client() method of the pycarol.bigquery.BQ class."""
     sa = {"project_id": ""}
     client = pycarol.bigquery.BQ._generate_client(sa)
     assert client == bigquery_mock.Client.return_value
 
 
 @mock.patch("pycarol.bigquery.bigquery.QueryJobConfig")
-def test_bq_query(query_job_mock) -> None:
+def test_bq_query_pd(query_job_mock) -> None:
+    """Test the query() method of the pycarol.bigquery.BQ class."""
+    import pandas as pd
+
     bq_mock = mock.MagicMock()
     query_ret = [
         {"col1": "val1", "col2": "val2"},
@@ -151,12 +165,29 @@ def test_bq_query(query_job_mock) -> None:
     client_mock.query.return_value = query_ret
     bq_mock._generate_client.return_value = client_mock
     query = ""
-    ret = pycarol.bigquery.BQ.query(bq_mock, query)
-    assert ret.equals(pd.DataFrame(query_ret))
+    ret = pycarol.bigquery.BQ.query(bq_mock, query, return_dataframe=True)
+    assert ret.equals(pd.DataFrame(query_ret))  # type: ignore
+
+
+@mock.patch("pycarol.bigquery.bigquery.QueryJobConfig")
+def test_bq_query(query_job_mock) -> None:
+    """Test the query() method of the pycarol.bigquery.BQ class."""
+    bq_mock = mock.MagicMock()
+    query_ret = [
+        {"col1": "val1", "col2": "val2"},
+        {"col1": "val1", "col2": "val2"},
+    ]
+    client_mock = mock.MagicMock()
+    client_mock.query.return_value = query_ret
+    bq_mock._generate_client.return_value = client_mock
+    query = ""
+    ret = pycarol.bigquery.BQ.query(bq_mock, query, return_dataframe=False)
+    assert ret == query_ret
 
 
 @mock.patch("pycarol.bigquery.TokenManager")
 def test_storage_init(manager_mock) -> None:
+    """Test the initialization of the BQStorage class in the pycarol.bigquery module."""
     storage_mock = mock.MagicMock()
     carol_mock = mock.MagicMock()
     carol_mock.get_current.return_value = {"env_id": "5"}
@@ -170,6 +201,7 @@ def test_storage_init(manager_mock) -> None:
 @mock.patch("pycarol.bigquery.Credentials")
 @mock.patch("pycarol.bigquery.bigquery_storage")
 def test_storage_generate_client(bigquery_mock, credentials_mock) -> None:
+    """Test the _generate_client() method of the pycarol.bigquery.BQStorage class."""
     sa = {"project_id": ""}
     client = pycarol.bigquery.BQStorage._generate_client(sa)
     assert client == bigquery_mock.BigQueryReadClient.return_value
@@ -177,6 +209,7 @@ def test_storage_generate_client(bigquery_mock, credentials_mock) -> None:
 
 @mock.patch("pycarol.bigquery.types")
 def test_storage_get_read_session(types_mock) -> None:
+    """Test the _get_read_session() method of the pycarol.bigquery.BQStorage class."""
     storage_mock = mock.MagicMock()
     client_mock = mock.MagicMock()
     session = pycarol.bigquery.BQStorage._get_read_session(
@@ -185,18 +218,25 @@ def test_storage_get_read_session(types_mock) -> None:
     assert session == client_mock.create_read_session.return_value
 
 
-def test_storage_query() -> None:
+def test_storage_query_pd() -> None:
+    """Test the query() method of the pycarol.bigquery.BQStorage class."""
+    import pandas as pd
+
     pages = mock.MagicMock()
     page1 = mock.MagicMock()
-    page1.to_dataframe.return_value = pd.DataFrame([
-        {"col1": "name1", "col2": "name2"},
-        {"col1": "name1", "col2": "name2"},
-    ])
+    page1.to_dataframe.return_value = pd.DataFrame(
+        [
+            {"col1": "name1", "col2": "name2"},
+            {"col1": "name1", "col2": "name2"},
+        ]
+    )
     page2 = mock.MagicMock()
-    page2.to_dataframe.return_value = pd.DataFrame([
-        {"col1": "name1", "col2": "name2"},
-        {"col1": "name1", "col2": "name2"},
-    ])
+    page2.to_dataframe.return_value = pd.DataFrame(
+        [
+            {"col1": "name1", "col2": "name2"},
+            {"col1": "name1", "col2": "name2"},
+        ]
+    )
     pages.pages = [page1, page2]
     reader_mock = mock.MagicMock()
     reader_mock.rows.return_value = pages
@@ -208,10 +248,49 @@ def test_storage_query() -> None:
     storage_mock._generate_client.return_value = client_mock
     ret = pycarol.bigquery.BQStorage.query(storage_mock, "table")
 
-    ret_expected = pd.DataFrame([
-        {"col1": "name1", "col2": "name2"},
-        {"col1": "name1", "col2": "name2"},
-        {"col1": "name1", "col2": "name2"},
-        {"col1": "name1", "col2": "name2"},
-    ])
+    ret_expected = pd.DataFrame(
+        [
+            {"col1": "name1", "col2": "name2"},
+            {"col1": "name1", "col2": "name2"},
+            {"col1": "name1", "col2": "name2"},
+            {"col1": "name1", "col2": "name2"},
+        ]
+    )
     assert ret_expected.equals(ret)
+
+
+def test_storage_query() -> None:
+    """Test the query() method of the pycarol.bigquery.BQStorage class."""
+    pages = mock.MagicMock()
+    page1 = [
+        {"col1": "name1", "col2": "name2"},
+        {"col1": "name1", "col2": "name2"},
+    ]
+    page2 = [
+        {"col1": "name1", "col2": "name2"},
+        {"col1": "name1", "col2": "name2"},
+    ]
+    pages.pages = [page1, page2]
+    reader_mock = mock.MagicMock()
+    reader_mock.rows.return_value = pages
+
+    client_mock = mock.MagicMock()
+    client_mock.read_rows.return_value = reader_mock
+
+    storage_mock = mock.MagicMock()
+    storage_mock._generate_client.return_value = client_mock
+    ret = pycarol.bigquery.BQStorage.query(
+        storage_mock, "table", return_dataframe=False
+    )
+
+    ret_expected = [
+        [
+            {"col1": "name1", "col2": "name2"},
+            {"col1": "name1", "col2": "name2"},
+        ],
+        [
+            {"col1": "name1", "col2": "name2"},
+            {"col1": "name1", "col2": "name2"},
+        ],
+    ]
+    assert ret_expected == ret

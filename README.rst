@@ -166,6 +166,18 @@ data transformation is needed.
     results = bq.query(query_str)
 
 
+In case one needs a service account with access to BigQuery, the following code can be
+used:
+
+.. code:: python
+
+    from pycarol import Carol
+    from pycarol.bigquery import TokenManager
+
+    tm = TokenManager(Carol())
+    service_account = tm.get_token().service_account
+
+
 PyCarol provides access to BigQuery Storage API also. It allows for much faster reading
 times, but with limited querying capabilities. For instance, only tables are readable,
 so 'ingestion_stg_model_deep_audit' is ok, but 'stg_model_deep_audit' is not (it is a 
