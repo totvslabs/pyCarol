@@ -7,6 +7,7 @@ from setuptools import setup, find_packages
 here = Path(__file__).absolute().parent
 
 min_requires = [
+    "beautifulsoup4",
     "deprecated",
     "deprecation",
     "gcsfs>=0.3.0,<0.7",
@@ -21,7 +22,6 @@ min_requires = [
     "retry",
     "tqdm",
     "urllib3",
-    "beautifulsoup4",
 ]
 
 dataframe_requires = [
