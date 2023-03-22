@@ -32,7 +32,6 @@ dataframe_requires = [
 ]
 dev_requirements = [
     "black",
-    "bumpversion",
     "flake8",
     "mypy",
     "pydocstyle",

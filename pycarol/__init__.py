@@ -2,6 +2,7 @@
 import os
 import tempfile
 
+# remove in future releases in case some users are accessing it.
 __version__ = "2.54.15"
 
 __TEMP_STORAGE__ = os.path.join(tempfile.gettempdir(), "carolina/cache")
