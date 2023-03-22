@@ -416,11 +416,5 @@ Release process
 ----------------
 1. Open a PR with your change for `master` branch;
 2. Once approved, merge into `master`;
-3. Locally, :code:`git checkout master`
-4. Locally, :code:`git pull`
-5. Make new version (this will create a commit with the new version)
+3. In case there are any changes to the default release notes, please update them
 
-  a. :code:`make bump_patch` or :code:`make bump_minor`
-
-6. Locally, :code:`git push origin <name of new tag>`
-7. In case there are any release notes, update it
