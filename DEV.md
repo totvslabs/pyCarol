@@ -50,7 +50,7 @@ This project use pylint and flake8 for checking errors. On VS Code, we use this 
     "python.linting.flake8Path": <path to flake8>,
     "python.linting.flake8Args": [
         "--max-line-length=88",
-        "--ignore=E203,W605"
+        "--ignore=E203,E402,W605"
     ],
     "python.linting.pylintEnabled": true,
     "python.linting.pylintPath": <path to pylint>,
