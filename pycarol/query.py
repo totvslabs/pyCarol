@@ -113,7 +113,7 @@ class Query:
         fields: `list`, default `None`
             Fields to return in response. e.g., ["mdmGoldenFieldAndValues.mdmtaxid", "mdmGoldenFieldAndValues.date"]
         get_aggs: `bool`, default `False`
-            To be used if the query/named query has aggravations
+            To be used if the query/named query has aggregations
         save_results: `bool`, default `False`
             If save the result of the query in the file specified in `filename`
         filename: `str`, default `query_result.json`
@@ -158,7 +158,6 @@ class Query:
         get_times=False,
         **kwargs,
     ):
-
         self.carol = carol
         self.max_hits = max_hits
         self.offset = offset
@@ -307,8 +306,9 @@ class Query:
         self.query_errors = {}
         self.mdmId_list = []
         while count < to_get:
-            raise_error = self.get_aggs and not self.only_hits
-            result = self._query_request(url_filter, raise_error)
+            # raise_error = self.get_aggs and not self.only_hits
+            print("getting...")
+            result = self._query_request(url_filter)
 
             if set_param is True:
                 self.total_hits = result["totalHits"]
@@ -365,14 +365,11 @@ class Query:
             if self.get_aggs is True and self.only_hits is False:
                 break
 
-            if scroll_id is None:
-                print(result)
-                raise NoScrollIdException
-
     @retry(exceptions=NoScrollIdException, tries=5)
-    def _query_request(
-        self, url: str, raise_error: bool
-    ) -> T.Dict:
+    def _query_request(self, url: str) -> T.Dict:
+        if url == "v2/queries/filter/None":
+            raise NoScrollIdException
+
         result = self.carol.call_api(
             url,
             data=self.json_query,
@@ -382,11 +379,16 @@ class Query:
             **self.kwargs,
         )
 
-        scroll_id = result.get("scrollId", None)
-        if raise_error is True and scroll_id is None:
-            print(result)
-            print("Retrying...")
-            raise NoScrollIdException
+        # scroll_id = result.get("scrollId", None)
+        # total_hits = result.get("totalHits", None)
+
+        # if raise_error is False:
+        #     return result
+
+        # if scroll_id is None and total_hits is not None and total_hits != 0:
+        #     print(result)
+        #     print("Retrying...")
+        #     raise NoScrollIdException
 
         return result
 
@@ -491,7 +493,6 @@ class ParQuery:
     def _get_min_max(
         self, datamodel_name, mdm_key, index_type, custom_filter=None, multiplier=None
     ):
-
         if custom_filter is not None:
             j = custom_filter
         else:
@@ -537,7 +538,6 @@ class ParQuery:
     def _get_staging_from_golden_rejected(
         self, datamodel_name, connector_id, staging_name, fields
     ):
-
         index_type = "STAGING"
         self.datamodel_name = f"{datamodel_name}Rejected"
         self.fields = "mdmStagingRecord"
@@ -620,7 +620,6 @@ class ParQuery:
         return list_to_compute
 
     def _get_golden(self, datamodel_name=None, fields=None):
-
         index_type = "MASTER"
         self.datamodel_name = f"{datamodel_name}Golden"
         self.fields = "mdmGoldenFieldAndValues"
@@ -677,7 +676,6 @@ class ParQuery:
     def _get_staging(
         self, connector_id=None, connector_name=None, staging_name=None, fields=None
     ):
-
         if not connector_id:
             connector_id = Connectors(self.carol).get_by_name(connector_name)["mdmId"]
 
@@ -767,7 +765,6 @@ class ParQuery:
                 fields=fields,
             )
         else:
-
             return self._get_golden(datamodel_name=datamodel_name, fields=fields)
 
 
