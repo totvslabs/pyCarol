@@ -56,9 +56,3 @@ sonar: test
 		-Dsonar.host.url=https://sonar.ops.totvslabs.com \
 		-Dsonar.login=$(SONAR_PYCAROL_TOKEN) \
 		-Dsonar.branch.name=$(BUILDKITE_BRANCH)
-
-bump_patch:
-	@bumpversion patch
-
-bump_minor:
-	@bumpversion minor
