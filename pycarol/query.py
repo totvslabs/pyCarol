@@ -306,8 +306,6 @@ class Query:
         self.query_errors = {}
         self.mdmId_list = []
         while count < to_get:
-            # raise_error = self.get_aggs and not self.only_hits
-            print("getting...")
             result = self._query_request(url_filter)
 
             if set_param is True:
@@ -378,17 +376,6 @@ class Query:
             method_whitelist=frozenset(["POST"]),
             **self.kwargs,
         )
-
-        # scroll_id = result.get("scrollId", None)
-        # total_hits = result.get("totalHits", None)
-
-        # if raise_error is False:
-        #     return result
-
-        # if scroll_id is None and total_hits is not None and total_hits != 0:
-        #     print(result)
-        #     print("Retrying...")
-        #     raise NoScrollIdException
 
         return result
 
