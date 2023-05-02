@@ -23,9 +23,7 @@ To install from source:
 1. ``pip install -r requirements.txt`` to install the minimal requirements;
 2. ``pip install -e . ".[dev]"`` to install the minimal requirements + dev libs;
 3. ``pip install -e . ".[pipeline]"`` to install the minimal requirements + pipelines dependencies;
-4. ``pip install -e . ".[dev]"`` to install the minimal requirements + dev libs;
-5. ``pip install -e . ".[complete]"`` to install all dependencies;
-6. etc;
+4. ``pip install -e . ".[complete]"`` to install all dependencies;
 
 
 Initializing pyCarol
