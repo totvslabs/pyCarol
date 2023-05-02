@@ -268,8 +268,7 @@ class BQ:
             dataset_id: BigQuery dataset ID, if not provided, it will use the default
                         one.
             return_dataframe: Return dataframe if True.
-            return_job_id : Create an tuple to return with results, even if returns
-                            a dataframe or not if True.
+            return_job_id : If True, returns an tuple containing the query results with the job-id on BigQuery platform.
             retry: Custom google.api_core.retry.Retry object to adjust Google`s BigQuery API
                    calls, to custom timeout and exceptions to retry.
 
