@@ -9,6 +9,7 @@ import typing as T
 from google.cloud import bigquery, bigquery_storage, bigquery_storage_v1
 from google.cloud.bigquery_storage import types
 from google.oauth2.service_account import Credentials
+from google.api_core import retry as retries
 
 try:
     import pandas
@@ -257,6 +258,8 @@ class BQ:
         query: str,
         dataset_id: T.Optional[str] = None,
         return_dataframe: bool = True,
+        return_job_id: bool = False,
+        retry: retries.Retry = None
     ) -> T.Union["pandas.DataFrame", T.List[T.Dict[str, T.Any]]]:
         """Run query. This will generate a SA if necessary.
 
@@ -265,12 +268,14 @@ class BQ:
             dataset_id: BigQuery dataset ID, if not provided, it will use the default
                         one.
             return_dataframe: Return dataframe if True.
+            return_job_id : If True, returns an tuple containing the query results with the job-id on BigQuery platform.
+            retry: Custom google.api_core.retry.Retry object to adjust Google`s BigQuery API
+                   calls, to custom timeout and exceptions to retry.
 
         Returns:
             Query result.
 
         Usage:
-
         .. code:: python
 
 
@@ -278,24 +283,34 @@ class BQ:
 
             bq = BQ(Carol())
             query = 'select * from invoice limit 10'
+            
+            #Normal use
             df = bq.query(query, return_dataframe=True)
+
+            #Custom retry object
+            from google.api_core.retry import Retry
+            df = bq.query(query, return_dataframe=True, retry=Retry(initial=2, multiplier=2, maximum=60, timeout=200))
+
+            #Getting BigQuery`s Job-id (Util for debugging in platform)
+            df, job_id_string = bq.query(query, return_dataframe=True, return_job_id=True)
+
         """
         service_account = self._token_manager.get_token().service_account
         client = self._generate_client(service_account)
 
         dataset_id = dataset_id or self._dataset_id
         job_config = bigquery.QueryJobConfig(default_dataset=dataset_id)
-        results_job = client.query(query, job_config=job_config)
+        results_job = client.query(query, retry=retry, job_config=job_config) if retry else client.query(query, job_config=job_config)
 
         results = [dict(row) for row in results_job]
 
         if return_dataframe is False:
-            return results
+            return results if not return_job_id else (results, results_job.job_id)
 
         if "pandas" not in sys.modules and return_dataframe is True:
             raise exceptions.PandasNotFoundException
 
-        return pandas.DataFrame(results)
+        return pandas.DataFrame(results) if not return_job_id else (pandas.DataFrame(results), results_job.job_id)
 
 
 class BQStorage:
