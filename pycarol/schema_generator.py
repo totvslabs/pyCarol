@@ -42,6 +42,10 @@ class Type(object):
 
         """docstring for get_schema_type_for"""
 
+        if np.__version__.startswith("1.2"):
+            np.int = np.int64
+            np.float = np.float64
+
         SCHEMA_TYPES = {
             type(None): NullType,
             str: StringType,
