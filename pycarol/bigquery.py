@@ -245,6 +245,7 @@ class BQ:
         self._project_id = f"carol-{self._env['env_id'][0:20]}"
         self._dataset_id = f"{self._project_id}.{self._env['env_id']}"
         self._token_manager = TokenManager(carol, service_account, cache_cds)
+        self.job: T.Optional[bigquery.job.query.QueryJob] = None
 
     @staticmethod
     def _generate_client(service_account: T.Dict) -> bigquery.Client:
@@ -309,7 +310,7 @@ class BQ:
             results_job = client.query(query, retry=retry, job_config=job_config)
         else:
             results_job = client.query(query, job_config=job_config)
-        )
+        self.job = results_job
 
         results = [dict(row) for row in results_job]
 
