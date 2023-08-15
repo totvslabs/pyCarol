@@ -72,7 +72,7 @@ setup(
     name="pycarol",
     setup_requires=["wheel"],
     packages=find_packages(exclude=["docs", "doc"]),
-    version="0.0.0",
+    version="{{VERSION_PLACEHOLDER}}",
     license="TOTVS",
     description="Carol Python API and Tools",
     long_description=long_description,
