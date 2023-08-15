@@ -259,7 +259,7 @@ class BQ:
         dataset_id: T.Optional[str] = None,
         return_dataframe: bool = True,
         return_job_id: bool = False,
-        retry: retries.Retry = None,
+        retry: T.Optional[retries.Retry] = None,
     ) -> T.Union["pandas.DataFrame", T.List[T.Dict[str, T.Any]]]:
         """Run query. This will generate a SA if necessary.
 
