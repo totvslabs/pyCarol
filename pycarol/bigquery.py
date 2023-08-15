@@ -305,10 +305,10 @@ class BQ:
 
         dataset_id = dataset_id or self._dataset_id
         job_config = bigquery.QueryJobConfig(default_dataset=dataset_id)
-        results_job = (
-            client.query(query, retry=retry, job_config=job_config)
-            if retry
-            else client.query(query, job_config=job_config)
+        if retry is not None:
+            results_job = client.query(query, retry=retry, job_config=job_config)
+        else:
+            results_job = client.query(query, job_config=job_config)
         )
 
         results = [dict(row) for row in results_job]
