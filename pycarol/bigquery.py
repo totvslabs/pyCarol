@@ -319,11 +319,10 @@ class BQ:
         if "pandas" not in sys.modules and return_dataframe is True:
             raise exceptions.PandasNotFoundException
 
-        return (
-            pandas.DataFrame(results)
-            if not return_job_id
-            else (pandas.DataFrame(results), results_job.job_id)
-        )
+        if return_job_id:
+            return (pandas.DataFrame(results), results_job.job_id)
+        
+        return pandas.DataFrame(results)
 
 
 class BQStorage:
