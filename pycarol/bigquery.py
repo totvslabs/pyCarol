@@ -361,7 +361,7 @@ class BQStorage:
         read_session = client.create_read_session(
             parent=parent,
             read_session=requested_session,
-            max_stream_count=4,
+            max_stream_count=1,
         )
         return read_session
 
