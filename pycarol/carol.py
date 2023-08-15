@@ -682,7 +682,7 @@ def _retry_session(
         connect=retries,
         backoff_factor=backoff_factor,
         status_forcelist=status_forcelist,
-        method_whitelist=method_whitelist,
+        allowed_methods=method_whitelist,
     )
     adapter = requests.adapters.HTTPAdapter(max_retries=retry)
     session.mount("http://", adapter)
