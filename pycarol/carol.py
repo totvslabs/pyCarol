@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 import os
 import typing as T
+import urllib3
 import warnings
 
 from dotenv import load_dotenv
@@ -676,14 +677,20 @@ def _retry_session(
         session
     """
     session = session or requests.Session()
-    retry = Retry(
-        total=retries,
-        read=retries,
-        connect=retries,
-        backoff_factor=backoff_factor,
-        status_forcelist=status_forcelist,
-        allowed_methods=method_whitelist,
-    )
+    kwargs = {
+        "total": retries,
+        "read": retries,
+        "connect": retries,
+        "backoff_factor": backoff_factor,
+        "status_forcelist": status_forcelist,
+    }
+    
+    if urllib3.__version__ >= "1.26.0":
+        kwargs["allowed_methods"] = method_whitelist
+    else:
+        kwargs["method_whitelist"] = method_whitelist
+    
+    retry = Retry(**kwargs)
     adapter = requests.adapters.HTTPAdapter(max_retries=retry)
     session.mount("http://", adapter)
     session.mount("https://", adapter)
