@@ -176,6 +176,10 @@ used:
     service_account = tm.get_token().service_account
 
 
+After each execution of ``BQ.query``, the ``BQ`` object will have an attribute called
+``job``. This attribute is of type ``bigquery.job.query.QueryJob`` and may be useful for
+monitoring/debug jobs.
+
 PyCarol provides access to BigQuery Storage API also. It allows for much faster reading
 times, but with limited querying capabilities. For instance, only tables are readable,
 so 'ingestion_stg_model_deep_audit' is ok, but 'stg_model_deep_audit' is not (it is a 
