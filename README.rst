@@ -192,7 +192,15 @@ view).
     bq = BQStorage(Carol())
     table_name = "ingestion_stg_model_deep_audit"
     col_names = ["request_id", "version"]
-    df = bq.query(table_name, col_names, return_dataframe=True)
+    restriction = "branch = '01'"
+    sample_size = 1000
+    df = bq.query(
+        table_name,
+        col_names,
+        row_restriction=restriction,
+        sample_percentage=sample_size,
+        return_dataframe=True
+    )
 
 
 From Data Models (RT Layer): Filter queries

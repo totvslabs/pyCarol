@@ -357,11 +357,15 @@ class BQStorage:
         client: bigquery_storage.BigQueryReadClient,
         table_name: str,
         columns_names: T.Optional[T.List[str]] = None,
+        row_restriction: T.Optional[str] = None,
+        sample_percentage: T.Optional[float] = None,
     ) -> bigquery_storage_v1.types.ReadSession:
         read_options = None
         if columns_names is not None:
             read_options = types.ReadSession.TableReadOptions(  # type:ignore # noqa:E501 pylint:disable=no-member
-                selected_fields=columns_names
+                selected_fields=columns_names,
+                row_restriction=row_restriction,
+                sample_percentage=sample_percentage,
             )
 
         table_path = f"projects/{self._project_id}/datasets/{self._dataset_id}/tables/{table_name}"  # noqa:E501
@@ -374,7 +378,7 @@ class BQStorage:
         read_session = client.create_read_session(
             parent=parent,
             read_session=requested_session,
-            max_stream_count=4,
+            max_stream_count=1,
         )
         return read_session
 
@@ -383,6 +387,8 @@ class BQStorage:
         table_name: str,
         columns_names: T.Optional[T.List[str]] = None,
         return_dataframe: bool = True,
+        row_restriction: T.Optional[str] = None,
+        sample_percentage: T.Optional[float] = None,
     ) -> T.Union["pandas.DataFrame", T.List[bigquery_storage_v1.reader.ReadRowsPage]]:
         """Read from BigQuery Storage API.
 
@@ -390,6 +396,8 @@ class BQStorage:
             table_name: name of the table (views are not supported).
             columns_names: names of columns to return.
             return_dataframe: if True, return a pandas DataFrame.
+            row_restriction: SQL WHERE clause. Limited to BQ Storage API.
+            sample_percentage: percentage of rows to return.
 
         Returns:
             Query result.
@@ -404,11 +412,16 @@ class BQStorage:
             bq = BQStorage(Carol())
             table_name = "ingestion_stg_model_deep_audit"
             col_names = ["request_id", "version"]
-            df = bq.query(table_name, col_names, return_dataframe=True)
+            filter = "branch = '01'"
+            df = bq.query(
+                table_name, column_names=col_names, row_restriction=filter,
+            )
         """
         service_account = self._token_manager.get_token().service_account
         client = self._generate_client(service_account)
-        read_session = self._get_read_session(client, table_name, columns_names)
+        read_session = self._get_read_session(
+            client, table_name, columns_names, row_restriction, sample_percentage,
+        )
 
         stream = read_session.streams[0]
         reader = client.read_rows(stream.name)
