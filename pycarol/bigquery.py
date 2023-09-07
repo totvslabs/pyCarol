@@ -242,6 +242,7 @@ class BQ:
         cache_cds: bool = True,
     ):
         self._env = carol.get_current()
+        self._env['app_name'] = carol.app_name
         self._project_id = f"carol-{self._env['env_id'][0:20]}"
         self._dataset_id = f"{self._project_id}.{self._env['env_id']}"
         self._token_manager = TokenManager(carol, service_account, cache_cds)
@@ -252,6 +253,31 @@ class BQ:
         project = service_account["project_id"]
         client = bigquery.Client(project=project, credentials=credentials)
         return client
+
+    def _build_query_job_labels(self) -> T.Dict[str, str]:
+        label_values = [
+            self._env.get('env_id', ''),
+            self._env.get('env_name', ''),
+            self._env.get('org_id', ''),
+            self._env.get('org_name', ''),
+            "sync",
+            "py_carol",
+            "",
+            self._env.get('app_name', ''),
+            ""
+        ]
+        label_keys = [
+            "tenant_id",
+            "tenant_name",
+            "organization_id",
+            "organization_name",
+            "job_type", ## Is any case that using this class is async?
+            "source",
+            "task_id", ## In this case may we use the "mdmBigQueryProvisionId" from 'carol._current_env()'?
+            "carol_app_name",
+            "carol_app_process_name", ## I do not understand what should be this property
+            ]
+        return {k:v for k,v in zip(label_keys, label_values) if v.strip() != ""}
 
     def query(
         self,
@@ -299,7 +325,8 @@ class BQ:
         client = self._generate_client(service_account)
 
         dataset_id = dataset_id or self._dataset_id
-        job_config = bigquery.QueryJobConfig(default_dataset=dataset_id)
+        labels = self._build_query_job_labels()
+        job_config = bigquery.QueryJobConfig(default_dataset=dataset_id, labels=labels)
         results_job = client.query(query, retry=retry, job_config=job_config) if retry else client.query(query, job_config=job_config)
 
         results = [dict(row) for row in results_job]
