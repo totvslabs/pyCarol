@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import sys
 import typing as T
+import os
 
 from google.cloud import bigquery, bigquery_storage, bigquery_storage_v1
 from google.cloud.bigquery_storage import types
@@ -242,6 +243,7 @@ class BQ:
         cache_cds: bool = True,
     ):
         self._env = carol.get_current()
+        self._env["app_name"] = carol.app_name
         self._project_id = f"carol-{self._env['env_id'][0:20]}"
         self._dataset_id = f"{self._project_id}.{self._env['env_id']}"
         self._token_manager = TokenManager(carol, service_account, cache_cds)
@@ -253,6 +255,20 @@ class BQ:
         project = service_account["project_id"]
         client = bigquery.Client(project=project, credentials=credentials)
         return client
+
+    def _build_query_job_labels(self) -> T.Dict[str, str]:
+        labels_to_check = {
+            "tenant_id": self._env.get("env_id", ""),
+            "tenant_name": self._env.get("env_name", ""),
+            "organization_id": self._env.get("org_id", ""),
+            "organization_name": self._env.get("org_name", ""),
+            "job_type": "sync",
+            "source": "py_carol",
+            "task_id": os.environ.get("LONGTAKSID", ""),
+            "carol_app_name": self._env.get("app_name", ""),
+            "carol_app_process_name": os.environ.get("ALGORITHM_NAME", ""),
+        }
+        return {k: v for k, v in labels_to_check.items() if v.strip() != ""}
 
     def query(
         self,
@@ -305,7 +321,8 @@ class BQ:
         client = self._generate_client(service_account)
 
         dataset_id = dataset_id or self._dataset_id
-        job_config = bigquery.QueryJobConfig(default_dataset=dataset_id)
+        labels = self._build_query_job_labels()
+        job_config = bigquery.QueryJobConfig(default_dataset=dataset_id, labels=labels)
         if retry is not None:
             results_job = client.query(query, retry=retry, job_config=job_config)
         else:
@@ -322,7 +339,7 @@ class BQ:
 
         if return_job_id:
             return (pandas.DataFrame(results), results_job.job_id)
-        
+
         return pandas.DataFrame(results)
 
 
@@ -420,7 +437,11 @@ class BQStorage:
         service_account = self._token_manager.get_token().service_account
         client = self._generate_client(service_account)
         read_session = self._get_read_session(
-            client, table_name, columns_names, row_restriction, sample_percentage,
+            client,
+            table_name,
+            columns_names,
+            row_restriction,
+            sample_percentage,
         )
 
         stream = read_session.streams[0]
