@@ -135,28 +135,32 @@ def test_bq_init(manager_mock) -> None:
     bq_mock = mock.MagicMock()
     carol_mock = mock.MagicMock()
     carol_mock.app_name = " "
-    carol_mock.get_current.return_value = {'env_name': 'env_name',
-                                           'env_id': 'env_id',
-                                           'org_name': 'org_name',
-                                           'org_id': 'org_id',
-                                           'org_level': False}
+    carol_mock.get_current.return_value = {
+        "env_name": "env_name",
+        "env_id": "env_id",
+        "org_name": "org_name",
+        "org_id": "org_id",
+        "org_level": False,
+    }
     pycarol.bigquery.BQ.__init__(bq_mock, carol_mock)
-    assert bq_mock._env == {'env_name': 'env_name',
-                            'env_id': 'env_id',
-                            'org_name': 'org_name',
-                            'org_id': 'org_id',
-                            'org_level': False,
-                            'app_name': ' '}
+    assert bq_mock._env == {
+        "env_name": "env_name",
+        "env_id": "env_id",
+        "org_name": "org_name",
+        "org_id": "org_id",
+        "org_level": False,
+        "app_name": " ",
+    }
     assert bq_mock._project_id == "carol-env_id"
     assert bq_mock._dataset_id == "carol-env_id.env_id"
     assert bq_mock._token_manager == manager_mock.return_value
     assert pycarol.bigquery.BQ._build_query_job_labels(bq_mock) == {
-        'tenant_id': 'env_id',
-        'tenant_name': 'env_name',
-        'organization_id': 'org_id',
-        'organization_name': 'org_name',
-        'job_type': 'sync',
-        'source': 'py_carol'
+        "tenant_id": "env_id",
+        "tenant_name": "env_name",
+        "organization_id": "org_id",
+        "organization_name": "org_name",
+        "job_type": "sync",
+        "source": "py_carol",
     }
 
 
