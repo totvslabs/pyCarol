@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import sys
 import typing as T
+import os
 
 from google.cloud import bigquery, bigquery_storage, bigquery_storage_v1
 from google.cloud.bigquery_storage import types
@@ -256,29 +257,18 @@ class BQ:
         return client
 
     def _build_query_job_labels(self) -> T.Dict[str, str]:
-        label_values = [
-            self._env.get("env_id", ""),
-            self._env.get("env_name", ""),
-            self._env.get("org_id", ""),
-            self._env.get("org_name", ""),
-            "sync",
-            "py_carol",
-            "",
-            self._env.get("app_name", ""),
-            "",
-        ]
-        label_keys = [
-            "tenant_id",
-            "tenant_name",
-            "organization_id",
-            "organization_name",
-            "job_type",  ## Is any case that using this class is async?
-            "source",
-            "task_id",  ## In this case may we use the "mdmBigQueryProvisionId" from 'carol._current_env()'?
-            "carol_app_name",
-            "carol_app_process_name",  ## I do not understand what should be this property
-        ]
-        return {k: v for k, v in zip(label_keys, label_values) if v.strip() != ""}
+        labels_to_check = {
+            "tenant_id": self._env.get("env_id", ""),
+            "tenant_name": self._env.get("env_name", ""),
+            "organization_id": self._env.get("org_id", ""),
+            "organization_name": self._env.get("org_name", ""),
+            "job_type": "sync",
+            "source": "py_carol",
+            "task_id": os.environ.get("LONGTAKSID", ""),
+            "carol_app_name": self._env.get("app_name", ""),
+            "carol_app_process_name": os.environ.get("ALGORITHM_NAME", ""),
+        }
+        return {k: v for k, v in labels_to_check.items() if v.strip() != ""}
 
     def query(
         self,
