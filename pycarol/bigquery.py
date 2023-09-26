@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import sys
 import typing as T
+import os
 
 from google.cloud import bigquery, bigquery_storage, bigquery_storage_v1
 from google.cloud.bigquery_storage import types
@@ -242,9 +243,11 @@ class BQ:
         cache_cds: bool = True,
     ):
         self._env = carol.get_current()
+        self._env["app_name"] = carol.app_name
         self._project_id = f"carol-{self._env['env_id'][0:20]}"
         self._dataset_id = f"{self._project_id}.{self._env['env_id']}"
         self._token_manager = TokenManager(carol, service_account, cache_cds)
+        self.job: T.Optional[bigquery.job.query.QueryJob] = None
 
     @staticmethod
     def _generate_client(service_account: T.Dict) -> bigquery.Client:
@@ -253,13 +256,27 @@ class BQ:
         client = bigquery.Client(project=project, credentials=credentials)
         return client
 
+    def _build_query_job_labels(self) -> T.Dict[str, str]:
+        labels_to_check = {
+            "tenant_id": self._env.get("env_id", ""),
+            "tenant_name": self._env.get("env_name", ""),
+            "organization_id": self._env.get("org_id", ""),
+            "organization_name": self._env.get("org_name", ""),
+            "job_type": "sync",
+            "source": "py_carol",
+            "task_id": os.environ.get("LONGTAKSID", ""),
+            "carol_app_name": self._env.get("app_name", ""),
+            "carol_app_process_name": os.environ.get("ALGORITHM_NAME", ""),
+        }
+        return {k: v for k, v in labels_to_check.items() if v.strip() != ""}
+
     def query(
         self,
         query: str,
         dataset_id: T.Optional[str] = None,
         return_dataframe: bool = True,
         return_job_id: bool = False,
-        retry: retries.Retry = None
+        retry: T.Optional[retries.Retry] = None,
     ) -> T.Union["pandas.DataFrame", T.List[T.Dict[str, T.Any]]]:
         """Run query. This will generate a SA if necessary.
 
@@ -268,9 +285,10 @@ class BQ:
             dataset_id: BigQuery dataset ID, if not provided, it will use the default
                         one.
             return_dataframe: Return dataframe if True.
-            return_job_id : If True, returns an tuple containing the query results with the job-id on BigQuery platform.
-            retry: Custom google.api_core.retry.Retry object to adjust Google`s BigQuery API
-                   calls, to custom timeout and exceptions to retry.
+            return_job_id : If True, returns an tuple containing the query results with
+                            the job-id on BigQuery platform.
+            retry: Custom google.api_core.retry.Retry object to adjust Google`s BigQuery
+                   API calls, to custom timeout and exceptions to retry.
 
         Returns:
             Query result.
@@ -283,24 +301,33 @@ class BQ:
 
             bq = BQ(Carol())
             query = 'select * from invoice limit 10'
-            
+
             #Normal use
             df = bq.query(query, return_dataframe=True)
 
             #Custom retry object
             from google.api_core.retry import Retry
-            df = bq.query(query, return_dataframe=True, retry=Retry(initial=2, multiplier=2, maximum=60, timeout=200))
+            df = bq.query(query, return_dataframe=True, retry=Retry(
+                initial=2, multiplier=2, maximum=60, timeout=200)
+            )
 
             #Getting BigQuery`s Job-id (Util for debugging in platform)
-            df, job_id_string = bq.query(query, return_dataframe=True, return_job_id=True)
+            df, job_id_string = bq.query(
+                query, return_dataframe=True, return_job_id=True
+            )
 
         """
         service_account = self._token_manager.get_token().service_account
         client = self._generate_client(service_account)
 
         dataset_id = dataset_id or self._dataset_id
-        job_config = bigquery.QueryJobConfig(default_dataset=dataset_id)
-        results_job = client.query(query, retry=retry, job_config=job_config) if retry else client.query(query, job_config=job_config)
+        labels = self._build_query_job_labels()
+        job_config = bigquery.QueryJobConfig(default_dataset=dataset_id, labels=labels)
+        if retry is not None:
+            results_job = client.query(query, retry=retry, job_config=job_config)
+        else:
+            results_job = client.query(query, job_config=job_config)
+        self.job = results_job
 
         results = [dict(row) for row in results_job]
 
@@ -310,7 +337,10 @@ class BQ:
         if "pandas" not in sys.modules and return_dataframe is True:
             raise exceptions.PandasNotFoundException
 
-        return pandas.DataFrame(results) if not return_job_id else (pandas.DataFrame(results), results_job.job_id)
+        if return_job_id:
+            return (pandas.DataFrame(results), results_job.job_id)
+
+        return pandas.DataFrame(results)
 
 
 class BQStorage:
@@ -344,11 +374,15 @@ class BQStorage:
         client: bigquery_storage.BigQueryReadClient,
         table_name: str,
         columns_names: T.Optional[T.List[str]] = None,
+        row_restriction: T.Optional[str] = None,
+        sample_percentage: T.Optional[float] = None,
     ) -> bigquery_storage_v1.types.ReadSession:
         read_options = None
         if columns_names is not None:
             read_options = types.ReadSession.TableReadOptions(  # type:ignore # noqa:E501 pylint:disable=no-member
-                selected_fields=columns_names
+                selected_fields=columns_names,
+                row_restriction=row_restriction,
+                sample_percentage=sample_percentage,
             )
 
         table_path = f"projects/{self._project_id}/datasets/{self._dataset_id}/tables/{table_name}"  # noqa:E501
@@ -361,7 +395,7 @@ class BQStorage:
         read_session = client.create_read_session(
             parent=parent,
             read_session=requested_session,
-            max_stream_count=4,
+            max_stream_count=1,
         )
         return read_session
 
@@ -370,6 +404,8 @@ class BQStorage:
         table_name: str,
         columns_names: T.Optional[T.List[str]] = None,
         return_dataframe: bool = True,
+        row_restriction: T.Optional[str] = None,
+        sample_percentage: T.Optional[float] = None,
     ) -> T.Union["pandas.DataFrame", T.List[bigquery_storage_v1.reader.ReadRowsPage]]:
         """Read from BigQuery Storage API.
 
@@ -377,6 +413,8 @@ class BQStorage:
             table_name: name of the table (views are not supported).
             columns_names: names of columns to return.
             return_dataframe: if True, return a pandas DataFrame.
+            row_restriction: SQL WHERE clause. Limited to BQ Storage API.
+            sample_percentage: percentage of rows to return.
 
         Returns:
             Query result.
@@ -391,11 +429,20 @@ class BQStorage:
             bq = BQStorage(Carol())
             table_name = "ingestion_stg_model_deep_audit"
             col_names = ["request_id", "version"]
-            df = bq.query(table_name, col_names, return_dataframe=True)
+            filter = "branch = '01'"
+            df = bq.query(
+                table_name, column_names=col_names, row_restriction=filter,
+            )
         """
         service_account = self._token_manager.get_token().service_account
         client = self._generate_client(service_account)
-        read_session = self._get_read_session(client, table_name, columns_names)
+        read_session = self._get_read_session(
+            client,
+            table_name,
+            columns_names,
+            row_restriction,
+            sample_percentage,
+        )
 
         stream = read_session.streams[0]
         reader = client.read_rows(stream.name)
