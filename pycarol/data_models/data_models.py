@@ -17,7 +17,7 @@ from ..utils import async_helpers
 from ..utils.miscellaneous import stream_data
 from .. import _CAROL_METADATA_GOLDEN, _NEEDED_FOR_MERGE, _REJECTED_DM_COLS, _CAROL_METADATA_UNTIE_GOLDEN
 from ..utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
-from ..utils.deprecation_msgs import _deprecation_msgs
+from ..utils.deprecation_msgs import _deprecation_msgs, deprecated
 from ..exceptions import CarolApiResponseException
 
 _DATA_MODEL_TYPES_MAPPING = {
@@ -102,6 +102,7 @@ class DataModel:
             {resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
 
+    @deprecated('2.56.0', '2.57.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
     def fetch_parquet(
             self, dm_name, merge_records=True, backend='pandas',
             return_dask_graph=False,
