@@ -77,7 +77,7 @@ def track_tasks(carol, task_list, retry_count=3, logger=None, callback=None, pol
         if callable(callback):
             callback(task_status)
 
-@deprecated('2.56.0', '2.57.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
+@deprecated('2.55.1', '2.57.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
 def delele_all_golden_data(carol, dm_name):
     """Delete golden files from a datamodel in all storages.
 
@@ -118,7 +118,7 @@ def par_delete_golden(carol, dm_list, n_jobs=5):
                                     for i in dm_list)
     return list(chain(*tasks))
 
-@deprecated('2.56.0', '2.57.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
+@deprecated('2.55.1', '2.57.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
 def delete_staging_data(carol, staging_name, connector_name):
     """Delete a staging.
 
