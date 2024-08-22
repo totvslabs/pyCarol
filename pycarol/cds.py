@@ -8,7 +8,7 @@ the `pycarol.cds.CDSGolden` classes are used to manipulate the data inside the f
 """
 from .connectors import Connectors
 from .data_models import DataModel
-from .utils.deprecation_msgs import _deprecation_msgs
+from .utils.deprecation_msgs import _deprecation_msgs, deprecated
 import warnings
 
 _MACHINE_FLAVORS = [
@@ -41,7 +41,7 @@ def check_worker_type(worker_type):
             Warning, stacklevel=3
         )
 
-
+@deprecated('2.55.1', '2.57.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
 class CDSStaging:
     """
     Class to handle all CDS Staging iterations.
@@ -331,7 +331,7 @@ class CDSStaging:
                         "stagingType": staging_name}
         return self.carol.call_api(path='v1/cds/staging/fetchCount', method='POST', params=query_params).get('count')
 
-
+@deprecated('2.55.1', '2.57.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
 class CDSGolden:
     """
     Class to handle all CDS Staging iterations.

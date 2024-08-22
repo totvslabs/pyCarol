@@ -10,7 +10,7 @@ from .utils import async_helpers
 from .utils.miscellaneous import stream_data
 from . import _CAROL_METADATA_STAGING, _NEEDED_FOR_MERGE, _CAROL_METADATA_UNTIE_STAGING
 from .utils.miscellaneous import drop_duplicated_parquet, drop_duplicated_parquet_dask
-from .utils.deprecation_msgs import _deprecation_msgs
+from .utils.deprecation_msgs import _deprecation_msgs, deprecated
 
 _SCHEMA_TYPES_MAPPING = {
     "geopoint": str,
@@ -399,6 +399,7 @@ class Staging:
         """
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
+    @deprecated('2.55.1', '2.57.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='pandas',
                       merge_records=True, return_dask_graph=False, columns=None, max_hits=None,
                       return_metadata=False, callback=None, cds=True, max_workers=None, file_pattern=None,

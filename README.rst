@@ -134,21 +134,6 @@ and then
 Ingesting data
 --------------
 
-From both Staging Tables and Data Models (CDS Layer)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Use this method when you need to read most of the records and columns from the source.
-
-.. code:: python
-
-    from pycarol import Carol, Staging
-
-    staging = Staging(Carol())
-    df = staging.fetch_parquet(
-        staging_name="execution_history", 
-        connector_name="model"
-    )
-
 From both Staging Tables and Data Models (BQ Layer)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
