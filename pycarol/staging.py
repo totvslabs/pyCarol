@@ -399,7 +399,7 @@ class Staging:
         """
         return Connectors(self.carol).get_by_name(connector_name)['mdmId']
 
-    @deprecated('2.55.1', '2.57.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
+    @deprecated('2.55.1', '2.56.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
     def fetch_parquet(self, staging_name, connector_id=None, connector_name=None, backend='pandas',
                       merge_records=True, return_dask_graph=False, columns=None, max_hits=None,
                       return_metadata=False, callback=None, cds=True, max_workers=None, file_pattern=None,

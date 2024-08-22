@@ -6,7 +6,7 @@ from pathlib import Path
 from pycarol.utils.deprecation_msgs import deprecated
 _FILE_MARKER = '<files>'
 
-@deprecated('2.55.1', '2.57.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
+@deprecated('2.55.1', '2.56.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
 def drop_duplicated_parquet_dask(d, untie_field='mdmCounterForEntity'):
     """
     Merge updates and delete records from the parquet files in CDS.
@@ -35,7 +35,7 @@ def drop_duplicated_parquet_dask(d, untie_field='mdmCounterForEntity'):
     d = d.reset_index(drop=True)
     return d
 
-@deprecated('2.55.1', '2.57.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
+@deprecated('2.55.1', '2.56.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
 def drop_duplicated_parquet(d, untie_field='mdmCounterForEntity'):
     """
     Merge updates and delete records from the parquet files in CDS.
