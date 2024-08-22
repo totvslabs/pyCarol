@@ -102,7 +102,7 @@ class DataModel:
             {resp['mdmName']: self._get_name_type_data_models(resp['mdmFields'])})
         return resp
 
-    @deprecated('2.55.1', '2.56.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
+    @deprecated('2.55.2', '2.56.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
     def fetch_parquet(
             self, dm_name, merge_records=True, backend='pandas',
             return_dask_graph=False,
