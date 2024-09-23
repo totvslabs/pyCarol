@@ -22,7 +22,6 @@ min_requires = [
     "retry",
     "tqdm",
     "urllib3",
-    "packaging",
 ]
 
 dataframe_requires = [
