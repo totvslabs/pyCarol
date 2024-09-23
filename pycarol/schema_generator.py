@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from packaging.version import Version
 
 class IntType(object):
     json_type = "integer"
@@ -42,7 +43,7 @@ class Type(object):
 
         """docstring for get_schema_type_for"""
 
-        if np.__version__.startswith("1.2"):
+        if np.__version__.startswith("1.2") or Version(np.__version__) >= Version("1.2"):
             np.int = np.int64
             np.float = np.float64
 
