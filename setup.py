@@ -24,6 +24,7 @@ min_requires = [
     "urllib3",
     "pandas>=0.23.4,!=1.0.4",
     "numpy>=1.16.3",
+    "pip-system-certs"
 ]
 
 dataframe_requires = [
