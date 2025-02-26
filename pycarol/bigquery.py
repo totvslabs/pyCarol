@@ -335,7 +335,7 @@ class BQ:
         labels = self._build_query_job_labels()
         job_config = bigquery.QueryJobConfig(default_dataset=dataset_id, labels=labels)
 
-        if self._token_manager.get_token().expired(backoff_seconds=(1*60*60)): # 1 hour
+        if self._token_manager.get_token().expired(backoff_seconds=(1*60*30)): # 30 minutes
             service_account = self._token_manager.get_forced_token().service_account
             client = self._generate_client(service_account)
             self._validate_client(client, retry=5)
