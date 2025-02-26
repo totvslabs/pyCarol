@@ -22,11 +22,12 @@ min_requires = [
     "retry",
     "tqdm",
     "urllib3",
+    "pandas>=0.23.4,!=1.0.4",
+    "numpy>=1.16.3",
+    "pip-system-certs"
 ]
 
 dataframe_requires = [
-    "pandas>=0.23.4,!=1.0.4",
-    "numpy>=1.16.3",
     "joblib>=0.11",
     "pyarrow>=0.15.1,<1.0.0",
 ]
