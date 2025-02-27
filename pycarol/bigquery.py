@@ -71,11 +71,11 @@ class Token:
     def created_recently(self, expiration_window: T.Optional[int] = 24, backoff_seconds: T.Optional[int] = 0) -> bool:
         """Check if token has been created within between an amount of time.
 
-        Return True if creation is within utc now - x minutes.
+        Return True if creation is within utc now - x seconds.
         """
         dt_format = "%Y-%m-%dT%H:%M:%S.%fZ"
         issued_at_ = datetime.strptime(self.expiration_time, dt_format).replace(tzinfo=timezone.utc) - timedelta(hours=expiration_window)
-        return issued_at_ < datetime.now(timezone.utc) + timedelta(seconds=backoff_seconds) # 2 minutes
+        return issued_at_ < datetime.now(timezone.utc) + timedelta(seconds=backoff_seconds)
 
 class TokenManager:
 
