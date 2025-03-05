@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import typing as T
 import os
+from time import sleep
 
 from google.cloud import bigquery, bigquery_storage, bigquery_storage_v1
 from google.cloud.bigquery_storage import types
@@ -67,6 +68,14 @@ class Token:
         expiration_time_ = datetime.strptime(self.expiration_time, dt_format).replace(tzinfo=timezone.utc)
         return expiration_time_ < datetime.now(timezone.utc) + timedelta(seconds=backoff_seconds)
 
+    def created_recently(self, expiration_window: T.Optional[int] = 24, backoff_seconds: T.Optional[int] = 0) -> bool:
+        """Check if token has been created within between an amount of time.
+
+        Return True if creation is within utc now - x seconds.
+        """
+        dt_format = "%Y-%m-%dT%H:%M:%S.%fZ"
+        issued_at_ = datetime.strptime(self.expiration_time, dt_format).replace(tzinfo=timezone.utc) - timedelta(hours=expiration_window)
+        return issued_at_ < datetime.now(timezone.utc) + timedelta(seconds=backoff_seconds)
 
 class TokenManager:
 
@@ -257,14 +266,15 @@ class BQ:
         client = bigquery.Client(project=project, credentials=credentials)
         return client
 
-    def _validate_client(self, client: bigquery.Client, retry: T.Optional[int] = 1) -> bool:
+    def _validate_client(self, client: bigquery.Client, retry: T.Optional[int] = 1, backoff_factor: T.Optional[int] = 10) -> bool:
         for i in range(retry):
             try:
-                client._credentials.refresh(Request())
-                return True
+                job = client.query("SELECT NULL", job_config=bigquery.QueryJobConfig(dry_run=True))
+                if job.done():
+                    return True
+                raise
             except Exception as e:
-                if i == retry - 1:
-                    return False
+                sleep(backoff_factor * (2 ** (i - 1)))
         return False
 
     def _build_query_job_labels(self) -> T.Dict[str, str]:
@@ -331,14 +341,16 @@ class BQ:
         service_account = self._token_manager.get_token().service_account
         client = self._generate_client(service_account)
 
-        dataset_id = dataset_id or self._dataset_id
-        labels = self._build_query_job_labels()
-        job_config = bigquery.QueryJobConfig(default_dataset=dataset_id, labels=labels)
-
         if self._token_manager.get_token().expired(backoff_seconds=(1*60*30)): # 30 minutes
             service_account = self._token_manager.get_forced_token().service_account
             client = self._generate_client(service_account)
+        
+        if self._token_manager.get_token().created_recently(self._token_manager.expiration_window, backoff_seconds=(1*60*2)): # 2 minutes.
             self._validate_client(client, retry=5)
+
+        dataset_id = dataset_id or self._dataset_id
+        labels = self._build_query_job_labels()
+        job_config = bigquery.QueryJobConfig(default_dataset=dataset_id, labels=labels)
 
         if retry is not None:
             results_job = client.query(query, retry=retry, job_config=job_config)
