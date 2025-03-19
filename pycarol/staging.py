@@ -164,12 +164,6 @@ class Staging:
             if data.duplicated(subset=_crosswalk).sum() >= 1:
                 raise Exception("crosswalk is not unique on data frame. set force=True to send it anyway.")
 
-        if not storage_only and not carol_sync:
-            url = f'v2/staging/tables/{staging_name}&returnData=false&connectorId={connector_id}'
-        elif carol_sync:
-            step_size = min(100, step_size)
-            url = f'v2/staging/tables/{staging_name}/sync?&connectorId={connector_id}&processMerge=true'
-        else:
             url = f'v2/staging/intake/{staging_name}?returnData=false&connectorId={connector_id}'
         
         self.cont = 0
