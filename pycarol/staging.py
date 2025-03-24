@@ -164,7 +164,7 @@ class Staging:
             if data.duplicated(subset=_crosswalk).sum() >= 1:
                 raise Exception("crosswalk is not unique on data frame. set force=True to send it anyway.")
 
-            url = f'v2/staging/intake/{staging_name}?returnData=false&connectorId={connector_id}'
+        url = f'v2/staging/intake/{staging_name}?returnData=false&connectorId={connector_id}'
         
         self.cont = 0
         if async_send:
