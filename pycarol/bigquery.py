@@ -34,9 +34,10 @@ class Token:
         env: dict from Carol.get_current().
 
     Attributes:
-        expiration_time: datetime of service account expiration.
+        expiration_time: datetime of service account expiration. Internal verification only, if not present will set default value and move on and Google will check credentials.
         env: dict from Carol.get_current().
         service_account: provided by Carol.
+        dt_format: default datetime format.
     """
 
     def __init__(
@@ -45,7 +46,10 @@ class Token:
         env: T.Dict[str, str],
     ):
         self.dt_format = "%Y-%m-%dT%H:%M:%S.%fZ"
-        self.expiration_time = service_account.get("expiration_time", (datetime.now(timezone.utc) + timedelta(days=7)).strftime(self.dt_format))
+        self.expiration_time = service_account.get(
+            "expiration_time",
+            (datetime.now(timezone.utc) + timedelta(days=7)).strftime(self.dt_format),
+        )
         self._env = env
         self.service_account = service_account
 
