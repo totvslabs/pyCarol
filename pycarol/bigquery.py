@@ -34,9 +34,10 @@ class Token:
         env: dict from Carol.get_current().
 
     Attributes:
-        expiration_time: datetime of service account expiration.
+        expiration_time: datetime of service account expiration. Internal verification only, if not present will set default value and move on and Google will check credentials.
         env: dict from Carol.get_current().
         service_account: provided by Carol.
+        dt_format: default datetime format.
     """
 
     def __init__(
@@ -44,7 +45,11 @@ class Token:
         service_account: T.Dict[str, T.Any],
         env: T.Dict[str, str],
     ):
-        self.expiration_time = service_account["expiration_time"]
+        self.dt_format = "%Y-%m-%dT%H:%M:%S.%fZ"
+        self.expiration_time = service_account.get(
+            "expiration_time",
+            (datetime.now(timezone.utc) + timedelta(days=7)).strftime(self.dt_format),
+        )
         self._env = env
         self.service_account = service_account
 
@@ -64,8 +69,8 @@ class Token:
 
         Return True if has expired.
         """
-        dt_format = "%Y-%m-%dT%H:%M:%S.%fZ"
-        expiration_time_ = datetime.strptime(self.expiration_time, dt_format).replace(tzinfo=timezone.utc)
+
+        expiration_time_ = datetime.strptime(self.expiration_time, self.dt_format).replace(tzinfo=timezone.utc)
         return expiration_time_ < datetime.now(timezone.utc) + timedelta(seconds=backoff_seconds)
 
     def created_recently(self, expiration_window: T.Optional[int] = 24, backoff_seconds: T.Optional[int] = 0) -> bool:
@@ -73,8 +78,8 @@ class Token:
 
         Return True if creation is within utc now - x seconds.
         """
-        dt_format = "%Y-%m-%dT%H:%M:%S.%fZ"
-        issued_at_ = datetime.strptime(self.expiration_time, dt_format).replace(tzinfo=timezone.utc) - timedelta(hours=expiration_window)
+
+        issued_at_ = datetime.strptime(self.expiration_time, self.dt_format).replace(tzinfo=timezone.utc) - timedelta(hours=expiration_window)
         return issued_at_ < datetime.now(timezone.utc) + timedelta(seconds=backoff_seconds)
 
 class TokenManager:
