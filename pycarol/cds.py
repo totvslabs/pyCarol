@@ -41,7 +41,7 @@ def check_worker_type(worker_type):
             Warning, stacklevel=3
         )
 
-@deprecated('2.55.2', '2.56.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
+@deprecated('2.55.9', '2.56.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
 class CDSStaging:
     """
     Class to handle all CDS Staging iterations.
@@ -51,6 +51,7 @@ class CDSStaging:
     def __init__(self, carol):
         self.carol = carol
 
+    @deprecated('2.55.9', '2.56.0', 'CDS staging processData endpoint is deprecated - Use Big Query layer to process data from Carol.')
     def process_data(
             self, staging_name, connector_id=None, connector_name=None,
             worker_type=None, max_number_workers=-1, number_shards=-1, num_records=-1,
@@ -144,6 +145,7 @@ class CDSStaging:
         return self.carol.call_api(path='v1/cds/staging/processData', method='POST', params=query_params,
                                    data=filter_query)
 
+    @deprecated('2.55.9', '2.56.0', 'CDS staging fetchData endpoint is deprecated - Use Big Query layer to fetch data from Carol.')
     def sync_data(
             self, staging_name, connector_id=None, connector_name=None, num_records=-1,
             delete_realtime_records=False, enable_realtime=None,
@@ -205,6 +207,7 @@ class CDSStaging:
         return self.carol.call_api(path='v1/cds/staging/fetchData', method='POST', params=query_params,
                                    data=filter_query)
 
+    @deprecated('2.55.9', '2.56.0', 'CDS staging consolidate endpoint is deprecated - Use Big Query layer to consolidate data from Carol.')
     def consolidate(
             self, staging_name, connector_id=None, connector_name=None,
             worker_type=None, max_number_workers=-1, number_shards=-1, force_dataflow=False,
@@ -270,6 +273,7 @@ class CDSStaging:
 
         return self.carol.call_api(path='v1/cds/staging/consolidate', method='POST', params=query_params)
 
+    @deprecated('2.55.9', '2.56.0', 'CDS staging clearData endpoint is deprecated - Use Big Query layer to clear data from Carol.')
     def delete(self, staging_name, connector_id=None, connector_name=None):
         """
         Delete all CDS staging data.
@@ -300,6 +304,7 @@ class CDSStaging:
 
         return self.carol.call_api(path='v1/cds/staging/clearData', method='POST', params=query_params)
 
+    @deprecated('2.55.9', '2.56.0', 'CDS staging fetchCount endpoint is deprecated - Use Big Query layer to count data from Carol.')
     def count(self, staging_name, connector_id=None, connector_name=None):
         """
 
@@ -331,7 +336,7 @@ class CDSStaging:
                         "stagingType": staging_name}
         return self.carol.call_api(path='v1/cds/staging/fetchCount', method='POST', params=query_params).get('count')
 
-@deprecated('2.55.2', '2.56.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
+@deprecated('2.55.9', '2.56.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
 class CDSGolden:
     """
     Class to handle all CDS Staging iterations.
@@ -351,6 +356,7 @@ class CDSGolden:
 
         self.carol = carol
 
+    @deprecated('2.55.9', '2.56.0', 'CDS golden fetchData endpoint is deprecated - Use Big Query layer to fetch data from Carol.')
     def sync_data(self, dm_name, dm_id=None, num_records=-1, file_pattern='*', filter_query=None,
                   skip_consolidation=False, force_dataflow=False, records_percentage=100, worker_type=None,
                   max_number_workers=-1, clear_golden_realtime=False,
@@ -408,6 +414,7 @@ class CDSGolden:
         return self.carol.call_api(path='v1/cds/golden/fetchData', method='POST', params=query_params,
                                    data=filter_query)
 
+    @deprecated('2.55.9', '2.56.0', 'CDS rejected clearData endpoint is deprecated - Use Big Query layer to clear rejected data from Carol.')
     def delete_rejected(self, dm_name=None, dm_id=None, connector_name=None, connector_id=None, staging_name=None):
         """
         Delete CDS DataModel rejected data
@@ -451,6 +458,7 @@ class CDSGolden:
         return self.carol.call_api("v2/cds/rejected/clearData", method='POST',
                                    params=params)
 
+    @deprecated('2.55.9', '2.56.0', 'CDS golden clearData endpoint is deprecated - Use Big Query layer to clear data from Carol.')
     def delete(self, dm_name=None, dm_id=None, ):
         """
         Delete all CDS data model data.
@@ -475,6 +483,7 @@ class CDSGolden:
 
         return self.carol.call_api(path='v1/cds/golden/clearData', method='POST', params=query_params)
 
+    @deprecated('2.55.9', '2.56.0', 'CDS golden fetchCount endpoint is deprecated - Use Big Query layer to count data from Carol.')
     def count(self, dm_name=None, dm_id=None):
         """
         Count number of messages in CDS.
@@ -499,6 +508,7 @@ class CDSGolden:
         query_params = {"entityTemplateId": dm_id}
         return self.carol.call_api(path='v1/cds/golden/fetchCount', method='POST', params=query_params).get('count')
 
+    @deprecated('2.55.9', '2.56.0', 'CDS golden consolidate endpoint is deprecated - Use Big Query layer to consolidate data from Carol.')
     def consolidate(
         self, dm_name=None, dm_id=None,
         worker_type=None, max_number_workers=-1, number_shards=-1, force_dataflow=False,
