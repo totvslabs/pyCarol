@@ -6,62 +6,6 @@ from pathlib import Path
 from pycarol.utils.deprecation_msgs import deprecated
 _FILE_MARKER = '<files>'
 
-@deprecated('2.55.2', '2.56.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
-def drop_duplicated_parquet_dask(d, untie_field='mdmCounterForEntity'):
-    """
-    Merge updates and delete records from the parquet files in CDS.
-
-    Args:
-        d: dask DataFrame
-        untie_field: str
-            Field to be used to untie records with the same `mdmId`. 
-
-    Returns:
-        dask DataFrame
-
-    """
-
-    if untie_field not in d.columns:
-        #Use the standard one. 
-        untie_field = 'mdmCounterForEntity'
-
-
-    d = d.set_index(untie_field, ) \
-        .drop_duplicates(subset='mdmId', keep='last') \
-        .reset_index()
-    if 'mdmDeleted' in d.columns:
-        d['mdmDeleted'] = d['mdmDeleted'].fillna(False)
-        d = d[~d['mdmDeleted']]
-    d = d.reset_index(drop=True)
-    return d
-
-@deprecated('2.55.2', '2.56.0', 'CDS Data reading is deprecated - Use Big Query layer to read data from Carol.')
-def drop_duplicated_parquet(d, untie_field='mdmCounterForEntity'):
-    """
-    Merge updates and delete records from the parquet files in CDS.
-
-    Args:
-        d: pd.DataFrame
-            Dataframe
-        untie_field: str
-            Field to be used to untie records with the same `mdmId`. 
-
-    Returns:
-        pd.DataFrame
-
-    """
-
-    if untie_field not in d.columns:
-        untie_field = 'mdmCounterForEntity'
-
-    d = d.sort_values(untie_field).reset_index(drop=True).drop_duplicates(subset='mdmId', keep='last')
-    if 'mdmDeleted' in d.columns:
-        d['mdmDeleted'] = d['mdmDeleted'].fillna(False)
-        d = d[~d['mdmDeleted']]
-    d = d.reset_index(drop=True)
-    return d
-
-
 class NumpyEncoder(json.JSONEncoder):
     """ Special json encoder for numpy types """
 
