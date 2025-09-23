@@ -5,6 +5,9 @@ Standard User/Password Auth
 
 import types
 import time
+import json
+from pathlib import Path
+from .. import __TEMP_STORAGE__
 from .PwdAuth_cloner import PwdAuthCloner
 
 
@@ -20,12 +23,13 @@ class PwdAuth:
 
     """
 
-    def __init__(self, user, password):
+    def __init__(self, user, password, mfa_code=None):
         self.user = user
         self.password = password
         self._token = None
         self.carol = None
         self.connector_id = None
+        self.mfa_code = mfa_code
 
     def _set_token(self, data):
         self._token = types.SimpleNamespace()
@@ -33,6 +37,8 @@ class PwdAuth:
         self._token.refresh_token = data['refresh_token']
         self._token.expiration = data['timeIssuedInMillis'] + (
                     data['expires_in'] * 1000)
+
+        self._save_token(data)
 
     def set_connector_id(self, connector_id):
         self.connector_id = connector_id
@@ -54,6 +60,27 @@ class PwdAuth:
         """
         self.carol = carol
 
+        self._temp_file_name = f".pycarol_token_{self.user}_{self.carol.organization}_{self.carol.domain}.json"
+        self._tmp_filepath = Path(__TEMP_STORAGE__) / self._temp_file_name
+
+        if self._tmp_filepath.exists():
+            with open(self._tmp_filepath, "r", encoding="utf-8") as file:
+                token_data = json.load(file)
+                self._set_token(token_data)
+
+                # Try access token
+                resp = self.carol.call_api(f'v5/oauth2/token/{token_data["access_token"]}', auth=False, errors="ignore")
+                if resp.get('access_token') and resp.get('errorCode') is None:
+                    return
+                
+                # Try refresh token
+                try:
+                    self._refresh_token()
+                    return
+                except Exception:
+                    pass
+
+        # New login
         data = {
             'username': self.user,
             'password': self.password,
@@ -62,12 +89,29 @@ class PwdAuth:
             'connectorId': carol.connector_id,
             'orgSubdomain': carol.organization
         }
-        resp = self.carol.call_api('v2/oauth2/token', auth=False, data=data,
+
+        resp = self.carol.call_api('v5/oauth2/token', auth=False, data=data,
                                    content_type='application/x-www-form-urlencoded')
+
+        if resp.get('mfa_token'):
+            mfa_code = input('Input your TOTVS Carol - MFA code: ') if self.mfa_code is None else self.mfa_code
+
+            data = {
+                'mfaCode': mfa_code
+            }
+
+            resp = self.carol.call_api('v5/oauth2/token/mfa/authenticate', auth=False, data=data,
+                                    extra_headers={'Authorization': resp['mfa_token']},
+                                    content_type='application/x-www-form-urlencoded')
 
         self._set_token(resp)
         if self.carol.verbose:
             print("Token: {}".format(self._token.access_token))
+
+    def _save_token(self, data):
+        self._tmp_filepath.parent.mkdir(parents=True, exist_ok=True)
+        with open(self._tmp_filepath, "w", encoding="utf-8") as file:
+            json.dump(data, file)
 
     def authenticate_request(self, headers):
         headers['Authorization'] = self.get_access_token()
@@ -92,7 +136,7 @@ class PwdAuth:
         return self._token.access_token
 
     def _refresh_token(self):
-        resp = self.carol.call_api('v2/oauth2/token', auth=False, data={
+        resp = self.carol.call_api('v5/oauth2/token', auth=False, data={
             'grant_type': 'refresh_token',
             'refresh_token': self._token.refresh_token
         }, content_type='application/x-www-form-urlencoded')
