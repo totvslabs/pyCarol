@@ -329,6 +329,11 @@ class Carol:
                     return {}
                 return json.loads(response.text)
 
+            if ('Single Sign On enabled' in response.text) and isinstance(self.auth, PwdAuth):                
+                raise exceptions.InvalidToken(
+                    response.text
+                    + ". Please use PwdFluig or ApiKeyAuth to authenticate.")
+
             if (response.reason == "Unauthorized") and isinstance(self.auth, PwdAuth):
                 if response.json().get("possibleResponsibleField") in [
                     "password",
