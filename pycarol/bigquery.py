@@ -483,27 +483,29 @@ class BQStorage:
             max_stream_count
         )
 
-        with ThreadPoolExecutor(max_workers=max_stream_count) as executor:
-            future_to_stream = {
-                executor.submit(
-                    client.read_rows,
-                    stream.name
-                ): stream for stream in read_session.streams
-            }
+        all_frames = []
 
+        def _read_stream(stream):
             frames = []
-            for future in as_completed(future_to_stream):
-                stream = future_to_stream[future]
-                reader = future.result()
-                for frame in reader.rows().pages:
-                    frames.append(frame)
+            reader = client.read_rows(stream.name)
+            for frame in reader.rows().pages:
+                frames.append(frame)
+            return frames
+        
+        with ThreadPoolExecutor(max_workers=len(read_session.streams)) as executor:
+            futures = {executor.submit(_read_stream, s): s for s in read_session.streams}
+
+            for future in as_completed(futures):
+                df = future.result()
+                all_frames.extend(df)
 
         if return_dataframe is False:
-            return frames
+            return all_frames
 
         if "pandas" not in sys.modules and return_dataframe is True:
             raise exceptions.PandasNotFoundException
 
-        dataframe = pandas.concat([frame.to_dataframe() for frame in frames])
+        dataframe = pandas.concat([frame.to_dataframe() for frame in all_frames])
         dataframe = dataframe.reset_index(drop=True)
         return dataframe
+
