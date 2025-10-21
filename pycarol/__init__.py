@@ -79,3 +79,4 @@ from .staging import Staging  # noqa
 from .storage import Storage  # noqa
 from .subscription import Subscription  # noqa
 from .tasks import Tasks  # noqa
+from .memory import Memory  # noqa
