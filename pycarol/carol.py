@@ -333,6 +333,7 @@ class Carol:
                 if response.json().get("possibleResponsibleField") in [
                     "password",
                     "userLogin",
+                    "userLogin/password"
                 ]:
                     raise exceptions.InvalidToken(response.text)
                 self.auth.get_access_token()  # It will refresh token if Unauthorized
