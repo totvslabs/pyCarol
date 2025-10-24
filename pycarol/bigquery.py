@@ -14,6 +14,8 @@ from google.oauth2.service_account import Credentials
 from google.api_core import retry as retries
 from google.auth.transport.requests import Request
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 try:
     import pandas
 except ImportError:
@@ -407,14 +409,15 @@ class BQStorage:
         self,
         client: bigquery_storage.BigQueryReadClient,
         table_name: str,
-        columns_names: T.Optional[T.List[str]] = None,
+        column_names: T.Optional[T.List[str]] = None,
         row_restriction: T.Optional[str] = None,
         sample_percentage: T.Optional[float] = None,
+        max_stream_count: T.Optional[int] = 1,
     ) -> bigquery_storage_v1.types.ReadSession:
         read_options = None
-        if columns_names is not None:
+        if column_names is not None:
             read_options = types.ReadSession.TableReadOptions(  # type:ignore # noqa:E501 pylint:disable=no-member
-                selected_fields=columns_names,
+                selected_fields=column_names,
                 row_restriction=row_restriction,
                 sample_percentage=sample_percentage,
             )
@@ -429,17 +432,18 @@ class BQStorage:
         read_session = client.create_read_session(
             parent=parent,
             read_session=requested_session,
-            max_stream_count=1,
+            max_stream_count=max_stream_count,
         )
         return read_session
 
     def query(
         self,
         table_name: str,
-        columns_names: T.Optional[T.List[str]] = None,
+        column_names: T.Optional[T.List[str]] = None,
         return_dataframe: bool = True,
         row_restriction: T.Optional[str] = None,
         sample_percentage: T.Optional[float] = None,
+        max_stream_count: T.Optional[int] = 1
     ) -> T.Union["pandas.DataFrame", T.List[bigquery_storage_v1.reader.ReadRowsPage]]:
         """Read from BigQuery Storage API.
 
@@ -473,24 +477,35 @@ class BQStorage:
         read_session = self._get_read_session(
             client,
             table_name,
-            columns_names,
+            column_names,
             row_restriction,
             sample_percentage,
+            max_stream_count
         )
 
-        stream = read_session.streams[0]
-        reader = client.read_rows(stream.name)
+        all_frames = []
 
-        frames = []
-        for frame in reader.rows().pages:
-            frames.append(frame)
+        def _read_stream(stream):
+            frames = []
+            reader = client.read_rows(stream.name)
+            for frame in reader.rows().pages:
+                frames.append(frame)
+            return frames
+        
+        with ThreadPoolExecutor(max_workers=len(read_session.streams)) as executor:
+            futures = {executor.submit(_read_stream, s): s for s in read_session.streams}
+
+            for future in as_completed(futures):
+                df = future.result()
+                all_frames.extend(df)
 
         if return_dataframe is False:
-            return frames
+            return all_frames
 
         if "pandas" not in sys.modules and return_dataframe is True:
             raise exceptions.PandasNotFoundException
 
-        dataframe = pandas.concat([frame.to_dataframe() for frame in frames])
+        dataframe = pandas.concat([frame.to_dataframe() for frame in all_frames])
         dataframe = dataframe.reset_index(drop=True)
         return dataframe
+
