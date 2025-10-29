@@ -24,7 +24,8 @@ min_requires = [
     "urllib3",
     "pandas>=0.23.4,!=1.0.4",
     "numpy>=1.16.3",
-    "pip-system-certs"
+    "pip-system-certs",
+    "duckdb==1.4.0"
 ]
 
 dataframe_requires = [

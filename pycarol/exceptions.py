@@ -100,3 +100,17 @@ class PandasNotFoundException(Exception):
             " False."
         )
         super().__init__(msg)
+
+
+class TableNotFoundError(Exception):
+
+    """Custom exception for when trying to append to a table that doesn't exist."""
+
+    pass
+
+
+class InsertOperationError(Exception):
+
+    """Custom exception for when an insert operation fails."""
+
+    pass
