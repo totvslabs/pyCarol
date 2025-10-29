@@ -62,6 +62,22 @@ class Memory:
 		self.conn.execute(f"DROP TABLE IF EXISTS {table_name}")
 		self.conn.execute(f"CREATE TABLE {table_name} AS SELECT * FROM df")
 
+	def delete(self, table_name: str) -> None:
+		"""remove a table in the database.
+
+		This method removes a table from the database if the table exists. 
+
+		Args:
+			table_name: Name of the table to remove.
+
+		Example:
+			>>> memory = Memory()
+			>>> df = pd.DataFrame({"id": [1, 2], "name": ["Alice", "Bob"]})
+			>>> memory.add("users", df)
+			>>> memory.remove("users")
+		"""
+		self.conn.execute(f"DROP TABLE IF EXISTS {table_name}")
+
 	def append(self, table_name: str, df: pd.DataFrame) -> None:
 		"""Append data to an existing table in the database.
 
