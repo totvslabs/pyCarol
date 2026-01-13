@@ -171,6 +171,9 @@ class Carol:
 
         self.auth.login(self)
 
+        # Fetch api key details to check if api key is valid
+        self.api_key_details(self.auth.api_key, self.auth.connector_id)
+
     @property
     def current_user(self) -> ResponseType:
         """Return the current user.
