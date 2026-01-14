@@ -186,8 +186,7 @@ class Staging:
                 self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type,
                                     status_forcelist=[502, 429, 524, 408, 504, 598, 520, 503, 500, 409],
                                     method_whitelist=frozenset(['POST']),
-                                    retries=10,
-                                    backoff_factor=0.5
+                                    retries=10
                                     )
                 if print_stats:
                     print('{}/{} sent'.format(cont, data_size), end='\r')
