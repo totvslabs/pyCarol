@@ -91,8 +91,10 @@ async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
 
     counter = AtomicCounter(total=len(data))
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        session = _retry_session(status_forcelist=[502, 429, 524, 408, 504, 598, 520, 503, 500],
-                                 method_whitelist=frozenset(['POST']))
+        session = _retry_session(status_forcelist=[502, 429, 524, 408, 504, 598, 520, 503, 500, 409],
+                                 method_whitelist=frozenset(['POST']),
+                                 retries=10,
+                                 backoff_factor=0.5)
         # Set any session parameters here before calling `send_a`
         loop = asyncio.get_event_loop()
         tasks = [
