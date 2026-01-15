@@ -16,8 +16,8 @@ def _check_constants(carol: pycarol.Carol) -> None:
 
 @mock.patch("pycarol.carol._set_host")
 @mock.patch("pycarol.carol._prepare_auth")
-@mock.patch("pycarol.carol.Carol.api_key_details")
-def test_init_carol_envvar(mock_api_key_details, mock_prepareauth, mock_sethost) -> None:
+@mock.patch("pycarol.carol.Carol.get_current")
+def test_init_carol_envvar(mock_api_get_current, mock_prepareauth, mock_sethost) -> None:
 
     tmp_filepath = "/tmp/.env_test"
     with open(tmp_filepath, "w", encoding="utf-8") as file:
@@ -51,8 +51,8 @@ def test_init_carol_envvar(mock_api_key_details, mock_prepareauth, mock_sethost)
 
 @mock.patch("pycarol.carol._prepare_auth")
 @mock.patch("pycarol.carol._set_host")
-@mock.patch("pycarol.carol.Carol.api_key_details")
-def test_init_carol_args(mock_api_key_details, mock_set_host, mock_getauth) -> None:
+@mock.patch("pycarol.carol.Carol.get_current")
+def test_init_carol_args(mock_api_get_current, mock_set_host, mock_getauth) -> None:
     mock_auth = mock.MagicMock()
     carol = pycarol.Carol(
         "domain",
@@ -85,8 +85,8 @@ def test_init_carol_args(mock_api_key_details, mock_set_host, mock_getauth) -> N
 
 @mock.patch("pycarol.carol._prepare_auth")
 @mock.patch("pycarol.carol._set_host")
-@mock.patch("pycarol.carol.Carol.api_key_details")
-def test_init_carol_exceptions(mock_api_key_details, mock_set_host, mock_getauth) -> None:
+@mock.patch("pycarol.carol.Carol.get_current")
+def test_init_carol_exceptions(mock_api_get_current, mock_set_host, mock_getauth) -> None:
     try:
         pycarol.Carol()
         assert "Should have thrown exception" == ""
