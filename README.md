@@ -6,7 +6,6 @@ It provides abstractions for authentication, connector and staging management, d
 The SDK encapsulates low-level API communication and authentication logic, making data pipelines easier to build, maintain, and operate.
 
 ## Table of Contents
-## Table of Contents
 
 * [Getting Started](#getting-started)
 * [Recommended authentication method](#recommended-authentication-method)
