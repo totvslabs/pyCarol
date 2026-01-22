@@ -6,9 +6,29 @@ It provides abstractions for authentication, connector and staging management, d
 The SDK encapsulates low-level API communication and authentication logic, making data pipelines easier to build, maintain, and operate.
 
 ## Table of Contents
+## Table of Contents
 
-Getting Started
----------------
+* [Getting Started](#getting-started)
+* [Recommended authentication method](#recommended-authentication-method)
+* [Explicit authentication methods](#explicit-authentication-methods)
+  * [1. Using user/password](#1-using-userpassword)
+  * [2. Using Tokens](#2-using-tokens)
+  * [3. Using API Key](#3-using-api-key)
+* [Setting up Carol entities](#setting-up-carol-entities)
+* [Sending Data](#sending-data)
+* [Reading data](#reading-data)
+* [Carol In Memory](#carol-in-memory)
+* [Logging](#logging)
+  * [Prerequisites](#prerequisites)
+  * [Logging messages to Carol](#logging-messages-to-carol)
+  * [Notes](#notes)
+* [Calling Carol APIs](#calling-carol-apis)
+* [Settings](#settings)
+* [Useful Functions](#useful-functions)
+* [Release process](#release-process)
+
+## Getting Started
+
 Run `pip install pycarol` to install the latest stable version from [PyPI](https://pypi.org/project/pycarol/).
 Documentation for the [latest release](https://pycarol.readthedocs.io/en/2.55.0/) is hosted on [Read the Docs](https://pycarol.readthedocs.io/).
 
@@ -25,8 +45,7 @@ To install from source:
 4. ``pip install -e . ".[complete]"`` to install all dependencies;
 
 
-Recommended authentication method
--------------------------
+## Recommended authentication method
 
 Never write in plain text your password/API token in your application. Use environment variables. pyCarol can use 
 environment variables automatically. When none parameter is passed to the Carol constructor pycarol will look for:
@@ -42,7 +61,7 @@ environment variables automatically. When none parameter is passed to the Carol 
  
 Carols's URL is build as ``www.ORGANIZATION.carol.ai/TENANT_NAME``
 
- e.g., one can create a ``.env`` file like this:
+For example, one can create a .env file like this:
 
 ```python
     CAROLAPPNAME=myApp
@@ -61,8 +80,7 @@ Use this code to read the .env file created:
     carol = Carol()
 ```
 
-Explicit authentication methods
---------------------
+## Explicit authentication methods
 
 Carol is the main object to access pyCarol and all Carol's APIs. There are different ways to initialize it.
 
@@ -142,8 +160,7 @@ ApiKeyAuth.
     carol.api_key_revoke(CONNECTORID)
 ```
 
-Setting up Carol entities
-------------
+## Setting up Carol entities
 
 Before sending data to Carol, it is necessary to set up the required entities that define how and where data will be stored.
 These entities establish the structural context for ingestion and must be created only once per dataset.
@@ -208,8 +225,7 @@ The json schema will be in the variable ``schema.schema``. The code above will c
     }
 ```
 
-Sending Data
-------------
+## Sending Data
 
 Once the connector and staging schema have been set up, data files can now be sent to Carol.
 
@@ -233,8 +249,7 @@ The parameter ``step_size`` says how many registers will be sent each time. Reme
 OBS: It is not possible to create a mapping using PyCarol. The Mapping has to be done via the UI.
 
 
-Reading data
---------------
+## Reading data
 
 ### From Staging Tables and Data Models (BigQuery layer)
 
@@ -333,8 +348,7 @@ If one wants all the response use ``only_hits = False``. Also, if your filter ha
     query.results
 ```
 
-From Data Models (RT Layer): Named queries
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### From Data Models (RT Layer): Named queries
 
 ```python
 
@@ -359,8 +373,7 @@ What if one does not remember the parameters for a given named query?
 </details>
 
 
-Carol In Memory
---------
+## Carol In Memory
 
 PyCarol provides an easy way to work with in-memory data using the Memory class, built on top of DuckDB. 
 Queries are executed locally over in-memory data, without triggering BigQuery jobs or consuming BigQuery slots, and results are returned as pandas DataFrames.
@@ -389,8 +402,7 @@ Queries are executed locally over in-memory data, without triggering BigQuery jo
     print(table)
 ```
 
-Logging
---------
+## Logging
 
 Logs are an essential tool for monitoring execution, troubleshooting errors, and understanding how data flows through Carol processes.
 They provide visibility into application behavior and are especially useful during development and debugging.
@@ -435,8 +447,7 @@ To send log messages to Carol, configure the Python logger using the ``CarolHand
 - It is recommended to log only ``INFO`` level and above in Carol to avoid excessive noise.
 
 
-Calling Carol APIs 
--------------------
+## Calling Carol APIs 
 
 In addition to the high-level abstractions provided by pyCarol, it is also possible to call Carol APIs directly when needed.
 This is useful for endpoints that are not yet covered by specific SDK methods.
@@ -449,8 +460,7 @@ carol.call_api(
 )
 ```
 
-Settings
---------
+## Settings
 
 We can use pyCarol to access the settings of your Carol App.
 
@@ -465,8 +475,7 @@ The settings will be returned as a dictionary where the keys are the parameter n
 the value for that parameter. Please note that your app must be created in Carol.
 
 
-Useful Functions
---------------------
+## Useful Functions
 
 This section presents utility functions that provide additional helpers for common tasks when working with pyCarol.
 
