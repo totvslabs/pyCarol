@@ -240,13 +240,12 @@ Once the connector and staging schema have been set up, data files can now be se
 
     staging = Staging(carol)
     staging.send_data(staging_name = 'my_stag', data = json_ex, step_size = 2,
-                     connector_id=CAROLCONNECTORID, print_stats = True)
+                     connector_id=CONNECTORID, print_stats = True)
 ```
-The parameter ``step_size`` says how many registers will be sent each time. Remember the the max size per payload is
-5MB. The parameter  ``data`` can be a pandas DataFrame.
+The parameter ``step_size`` says how many registers will be sent each time. Remember the the max size 
+per payload is 5MB. Pycarol uses default step_size parameter, so it becomes optional on `send_data` method.
 
-OBS: It is not possible to create a mapping using PyCarol. The Mapping has to be done via the UI.
-
+The parameter  ``data`` can be a dict object or a pandas DataFrame. 
 
 ## Reading data
 
@@ -280,7 +279,7 @@ monitoring/debug jobs.
 PyCarol provides access to BigQuery Storage API also. It allows for much faster reading
 times, but with limited querying capabilities. For instance, only tables are readable,
 so 'ingestion_stg_model_deep_audit' is ok, but 'stg_model_deep_audit' is not (it is a 
-view).
+view). To compensate for limited querying capabilities, PyCarol implements `Carol In Memory`.
 
 ```python
 
@@ -375,7 +374,8 @@ What if one does not remember the parameters for a given named query?
 ## Carol In Memory
 
 PyCarol provides an easy way to work with in-memory data using the Memory class, built on top of DuckDB. 
-Queries are executed locally over in-memory data, without triggering BigQuery jobs or consuming BigQuery slots, and results are returned as pandas DataFrames.
+Queries are executed locally over in-memory data, without triggering BigQuery jobs or consuming BigQuery 
+slots, and results are returned as pandas DataFrames. The recommended usage is with `BQStorage` objects.
 
 ```python
 
