@@ -395,11 +395,16 @@ slots, and results are returned as pandas DataFrames. The recommended usage is w
     max_stream_count=50
     )
 
+    memory.add("my_table", t)
+
     table = memory.query('''
-        SELECT * FROM ingestion_stg_connectorname_tablename
+        SELECT * FROM my_table 
         ''')
+
     print(table)
 ```
+
+The sintax of Carol In Memory follows DuckDB [SQL Sintax](https://duckdb.org/docs/stable/sql/introduction)
 
 ## Logging
 
