@@ -1,5 +1,6 @@
-PyCarol
-=======
+<h1 align="center">PyCarol</h1>
+
+<hr/>
 
 PyCarol is a Python SDK designed to support data ingestion and data access workflows on Carol.
 It provides abstractions for authentication, connector and staging management, data ingestion, and querying, enabling reliable integration with Carol services using Python.
@@ -501,3 +502,7 @@ Release process
 2. Once approved, merge into `main`;
 3. In case there are any changes to the default release notes, please update them.
 4. If any features are added or modified, please update README accordingly.
+
+<hr/>
+
+<p align="center">Made with ❤ at TOTVS IDeIA</p>
