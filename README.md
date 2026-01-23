@@ -49,14 +49,14 @@ To install from source:
 Never write in plain text your password/API token in your application. Use environment variables. pyCarol can use 
 environment variables automatically. When none parameter is passed to the Carol constructor pycarol will look for:
 
- 1. ``CAROLTENANT`` for domain
+ 1. ``CAROLTENANT`` for domain or tenant name
  2. ``CAROLAPPNAME`` for app_name
- 3. ``CAROL_DOMAIN`` for environment
+ 3. ``CAROL_DOMAIN`` for environment or tenant name
  4. ``CAROLORGANIZATION`` for organization
  5. ``CAROLAPPOAUTH`` for auth
  6. ``CAROLCONNECTORID`` for connector_id
  7. ``CAROLUSER`` for carol user email
- 8. ``CAROLPWD`` for user password.
+ 8. ``CAROLPWD`` for user password
  
 Carols's URL is build as ``www.ORGANIZATION.carol.ai/TENANT_NAME``
 
@@ -98,8 +98,8 @@ Carol is the main object to access pyCarol and all Carol's APIs. There are diffe
 
 #### 2. Using Tokens
 
-It is also possible to initialize the Carol object using a token generated from a username and password.
-This is useful for applications that need to authenticate programmatically without storing user credentials.
+It is also possible to initialize the Carol object using a Oauth2 token generated from a username and password.
+This is useful for applications that need to temporary authenticate programmatically without storing user credentials.
 
 ```python
 
@@ -123,7 +123,7 @@ This can be done using a user/password authentication.
     from pycarol import PwdAuth, ApiKeyAuth, Carol
 
     carol = Carol(domain=TENANT_NAME, app_name=APP_NAME, organization=ORGANIZATION,
-                  auth=PwdAuth(USERNAME, PASSWORD), connector_id=CONNECTOR)
+                  auth=PwdAuth(USERNAME, PASSWORD), connector_id=CONNECTORID)
     api_key = carol.issue_api_key()
 
     print(f"This is a API key {api_key['X-Auth-Key']}")
@@ -142,7 +142,7 @@ ApiKeyAuth.
     carol = Carol(domain=DOMAIN,
                   app_name=APP_NAME,
                   auth=ApiKeyAuth(api_key=X_AUTH_KEY),
-                  connector_id=CONNECTOR, organization=ORGANIZATION)
+                  connector_id=CONNECTORID, organization=ORGANIZATION)
 ```
 
 - Retrieving API key details
@@ -259,7 +259,7 @@ OBS: It is not possible to create a mapping using PyCarol. The Mapping has to be
     from pycarol import BQ, Carol
 
     bq = BQ(Carol())
-    query_str = "SELECT * FROM stg_connectorname_table_name"
+    query_str = "SELECT * FROM stg_connectorname_tablename"
     results = bq.query(query_str)
 ```
 #### 2. If a service account with BigQuery access is required, use the following code:
@@ -300,7 +300,7 @@ view).
     )
 ```
 <details>
-<summary>Legacy authentication (deprecated)</summary>
+<summary>Legacy Reading Data Methods</summary>
 
 ### From Data Models (RT Layer): Filter queries
 
@@ -390,13 +390,13 @@ Queries are executed locally over in-memory data, without triggering BigQuery jo
     memory = Memory()
 
     t = storage.query(
-    'ingestion_stg_table_name',
+    'ingestion_stg_connectorname_tablename',
     column_names=['tenantid', 'processing', '_ingestionDatetime'],
     max_stream_count=50
     )
 
     table = memory.query('''
-        SELECT * FROM stg_connectorname_table_name
+        SELECT * FROM ingestion_stg_connectorname_tablename
         ''')
     print(table)
 ```
@@ -454,7 +454,7 @@ This is useful for endpoints that are not yet covered by specific SDK methods.
 ```python
 
 carol.call_api(
-    'v1/tenantApps/subscribe/carolApps/{app_id}',
+    'v1/tenantApps/subscribe/carolApps/{carol_app_id}',
     method='POST'
 )
 ```
@@ -492,6 +492,7 @@ This section presents utility functions that provide additional helpers for comm
 
 Release process
 ----------------
-1. Open a PR with your change for `master` branch;
-2. Once approved, merge into `master`;
-3. In case there are any changes to the default release notes, please update them
+1. Open a PR with your change for `main` branch;
+2. Once approved, merge into `main`;
+3. In case there are any changes to the default release notes, please update them.
+4. If any features are added or modified, please update README accordingly.
