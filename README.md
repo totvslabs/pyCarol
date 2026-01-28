@@ -118,7 +118,7 @@ In case the Carol Organization you want to login uses TOTVS Fluig Identity, you 
                 auth=PwdFluig(USER_LOGIN), organization=ORGANIZATION)
 ```
 
-You will be asked an access_token once. After provide correct access_token, pyCarol will manage authorization until your refresh_token expires.
+You will be asked an access_token once. After providing correct access_token, pyCarol will manage authorization until your refresh_token expires.
 
 #### 3. Using API Key
 
