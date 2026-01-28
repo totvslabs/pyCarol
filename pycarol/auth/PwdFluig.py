@@ -2,9 +2,12 @@ import urllib.parse
 
 from bs4 import BeautifulSoup
 import requests
+import json
+from pathlib import Path
 
 from .PwdKeyAuth import PwdKeyAuth
 from ..exceptions import InvalidToken, CarolApiResponseException
+from .. import __TEMP_STORAGE__
 
 
 class PwdFluig(PwdKeyAuth):
@@ -18,37 +21,15 @@ class PwdFluig(PwdKeyAuth):
             Password
     """
 
-    def __init__(self, user, password, lazy_login=False):
+    def __init__(self, user, lazy_login=False, access_token=None):
         self.user = user
-        self.password = password
+        self.access_token = access_token
         self._token = None
         self.carol = None
         self.connector_id = None
         self.sess = requests.Session()
         self.lazy_login = lazy_login
 
-    def _fluig_login(self, username, password):
-        url = "https://totvs.fluigidentity.com/api/auth/v1/login"
-
-        login_data = {
-            'domain': 'totvs',
-            'grant_type': 'password',
-            'username': username,
-            'password': password,
-            'captchaReturnedValue': 'undefined',
-        }
-        headers = {
-            'accept': 'application/json',
-            'content-type': 'application/x-www-form-urlencoded',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36',
-        }
-
-        response = self.sess.request("POST", url, headers=headers,
-                                     data=login_data, allow_redirects=True)
-
-        if not response.ok:
-            raise InvalidToken(response.text)
-        return response
 
     def login(self, carol):
         """
@@ -63,49 +44,57 @@ class PwdFluig(PwdKeyAuth):
 
         """
         self.carol = carol
+        self._temp_file_name = f".pycarol_token_{self.user}_{self.carol.organization}_{self.carol.domain}.json"
+        self._tmp_filepath = Path(__TEMP_STORAGE__) / self._temp_file_name
 
-        params = params = {
-            "redirect": f"/{self.carol.domain}/carol-ui/carol-ui/",
-            "org": f"{self.carol.organization}",
-            "env": f"{self.carol.domain}",
-        }
-        headers = {}
-        headers.update({'User-Agent': self.carol._user_agent})
-        url = f'https://{self.carol.organization}.carol.ai/samlAuth/'
+        if self._tmp_filepath.exists():
+            with open(self._tmp_filepath, "r", encoding="utf-8") as file:
+                token_data = json.load(file)
+                self._set_token(token_data)
 
-        resp = self.sess.get(url, headers=headers,
-                             allow_redirects=True, params=params)
+                # Try access token
+                resp = self.carol.call_api(f'v5/oauth2/token/{token_data["access_token"]}', auth=False, errors="ignore")
+                if resp.get('access_token') and resp.get('errorCode') is None:
+                    return
+                
+                # Try refresh token
+                try:
+                    self._refresh_token()
+                    return
+                except Exception:
+                    pass
+        
+        access_token = input(f'Please login into https://{self.carol.organization}.carol.ai/{self.carol.domain} and provide an access_token: ') if self.access_token is None else self.access_token
 
-        soup = BeautifulSoup(resp.text, 'html.parser')
-        tag = soup.find("form")
-        if tag is None:
-            raise Exception("Unable to login using fluig")
+        headers = {'Authorization': access_token}
 
-        tag = urllib.parse.unquote(
-            tag['action'].replace('/cloudpass/?forward=%2F', ''))
-        next_redirect = "https://totvs.fluigidentity.com/cloudpass/" + tag
+        token_details = carol.call_api(f'v5/oauth2/token/{access_token}/userAccessDetails', auth=False,
+                             extra_headers=headers)
+        
+        provided_tenant = token_details['tenantId']
+        provided_org = token_details['orgId']
+        provided_user = token_details['userId']
 
-        token = self._fluig_login(self.user, self.password)
+        provided_tenant_details = carol.call_api(f'v5/tenants/{provided_tenant}', auth=False,
+                                extra_headers=headers)        
+        provided_org_details = carol.call_api(f'v3/organizations/{provided_org}', auth=False,
+                                extra_headers=headers)
+        provided_user_details = carol.call_api(f'v3/users/{provided_user}', auth=False,
+                                extra_headers=headers)
+        
+        check = (
+            self.carol.domain == provided_tenant_details['mdmSubdomain'] and
+            self.carol.organization == provided_org_details['mdmSubdomain'] and
+            self.user == provided_user_details['mdmUserLogin']
+        )
 
-        for i, j in token.json().items():
-            self.sess.cookies[i] = str(j)
+        if not check:
+            raise InvalidToken('Please provide correct credentials.')
+        
+        token = carol.call_api(f'v5/oauth2/token/{access_token}', auth=False,
+                            extra_headers=headers)
+        
+        self._set_token(token)
 
-        resp = self.sess.get(
-            next_redirect, headers=headers, allow_redirects=True)
-
-        soup = BeautifulSoup(resp.text, 'html.parser')
-        payload = {}
-        for tag in soup.find_all("input", type="hidden", attrs={"name": ["RelayState", "SAMLResponse", "Signature", "SigAlg", "KeyInfo"]}):
-            payload[tag['name']] = tag['value']
-
-        url = f"https://{self.carol.organization}.carol.ai/api/v1/saml/ACS?orgSubdomain={self.carol.organization}"
-        headers['content-type'] = 'application/x-www-form-urlencoded'
-        carol_resp = self.sess.request(
-            "POST", url, headers=headers, data=payload, allow_redirects=False)
-
-        if not carol_resp.ok:
-            raise CarolApiResponseException(carol_resp.text)
-        self.access_token = carol_resp.headers['Location'].split(
-            'handoff=')[-1]
-
-        super().login(self.carol)
+        if self.carol.verbose:
+            print("Token: {}".format(self._token.access_token))
