@@ -66,7 +66,7 @@ readme_note = """\
    `GitHub repository <https://github.com/totvslabs/pyCarol>`_\n\n
 """
 
-with open("README.rst") as fobj:
+with open("README.md") as fobj:
     long_description = readme_note + fobj.read()
 
 
