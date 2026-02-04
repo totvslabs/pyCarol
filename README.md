@@ -109,6 +109,17 @@ This is useful for applications that need to temporary authenticate programmatic
                   auth=PwdKeyAuth(pwd_auth_token), organization=ORGANIZATION)
 ```
 
+In case the Carol Organization you want to login uses TOTVS Fluig Identity, you can use `PwdFluig` and manually provide an access_token.
+
+```python
+
+    from pycarol import PwdFluig, Carol
+    carol = Carol(domain=TENANT_NAME,
+                auth=PwdFluig(USER_LOGIN), organization=ORGANIZATION)
+```
+
+You will be asked an access_token once. After providing correct access_token, pyCarol will manage authorization until your refresh_token expires.
+
 #### 3. Using API Key
 
 API keys provide an alternative authentication method to username and password.
