@@ -12,28 +12,28 @@ The SDK encapsulates low-level API communication and authentication logic, makin
 Table of Contents
 -----------------
 
-- Getting Started_
-- Recommended authentication method_
-- Explicit authentication methods_
+- `Getting Started <getting-started_>`_
+- `Recommended authentication method <recommended-authentication_>`_
+- `Explicit authentication methods <explicit-authentication_>`_
 
-  - `1. Using user/password`_
-  - `2. Using Tokens`_
-  - `3. Using API Key`_
+  - `Using user/password <auth-user-password_>`_
+  - `Using Tokens <auth-tokens_>`_
+  - `Using API Key <auth-api-key_>`_
 
-- Setting up Carol entities_
-- Sending Data_
-- Reading data_
-- Carol In Memory_
-- Logging_
+- `Setting up Carol entities <setup-entities_>`_
+- `Sending Data <sending-data_>`_
+- `Reading data <reading-data_>`_
+- `Carol In Memory <carol-in-memory_>`_
+- `Logging <logging_>`_
 
-  - Prerequisites_
-  - Logging messages to Carol_
-  - Notes_
+  - `Prerequisites <logging-prerequisites_>`_
+  - `Logging messages to Carol <logging-messages_>`_
+  - `Notes <logging-notes_>`_
 
-- Calling Carol APIs_
-- Settings_
-- Useful Functions_
-- Release process_
+- `Calling Carol APIs <calling-apis_>`_
+- `Settings <settings_>`_
+- `Useful Functions <useful-functions_>`_
+- `Release process <release-process_>`_
 
 Getting Started
 ---------------
