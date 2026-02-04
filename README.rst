@@ -178,7 +178,7 @@ Set ``LONGTASKID`` when running locally.
 .. _logging-messages:
 
 Logging messages to Carol
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -192,7 +192,7 @@ Logging messages to Carol
 .. _logging-notes:
 
 Notes
-~~~~~
+~~~~~~~~~~
 
 - Logs are linked to long tasks
 - Console fallback when task ID is missing
@@ -200,7 +200,7 @@ Notes
 .. _calling-apis:
 
 Calling Carol APIs
-------------------
+------------------------------------
 
 .. code-block:: python
 
@@ -209,7 +209,7 @@ Calling Carol APIs
 .. _settings:
 
 Settings
---------
+----------------
 
 .. code-block:: python
 
@@ -219,7 +219,7 @@ Settings
 .. _useful-functions:
 
 Useful Functions
-----------------
+--------------------------------
 
 .. code-block:: python
 
@@ -229,7 +229,7 @@ Useful Functions
 .. _release-process:
 
 Release process
----------------
+------------------------------
 
 1. Open PR to ``main``
 2. Merge after approval
