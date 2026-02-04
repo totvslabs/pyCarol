@@ -1,13 +1,13 @@
 PyCarol
 =======
 
-.. raw:: html
-
-   <hr/>
+--------------------
 
 PyCarol is a Python SDK designed to support data ingestion and data access workflows on Carol.
-It provides abstractions for authentication, connector and staging management, data ingestion, and querying, enabling reliable integration with Carol services using Python.
-The SDK encapsulates low-level API communication and authentication logic, making data pipelines easier to build, maintain, and operate.
+It provides abstractions for authentication, connector and staging management, data ingestion, and querying,
+enabling reliable integration with Carol services using Python.
+The SDK encapsulates low-level API communication and authentication logic, making data pipelines easier to
+build, maintain, and operate.
 
 Table of Contents
 -----------------
@@ -40,18 +40,21 @@ Table of Contents
 Getting Started
 ---------------
 
-Run ``pip install pycarol`` to install the latest stable version from `PyPI <https://pypi.org/project/pycarol/>`_.
-Documentation for the `latest release <https://pycarol.readthedocs.io/en/2.55.0/>`_ is hosted on `Read the Docs <https://pycarol.readthedocs.io/>`_.
+Run ``pip install pycarol`` to install the latest stable version from
+`PyPI <https://pypi.org/project/pycarol/>`_.
+Documentation for the `latest release <https://pycarol.readthedocs.io/en/2.55.0/>`_
+is hosted on `Read the Docs <https://pycarol.readthedocs.io/>`_.
 
-This will install the minimal dependencies. To install pyCarol with the ``dataframes`` dependencies use::
+This will install the minimal dependencies. To install pyCarol with the
+``dataframe`` dependencies::
 
     pip install pycarol[dataframe]
 
-Or to install with dask+pipeline dependencies::
+To install with dask and pipeline dependencies::
 
     pip install pycarol[pipeline,dask]
 
-The available options are: ``complete``, ``dataframe``, ``onlineapp``, ``dask``, ``pipeline``.
+Available options: ``complete``, ``dataframe``, ``onlineapp``, ``dask``, ``pipeline``.
 
 To install from source:
 
@@ -65,16 +68,15 @@ To install from source:
 Recommended authentication method
 ---------------------------------
 
-Never write in plain text your password or API token in your application. Use environment variables.
-pyCarol automatically reads environment variables when no parameters are passed to the ``Carol`` constructor.
+Never write passwords or API tokens in plain text. Use environment variables.
+When no parameters are passed to the ``Carol`` constructor, pyCarol automatically
+reads the following variables:
 
-Variables used:
-
-1. ``CAROLTENANT`` – domain or tenant name
+1. ``CAROLTENANT`` – tenant name
 2. ``CAROLAPPNAME`` – app name
-3. ``CAROL_DOMAIN`` – environment or tenant name
+3. ``CAROL_DOMAIN`` – environment
 4. ``CAROLORGANIZATION`` – organization
-5. ``CAROLAPPOAUTH`` – auth
+5. ``CAROLAPPOAUTH`` – authentication token
 6. ``CAROLCONNECTORID`` – connector ID
 7. ``CAROLUSER`` – user email
 8. ``CAROLPWD`` – user password
@@ -91,7 +93,7 @@ Example ``.env`` file::
     CAROLAPPOAUTH=myAPIKey
     CAROLCONNECTORID=myConnector
 
-Loading the environment variables:
+Loading environment variables:
 
 .. code-block:: python
 
@@ -106,7 +108,7 @@ Loading the environment variables:
 Explicit authentication methods
 -------------------------------
 
-Carol is the main object to access pyCarol and all Carol APIs.
+Carol is the main object to access pyCarol and Carol APIs.
 
 .. _auth-user-password:
 
@@ -204,7 +206,7 @@ Creating a connector:
         group_name='GroupName'
     )
 
-Creating staging schema and table:
+Creating staging schema:
 
 .. code-block:: python
 
@@ -236,18 +238,10 @@ Sending Data
 
     from pycarol import Staging
 
-    json_ex = [
-        {"name": "Rafael", "email": {"type": "email", "email": "rafael@totvs.com.br"}},
-        {"name": "Leandro", "email": {"type": "email", "email": "leandro@totvs.com.br"}},
-        {"name": "Joao", "email": {"type": "email", "email": "joao@rolima.com.br"}},
-        {"name": "Marcelo", "email": {"type": "email", "email": "marcelo@totvs.com.br"}},
-    ]
-
     staging = Staging(carol)
     staging.send_data(
         staging_name='my_stag',
-        data=json_ex,
-        step_size=2,
+        data=[{"name": "Rafael"}],
         connector_id=CONNECTORID,
         print_stats=True
     )
@@ -272,19 +266,11 @@ Carol In Memory
 .. code-block:: python
 
     from pycarol import Carol, Memory, BQStorage
-    from dotenv import load_dotenv
 
-    load_dotenv()
-    carol = Carol()
-
-    storage = BQStorage(carol)
+    storage = BQStorage(Carol())
     memory = Memory()
 
-    data = storage.query(
-        'ingestion_stg_connectorname_tablename',
-        column_names=['tenantid', 'processing', '_ingestionDatetime']
-    )
-
+    data = storage.query("ingestion_stg_connectorname_tablename")
     memory.add("my_table", data)
     table = memory.query("SELECT * FROM my_table")
 
@@ -314,12 +300,9 @@ Logging messages to Carol
     import logging
 
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
+    logger.addHandler(CarolHandler(Carol()))
 
-    handler = CarolHandler(Carol())
-    handler.setLevel(logging.INFO)
-
-    logger.addHandler(handler)
     logger.info("This is an info message")
 
 .. _logging-notes:
@@ -327,9 +310,9 @@ Logging messages to Carol
 Notes
 ~~~~~
 
-- Logs are associated with the current long task when running inside Carol.
-- If no task ID is provided, the handler behaves as a console logger.
-- Prefer ``INFO`` level and above.
+- Logs are associated with the current long task when running inside Carol
+- Without task ID, logs fall back to console
+- Prefer ``INFO`` level and above
 
 .. _calling-apis:
 
@@ -380,13 +363,11 @@ Tracking tasks:
 Release process
 ---------------
 
-1. Open a PR targeting the ``main`` branch
+1. Open a PR targeting ``main``
 2. Merge after approval
 3. Update release notes if needed
 4. Update README when features change
 
-.. raw:: html
-
-   <hr/>
+--------------------
 
 Made with ❤ at TOTVS IDeIA
