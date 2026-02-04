@@ -1,8 +1,6 @@
 PyCarol
 =======
 
-================================================================================
-
 PyCarol is a Python SDK designed to support data ingestion and data access workflows on Carol.
 It provides abstractions for authentication, connector and staging management, data ingestion, and querying,
 enabling reliable integration with Carol services using Python.
@@ -38,7 +36,7 @@ Table of Contents
 .. _getting-started:
 
 Getting Started
--------------------------------------------------------------------------------
+---------------
 
 Run ``pip install pycarol`` to install the latest stable version from
 `PyPI <https://pypi.org/project/pycarol/>`_.
@@ -47,22 +45,26 @@ Documentation is hosted on `Read the Docs <https://pycarol.readthedocs.io/>`_.
 .. _recommended-authentication:
 
 Recommended authentication method
--------------------------------------------------------------------------------
+---------------------------------
 
 Never write passwords or API tokens in plain text.
 Use environment variables whenever possible.
 
+Carol URL format::
+
+    www.ORGANIZATION.carol.ai/TENANT_NAME
+
 .. _explicit-authentication:
 
 Explicit authentication methods
--------------------------------------------------------------------------------
+-------------------------------
 
 Carol is the main object to access pyCarol and Carol APIs.
 
 .. _auth-user-password:
 
 Using user/password
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -78,7 +80,7 @@ Using user/password
 .. _auth-tokens:
 
 Using Tokens
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -94,7 +96,7 @@ Using Tokens
 .. _auth-api-key:
 
 Using API Key
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -111,7 +113,7 @@ Using API Key
 .. _setup-entities:
 
 Setting up Carol entities
--------------------------------------------------------------------------------
+-------------------------
 
 .. code-block:: python
 
@@ -125,7 +127,7 @@ Setting up Carol entities
 .. _sending-data:
 
 Sending Data
--------------------------------------------------------------------------------
+------------
 
 .. code-block:: python
 
@@ -140,7 +142,7 @@ Sending Data
 .. _reading-data:
 
 Reading data
--------------------------------------------------------------------------------
+------------
 
 .. code-block:: python
 
@@ -151,7 +153,7 @@ Reading data
 .. _carol-in-memory:
 
 Carol In Memory
--------------------------------------------------------------------------------
+---------------
 
 .. code-block:: python
 
@@ -164,19 +166,19 @@ Carol In Memory
 .. _logging:
 
 Logging
--------------------------------------------------------------------------------
+-------
 
 .. _logging-prerequisites:
 
 Prerequisites
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 Set ``LONGTASKID`` when running locally.
 
 .. _logging-messages:
 
 Logging messages to Carol
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -190,7 +192,7 @@ Logging messages to Carol
 .. _logging-notes:
 
 Notes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
 
 - Logs are linked to long tasks
 - Console fallback when task ID is missing
@@ -198,7 +200,7 @@ Notes
 .. _calling-apis:
 
 Calling Carol APIs
--------------------------------------------------------------------------------
+------------------
 
 .. code-block:: python
 
@@ -207,7 +209,7 @@ Calling Carol APIs
 .. _settings:
 
 Settings
--------------------------------------------------------------------------------
+--------
 
 .. code-block:: python
 
@@ -217,7 +219,7 @@ Settings
 .. _useful-functions:
 
 Useful Functions
--------------------------------------------------------------------------------
+----------------
 
 .. code-block:: python
 
@@ -227,12 +229,10 @@ Useful Functions
 .. _release-process:
 
 Release process
--------------------------------------------------------------------------------
+---------------
 
 1. Open PR to ``main``
 2. Merge after approval
 3. Update README if needed
-
-================================================================================
 
 Made with ❤ at TOTVS IDeIA
