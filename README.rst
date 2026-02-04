@@ -35,6 +35,8 @@ Table of Contents
 - `Useful Functions <useful-functions_>`_
 - `Release process <release-process_>`_
 
+.. _getting-started:
+
 Getting Started
 ---------------
 
@@ -57,6 +59,8 @@ To install from source:
 2. ``pip install -e . ".[dev]"``
 3. ``pip install -e . ".[pipeline]"``
 4. ``pip install -e . ".[complete]"``
+
+.. _recommended-authentication:
 
 Recommended authentication method
 ---------------------------------
@@ -97,13 +101,17 @@ Loading the environment variables:
     load_dotenv(".env")
     carol = Carol()
 
+.. _explicit-authentication:
+
 Explicit authentication methods
 -------------------------------
 
 Carol is the main object to access pyCarol and all Carol APIs.
 
-1. Using user/password
-~~~~~~~~~~~~~~~~~~~~~~
+.. _auth-user-password:
+
+Using user/password
+~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -116,8 +124,10 @@ Carol is the main object to access pyCarol and all Carol APIs.
         organization=ORGANIZATION
     )
 
-2. Using Tokens
-~~~~~~~~~~~~~~
+.. _auth-tokens:
+
+Using Tokens
+~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -142,8 +152,10 @@ For Fluig Identity:
         organization=ORGANIZATION
     )
 
-3. Using API Key
-~~~~~~~~~~~~~~~~
+.. _auth-api-key:
+
+Using API Key
+~~~~~~~~~~~~~
 
 Generating an API key:
 
@@ -174,6 +186,8 @@ Authenticating with API key:
         connector_id=CONNECTORID,
         organization=ORGANIZATION
     )
+
+.. _setup-entities:
 
 Setting up Carol entities
 ------------------------
@@ -213,6 +227,8 @@ Creating staging schema and table:
         connector_name='my_connector'
     )
 
+.. _sending-data:
+
 Sending Data
 ------------
 
@@ -236,10 +252,10 @@ Sending Data
         print_stats=True
     )
 
+.. _reading-data:
+
 Reading data
 ------------
-
-Querying BigQuery:
 
 .. code-block:: python
 
@@ -247,6 +263,8 @@ Querying BigQuery:
 
     bq = BQ(Carol())
     results = bq.query("SELECT * FROM stg_connectorname_tablename")
+
+.. _carol-in-memory:
 
 Carol In Memory
 ---------------
@@ -270,8 +288,12 @@ Carol In Memory
     memory.add("my_table", data)
     table = memory.query("SELECT * FROM my_table")
 
+.. _logging:
+
 Logging
 -------
+
+.. _logging-prerequisites:
 
 Prerequisites
 ~~~~~~~~~~~~~
@@ -280,6 +302,8 @@ Prerequisites
 
     import os
     os.environ['LONGTASKID'] = task_id
+
+.. _logging-messages:
 
 Logging messages to Carol
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -298,6 +322,17 @@ Logging messages to Carol
     logger.addHandler(handler)
     logger.info("This is an info message")
 
+.. _logging-notes:
+
+Notes
+~~~~~
+
+- Logs are associated with the current long task when running inside Carol.
+- If no task ID is provided, the handler behaves as a console logger.
+- Prefer ``INFO`` level and above.
+
+.. _calling-apis:
+
 Calling Carol APIs
 ------------------
 
@@ -308,6 +343,8 @@ Calling Carol APIs
         method='POST'
     )
 
+.. _settings:
+
 Settings
 --------
 
@@ -317,6 +354,8 @@ Settings
 
     app = Apps(carol)
     settings = app.get_settings(app_name='my_app')
+
+.. _useful-functions:
 
 Useful Functions
 ----------------
@@ -335,6 +374,8 @@ Tracking tasks:
         task_list=['task_id_1', 'task_id_2'],
         callback=callback
     )
+
+.. _release-process:
 
 Release process
 ---------------
