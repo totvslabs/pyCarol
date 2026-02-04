@@ -1,7 +1,7 @@
 PyCarol
 =======
 
---------------------
+================================================================================
 
 PyCarol is a Python SDK designed to support data ingestion and data access workflows on Carol.
 It provides abstractions for authentication, connector and staging management, data ingestion, and querying,
@@ -38,46 +38,31 @@ Table of Contents
 .. _getting-started:
 
 Getting Started
----------------
+-------------------------------------------------------------------------------
 
 Run ``pip install pycarol`` to install the latest stable version from
 `PyPI <https://pypi.org/project/pycarol/>`_.
-Documentation for the `latest release <https://pycarol.readthedocs.io/>`_
-is hosted on `Read the Docs <https://pycarol.readthedocs.io/>`_.
-
-To install with dataframe dependencies::
-
-    pip install pycarol[dataframe]
-
-To install with pipeline and dask dependencies::
-
-    pip install pycarol[pipeline,dask]
-
-Available options: ``complete``, ``dataframe``, ``onlineapp``, ``dask``, ``pipeline``.
+Documentation is hosted on `Read the Docs <https://pycarol.readthedocs.io/>`_.
 
 .. _recommended-authentication:
 
 Recommended authentication method
----------------------------------
+-------------------------------------------------------------------------------
 
 Never write passwords or API tokens in plain text.
 Use environment variables whenever possible.
 
-Carol URL format::
-
-    www.ORGANIZATION.carol.ai/TENANT_NAME
-
 .. _explicit-authentication:
 
 Explicit authentication methods
--------------------------------
+-------------------------------------------------------------------------------
 
 Carol is the main object to access pyCarol and Carol APIs.
 
 .. _auth-user-password:
 
 Using user/password
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -93,7 +78,7 @@ Using user/password
 .. _auth-tokens:
 
 Using Tokens
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -109,7 +94,7 @@ Using Tokens
 .. _auth-api-key:
 
 Using API Key
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -126,31 +111,28 @@ Using API Key
 .. _setup-entities:
 
 Setting up Carol entities
--------------------------
-
-Creating a connector:
+-------------------------------------------------------------------------------
 
 .. code-block:: python
 
     from pycarol import Connectors
 
     connector_id = Connectors(carol).create(
-        name='my_connector',
-        label='connector_label'
+        name="my_connector",
+        label="connector_label"
     )
 
 .. _sending-data:
 
 Sending Data
-------------
+-------------------------------------------------------------------------------
 
 .. code-block:: python
 
     from pycarol import Staging
 
-    staging = Staging(carol)
-    staging.send_data(
-        staging_name='my_stag',
+    Staging(carol).send_data(
+        staging_name="my_stag",
         data=[{"name": "Rafael"}],
         connector_id=CONNECTORID
     )
@@ -158,23 +140,22 @@ Sending Data
 .. _reading-data:
 
 Reading data
-------------
+-------------------------------------------------------------------------------
 
 .. code-block:: python
 
     from pycarol import BQ, Carol
 
-    bq = BQ(Carol())
-    results = bq.query("SELECT * FROM stg_connectorname_tablename")
+    BQ(Carol()).query("SELECT * FROM stg_connectorname_tablename")
 
 .. _carol-in-memory:
 
 Carol In Memory
----------------
+-------------------------------------------------------------------------------
 
 .. code-block:: python
 
-    from pycarol import Carol, Memory
+    from pycarol import Memory
 
     memory = Memory()
     memory.add("my_table", [{"id": 1}])
@@ -183,19 +164,19 @@ Carol In Memory
 .. _logging:
 
 Logging
--------
+-------------------------------------------------------------------------------
 
 .. _logging-prerequisites:
 
 Prerequisites
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Set the task ID when running locally.
+Set ``LONGTASKID`` when running locally.
 
 .. _logging-messages:
 
 Logging messages to Carol
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -209,15 +190,15 @@ Logging messages to Carol
 .. _logging-notes:
 
 Notes
-~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Logs are linked to long tasks when available
+- Logs are linked to long tasks
 - Console fallback when task ID is missing
 
 .. _calling-apis:
 
 Calling Carol APIs
-------------------
+-------------------------------------------------------------------------------
 
 .. code-block:: python
 
@@ -226,7 +207,7 @@ Calling Carol APIs
 .. _settings:
 
 Settings
---------
+-------------------------------------------------------------------------------
 
 .. code-block:: python
 
@@ -236,23 +217,22 @@ Settings
 .. _useful-functions:
 
 Useful Functions
-----------------
+-------------------------------------------------------------------------------
 
 .. code-block:: python
 
     from pycarol.functions import track_tasks
-
     track_tasks(carol, ["task1", "task2"])
 
 .. _release-process:
 
 Release process
----------------
+-------------------------------------------------------------------------------
 
 1. Open PR to ``main``
 2. Merge after approval
 3. Update README if needed
 
---------------------
+================================================================================
 
 Made with ❤ at TOTVS IDeIA
