@@ -38,7 +38,7 @@ class AtomicCounter:
             print(f'{self.value}/{self.total} sent', end='\r')
 
 
-def send_a(carol, session, url, data_json, extra_headers, content_type, counter):
+def send_a(carol, session, url, data_json, extra_headers, content_type, counter, batch_state=None):
     """
     Helper function to be used when sending data async.
 
@@ -48,24 +48,31 @@ def send_a(carol, session, url, data_json, extra_headers, content_type, counter)
         session: `requests.Session`
             Session object to handle multiple API calls.
         url: `str`
-            end point to be called.
+            end point to be called (may include batchId; batchIdSequence added here if batch_state).
         data_json: `dict`
             The json to be send.
         extra_headers: `dict`
             Extra headers to be used in the API call
         content_type: `dict`
             Content type of the call.
+        counter: `AtomicCounter`
+            Counter for progress.
+        batch_state: optional batch state; when set, url gets batchIdSequence and stats are recorded.
         :return: None
     """
-    carol.call_api(url, data=data_json, extra_headers=extra_headers,
+    request_url = url
+    if batch_state is not None:
+        request_url = f'{url}&batchIdSequence={batch_state.get_next_sequence()}'
+    carol.call_api(request_url, data=data_json, extra_headers=extra_headers,
                    content_type=content_type, session=session)
-
+    if batch_state is not None:
+        batch_state.record_request(len(data_json) if isinstance(data_json, list) else 1)
     counter.increment(len(data_json))
     counter.print()
 
 
 async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
-                                 content_type, max_workers, compress_gzip):
+                                 content_type, max_workers, compress_gzip, batch_state=None):
     """
     Helper function to send data asynchronous.
 
@@ -77,7 +84,7 @@ async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
         step_size: 'int'
             Number of records per slice.
         url: 'str'
-            API URI
+            API URI (may include batchId when using batch).
         extra_headers: `dict`
             Extra headers to be used in the API call
         content_type:  `dict`
@@ -86,6 +93,7 @@ async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
             Max number of workers of the async job
         compress_gzip: 'bool'
             If to compress the data to send
+        batch_state: optional batch state for batchIdSequence and stats.
         :return:
     """
 
@@ -95,14 +103,12 @@ async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
                                  method_whitelist=frozenset(['POST']),
                                  retries=10,
                                  backoff_factor=0.5)
-        # Set any session parameters here before calling `send_a`
         loop = asyncio.get_event_loop()
         tasks = [
             loop.run_in_executor(
                 executor,
                 send_a,
-                *(carol, session, url, data_json, extra_headers, content_type, counter)
-                # Allows us to pass in multiple arguments to `send_a`
+                *(carol, session, url, data_json, extra_headers, content_type, counter, batch_state)
             )
             for data_json, _ in stream_data(data=data,
                                             step_size=step_size,

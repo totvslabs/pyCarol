@@ -1,6 +1,9 @@
 import json
+import uuid
 import warnings
 import asyncio
+import threading
+from datetime import datetime, timezone
 
 from .schema_generator import carolSchemaGenerator
 from .connectors import Connectors
@@ -10,6 +13,29 @@ from .utils import async_helpers
 from .utils.miscellaneous import stream_data
 from . import _CAROL_METADATA_STAGING, _NEEDED_FOR_MERGE, _CAROL_METADATA_UNTIE_STAGING
 from .utils.deprecation_msgs import _deprecation_msgs, deprecated
+
+class _BatchState:
+    """Thread-safe state for a batch: sequence, total_records, total_requests."""
+    __slots__ = ('batch_id', 'timestamp_start', 'total_records', 'total_requests', 'next_sequence', '_lock')
+
+    def __init__(self, batch_id):
+        self.batch_id = batch_id
+        self.timestamp_start = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+        self.total_records = 0
+        self.total_requests = 0
+        self.next_sequence = 0
+        self._lock = threading.Lock()
+
+    def get_next_sequence(self):
+        with self._lock:
+            self.next_sequence += 1
+            return self.next_sequence
+
+    def record_request(self, num_records):
+        with self._lock:
+            self.total_requests += 1
+            self.total_records += num_records
+
 
 _SCHEMA_TYPES_MAPPING = {
     "geopoint": str,
@@ -33,6 +59,44 @@ class Staging:
 
     def __init__(self, carol):
         self.carol = carol
+        self._current_batch = None
+
+    def start_batch(self):
+        """
+        Start a batch for sending data to Carol. Tracks batchId, sequences, total records and total requests.
+        Call end_batch() when done to send the summary to Carol and trigger processing.
+
+        Returns:
+            str: The batch ID (use for tracking; summary is sent in end_batch()).
+        """
+        batch_id = f"{self.carol._current_env()['mdmId']}-pyCarol-{str(uuid.uuid4())}"
+        self._current_batch = _BatchState(batch_id)
+        return batch_id
+
+    def end_batch(self):
+        """
+        Send the batch summary to Carol and clear the current batch. Required when using batchId
+        so Carol knows the batch is complete and can start processing.
+
+        Returns:
+            dict: Carol API response from POST /api/v3/staging/batch/{batchId}/summary.
+        """
+        if self._current_batch is None:
+            raise RuntimeError('No active batch. Call start_batch() first or let send_data() manage it.')
+        batch = self._current_batch
+        payload = {
+            'totalRecords': batch.total_records,
+            'totalRequests': batch.total_requests,
+            'timestampStart': batch.timestamp_start,
+            'timestampEnd': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        }
+        resp = self.carol.call_api(
+            f'v3/staging/batch/{batch.batch_id}/summary',
+            method='POST',
+            data=payload,
+        )
+        self._current_batch = None
+        return resp
 
     def send_data(self, staging_name, data=None, connector_name=None, connector_id=None, step_size=500,
                   print_stats=True, gzip=True, auto_create_schema=False, crosswalk_auto_create=None,
@@ -164,32 +228,45 @@ class Staging:
                 raise Exception("crosswalk is not unique on data frame. set force=True to send it anyway.")
 
         url = f'v2/staging/intake/{staging_name}?returnData=false&connectorId={connector_id}'
-        
+        auto_batch = False
+        if self._current_batch is None:
+            self.start_batch()
+            auto_batch = True
+        if self._current_batch is not None:
+            url = f'{url}&batchId={self._current_batch.batch_id}'
+
         self.cont = 0
-        if async_send:
-            loop = asyncio.get_event_loop()
-            future = asyncio.ensure_future(async_helpers.send_data_asynchronous(carol=self.carol,
-                                                                                data=data,
-                                                                                step_size=step_size,
-                                                                                url=url,
-                                                                                extra_headers=extra_headers,
-                                                                                content_type=content_type,
-                                                                                max_workers=max_workers,
-                                                                                compress_gzip=self.gzip))
-            loop.run_until_complete(future)
-
-        else:
-            for data_json, cont in stream_data(data=data,
-                                               step_size=step_size,
-                                               compress_gzip=self.gzip):
-
-                self.carol.call_api(url, data=data_json, extra_headers=extra_headers, content_type=content_type,
-                                    status_forcelist=[502, 429, 524, 408, 504, 598, 520, 503, 500, 409],
-                                    method_whitelist=frozenset(['POST']),
-                                    retries=10
-                                    )
-                if print_stats:
-                    print('{}/{} sent'.format(cont, data_size), end='\r')
+        try:
+            if async_send:
+                loop = asyncio.get_event_loop()
+                future = asyncio.ensure_future(async_helpers.send_data_asynchronous(
+                    carol=self.carol,
+                    data=data,
+                    step_size=step_size,
+                    url=url,
+                    extra_headers=extra_headers,
+                    content_type=content_type,
+                    max_workers=max_workers,
+                    compress_gzip=self.gzip,
+                    batch_state=self._current_batch,
+                ))
+                loop.run_until_complete(future)
+            else:
+                for data_json, cont in stream_data(data=data,
+                                                   step_size=step_size,
+                                                   compress_gzip=self.gzip):
+                    request_url = f'{url}&batchIdSequence={self._current_batch.get_next_sequence()}'
+                    self.carol.call_api(request_url, data=data_json, extra_headers=extra_headers, content_type=content_type,
+                                        status_forcelist=[502, 429, 524, 408, 504, 598, 520, 503, 500, 409],
+                                        method_whitelist=frozenset(['POST']),
+                                        retries=10
+                                        )
+                    self._current_batch.record_request(len(data_json) if isinstance(data_json, list) else 1)
+                    if print_stats:
+                        print('{}/{} sent'.format(cont, data_size), end='\r')
+        finally:
+            if auto_batch and self._current_batch is not None:
+                self.end_batch()
 
     def get_schema(self, staging_name, connector_name=None, connector_id=None):
 
