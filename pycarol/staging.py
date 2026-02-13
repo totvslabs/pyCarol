@@ -1,5 +1,5 @@
 import json
-import uuid
+import time
 import warnings
 import asyncio
 import threading
@@ -69,7 +69,7 @@ class Staging:
         Returns:
             str: The batch ID (use for tracking; summary is sent in end_batch()).
         """
-        batch_id = f"{self.carol._current_env()['mdmId']}-pyCarol-{str(uuid.uuid4())}"
+        batch_id = f"{self.carol._current_env()['mdmId']}-pycarol-{int(time.time())}"
         self._current_batch = _BatchState(batch_id)
         return batch_id
 
