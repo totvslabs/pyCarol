@@ -20,6 +20,8 @@ Table of Contents
 
 - `Setting up Carol entities <setup-entities_>`_
 - `Sending Data <sending-data_>`_
+
+  - `Staging batch API: Batch ingestion <staging-batch-api_>`_
 - `Reading data <reading-data_>`_
 - `Carol In Memory <carol-in-memory_>`_
 - `Logging <logging_>`_
@@ -139,6 +141,45 @@ Sending Data
         connector_id=CONNECTORID
     )
 
+.. _staging-batch-api:
+
+Staging batch API: Batch ingestion
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To group multiple ``send_data()`` calls under one batch (e.g. for Carol to process as a unit), use
+``start_batch()`` and ``end_batch()``. Each request is tagged with ``batchId`` and ``batchIdSequence``.
+If you do not start a batch explicitly, a batch is auto-started and auto-ended around a single
+``send_data()`` call.
+
+- **``Staging.start_batch()``**: Starts a batch, generates a ``batchId``, returns it.
+- **``Staging.end_batch()``**: Sends the batch summary to Carol and clears the current batch.
+- **``Staging.send_data()``**: When a batch is active, appends ``batchId`` and ``batchIdSequence`` to the intake URL.
+
+.. code-block:: python
+
+    from pycarol import Carol, Staging
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    carol = Carol()
+    json_ex = [
+        {"name": "Rafael", "email": {"type": "email", "email": "rafael@totvs.com.br"}},
+        {"name": "Leandro", "email": {"type": "email", "email": "Leandro@totvs.com.br"}},
+    ]
+    staging = Staging(carol)
+
+    # Single send_data: batch is generated internally
+    staging.send_data(staging_name="test_batch", data=json_ex, step_size=1,
+                      connector_id=CONNECTORID, print_stats=True)
+
+    # User-managed batch for multiple intake calls
+    staging.start_batch()
+    staging.send_data(staging_name="test_batch", data=json_ex, step_size=1,
+                      connector_id=CONNECTORID, print_stats=True)
+    staging.send_data(staging_name="test_batch", data=json_ex, step_size=4,
+                      connector_id=CONNECTORID, print_stats=True)
+    staging.end_batch()
+
 .. _reading-data:
 
 Reading data
@@ -155,13 +196,32 @@ Reading data
 Carol In Memory
 ---------------
 
+PyCarol provides an easy way to work with in-memory data using the Memory class, built on top of DuckDB.
+Queries are executed locally over in-memory data, without triggering BigQuery jobs or consuming BigQuery
+slots, and results are returned as pandas DataFrames. The recommended usage is with ``BQStorage`` objects.
+
 .. code-block:: python
 
-    from pycarol import Memory
+    from pycarol import Carol, Memory, BQStorage
+    from dotenv import load_dotenv
 
+    load_dotenv()
+    carol = Carol()
+
+    storage = BQStorage(carol)
     memory = Memory()
-    memory.add("my_table", [{"id": 1}])
-    memory.query("SELECT * FROM my_table")
+
+    t = storage.query(
+        "ingestion_stg_connectorname_tablename",
+        column_names=["tenantid", "processing", "_ingestionDatetime"],
+        max_stream_count=50
+    )
+    memory.add("my_table", t)
+
+    table = memory.query("SELECT * FROM my_table")
+    print(table)
+
+The syntax of Carol In Memory follows DuckDB `SQL Syntax <https://duckdb.org/docs/stable/sql/introduction>`_.
 
 .. _logging:
 
@@ -200,11 +260,17 @@ Notes
 .. _calling-apis:
 
 Calling Carol APIs
-------------------------------------
+------------------
+
+In addition to the high-level abstractions provided by pyCarol, it is also possible to call Carol APIs directly when needed.
+This is useful for endpoints that are not yet covered by specific SDK methods.
 
 .. code-block:: python
 
-    carol.call_api("v1/some/endpoint", method="POST")
+    carol.call_api(
+        "v1/tenantApps/subscribe/carolApps/{carol_app_id}",
+        method="POST"
+    )
 
 .. _settings:
 
