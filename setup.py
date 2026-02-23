@@ -22,10 +22,10 @@ min_requires = [
     "retry",
     "tqdm",
     "urllib3",
-    "pandas>=0.23.4,!=1.0.4",
+    "pandas==3.0.0",
     "numpy>=1.16.3",
     "pip-system-certs",
-    "duckdb==1.4.0"
+    "duckdb==1.4.4"
 ]
 
 dataframe_requires = [
