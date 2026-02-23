@@ -505,6 +505,10 @@ class BQStorage:
         if "pandas" not in sys.modules and return_dataframe is True:
             raise exceptions.PandasNotFoundException
 
+        if not all_frames:
+            dataframe = pandas.DataFrame(columns=column_names or [])
+            return dataframe
+
         dataframe = pandas.concat([frame.to_dataframe() for frame in all_frames])
         dataframe = dataframe.reset_index(drop=True)
         return dataframe

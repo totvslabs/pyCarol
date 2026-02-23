@@ -142,11 +142,11 @@ class Memory:
 			>>> result = memory.query("SELECT * FROM users WHERE id > 1")
 			>>> result = memory.query("WITH cte AS (SELECT * FROM users) SELECT * FROM cte")
 		"""
-		if not self._is_select_query(query):
+		if not self._is_permitted_query(query):
 			raise ValueError("Only SELECT queries are allowed. Other operations are not permitted.")
 		return self.conn.execute(query).fetchdf()
 
-	def _is_select_query(self, query: str) -> bool:
+	def _is_permitted_query(self, query: str) -> bool:
 		"""Check if the query contains only SELECT statements, preventing SQL injection.
 
 		This private method validates that the provided query contains only SELECT
@@ -158,7 +158,7 @@ class Memory:
 			query: SQL query string to validate.
 
 		Returns:
-			bool: True if the query contains only SELECT/WITH statements,
+			bool: True if the query contains only SELECT/WITH/CREATE OR REPLACE TEMP MACRO statements,
 				False otherwise.
 		"""
 		normalized_query = query.strip()
@@ -167,7 +167,7 @@ class Memory:
 		
 		for statement in statements:
 			statement_upper = statement.upper()
-			if not statement_upper.startswith(('SELECT', 'WITH')):
+			if not statement_upper.startswith(('SELECT', 'WITH', 'CREATE OR REPLACE TEMP MACRO')):
 				return False
 		
 		return len(statements) > 0
