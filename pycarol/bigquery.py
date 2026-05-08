@@ -394,10 +394,11 @@ class BQStorage:
         carol: Carol,
         service_account: T.Optional[T.Dict[str, T.Any]] = None,
         cache_cds: bool = True,
+        dataset_id: T.Optional[str] = None,
     ):
         self._env = carol.get_current()
         self._project_id = f"carol-{self._env['env_id'][0:20]}"
-        self._dataset_id = f"{self._env['env_id']}"
+        self._dataset_id = dataset_id if dataset_id is not None else f"{self._env['env_id']}"
         self._token_manager = TokenManager(carol, service_account, cache_cds)
 
     @staticmethod
