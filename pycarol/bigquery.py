@@ -1,5 +1,6 @@
 """Back-end for BigQuery-related code."""
 import copy
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
@@ -12,9 +13,14 @@ from google.cloud import bigquery, bigquery_storage, bigquery_storage_v1
 from google.cloud.bigquery_storage import types
 from google.oauth2.service_account import Credentials
 from google.api_core import retry as retries
-from google.auth.transport.requests import Request
+from google.api_core import exceptions as gcp_exceptions
+from google.auth import exceptions as auth_exceptions
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+_AUTH_RETRYABLE = (
+    gcp_exceptions.Unauthenticated,
+    auth_exceptions.RefreshError,
+    auth_exceptions.TransportError,
+)
 
 try:
     import pandas
@@ -74,15 +80,6 @@ class Token:
 
         expiration_time_ = datetime.strptime(self.expiration_time, self.dt_format).replace(tzinfo=timezone.utc)
         return expiration_time_ < datetime.now(timezone.utc) + timedelta(seconds=backoff_seconds)
-
-    def created_recently(self, expiration_window: T.Optional[int] = 24, backoff_seconds: T.Optional[int] = 0) -> bool:
-        """Check if token has been created within between an amount of time.
-
-        Return True if creation is within utc now - x seconds.
-        """
-
-        issued_at_ = datetime.strptime(self.expiration_time, self.dt_format).replace(tzinfo=timezone.utc) - timedelta(hours=expiration_window)
-        return issued_at_ < datetime.now(timezone.utc) + timedelta(seconds=backoff_seconds)
 
 class TokenManager:
 
@@ -177,16 +174,19 @@ class TokenManager:
 
     def _load_token_cloud(self) -> T.Optional[Token]:
         filename = self._tmp_filepath.name
-        cache_exists = self._storage.exists(name=filename, storage_space="pycarol")
-        if cache_exists is True:
-            sa_path = self._storage.load(
-                name=filename,
-                format="file",
-                storage_space="pycarol",
-                cache=False,
-            )
-            Path(sa_path).rename(self._tmp_filepath)
-            return self._load_token_file()
+        try:
+            cache_exists = self._storage.exists(name=filename, storage_space="pycarol")
+            if cache_exists is True:
+                sa_path = self._storage.load(
+                    name=filename,
+                    format="file",
+                    storage_space="pycarol",
+                    cache=False,
+                )
+                Path(sa_path).rename(self._tmp_filepath)
+                return self._load_token_file()
+        except _AUTH_RETRYABLE:
+            return None
         return None
 
     def get_forced_token(self) -> Token:
@@ -242,6 +242,44 @@ class TokenManager:
         self.token = self.get_forced_token()
         return self.token
 
+    def validate(
+        self,
+        client_factory: T.Callable[[T.Dict[str, T.Any]], T.Any],
+        operation: T.Callable[[T.Any], T.Any],
+        max_retries: int = 8,
+        backoff_seconds: int = 1,
+        max_backoff_seconds: int = 120,
+    ) -> T.Any:
+        """Execute a GCP operation, retrying on transient auth errors.
+
+        Args:
+            client_factory: callable that takes a service account dict and returns a GCP client.
+            operation: callable that takes a client and returns the operation result.
+            max_retries: total attempts before raising.
+            backoff_seconds: base sleep in seconds; doubles each retry (1s, 2s, 4s... by default).
+            max_backoff_seconds: ceiling for any single sleep (default 120s).
+
+        Returns:
+            Result of operation(client).
+        """
+        if max_retries < 1:
+            raise ValueError("max_retries must be >= 1")
+        service_account = self.get_token().service_account
+        client = client_factory(service_account)
+        for attempt in range(max_retries):
+            try:
+                return operation(client)
+            except _AUTH_RETRYABLE:
+                if attempt == max_retries - 1:
+                    raise
+                delay = min(backoff_seconds * (2 ** attempt), max_backoff_seconds)
+                if self._carol.verbose:
+                    print(f"GCP auth error on attempt {attempt + 1}/{max_retries}, retrying in {delay}s")
+                sleep(delay)
+                service_account = self.get_forced_token().service_account
+                client = client_factory(service_account)
+        raise RuntimeError(f"validate: exhausted all {max_retries} retries without result")
+
 
 class BQ:
 
@@ -272,17 +310,6 @@ class BQ:
         project = service_account["project_id"]
         client = bigquery.Client(project=project, credentials=credentials)
         return client
-
-    def _validate_client(self, client: bigquery.Client, retry: T.Optional[int] = 1, backoff_factor: T.Optional[int] = 10) -> bool:
-        for i in range(retry):
-            try:
-                job = client.query("SELECT NULL", job_config=bigquery.QueryJobConfig(dry_run=True))
-                if job.done():
-                    return True
-                raise
-            except Exception as e:
-                sleep(backoff_factor * (2 ** (i - 1)))
-        return False
 
     def _build_query_job_labels(self) -> T.Dict[str, str]:
         labels_to_check = {
@@ -345,36 +372,28 @@ class BQ:
             )
 
         """
-        service_account = self._token_manager.get_token().service_account
-        client = self._generate_client(service_account)
-
-        if self._token_manager.get_token().expired(backoff_seconds=(1*60*30)): # 30 minutes
-            service_account = self._token_manager.get_forced_token().service_account
-            client = self._generate_client(service_account)
-        
-        if self._token_manager.get_token().created_recently(self._token_manager.expiration_window, backoff_seconds=(1*60*2)): # 2 minutes.
-            self._validate_client(client, retry=5)
-
         dataset_id = dataset_id or self._dataset_id
         labels = self._build_query_job_labels()
         job_config = bigquery.QueryJobConfig(default_dataset=dataset_id, labels=labels)
 
-        if retry is not None:
-            results_job = client.query(query, retry=retry, job_config=job_config)
-        else:
-            results_job = client.query(query, job_config=job_config)
-        self.job = results_job
+        def _run(client):
+            if retry is not None:
+                results_job = client.query(query, retry=retry, job_config=job_config)
+            else:
+                results_job = client.query(query, job_config=job_config)
+            self.job = results_job
+            return [dict(row) for row in results_job]
 
-        results = [dict(row) for row in results_job]
+        results = self._token_manager.validate(self._generate_client, _run)
 
         if return_dataframe is False:
-            return results if not return_job_id else (results, results_job.job_id)
+            return results if not return_job_id else (results, self.job.job_id)
 
         if "pandas" not in sys.modules and return_dataframe is True:
             raise exceptions.PandasNotFoundException
 
         if return_job_id:
-            return (pandas.DataFrame(results), results_job.job_id)
+            return (pandas.DataFrame(results), self.job.job_id)
 
         return pandas.DataFrame(results)
 
@@ -473,32 +492,38 @@ class BQStorage:
                 table_name, column_names=col_names, row_restriction=filter,
             )
         """
-        service_account = self._token_manager.get_token().service_account
-        client = self._generate_client(service_account)
-        read_session = self._get_read_session(
-            client,
-            table_name,
-            column_names,
-            row_restriction,
-            sample_percentage,
-            max_stream_count
-        )
+        def _run(client):
+            read_session = self._get_read_session(
+                client,
+                table_name,
+                column_names,
+                row_restriction,
+                sample_percentage,
+                max_stream_count,
+            )
 
-        all_frames = []
+            def _read_stream(stream):
+                frames = []
+                reader = client.read_rows(stream.name)
+                for frame in reader.rows().pages:
+                    frames.append(frame)
+                return frames
 
-        def _read_stream(stream):
-            frames = []
-            reader = client.read_rows(stream.name)
-            for frame in reader.rows().pages:
-                frames.append(frame)
-            return frames
-        
-        with ThreadPoolExecutor(max_workers=len(read_session.streams)) as executor:
-            futures = {executor.submit(_read_stream, s): s for s in read_session.streams}
+            if not read_session.streams:
+                return []
 
-            for future in as_completed(futures):
-                df = future.result()
-                all_frames.extend(df)
+            all_frames = []
+            with ThreadPoolExecutor(max_workers=len(read_session.streams)) as executor:
+                futures = {executor.submit(_read_stream, s): s for s in read_session.streams}
+                for future in as_completed(futures):
+                    try:
+                        all_frames.extend(future.result())
+                    except _AUTH_RETRYABLE:
+                        executor.shutdown(wait=False, cancel_futures=True)
+                        raise
+            return all_frames
+
+        all_frames = self._token_manager.validate(self._generate_client, _run)
 
         if return_dataframe is False:
             return all_frames
@@ -507,10 +532,8 @@ class BQStorage:
             raise exceptions.PandasNotFoundException
 
         if not all_frames:
-            dataframe = pandas.DataFrame(columns=column_names or [])
-            return dataframe
+            return pandas.DataFrame(columns=column_names or [])
 
         dataframe = pandas.concat([frame.to_dataframe() for frame in all_frames])
-        dataframe = dataframe.reset_index(drop=True)
-        return dataframe
+        return dataframe.reset_index(drop=True)
 
