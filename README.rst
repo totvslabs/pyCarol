@@ -200,6 +200,9 @@ PyCarol provides an easy way to work with in-memory data using the Memory class,
 Queries are executed locally over in-memory data, without triggering BigQuery jobs or consuming BigQuery
 slots, and results are returned as pandas DataFrames. The recommended usage is with ``BQStorage`` objects.
 
+On ``BQStorage`` you can optionally indicate the dataset by declaring ``dataset_id``. 
+If you don't, it will default to Carol's dataset.
+
 .. code-block:: python
 
     from pycarol import Carol, Memory, BQStorage
