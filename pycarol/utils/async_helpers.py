@@ -38,7 +38,8 @@ class AtomicCounter:
             print(f'{self.value}/{self.total} sent', end='\r')
 
 
-def send_a(carol, session, url, data_json, extra_headers, content_type, counter, batch_state=None):
+def send_a(carol, session, url, data_json, extra_headers, content_type, counter, batch_state=None,
+           num_records=None):
     """
     Helper function to be used when sending data async.
 
@@ -58,16 +59,21 @@ def send_a(carol, session, url, data_json, extra_headers, content_type, counter,
         counter: `AtomicCounter`
             Counter for progress.
         batch_state: optional batch state; when set, url gets batchIdSequence and stats are recorded.
+        num_records: `int`, default `None`
+            Number of records in `data_json`. Required when `data_json` is gzip bytes,
+            since `len()` would count bytes instead of records.
         :return: None
     """
+    if num_records is None:
+        num_records = len(data_json)
     request_url = url
     if batch_state is not None:
         request_url = f'{url}&batchIdSequence={batch_state.get_next_sequence()}'
     carol.call_api(request_url, data=data_json, extra_headers=extra_headers,
                    content_type=content_type, session=session)
     if batch_state is not None:
-        batch_state.record_request(len(data_json) if isinstance(data_json, list) else 1)
-    counter.increment(len(data_json))
+        batch_state.record_request(num_records)
+    counter.increment(num_records)
     counter.print()
 
 
@@ -104,16 +110,18 @@ async def send_data_asynchronous(carol, data, step_size, url, extra_headers,
                                  retries=10,
                                  backoff_factor=0.5)
         loop = asyncio.get_event_loop()
-        tasks = [
-            loop.run_in_executor(
+        tasks = []
+        prev_cont = 0
+        for data_json, cont in stream_data(data=data,
+                                           step_size=step_size,
+                                           compress_gzip=compress_gzip):
+            tasks.append(loop.run_in_executor(
                 executor,
                 send_a,
-                *(carol, session, url, data_json, extra_headers, content_type, counter, batch_state)
-            )
-            for data_json, _ in stream_data(data=data,
-                                            step_size=step_size,
-                                            compress_gzip=compress_gzip)
-        ]
+                *(carol, session, url, data_json, extra_headers, content_type, counter, batch_state,
+                  cont - prev_cont)
+            ))
+            prev_cont = cont
 
         for _ in await asyncio.gather(*tasks):
             pass
