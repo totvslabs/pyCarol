@@ -186,6 +186,7 @@ def test_bq_query_pd(query_job_mock) -> None:
     client_mock = mock.MagicMock()
     client_mock.query.return_value = query_ret
     bq_mock._generate_client.return_value = client_mock
+    bq_mock._token_manager.validate.side_effect = lambda cf, op, **kw: op(cf({}))
     query = ""
     ret = pycarol.bigquery.BQ.query(bq_mock, query, return_dataframe=True)
     assert ret.equals(pd.DataFrame(query_ret))  # type: ignore
@@ -202,6 +203,7 @@ def test_bq_query(query_job_mock) -> None:
     client_mock = mock.MagicMock()
     client_mock.query.return_value = query_ret
     bq_mock._generate_client.return_value = client_mock
+    bq_mock._token_manager.validate.side_effect = lambda cf, op, **kw: op(cf({}))
     query = ""
     ret = pycarol.bigquery.BQ.query(bq_mock, query, return_dataframe=False)
     assert ret == query_ret
@@ -266,8 +268,11 @@ def test_storage_query_pd() -> None:
     client_mock = mock.MagicMock()
     client_mock.read_rows.return_value = reader_mock
 
+    stream_mock = mock.MagicMock()
     storage_mock = mock.MagicMock()
     storage_mock._generate_client.return_value = client_mock
+    storage_mock._get_read_session.return_value.streams = [stream_mock]
+    storage_mock._token_manager.validate.side_effect = lambda cf, op, **kw: op(cf({}))
     ret = pycarol.bigquery.BQStorage.query(storage_mock, "table")
 
     ret_expected = pd.DataFrame(
@@ -299,8 +304,11 @@ def test_storage_query() -> None:
     client_mock = mock.MagicMock()
     client_mock.read_rows.return_value = reader_mock
 
+    stream_mock = mock.MagicMock()
     storage_mock = mock.MagicMock()
     storage_mock._generate_client.return_value = client_mock
+    storage_mock._get_read_session.return_value.streams = [stream_mock]
+    storage_mock._token_manager.validate.side_effect = lambda cf, op, **kw: op(cf({}))
     ret = pycarol.bigquery.BQStorage.query(
         storage_mock, "table", return_dataframe=False
     )
@@ -316,3 +324,76 @@ def test_storage_query() -> None:
         ],
     ]
     assert ret_expected == ret
+
+
+def test_token_manager_validate() -> None:
+    """Test TokenManager.validate happy path."""
+    manager_mock = mock.MagicMock()
+    manager_mock._carol.verbose = False
+
+    client_mock = mock.MagicMock()
+    client_factory = mock.MagicMock(return_value=client_mock)
+    operation = mock.MagicMock(return_value="result")
+
+    result = pycarol.bigquery.TokenManager.validate(manager_mock, client_factory, operation)
+
+    assert result == "result"
+    client_factory.assert_called_once()
+    operation.assert_called_once_with(client_mock)
+
+
+def test_token_manager_validate_retries_on_auth_error() -> None:
+    """Test that validate() retries on auth errors and succeeds on second attempt."""
+    from google.api_core import exceptions as gcp_exceptions
+
+    manager_mock = mock.MagicMock()
+    manager_mock._carol.verbose = False
+
+    client_mock = mock.MagicMock()
+    client_factory = mock.MagicMock(return_value=client_mock)
+    operation = mock.MagicMock(side_effect=[
+        gcp_exceptions.Unauthenticated("transient"),
+        "result",
+    ])
+
+    with mock.patch("pycarol.bigquery.sleep"):
+        result = pycarol.bigquery.TokenManager.validate(
+            manager_mock, client_factory, operation, max_retries=2, backoff_seconds=1
+        )
+
+    assert result == "result"
+    assert operation.call_count == 2
+    manager_mock.get_forced_token.assert_called_once()
+
+
+def test_token_manager_validate_raises_after_max_retries() -> None:
+    """Test that validate() raises after exhausting all retries."""
+    from google.api_core import exceptions as gcp_exceptions
+
+    manager_mock = mock.MagicMock()
+    manager_mock._carol.verbose = False
+
+    client_factory = mock.MagicMock()
+    operation = mock.MagicMock(side_effect=gcp_exceptions.Unauthenticated("always fails"))
+
+    with mock.patch("pycarol.bigquery.sleep"):
+        try:
+            pycarol.bigquery.TokenManager.validate(
+                manager_mock, client_factory, operation, max_retries=3, backoff_seconds=1
+            )
+            assert False, "Expected exception not raised"
+        except gcp_exceptions.Unauthenticated:
+            pass
+
+    assert operation.call_count == 3
+
+
+def test_token_manager_load_token_cloud_auth_error() -> None:
+    """Test that _load_token_cloud returns None on transient auth failure."""
+    from google.api_core import exceptions as gcp_exceptions
+
+    manager_mock = mock.MagicMock()
+    manager_mock._storage.exists.side_effect = gcp_exceptions.Unauthenticated("transient")
+
+    token = pycarol.bigquery.TokenManager._load_token_cloud(manager_mock)
+    assert token is None

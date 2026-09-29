@@ -252,6 +252,7 @@ class Staging:
                 ))
                 loop.run_until_complete(future)
             else:
+                prev_cont = 0
                 for data_json, cont in stream_data(data=data,
                                                    step_size=step_size,
                                                    compress_gzip=self.gzip):
@@ -261,7 +262,9 @@ class Staging:
                                         method_whitelist=frozenset(['POST']),
                                         retries=10
                                         )
-                    self._current_batch.record_request(len(data_json) if isinstance(data_json, list) else 1)
+                    # data_json may be gzip bytes, so count records from stream_data's cumulative counter.
+                    self._current_batch.record_request(cont - prev_cont)
+                    prev_cont = cont
                     if print_stats:
                         print('{}/{} sent'.format(cont, data_size), end='\r')
         finally:
